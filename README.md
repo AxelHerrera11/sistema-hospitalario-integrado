@@ -35,11 +35,11 @@ Cada integrante construye una capacidad completa del HIS, no una pieza aislada. 
 | 1 | María Lindo | Auth, usuarios, RBAC y auditoría | 1, 2, 22 |
 | 2 | María de los Ángeles López | Pacientes y expediente base | 3, 10 |
 | 3 | Gerson Orellana | Médicos, especialidades y citas | 4, 5 |
-| 4 | Cindy Ruano | Salas, camas, admisión, traslados y altas | 6, 7, 8 |
+| 4 | Madelin Cerón | Salas, camas, admisión, traslados y altas | 6, 7, 8 |
 | 5 | Lis Rosales | Notas SOAP, diagnósticos y signos vitales | 11, 13 |
 | 6 | Javier Fajardo | Alergias, medicamentos y prescripciones con validación de alergias | 12, 14, 15 |
 | 7 | Josué Hicho | Laboratorio: órdenes, catálogo, muestras, resultados y validación | 16, 17, 18, 19, 20 |
-| 8 | Madelin Cerón | Alertas críticas, notificaciones, dashboard y reportes | 9, 21, 23, 27 |
+| 8 | Cindy Ruano | Alertas críticas, notificaciones, dashboard y reportes | 9, 21, 23, 27 |
 | 9 | Axel Herrera | Líder técnico: contrato API, UI transversal, QA/CI e integración | 24, 25, 26, 28 |
 
 Fuera de alcance: prototipo NativePHP (módulo 29).
