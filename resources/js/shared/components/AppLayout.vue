@@ -9,6 +9,13 @@
                     Inicio
                 </router-link>
                 <template v-if="auth.token">
+                    <router-link
+                        v-if="auth.can('citas.ver')"
+                        class="layout__link"
+                        to="/medicos-citas"
+                    >
+                        Médicos y citas
+                    </router-link>
                     <span class="layout__user">{{ auth.user?.name }}</span>
                     <button class="layout__link layout__logout" type="button" @click="handleLogout">
                         Cerrar sesión
