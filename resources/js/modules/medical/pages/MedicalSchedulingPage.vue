@@ -17,66 +17,39 @@
             {{ errorMessage }}
         </p>
 
-        <div class="medical-page__grid">
-            <section class="medical-page__panel">
-                <div class="medical-page__panel-header">
-                    <h2>Especialidades</h2>
-                    <span>{{ specialties.length }}</span>
-                </div>
-                <form v-if="auth.can('medicos.gestionar')" class="medical-page__form" @submit.prevent="createSpecialty">
-                    <input v-model="specialtyForm.name" type="text" placeholder="Nombre de especialidad" required>
-                    <input v-model="specialtyForm.description" type="text" placeholder="Descripción clínica">
-                    <button class="medical-page__button" type="submit" :disabled="saving">
-                        Guardar especialidad
-                    </button>
-                </form>
-                <p v-if="loading" class="medical-page__empty">Cargando especialidades.</p>
-                <ul v-else-if="specialties.length" class="medical-page__list">
-                    <li v-for="specialty in specialties" :key="specialty.id">
-                        <strong>{{ specialty.name }}</strong>
-                        <span>{{ specialty.description || 'Sin descripción' }}</span>
-                    </li>
-                </ul>
-                <p v-else class="medical-page__empty">No hay especialidades registradas.</p>
-            </section>
-
-            <section class="medical-page__panel">
-                <div class="medical-page__panel-header">
-                    <h2>Médicos</h2>
-                    <span>{{ doctors.length }}</span>
-                </div>
-                <form v-if="auth.can('medicos.gestionar')" class="medical-page__form" @submit.prevent="createDoctor">
-                    <div class="medical-page__inline">
-                        <input v-model.number="doctorForm.user_id" type="number" min="1" placeholder="ID usuario" required>
-                        <select v-model.number="doctorForm.specialty_id" required>
-                            <option disabled value="">Especialidad</option>
-                            <option v-for="specialty in specialties" :key="specialty.id" :value="specialty.id">
-                                {{ specialty.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <div class="medical-page__inline">
-                        <input v-model="doctorForm.license_number" type="text" placeholder="No. colegiado" required>
-                        <input v-model="doctorForm.phone" type="text" placeholder="Teléfono">
-                    </div>
-                    <button class="medical-page__button" type="submit" :disabled="saving">
-                        Guardar médico
-                    </button>
-                </form>
-                <p v-if="loading" class="medical-page__empty">Cargando médicos.</p>
-                <ul v-else-if="doctors.length" class="medical-page__list">
-                    <li v-for="doctor in doctors" :key="doctor.id">
-                        <strong>{{ doctor.user?.name || `Médico #${doctor.id}` }}</strong>
-                        <span>{{ doctor.specialty?.name }} · {{ doctor.license_number }}</span>
-                    </li>
-                </ul>
-                <p v-else class="medical-page__empty">No hay médicos registrados.</p>
-            </section>
+        <div class="medical-page__summary" aria-label="Resumen del módulo">
+            <button
+                v-for="item in summaryItems"
+                :key="item.key"
+                class="medical-page__summary-item"
+                :class="{ 'medical-page__summary-item--active': activeTab === item.key }"
+                type="button"
+                @click="activeTab = item.key"
+            >
+                <span>{{ item.label }}</span>
+                <strong>{{ item.count }}</strong>
+            </button>
         </div>
 
-        <section class="medical-page__panel medical-page__panel--wide">
+        <nav class="medical-page__tabs" aria-label="Áreas del módulo">
+            <button
+                v-for="tab in tabs"
+                :key="tab.key"
+                class="medical-page__tab"
+                :class="{ 'medical-page__tab--active': activeTab === tab.key }"
+                type="button"
+                @click="activeTab = tab.key"
+            >
+                {{ tab.label }}
+            </button>
+        </nav>
+
+        <section v-if="activeTab === 'appointments'" class="medical-page__panel medical-page__panel--wide">
             <div class="medical-page__panel-header">
-                <h2>Citas</h2>
+                <div>
+                    <h2>Agenda de citas</h2>
+                    <p>Programa consultas y revisa el estado operativo del día.</p>
+                </div>
                 <span>{{ appointments.length }}</span>
             </div>
             <form v-if="auth.can('citas.crear')" class="medical-page__form medical-page__form--appointments" @submit.prevent="createAppointment">
@@ -141,11 +114,72 @@
                 <p v-else class="medical-page__empty">No hay citas registradas.</p>
             </div>
         </section>
+
+        <section v-if="activeTab === 'doctors'" class="medical-page__panel">
+            <div class="medical-page__panel-header">
+                <div>
+                    <h2>Médicos</h2>
+                    <p>Gestiona perfiles médicos asociados a usuarios del hospital.</p>
+                </div>
+                <span>{{ doctors.length }}</span>
+            </div>
+            <form v-if="auth.can('medicos.gestionar')" class="medical-page__form" @submit.prevent="createDoctor">
+                <div class="medical-page__inline">
+                    <input v-model.number="doctorForm.user_id" type="number" min="1" placeholder="ID usuario" required>
+                    <select v-model.number="doctorForm.specialty_id" required>
+                        <option disabled value="">Especialidad</option>
+                        <option v-for="specialty in specialties" :key="specialty.id" :value="specialty.id">
+                            {{ specialty.name }}
+                        </option>
+                    </select>
+                </div>
+                <div class="medical-page__inline">
+                    <input v-model="doctorForm.license_number" type="text" placeholder="No. colegiado" required>
+                    <input v-model="doctorForm.phone" type="text" placeholder="Teléfono">
+                </div>
+                <button class="medical-page__button" type="submit" :disabled="saving">
+                    Guardar médico
+                </button>
+            </form>
+            <p v-if="loading" class="medical-page__empty">Cargando médicos.</p>
+            <ul v-else-if="doctors.length" class="medical-page__list medical-page__list--columns">
+                <li v-for="doctor in doctors" :key="doctor.id">
+                    <strong>{{ doctor.user?.name || `Médico #${doctor.id}` }}</strong>
+                    <span>{{ doctor.specialty?.name }} · {{ doctor.license_number }}</span>
+                </li>
+            </ul>
+            <p v-else class="medical-page__empty">No hay médicos registrados.</p>
+        </section>
+
+        <section v-if="activeTab === 'specialties'" class="medical-page__panel">
+            <div class="medical-page__panel-header">
+                <div>
+                    <h2>Especialidades</h2>
+                    <p>Mantén el catálogo clínico usado por médicos y citas.</p>
+                </div>
+                <span>{{ specialties.length }}</span>
+            </div>
+            <form v-if="auth.can('medicos.gestionar')" class="medical-page__form" @submit.prevent="createSpecialty">
+                <input v-model="specialtyForm.name" type="text" placeholder="Nombre de especialidad" required>
+                <input v-model="specialtyForm.description" type="text" placeholder="Descripción clínica">
+                <button class="medical-page__button" type="submit" :disabled="saving">
+                    Guardar especialidad
+                </button>
+            </form>
+            <p v-if="loading" class="medical-page__empty">Cargando especialidades.</p>
+            <ul v-else-if="specialties.length" class="medical-page__list medical-page__list--columns">
+                <li v-for="specialty in specialties" :key="specialty.id">
+                    <strong>{{ specialty.name }}</strong>
+                    <span>{{ specialty.description || 'Sin descripción' }}</span>
+                </li>
+            </ul>
+            <p v-else class="medical-page__empty">No hay especialidades registradas.</p>
+        </section>
     </section>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 import { useAuthStore } from '@/stores/auth';
 
@@ -158,6 +192,19 @@ const loading = ref(false);
 const saving = ref(false);
 const message = ref('');
 const errorMessage = ref('');
+const activeTab = ref('appointments');
+
+const tabs = [
+    { key: 'appointments', label: 'Agenda' },
+    { key: 'doctors', label: 'Médicos' },
+    { key: 'specialties', label: 'Especialidades' },
+];
+
+const summaryItems = computed(() => [
+    { key: 'appointments', label: 'Citas', count: appointments.value.length },
+    { key: 'doctors', label: 'Médicos', count: doctors.value.length },
+    { key: 'specialties', label: 'Especialidades', count: specialties.value.length },
+]);
 
 const specialtyForm = reactive({
     name: '',
@@ -353,10 +400,59 @@ onMounted(loadAll);
     color: #9f1239;
 }
 
-.medical-page__grid {
+.medical-page__summary {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1rem;
+}
+
+.medical-page__summary-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #d8e1e8;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 0.85rem 1rem;
+    color: #334155;
+    font: inherit;
+    cursor: pointer;
+}
+
+.medical-page__summary-item strong {
+    color: #0f766e;
+    font-size: 1.35rem;
+}
+
+.medical-page__summary-item--active {
+    border-color: #0f766e;
+    background: #f0fdfa;
+}
+
+.medical-page__tabs {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 0.25rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 0.25rem;
+}
+
+.medical-page__tab {
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #475569;
+    padding: 0.55rem 0.85rem;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.medical-page__tab--active {
+    background: #0f766e;
+    color: #ffffff;
 }
 
 .medical-page__panel {
@@ -381,6 +477,12 @@ onMounted(loadAll);
 .medical-page__panel-header h2 {
     margin: 0;
     font-size: 1rem;
+}
+
+.medical-page__panel-header p {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
 }
 
 .medical-page__panel-header span {
@@ -449,6 +551,12 @@ onMounted(loadAll);
     margin: 0;
     padding: 0;
     list-style: none;
+}
+
+.medical-page__list--columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 1rem;
 }
 
 .medical-page__list li {
@@ -531,8 +639,12 @@ onMounted(loadAll);
 }
 
 @media (max-width: 1000px) {
-    .medical-page__grid,
+    .medical-page__summary,
     .medical-page__form--appointments {
+        grid-template-columns: 1fr;
+    }
+
+    .medical-page__list--columns {
         grid-template-columns: 1fr;
     }
 }
@@ -546,6 +658,12 @@ onMounted(loadAll);
     .medical-page__header {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .medical-page__tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-self: stretch;
     }
 }
 </style>
