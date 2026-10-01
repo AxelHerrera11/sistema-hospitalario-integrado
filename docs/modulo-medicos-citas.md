@@ -168,6 +168,7 @@ php artisan test --configuration=phpunit.pgsql.xml
 | 2026-10-01 | API inicial del modulo: especialidades, medicos y citas. | Controladores `SpecialtyController`, `DoctorController`, `AppointmentController`; rutas bajo `/api/v1`. |
 | 2026-10-01 | UI inicial del modulo en Vue. | Pantalla `/medicos-citas` con listas y formularios basicos. |
 | 2026-10-01 | Pruebas especificas del modulo. | `tests/Feature/MedicalSchedulingTest.php`. |
+| 2026-10-01 | Rediseño operativo inspirado en Clinical Precision UI. | Tabs separados para Agenda, Medicos y Especialidades; KPIs de citas, filtros visuales, drawers de creacion/edicion y salto desde especialidad hacia agenda filtrada. |
 
 Validaciones ejecutadas:
 
@@ -185,8 +186,8 @@ Resultado actual:
 ## 11. Pendientes proximos
 
 - Mejorar la UI con selectores reales de pacientes y usuarios cuando existan endpoints de esos modulos.
-- Agregar edicion desde la interfaz para especialidades, medicos y citas.
-- Agregar filtros visuales por fecha, medico, paciente, especialidad y estado.
+- Agregar vistas de detalle profundas para perfil medico y auditoria de cambios de citas.
+- Agregar paginacion visual para tablas cuando se consuman mas de 50 registros por endpoint.
 - Validar en PostgreSQL con `php artisan test --configuration=phpunit.pgsql.xml`.
 - Tomar capturas de pantalla para adjuntar al issue o PR.
 - Abrir PR hacia `develop` cuando el avance sea revisable por el lider tecnico.
