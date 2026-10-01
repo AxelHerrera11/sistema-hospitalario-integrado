@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\AppointmentController;
+use App\Http\Controllers\Api\V1\DoctorController;
+use App\Http\Controllers\Api\V1\SpecialtyController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,6 +43,32 @@ Route::middleware(['tenant', 'jwt.refresh'])->group(function (): void {
 // ── Área 1: Auth, usuarios, RBAC y auditoría ──────────────────────────────
 // ── Área 2: Pacientes y expediente base ───────────────────────────────────
 // ── Área 3: Médicos, especialidades y citas ───────────────────────────────
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/specialties', [SpecialtyController::class, 'index'])
+        ->middleware('permission:medicos.ver');
+    Route::post('/specialties', [SpecialtyController::class, 'store'])
+        ->middleware('permission:medicos.gestionar');
+    Route::put('/specialties/{specialty}', [SpecialtyController::class, 'update'])
+        ->middleware('permission:medicos.gestionar');
+
+    Route::get('/doctors', [DoctorController::class, 'index'])
+        ->middleware('permission:medicos.ver');
+    Route::post('/doctors', [DoctorController::class, 'store'])
+        ->middleware('permission:medicos.gestionar');
+    Route::put('/doctors/{doctor}', [DoctorController::class, 'update'])
+        ->middleware('permission:medicos.gestionar');
+
+    Route::get('/appointments', [AppointmentController::class, 'index'])
+        ->middleware('permission:citas.ver');
+    Route::post('/appointments', [AppointmentController::class, 'store'])
+        ->middleware('permission:citas.crear');
+    Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])
+        ->middleware('permission:citas.editar');
+    Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
+        ->middleware('permission:citas.cancelar');
+    Route::post('/appointments/{appointment}/status', [AppointmentController::class, 'status'])
+        ->middleware('permission:citas.editar');
+});
 // ── Área 4: Salas, camas, admisión, traslados y altas ─────────────────────
 // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────────────
 // ── Área 6: Alergias, medicamentos y prescripciones ───────────────────────
