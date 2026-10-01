@@ -3,10 +3,10 @@
         <header class="medical-page__header">
             <div>
                 <p class="medical-page__eyebrow">ASII-03</p>
-                <h1 class="medical-page__title">Medicos, especialidades y citas</h1>
+                <h1 class="medical-page__title">Médicos, especialidades y citas</h1>
             </div>
-            <button class="medical-page__button medical-page__button--ghost" type="button" @click="loadAll">
-                Actualizar
+            <button class="medical-page__button medical-page__button--ghost" type="button" :disabled="loading" @click="loadAll">
+                {{ loading ? 'Actualizando' : 'Actualizar' }}
             </button>
         </header>
 
@@ -24,23 +24,25 @@
                     <span>{{ specialties.length }}</span>
                 </div>
                 <form v-if="auth.can('medicos.gestionar')" class="medical-page__form" @submit.prevent="createSpecialty">
-                    <input v-model="specialtyForm.name" type="text" placeholder="Nombre" required>
-                    <input v-model="specialtyForm.description" type="text" placeholder="Descripcion">
+                    <input v-model="specialtyForm.name" type="text" placeholder="Nombre de especialidad" required>
+                    <input v-model="specialtyForm.description" type="text" placeholder="Descripción clínica">
                     <button class="medical-page__button" type="submit" :disabled="saving">
                         Guardar especialidad
                     </button>
                 </form>
-                <ul class="medical-page__list">
+                <p v-if="loading" class="medical-page__empty">Cargando especialidades.</p>
+                <ul v-else-if="specialties.length" class="medical-page__list">
                     <li v-for="specialty in specialties" :key="specialty.id">
                         <strong>{{ specialty.name }}</strong>
-                        <span>{{ specialty.description || 'Sin descripcion' }}</span>
+                        <span>{{ specialty.description || 'Sin descripción' }}</span>
                     </li>
                 </ul>
+                <p v-else class="medical-page__empty">No hay especialidades registradas.</p>
             </section>
 
             <section class="medical-page__panel">
                 <div class="medical-page__panel-header">
-                    <h2>Medicos</h2>
+                    <h2>Médicos</h2>
                     <span>{{ doctors.length }}</span>
                 </div>
                 <form v-if="auth.can('medicos.gestionar')" class="medical-page__form" @submit.prevent="createDoctor">
@@ -55,18 +57,20 @@
                     </div>
                     <div class="medical-page__inline">
                         <input v-model="doctorForm.license_number" type="text" placeholder="No. colegiado" required>
-                        <input v-model="doctorForm.phone" type="text" placeholder="Telefono">
+                        <input v-model="doctorForm.phone" type="text" placeholder="Teléfono">
                     </div>
                     <button class="medical-page__button" type="submit" :disabled="saving">
-                        Guardar medico
+                        Guardar médico
                     </button>
                 </form>
-                <ul class="medical-page__list">
+                <p v-if="loading" class="medical-page__empty">Cargando médicos.</p>
+                <ul v-else-if="doctors.length" class="medical-page__list">
                     <li v-for="doctor in doctors" :key="doctor.id">
-                        <strong>{{ doctor.user?.name || `Medico #${doctor.id}` }}</strong>
+                        <strong>{{ doctor.user?.name || `Médico #${doctor.id}` }}</strong>
                         <span>{{ doctor.specialty?.name }} · {{ doctor.license_number }}</span>
                     </li>
                 </ul>
+                <p v-else class="medical-page__empty">No hay médicos registrados.</p>
             </section>
         </div>
 
@@ -78,9 +82,9 @@
             <form v-if="auth.can('citas.crear')" class="medical-page__form medical-page__form--appointments" @submit.prevent="createAppointment">
                 <input v-model.number="appointmentForm.patient_id" type="number" min="1" placeholder="ID paciente" required>
                 <select v-model.number="appointmentForm.doctor_id" required @change="syncDoctorSpecialty">
-                    <option disabled value="">Medico</option>
+                    <option disabled value="">Médico</option>
                     <option v-for="doctor in doctors" :key="doctor.id" :value="doctor.id">
-                        {{ doctor.user?.name || `Medico #${doctor.id}` }} - {{ doctor.specialty?.name }}
+                        {{ doctor.user?.name || `Médico #${doctor.id}` }} - {{ doctor.specialty?.name }}
                     </option>
                 </select>
                 <select v-model.number="appointmentForm.specialty_id" required>
@@ -98,12 +102,13 @@
             </form>
 
             <div class="medical-page__table-wrap">
-                <table class="medical-page__table">
+                <p v-if="loading" class="medical-page__empty">Cargando agenda de citas.</p>
+                <table v-else-if="appointments.length" class="medical-page__table">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Paciente</th>
-                            <th>Medico</th>
+                            <th>Médico</th>
                             <th>Especialidad</th>
                             <th>Estado</th>
                             <th></th>
@@ -116,7 +121,9 @@
                             <td>{{ appointment.doctor?.user?.name }}</td>
                             <td>{{ appointment.specialty?.name }}</td>
                             <td>
-                                <span class="medical-page__status">{{ appointment.status }}</span>
+                                <span class="medical-page__status" :class="statusClass(appointment.status)">
+                                    {{ statusLabel(appointment.status) }}
+                                </span>
                             </td>
                             <td>
                                 <button
@@ -131,6 +138,7 @@
                         </tr>
                     </tbody>
                 </table>
+                <p v-else class="medical-page__empty">No hay citas registradas.</p>
             </div>
         </section>
     </section>
@@ -146,6 +154,7 @@ const auth = useAuthStore();
 const specialties = ref([]);
 const doctors = ref([]);
 const appointments = ref([]);
+const loading = ref(false);
 const saving = ref(false);
 const message = ref('');
 const errorMessage = ref('');
@@ -188,16 +197,21 @@ function handleError(error) {
 
 async function loadAll() {
     clearFeedback();
+    loading.value = true;
 
-    const [specialtiesResponse, doctorsResponse, appointmentsResponse] = await Promise.all([
-        api.get('/specialties', { params: { per_page: 50 } }),
-        api.get('/doctors', { params: { per_page: 50 } }),
-        api.get('/appointments', { params: { per_page: 50 } }),
-    ]);
+    try {
+        const specialtiesResponse = await api.get('/specialties', { params: { per_page: 50 }, timeout: 8000 });
+        const doctorsResponse = await api.get('/doctors', { params: { per_page: 50 }, timeout: 8000 });
+        const appointmentsResponse = await api.get('/appointments', { params: { per_page: 50 }, timeout: 8000 });
 
-    specialties.value = normalizePaginated(specialtiesResponse.data);
-    doctors.value = normalizePaginated(doctorsResponse.data);
-    appointments.value = normalizePaginated(appointmentsResponse.data);
+        specialties.value = normalizePaginated(specialtiesResponse.data);
+        doctors.value = normalizePaginated(doctorsResponse.data);
+        appointments.value = normalizePaginated(appointmentsResponse.data);
+    } catch (error) {
+        handleError(error);
+    } finally {
+        loading.value = false;
+    }
 }
 
 async function createSpecialty() {
@@ -216,7 +230,7 @@ async function createDoctor() {
         doctorForm.specialty_id = '';
         doctorForm.license_number = '';
         doctorForm.phone = '';
-        message.value = 'Medico creado.';
+        message.value = 'Médico creado.';
     });
 }
 
@@ -275,6 +289,22 @@ function formatDate(value) {
     }).format(new Date(value));
 }
 
+function statusLabel(status) {
+    const labels = {
+        pendiente: 'Pendiente',
+        confirmada: 'Confirmada',
+        completada: 'Completada',
+        cancelada: 'Cancelada',
+        no_asistio: 'No asistió',
+    };
+
+    return labels[status] ?? status;
+}
+
+function statusClass(status) {
+    return `medical-page__status--${status}`;
+}
+
 onMounted(loadAll);
 </script>
 
@@ -319,8 +349,8 @@ onMounted(loadAll);
 }
 
 .medical-page__error {
-    background: #fef2f2;
-    color: #991b1b;
+    background: #fff1f2;
+    color: #9f1239;
 }
 
 .medical-page__grid {
@@ -330,7 +360,7 @@ onMounted(loadAll);
 }
 
 .medical-page__panel {
-    border: 1px solid #d7dee8;
+    border: 1px solid #d8e1e8;
     border-radius: 8px;
     background: #ffffff;
     padding: 1rem;
@@ -405,7 +435,7 @@ onMounted(loadAll);
 .medical-page__button--ghost {
     border: 1px solid #94a3b8;
     background: #ffffff;
-    color: #0f172a;
+    color: #164e63;
 }
 
 .medical-page__button--danger {
@@ -429,9 +459,21 @@ onMounted(loadAll);
     padding-top: 0.6rem;
 }
 
+.medical-page__list strong {
+    color: #102a43;
+}
+
 .medical-page__list span {
     color: #64748b;
     font-size: 0.9rem;
+}
+
+.medical-page__empty {
+    margin: 0;
+    border-top: 1px solid #edf2f7;
+    padding-top: 0.75rem;
+    color: #64748b;
+    font-size: 0.92rem;
 }
 
 .medical-page__table-wrap {
@@ -466,6 +508,26 @@ onMounted(loadAll);
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
     font-weight: 700;
+}
+
+.medical-page__status--confirmada {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.medical-page__status--completada {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.medical-page__status--cancelada {
+    background: #ffe4e6;
+    color: #9f1239;
+}
+
+.medical-page__status--no_asistio {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 @media (max-width: 1000px) {
