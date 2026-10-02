@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\DoctorController;
+use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,16 @@ Route::middleware(['tenant', 'jwt.refresh'])->group(function (): void {
 
 // ── Área 1: Auth, usuarios, RBAC y auditoría ──────────────────────────────
 // ── Área 2: Pacientes y expediente base ───────────────────────────────────
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/patients', [PatientController::class, 'index'])
+        ->middleware('permission:pacientes.ver');
+    Route::get('/patients/{patient}', [PatientController::class, 'show'])
+        ->middleware('permission:pacientes.ver');
+    Route::post('/patients', [PatientController::class, 'store'])
+        ->middleware('permission:pacientes.crear');
+    Route::put('/patients/{patient}', [PatientController::class, 'update'])
+        ->middleware('permission:pacientes.editar');
+});
 // ── Área 3: Médicos, especialidades y citas ───────────────────────────────
 Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
     Route::get('/specialties', [SpecialtyController::class, 'index'])
