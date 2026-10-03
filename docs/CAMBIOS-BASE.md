@@ -26,9 +26,11 @@ petición responde 403.
 
 ### 3. Aislamiento automático por hospital
 Nuevo trait `App\Models\Concerns\BelongsToTenant`, aplicado a todos los
-modelos con `tenant_id` (excepto `User`, que se valida explícitamente en el
-login). Filtra todas las consultas por el hospital de la petición y asigna
-`tenant_id` al crear registros. Cubierto por `tests/Feature/TenantIsolationTest.php`.
+modelos con `tenant_id`. Filtra todas las consultas por el hospital de la
+petición y asigna `tenant_id` al crear registros. `User` también usa el trait:
+el JWT compara primero su claim de hospital con la petición y solo después
+carga al usuario mediante el scope. Cubierto por
+`tests/Feature/TenantIsolationTest.php`.
 
 ### 4. Llaves foráneas hacia `tenants`
 `tenants.id` pasó a `uuid` y todas las columnas `tenant_id` son

@@ -1,10 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AppointmentController;
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DoctorController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,11 +38,15 @@ Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
         ->middleware('role:Admin');
 });
 
-Route::middleware(['tenant', 'jwt.refresh'])->group(function (): void {
+Route::middleware('tenant')->group(function (): void {
     Route::post('/auth/refresh', [AuthController::class, 'refresh']);
 });
 
 // ── Área 1: Auth, usuarios, RBAC y auditoría ──────────────────────────────
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/users', [UserController::class, 'index'])
+        ->middleware('permission:usuarios.ver');
+});
 // ── Área 2: Pacientes y expediente base ───────────────────────────────────
 Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
     Route::get('/patients', [PatientController::class, 'index'])

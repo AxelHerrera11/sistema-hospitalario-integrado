@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Patient;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -50,5 +51,30 @@ class TenantIsolationTest extends TestCase
         $patient = Patient::factory()->create(['tenant_id' => null]);
 
         $this->assertSame($hospital->id, $patient->tenant_id);
+    }
+
+    public function test_user_queries_are_limited_to_the_current_tenant(): void
+    {
+        $hospitalA = Tenant::factory()->create();
+        $hospitalB = Tenant::factory()->create();
+
+        User::factory()->count(3)->create(['tenant_id' => $hospitalA->id]);
+        User::factory()->count(2)->create(['tenant_id' => $hospitalB->id]);
+
+        app()->instance('currentTenant', $hospitalA);
+        $this->assertSame(3, User::query()->count());
+
+        app()->instance('currentTenant', $hospitalB);
+        $this->assertSame(2, User::query()->count());
+    }
+
+    public function test_new_users_get_the_current_tenant_automatically(): void
+    {
+        $hospital = Tenant::factory()->create();
+        app()->instance('currentTenant', $hospital);
+
+        $user = User::factory()->create(['tenant_id' => null]);
+
+        $this->assertSame($hospital->id, $user->tenant_id);
     }
 }

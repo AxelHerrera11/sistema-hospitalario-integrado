@@ -13,21 +13,32 @@ class JwtAuth
     public function handle(Request $request, Closure $next): Response
     {
         try {
-            JWT::parseToken()->authenticate();
-        } catch (JWTException $exception) {
+            $jwt = JWT::parseToken();
+            $payload = $jwt->getPayload();
+        } catch (JWTException) {
             return response()->json([
                 'message' => 'Token inválido o expirado.',
             ], 401);
         }
 
-        $tenantHeader = $request->header('X-Tenant-ID');
-        $user = auth('api')->user();
+        $tenant = $request->attributes->get('tenant');
 
-        if ($tenantHeader !== null && $tenantHeader !== '' && $user !== null
-            && (string) $user->tenant_id !== (string) $tenantHeader) {
+        if ((string) $payload->get('tenant_id') !== (string) $tenant->getKey()) {
             return response()->json([
                 'message' => 'El tenant indicado no coincide con el usuario del token.',
             ], 403);
+        }
+
+        try {
+            $user = $jwt->authenticate();
+        } catch (JWTException) {
+            $user = false;
+        }
+
+        if ($user === false) {
+            return response()->json([
+                'message' => 'Token inválido o expirado.',
+            ], 401);
         }
 
         return $next($request);
