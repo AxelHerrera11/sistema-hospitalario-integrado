@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Tenant;
 use App\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -83,6 +84,39 @@ class AuthTest extends TestCase
             ->assertStatus(403);
     }
 
+    public function test_malformed_token_is_rejected(): void
+    {
+        $this->withHeaders([
+            'Authorization' => 'Bearer token-invalido',
+            'X-Tenant-ID' => $this->tenant->id,
+        ])->getJson('/api/v1/auth/me')
+            ->assertUnauthorized();
+    }
+
+    public function test_token_with_altered_signature_is_rejected(): void
+    {
+        $user = $this->userWithRole('Médico');
+        [$header, $payload, $signature] = explode('.', JWTAuth::fromUser($user));
+        $signature[0] = $signature[0] === 'a' ? 'b' : 'a';
+
+        $this->withHeaders([
+            'Authorization' => "Bearer {$header}.{$payload}.{$signature}",
+            'X-Tenant-ID' => $this->tenant->id,
+        ])->getJson('/api/v1/auth/me')
+            ->assertUnauthorized();
+    }
+
+    public function test_token_for_missing_user_is_rejected(): void
+    {
+        $user = $this->userWithRole('Médico');
+        $headers = $this->headersFor($user);
+        $user->delete();
+
+        $this->withHeaders($headers)
+            ->getJson('/api/v1/auth/me')
+            ->assertUnauthorized();
+    }
+
     public function test_me_returns_role_permissions(): void
     {
         $user = $this->userWithRole('Recepcionista');
@@ -134,5 +168,142 @@ class AuthTest extends TestCase
         $created = User::query()->where('email', 'enfermera@demo.local')->firstOrFail();
         $this->assertSame($this->tenant->id, $created->tenant_id);
         $this->assertTrue($created->hasRole('Enfermera'));
+    }
+
+    public function test_same_email_can_exist_in_different_hospitals_but_not_twice_in_one(): void
+    {
+        $otherTenant = Tenant::factory()->create();
+        $admin = $this->userWithRole('Admin');
+        $otherAdmin = $this->userWithRole('Admin', $otherTenant);
+        $payload = [
+            'name' => 'Usuario Compartido',
+            'email' => 'compartido@demo.local',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ];
+
+        $this->withHeaders($this->headersFor($admin))
+            ->postJson('/api/v1/auth/register', $payload)
+            ->assertCreated();
+
+        $this->withHeaders($this->headersFor($otherAdmin, $otherTenant))
+            ->postJson('/api/v1/auth/register', $payload)
+            ->assertCreated();
+
+        $duplicate = $payload;
+        $duplicate['email'] = strtoupper($payload['email']);
+
+        $this->withHeaders($this->headersFor($admin))
+            ->postJson('/api/v1/auth/register', $duplicate)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('email');
+
+        $this->assertDatabaseHas('users', [
+            'tenant_id' => $this->tenant->id,
+            'email' => $payload['email'],
+        ]);
+        $this->assertDatabaseHas('users', [
+            'tenant_id' => $otherTenant->id,
+            'email' => $payload['email'],
+        ]);
+    }
+
+    public function test_login_normalizes_email_case(): void
+    {
+        $user = $this->userWithRole('Médico');
+
+        $this->withHeader('X-Tenant-ID', $this->tenant->id)
+            ->postJson('/api/v1/auth/login', [
+                'email' => strtoupper($user->email),
+                'password' => 'password',
+            ])
+            ->assertOk();
+    }
+
+    public function test_token_can_be_refreshed_and_keeps_tenant_isolation(): void
+    {
+        $user = $this->userWithRole('Médico');
+
+        $token = $this->withHeaders($this->headersFor($user))
+            ->postJson('/api/v1/auth/refresh')
+            ->assertOk()
+            ->assertJsonStructure(['access_token', 'token_type', 'expires_in'])
+            ->json('access_token');
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer '.$token,
+            'X-Tenant-ID' => $this->tenant->id,
+        ])->getJson('/api/v1/auth/me')
+            ->assertOk();
+    }
+
+    public function test_expired_token_can_be_refreshed_within_refresh_period(): void
+    {
+        $user = $this->userWithRole('Médico');
+        $issuedAt = Carbon::parse('2026-01-01 00:00:00', 'UTC');
+        Carbon::setTestNow($issuedAt);
+        $headers = $this->headersFor($user);
+        Carbon::setTestNow($issuedAt->copy()->addMinutes((int) config('jwt.ttl') + 1));
+
+        try {
+            $this->withHeaders($headers)
+                ->postJson('/api/v1/auth/refresh')
+                ->assertOk()
+                ->assertJsonStructure(['access_token', 'token_type', 'expires_in']);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_token_outside_refresh_period_is_rejected(): void
+    {
+        $user = $this->userWithRole('Médico');
+        $issuedAt = Carbon::parse('2026-01-01 00:00:00', 'UTC');
+        Carbon::setTestNow($issuedAt);
+        $headers = $this->headersFor($user);
+        Carbon::setTestNow($issuedAt->copy()->addMinutes((int) config('jwt.refresh_ttl') + 1));
+
+        try {
+            $this->withHeaders($headers)
+                ->postJson('/api/v1/auth/refresh')
+                ->assertUnauthorized();
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_refresh_rejects_token_invalidated_by_logout(): void
+    {
+        $user = $this->userWithRole('Médico');
+        $headers = $this->headersFor($user);
+
+        $this->withHeaders($headers)
+            ->postJson('/api/v1/auth/logout')
+            ->assertOk();
+
+        $this->withHeaders($headers)
+            ->postJson('/api/v1/auth/refresh')
+            ->assertUnauthorized();
+    }
+
+    public function test_refresh_rejects_token_from_another_hospital(): void
+    {
+        $user = $this->userWithRole('Médico');
+        $otherTenant = Tenant::factory()->create();
+
+        $this->withHeaders($this->headersFor($user, $otherTenant))
+            ->postJson('/api/v1/auth/refresh')
+            ->assertForbidden();
+    }
+
+    public function test_refresh_rejects_token_for_missing_user(): void
+    {
+        $user = $this->userWithRole('Médico');
+        $headers = $this->headersFor($user);
+        $user->delete();
+
+        $this->withHeaders($headers)
+            ->postJson('/api/v1/auth/refresh')
+            ->assertUnauthorized();
     }
 }

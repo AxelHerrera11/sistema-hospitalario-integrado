@@ -12,7 +12,7 @@ Sistema Hospitalario Integrado del **grupo de 9 integrantes** para el **Proyecto
 | Stack frontend | Vue 3, Vite, Pinia, Vue Router y Axios. |
 | Seguridad base | JWT con validación token ↔ `X-Tenant-ID`, aislamiento automático por hospital (trait `BelongsToTenant`), RBAC con 6 roles y 45 permisos `modulo.accion`. |
 | Modelo clínico | Migraciones, modelos Eloquent (22), factories y seeders demo para pacientes, médicos, camas, admisiones, EMR, laboratorio, auditoría y notificaciones. |
-| API actual | Autenticación bajo `/api/v1`: login, usuario actual (con permisos), refresh, logout y alta de usuarios (solo Admin). |
+| API actual | Autenticación bajo `/api/v1`: login, usuario actual (con permisos), refresh, logout, alta y listado paginado de usuarios (solo Admin). |
 | Pruebas | 18 pruebas automatizadas (autenticación, permisos, aislamiento entre hospitales y búsqueda), verificadas en SQLite y PostgreSQL. |
 | Pendiente | Endpoints, pantallas y pruebas de cada área clínica. |
 
@@ -143,6 +143,7 @@ Todas las rutas están bajo `/api/v1` y requieren la cabecera `X-Tenant-ID`.
 | POST | `/auth/refresh` | JWT refresh |
 | POST | `/auth/logout` | Bearer JWT |
 | POST | `/auth/register` | Bearer JWT, solo rol **Admin** — crea usuarios del hospital con un rol |
+| GET | `/users` | Bearer JWT + `usuarios.ver` — lista usuarios y roles del hospital actual |
 
 Datos demo tras `php artisan migrate:fresh --seed` (contraseña `password`):
 
