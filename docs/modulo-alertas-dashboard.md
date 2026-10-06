@@ -48,7 +48,7 @@ Los actores funcionales no implican que exista un rol técnico con idéntico nom
 
 - *Actores principales:* Sistemas clínicos integrados.
 - *Actores interesados:* Médico Tratante, Enfermera.
-- *Disparadores:* Setección de una alergia relevante durante una prescripción, validación de un resultado crítico de laboratorio STAT o registro de signos vitales que excedan los umbrales configurados.
+- *Disparadores:* Detección de una alergia relevante durante una prescripción, validación de un resultado crítico de laboratorio STAT o registro de signos vitales que excedan los umbrales configurados.
 - *Flujo principal:* El sistema de origen valida el evento; se crea o comunica una alerta con su tipo, severidad, paciente, fecha y hora, referencia al contexto de origen y destinatario según las reglas acordadas; el Área 8 la hace disponible a los usuarios autorizados en el centro de notificaciones y en las vistas pertinentes.
 - *Excepciones y reglas:* Un usuario de otro tenant no puede consultar la alerta; un evento duplicado debe manejarse según una regla de idempotencia acordada; si no existe destinatario válido, el evento debe quedar trazable para su revisión y no descartarse silenciosamente.
 - *Resultado:* Alerta persistida y disponible para seguimiento, sin alterar el registro clínico de origen.
