@@ -1,10 +1,12 @@
 <?php
 
-use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AppointmentController;
+use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BedController;
 use App\Http\Controllers\Api\V1\DoctorController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
+use App\Http\Controllers\Api\V1\WardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -81,6 +83,20 @@ Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
         ->middleware('permission:citas.editar');
 });
 // ── Área 4: Salas, camas, admisión, traslados y altas ─────────────────────
+
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/wards', [WardController::class, 'index'])
+        ->middleware('permission:camas.ver');
+
+    Route::get('/wards/{ward}/beds', [WardController::class, 'beds'])
+        ->middleware('permission:camas.ver');
+
+    Route::get('/beds', [BedController::class, 'index'])
+        ->middleware('permission:camas.ver');
+
+    Route::patch('/beds/{bed}/status', [BedController::class, 'updateStatus'])
+        ->middleware('permission:camas.gestionar');
+});
 // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────────────
 // ── Área 6: Alergias, medicamentos y prescripciones ───────────────────────
 // ── Área 7: Laboratorio ───────────────────────────────────────────────────
