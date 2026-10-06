@@ -61,6 +61,24 @@ Dependencias clave entre áreas (acordar contratos temprano):
 - Respuestas, paginación y errores según [`docs/contrato-api.md`](docs/contrato-api.md).
 - Permisos nuevos: se agregan en `database/seeders/RoleSeeder.php` mediante PR, con la convención `modulo.accion`.
 - Cada área agrega sus rutas en su bloque comentado de `routes/api.php` y sus pantallas en `resources/js/modules/<area>/`.
+
+### Convención de frontend
+
+- Pantallas en `resources/js/modules/<area>/pages/<Nombre>Page.vue`; componentes propios en `resources/js/modules/<area>/components/`.
+- Rutas en `resources/js/router/index.js`, **solo dentro del bloque comentado del área**, con carga diferida y `meta`:
+
+  ```js
+  // ── Área 7: Laboratorio ─────────────────────────────
+  {
+      path: '/laboratorio/ordenes',
+      name: 'laboratorio-ordenes',          // <area>-<pantalla>
+      component: () => import('@/modules/laboratorio/pages/LabOrdersPage.vue'),
+      meta: { requiresAuth: true, permission: 'laboratorio.ver' },
+  },
+  ```
+
+- Enlace del menú en `resources/js/shared/components/AppLayout.vue`, dentro del bloque del área, con `v-if="auth.can('<permiso>')"`.
+- Llamadas a la API con `api` de `@/plugins/axios` (ya agrega el token y `X-Tenant-ID`).
 - Toda PR debe pasar `php artisan test` (SQLite y PostgreSQL) y `npm run build`; el CI lo verifica automáticamente.
 
 ## Flujo de trabajo con Git
@@ -231,6 +249,7 @@ Un área se considera terminada cuando cumple todo lo siguiente:
 
 ## Documentos de apoyo
 
+- [`docs/arquitectura-c4.md`](docs/arquitectura-c4.md): arquitectura global (C4) y mapa de dependencias entre áreas.
 - [`docs/contrato-api.md`](docs/contrato-api.md): formato común de respuestas, paginación y errores.
 - [`docs/weekly-plan.md`](docs/weekly-plan.md): cronograma detallado de semanas 1 a 18.
 - [`docs/CAMBIOS-BASE.md`](docs/CAMBIOS-BASE.md): correcciones aplicadas a la base del curso.
