@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend (SQLite + PostgreSQL)
+    runs-on: ubuntu-latest
+
+    # Mismos datos que phpunit.pgsql.xml, para usarlo sin cambios.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: his
+          POSTGRES_PASSWORD: his123
+          POSTGRES_DB: hospital_his_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U his -d hospital_his_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, pdo_sqlite, sqlite3, mbstring
+          coverage: none
+
+      - name: Cache de Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # phpunit.xml no define APP_KEY y la ruta web la necesita.
+      - name: Generar APP_KEY de prueba
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      - name: Pruebas en SQLite
+        run: vendor/bin/phpunit
+
+      - name: Pruebas en PostgreSQL
+        run: vendor/bin/phpunit -c phpunit.pgsql.xml
+
+  frontend:
+    name: frontend (build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
