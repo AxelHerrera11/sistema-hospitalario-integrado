@@ -1,7 +1,7 @@
 # ASII-07 - Laboratorio clínico
 
 Responsable: Josué Hicho (`Jhos-hgnu`)  
-Rama de trabajo: `feature/asii-07-laboratorio-docs-analisis-Jhos-hgnu`  
+Ramas: `feature/asii-07-laboratorio-<tema>-Jhos-hgnu` (una por fase, desde `develop`)  
 Área asignada: laboratorio (órdenes, catálogo, muestras, resultados y validación)  
 Módulos originales: 16, 17, 18, 19 y 20
 
@@ -232,21 +232,22 @@ Fuente: `https://mvpcluster.com/diseno-de-software-2/`.
 
 | Área | Punto de integración | Submódulo | Estado |
 |---|---|---|---|
-| 1 · María Lindo | Servicio común de auditoría; usuario demo con rol Bioquimico y órdenes en estados abiertos | Todos | Pendiente (issue) |
-| 2 · María de los Ángeles | Forma del objeto `patient` en las respuestas | ORD | Pendiente (issue) |
-| 5 · Lis Rosales | `SoapNoteFactory`, relación `SoapNote::labOrders()`, política de borrado de notas y si la nota debe estar firmada | ORD | Pendiente (issue) |
-| 8 · Cindy Ruano | Quién inserta y quién lee `critical_alerts`, formato de `message`, quién marca `sent_to_emr` | VAL | Pendiente (issue) |
-| 9 · Axel Herrera | Formato de respuesta y paginación, C4 global, plantillas de PR e issue | Todos | Pendiente (issue) |
+| 1 · María Lindo | Servicio común de auditoría; usuario demo con rol Bioquimico y órdenes en estados abiertos | Todos | En revisión: #9 → PR #14 (`AuditLogger`) |
+| 2 · María de los Ángeles | Forma del objeto `patient` en las respuestas | ORD | Acordado en `contrato-api.md` §3; #13 → PR #16 (`PatientSummaryResource`) |
+| 5 · Lis Rosales | `SoapNoteFactory`, relación `SoapNote::labOrders()`, política de borrado de notas y si la nota debe estar firmada | ORD | Pendiente: #11 |
+| 8 · Cindy Ruano | Quién inserta y quién lee `critical_alerts`, formato de `message`, quién marca `sent_to_emr` | VAL | Pendiente: #12 |
+| 9 · Axel Herrera | Formato de respuesta y paginación, C4 global, plantillas de PR e issue | Todos | Resuelto: #7 y #8 (`contrato-api.md`, `arquitectura-c4.md`) |
 
-Ninguna dependencia bloquea las fases F0 y F1. La propuesta de cada una está en la sección 11.
+Ninguna dependencia bloquea F1. Las de las áreas 1 y 5 se necesitan desde F2 y la del área 8
+en F4. La propuesta de cada una está en la sección 11.
 
 ## 11. Hallazgos y decisiones propuestas
 
 | ID | Hallazgo en la base | Propuesta |
 |---|---|---|
-| H-01 | `LabOrder` y `LabResult` usan `HasFactory`, pero no existe su factory; `LabTest`, `LabOrderItem`, `Sample` y `CriticalAlert` no usan el trait. | Crear las 6 factories en F0. |
-| H-02 | No existe `SoapNoteFactory` y `lab_orders.soap_note_id` es obligatorio. | Pedirla al área 5; mientras tanto, crear la nota dentro de `LabOrderFactory`. |
-| H-03 | Las factories actuales crean un hospital nuevo en cada nivel. | Las factories de laboratorio propagan un único `tenant_id` por toda la cadena. |
+| H-01 | `LabOrder` y `LabResult` usan `HasFactory`, pero no existe su factory; `LabTest`, `LabOrderItem`, `Sample` y `CriticalAlert` no usan el trait. | Resuelto en F1: 6 factories y `HasFactory` en los 6 modelos. |
+| H-02 | No existe `SoapNoteFactory` y `lab_orders.soap_note_id` es obligatorio. | Pedida al área 5 (#11); mientras tanto `LabOrderFactory` crea la nota con un `TODO(#11)`. |
+| H-03 | Las factories actuales crean un hospital nuevo en cada nivel. | Resuelto en F1: las factories de laboratorio propagan un único `tenant_id` por toda la cadena (`LabFactoriesTest`). |
 | H-04 | `lab_orders.soap_note_id` usa `cascadeOnDelete`: borrar una nota destruye orden, muestras y resultados. | `restrictOnDelete` o borrado lógico de notas (acordar con el área 5). |
 | H-05 | El seeder valida resultados con el usuario Admin y solo evalúa `critical_max` (con `reference_max × 1.5` si es nulo). | Validar con Bioquimico y aplicar la regla 8.3 (área 1). |
 | H-06 | El seeder deja todas las órdenes `completada` y sortea `acknowledged` y `acknowledged_at` por separado. | Incluir órdenes abiertas y alertas coherentes (área 1). |
@@ -255,11 +256,11 @@ Ninguna dependencia bloquea las fases F0 y F1. La propuesta de cada una está en
 
 | Fase | Contenido | Submódulo |
 |---|---|---|
-| F0 | Este documento · `CriticalValueEvaluator` + pruebas unitarias · 6 factories · vista C4 de componentes y contrato API preliminar | Todos |
-| F1 | CRUD del catálogo + pruebas de permisos, hospital, unicidad y enums | CAT |
+| F0 | Este documento (solo documentación) · vista C4 de componentes y contrato API preliminar | Todos |
+| F1 | 6 factories · catálogo: listar, ver, crear, editar y desactivar + pruebas de permisos, hospital, unicidad y rangos | CAT |
 | F2 | `LabOrderService` (código, resolución SOAP) · crear, listar, ver y cancelar · worklist | ORD |
 | F3 | `SampleService` (código de barras) · toma, recepción y descarte | MUE |
-| F4 | Ingreso con clasificación · validación · alerta crítica transaccional | RES, VAL |
+| F4 | `CriticalValueEvaluator` + pruebas unitarias · ingreso con clasificación · validación · alerta crítica transaccional | RES, VAL |
 | F5 | UI Vue: catálogo, worklist y órdenes, recepción de muestras, ingreso y validación | Todos |
 | F6 | Contrato API final, evidencia de integración y matriz de amenazas | Todos |
 
@@ -274,3 +275,4 @@ del área 7.
 | Fecha | Avance | Evidencia |
 |---|---|---|
 | 2026-10-01 | Fase 0: análisis, submódulos, casos de uso, RF/RNF, criterios de aceptación, reglas de negocio, SOLID, dependencias y plan de fases. | Este documento. |
+| 2026-10-05 | Fase 1 (parte 1): 6 factories de laboratorio con un solo hospital por cadena. | `LabFactoriesTest`. |
