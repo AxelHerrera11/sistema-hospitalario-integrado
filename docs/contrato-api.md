@@ -33,7 +33,7 @@ return response()->json(
   "from": 1,
   "last_page": 1,
   "last_page_url": "http://localhost/api/v1/patients?per_page=1&page=1",
-  "links": [ { "url": null, "label": "&laquo; Previous", "page": null, "active": false }, "..." ],
+  "links": [ { "url": null, "label": "&laquo; Anterior", "page": null, "active": false }, "..." ],
   "next_page_url": null,
   "path": "http://localhost/api/v1/patients",
   "per_page": 1,
@@ -99,21 +99,26 @@ Todos los errores responden JSON con al menos `message`.
 | `401` | Sin token, token inválido o vencido | `{"message": "Token inválido o expirado."}` |
 | `403` | Sin el permiso de la ruta | `{"message": "No tiene permiso para realizar esta acción."}` |
 | `403` | El token es de otro hospital que el de `X-Tenant-ID` | `{"message": "El tenant indicado no coincide con el usuario del token."}` |
-| `404` | El id no existe **o pertenece a otro hospital** (no se revela cuál) | `{"message": "..."}` |
+| `404` | El id no existe, **pertenece a otro hospital** o la ruta no existe (no se revela cuál) | `{"message": "Recurso no encontrado."}` |
 | `422` | Validación de datos **o regla de negocio** | `{"message": "...", "errors": {"campo": ["..."]}}` |
 
 ### 422 de validación
 
 ```json
 {
-  "message": "The last name field is required. (and 2 more errors)",
+  "message": "El campo apellido es obligatorio. (y 2 errores más)",
   "errors": {
-    "last_name": ["The last name field is required."],
-    "birth_date": ["The birth date field is required."],
-    "gender": ["The gender field is required."]
+    "last_name": ["El campo apellido es obligatorio."],
+    "birth_date": ["El campo fecha de nacimiento es obligatorio."],
+    "gender": ["El campo género es obligatorio."]
   }
 }
 ```
+
+Los mensajes salen en español (`lang/es/validation.php`). El nombre legible de
+cada campo se toma de `attributes`: **cada área agrega los suyos en su bloque**
+de ese archivo (p. ej. `'scheduled_at' => 'fecha y hora'`). Si falta, el
+mensaje usa el nombre técnico ("El campo scheduled at es obligatorio.").
 
 ### 422 de regla de negocio
 
@@ -136,5 +141,8 @@ acción) como campo, p. ej. `'status' => ['Una cita completada no se puede cance
 - No responder `200` con un error dentro del cuerpo.
 - No devolver `403` para registros de otro hospital: es `404` (lo hace solo el
   global scope de `BelongsToTenant`).
+- No armar mensajes 404 propios: `bootstrap/app.php` responde siempre
+  `Recurso no encontrado.` para no revelar clases internas ni si el id existe.
+- Mensajes de negocio escritos por el área, en español.
 - Documentar en `docs/modulo-<area>.md` los endpoints, los filtros propios y los
   errores de negocio de cada endpoint.

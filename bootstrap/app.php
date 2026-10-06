@@ -43,4 +43,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 403);
             }
         });
+
+        // 404 genérico: un id inexistente, de otro hospital o una ruta que no existe
+        // responden igual, sin exponer la clase del modelo ("No query results for
+        // model [App\Models\...]"). Laravel ya convirtió ModelNotFoundException aquí.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Recurso no encontrado.',
+                ], 404);
+            }
+        });
     })->create();
