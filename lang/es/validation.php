@@ -214,6 +214,15 @@ return [
         // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────
         // ── Área 6: Alergias, medicamentos y prescripciones ───────────────
         // ── Área 7: Laboratorio ───────────────────────────────────────────
+        'category' => 'categoría',
+        'unit' => 'unidad',
+        'reference_min' => 'mínimo de referencia',
+        'reference_max' => 'máximo de referencia',
+        'critical_min' => 'mínimo crítico',
+        'critical_max' => 'máximo crítico',
+        'turnaround_min' => 'tiempo de entrega (minutos)',
+        'active' => 'activa',
+
         // ── Área 8: Alertas críticas, dashboard y reportes ────────────────
     ],
 

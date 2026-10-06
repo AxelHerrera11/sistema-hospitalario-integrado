@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BedController;
 use App\Http\Controllers\Api\V1\DoctorController;
+use App\Http\Controllers\Api\V1\LabTestController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
 use App\Http\Controllers\Api\V1\WardController;
@@ -100,4 +101,14 @@ Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
 // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────────────
 // ── Área 6: Alergias, medicamentos y prescripciones ───────────────────────
 // ── Área 7: Laboratorio ───────────────────────────────────────────────────
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/lab-tests', [LabTestController::class, 'index'])
+        ->middleware('permission:laboratorio.ver');
+    Route::get('/lab-tests/{labTest}', [LabTestController::class, 'show'])
+        ->middleware('permission:laboratorio.ver');
+    Route::post('/lab-tests', [LabTestController::class, 'store'])
+        ->middleware('permission:laboratorio.gestionar_catalogo');
+    Route::put('/lab-tests/{labTest}', [LabTestController::class, 'update'])
+        ->middleware('permission:laboratorio.gestionar_catalogo');
+});
 // ── Área 8: Alertas críticas, dashboard y reportes ────────────────────────
