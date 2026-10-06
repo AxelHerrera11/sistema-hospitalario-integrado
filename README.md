@@ -86,6 +86,15 @@ Dependencias clave entre áreas (acordar contratos temprano):
 - `main`: solo versiones entregables. `develop`: integración.
 - Cada área trabaja en su rama: `feature/<area>-<descripcion>` creada desde `develop` (p. ej. `feature/laboratorio-ordenes`).
 - Toda PR apunta a `develop` y la revisa el líder técnico. Nada de `force push` ni de commits directos a `main`/`develop`.
+- **Las ramas de PR mergeados se conservan como historial y no se reutilizan.** Para la siguiente fase o corrección, crea una rama nueva desde `develop` actualizado:
+
+  ```bash
+  git switch develop && git pull
+  git switch -c feature/<area>-<tema>
+  ```
+
+  Un push a una rama ya mergeada no llega a `develop`; cualquier ajuste va en una rama nueva con su propio PR.
+- **PR apilados** (un PR cuya base es la rama de otro PR, p. ej. #31 sobre #30): como las ramas no se borran al mergear, GitHub no cambia la base sola. Después de mergear el PR de abajo, cambia la base del de arriba a `develop` (botón *Edit* junto al título, o `gh pr edit <n> --base develop`) **antes** de mergearlo; si no, se mergea en la rama vieja y no llega a `develop`.
 - No modificar archivos de otra área sin coordinarlo; los archivos compartidos (`routes/api.php`, `RoleSeeder`, `router/index.js`) se tocan en bloques pequeños para evitar conflictos.
 - Los worktrees son opcionales; la guía sigue en [`docs/worktree-guide.md`](docs/worktree-guide.md).
 
