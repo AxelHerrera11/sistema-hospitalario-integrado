@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'hospital'),
 
     /*
     |--------------------------------------------------------------------------
@@ -44,20 +44,32 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
-        /*
-        | Stancl Tenancy: el modelo Tenant usa la conexión "central" (configuración por defecto del paquete).
-        | En desarrollo con SQLite, apunta al mismo archivo que la conexión por defecto.
-        */
         'central' => [
-            'driver' => 'sqlite',
-            'url' => env('DB_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'driver' => 'pgsql',
+            'host' => env('CENTRAL_DB_HOST', '127.0.0.1'),
+            'port' => env('CENTRAL_DB_PORT', '5432'),
+            'database' => env('CENTRAL_DB_DATABASE', 'his_central'),
+            'username' => env('CENTRAL_DB_USERNAME', 'postgres'),
+            'password' => env('CENTRAL_DB_PASSWORD', ''),
+            'charset' => 'utf8',
             'prefix' => '',
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
-            'transaction_mode' => 'DEFERRED',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('CENTRAL_DB_SSLMODE', 'prefer'),
+        ],
+
+        'hospital' => [
+            'driver' => 'pgsql',
+            'host' => env('HOSPITAL_DB_HOST', '127.0.0.1'),
+            'port' => env('HOSPITAL_DB_PORT', '5432'),
+            'database' => env('HOSPITAL_DB_DATABASE', 'his_hospital'),
+            'username' => env('HOSPITAL_DB_USERNAME', 'postgres'),
+            'password' => env('HOSPITAL_DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('HOSPITAL_DB_SSLMODE', 'prefer'),
         ],
 
         'mysql' => [
