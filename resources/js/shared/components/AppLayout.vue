@@ -9,6 +9,10 @@
                     Inicio
                 </router-link>
                 <template v-if="auth.token">
+                    <!-- Cada área agrega su enlace SOLO en su bloque, con v-if="auth.can('<permiso>')". -->
+                    <!-- Área 1: Auth, usuarios, RBAC y auditoría -->
+                    <!-- Área 2: Pacientes y expediente base -->
+                    <!-- Área 3: Médicos, especialidades y citas -->
                     <router-link
                         v-if="auth.can('citas.ver')"
                         class="layout__link"
@@ -16,6 +20,11 @@
                     >
                         Médicos y citas
                     </router-link>
+                    <!-- Área 4: Salas, camas, admisión, traslados y altas -->
+                    <!-- Área 5: Notas SOAP, diagnósticos y signos vitales -->
+                    <!-- Área 6: Alergias, medicamentos y prescripciones -->
+                    <!-- Área 7: Laboratorio -->
+                    <!-- Área 8: Alertas críticas, dashboard y reportes -->
                     <span class="layout__user">{{ auth.user?.name }}</span>
                     <button class="layout__link layout__logout" type="button" @click="handleLogout">
                         Cerrar sesión
