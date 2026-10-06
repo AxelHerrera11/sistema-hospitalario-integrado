@@ -116,7 +116,7 @@
                     <div class="medical-module__panel-heading">
                         <div>
                             <h2>Agenda de citas</h2>
-                            <p>{{ filteredAppointments.length }} citas visibles, ordenadas por fecha y hora.</p>
+                            <p>{{ appointmentsSummary }} ordenadas por fecha y hora.</p>
                         </div>
                     </div>
 
@@ -168,7 +168,7 @@
                                                 Editar
                                             </button>
                                             <button
-                                                v-if="auth.can('citas.editar') && appointment.status !== 'confirmada'"
+                                                v-if="auth.can('citas.editar') && appointment.status === 'pendiente'"
                                                 class="medical-module__link-button"
                                                 type="button"
                                                 @click="changeAppointmentStatus(appointment, 'confirmada')"
@@ -176,7 +176,7 @@
                                                 Confirmar
                                             </button>
                                             <button
-                                                v-if="auth.can('citas.editar') && appointment.status !== 'completada'"
+                                                v-if="auth.can('citas.editar') && appointment.status === 'confirmada'"
                                                 class="medical-module__link-button"
                                                 type="button"
                                                 @click="changeAppointmentStatus(appointment, 'completada')"
@@ -184,7 +184,7 @@
                                                 Completar
                                             </button>
                                             <button
-                                                v-if="auth.can('citas.cancelar') && appointment.status !== 'cancelada'"
+                                                v-if="auth.can('citas.cancelar') && canCancelAppointment(appointment)"
                                                 class="medical-module__link-button medical-module__link-button--danger"
                                                 type="button"
                                                 @click="cancelAppointment(appointment)"
@@ -197,6 +197,27 @@
                             </tbody>
                         </table>
                         <p v-else class="medical-module__empty">No hay citas que coincidan con los filtros.</p>
+                    </div>
+                    <div v-if="appointmentPagination.last_page > 1" class="medical-module__pagination">
+                        <button
+                            class="medical-module__button medical-module__button--quiet"
+                            type="button"
+                            :disabled="loading || appointmentPagination.current_page <= 1"
+                            @click="loadAppointments(appointmentPagination.current_page - 1)"
+                        >
+                            Anterior
+                        </button>
+                        <span>
+                            Pagina {{ appointmentPagination.current_page }} de {{ appointmentPagination.last_page }}
+                        </span>
+                        <button
+                            class="medical-module__button medical-module__button--quiet"
+                            type="button"
+                            :disabled="loading || appointmentPagination.current_page >= appointmentPagination.last_page"
+                            @click="loadAppointments(appointmentPagination.current_page + 1)"
+                        >
+                            Siguiente
+                        </button>
                     </div>
                 </article>
 
@@ -351,8 +372,17 @@
 
                 <form v-if="drawer.type === 'appointment'" class="medical-module__drawer-form" @submit.prevent="saveAppointment">
                     <label>
-                        ID paciente
-                        <input v-model.number="appointmentForm.patient_id" type="number" min="1" required>
+                        Buscar paciente
+                        <input v-model="patientSearch" type="search" placeholder="Nombre, codigo o DPI">
+                    </label>
+                    <label>
+                        Paciente
+                        <select v-model.number="appointmentForm.patient_id" required>
+                            <option disabled value="">Selecciona paciente</option>
+                            <option v-for="patient in patients" :key="patient.id" :value="patient.id">
+                                {{ patientLabel(patient) }}
+                            </option>
+                        </select>
                     </label>
                     <label>
                         Especialidad
@@ -448,7 +478,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import api from '@/plugins/axios';
 import { useAuthStore } from '@/stores/auth';
 
@@ -457,11 +487,20 @@ const auth = useAuthStore();
 const specialties = ref([]);
 const doctors = ref([]);
 const appointments = ref([]);
+const patients = ref([]);
 const loading = ref(false);
 const saving = ref(false);
 const message = ref('');
 const errorMessage = ref('');
 const activeTab = ref('appointments');
+const patientSearch = ref('');
+
+const appointmentPagination = reactive({
+    current_page: 1,
+    last_page: 1,
+    per_page: 15,
+    total: 0,
+});
 
 const statuses = [
     { value: 'pendiente', label: 'Pendiente' },
@@ -520,10 +559,23 @@ const specialtyForm = reactive({
 });
 
 const tabs = computed(() => [
-    { key: 'appointments', label: 'Agenda de citas', count: appointments.value.length },
+    { key: 'appointments', label: 'Agenda de citas', count: appointmentPagination.total || appointments.value.length },
     { key: 'doctors', label: 'Medicos', count: doctors.value.length },
     { key: 'specialties', label: 'Especialidades', count: specialties.value.length },
 ]);
+
+const appointmentsSummary = computed(() => {
+    const total = appointmentPagination.total || filteredAppointments.value.length;
+
+    if (! total) {
+        return '0 citas visibles';
+    }
+
+    const from = ((appointmentPagination.current_page - 1) * appointmentPagination.per_page) + 1;
+    const to = from + filteredAppointments.value.length - 1;
+
+    return `${from}-${to} de ${total} citas visibles`;
+});
 
 const filteredAppointments = computed(() => appointments.value.filter((appointment) => {
     const term = normalize(appointmentFilters.search);
@@ -614,6 +666,13 @@ function normalizePaginated(data) {
     return data?.data ?? [];
 }
 
+function syncPagination(data) {
+    appointmentPagination.current_page = data?.current_page ?? 1;
+    appointmentPagination.last_page = data?.last_page ?? 1;
+    appointmentPagination.per_page = Number(data?.per_page ?? appointmentPagination.per_page);
+    appointmentPagination.total = data?.total ?? normalizePaginated(data).length;
+}
+
 function normalize(value) {
     return String(value ?? '').toLowerCase().trim();
 }
@@ -636,15 +695,78 @@ async function loadAll() {
     try {
         const specialtiesResponse = await api.get('/specialties', { params: { per_page: 50 }, timeout: 8000 });
         const doctorsResponse = await api.get('/doctors', { params: { per_page: 50 }, timeout: 8000 });
-        const appointmentsResponse = await api.get('/appointments', { params: { per_page: 50 }, timeout: 8000 });
 
         specialties.value = normalizePaginated(specialtiesResponse.data);
         doctors.value = normalizePaginated(doctorsResponse.data);
-        appointments.value = normalizePaginated(appointmentsResponse.data);
+        await loadAppointments(1, false);
     } catch (error) {
         handleError(error);
     } finally {
         loading.value = false;
+    }
+}
+
+async function loadAppointments(page = 1, showSpinner = true) {
+    if (showSpinner) {
+        loading.value = true;
+    }
+
+    const params = {
+        per_page: appointmentPagination.per_page,
+        page,
+    };
+
+    if (appointmentFilters.search) {
+        params.q = appointmentFilters.search;
+    }
+
+    if (appointmentFilters.status) {
+        params.status = appointmentFilters.status;
+    }
+
+    if (appointmentFilters.doctor_id) {
+        params.doctor_id = appointmentFilters.doctor_id;
+    }
+
+    if (appointmentFilters.specialty_id) {
+        params.specialty_id = appointmentFilters.specialty_id;
+    }
+
+    if (appointmentFilters.date) {
+        params.date_from = appointmentFilters.date;
+        params.date_to = appointmentFilters.date;
+    }
+
+    try {
+        const appointmentsResponse = await api.get('/appointments', { params, timeout: 8000 });
+        appointments.value = normalizePaginated(appointmentsResponse.data);
+        syncPagination(appointmentsResponse.data);
+    } catch (error) {
+        handleError(error);
+    } finally {
+        if (showSpinner) {
+            loading.value = false;
+        }
+    }
+}
+
+async function loadPatients() {
+    try {
+        const selectedPatient = patients.value.find((patient) => Number(patient.id) === Number(appointmentForm.patient_id));
+        const patientsResponse = await api.get('/patients', {
+            params: {
+                per_page: 20,
+                q: patientSearch.value || undefined,
+            },
+            timeout: 8000,
+        });
+
+        const nextPatients = normalizePaginated(patientsResponse.data);
+        patients.value = selectedPatient && ! nextPatients.some((patient) => Number(patient.id) === Number(selectedPatient.id))
+            ? [selectedPatient, ...nextPatients]
+            : nextPatients;
+    } catch (error) {
+        handleError(error);
     }
 }
 
@@ -661,8 +783,10 @@ function openAppointmentDrawer(appointment = null) {
         appointmentForm.reason = appointment.reason ?? '';
         appointmentForm.notes = appointment.notes ?? '';
         appointmentForm.status = appointment.status ?? 'pendiente';
+        addKnownPatient(appointment.patient);
     }
 
+    loadPatients();
     drawer.type = 'appointment';
     drawer.open = true;
 }
@@ -712,6 +836,7 @@ function resetAppointmentForm() {
         notes: '',
         status: 'pendiente',
     });
+    patientSearch.value = '';
 }
 
 function resetDoctorForm() {
@@ -740,7 +865,6 @@ async function saveAppointment() {
             specialty_id: appointmentForm.specialty_id,
             scheduled_at: appointmentForm.scheduled_at.replace('T', ' '),
             duration_min: appointmentForm.duration_min,
-            status: appointmentForm.status,
             reason: appointmentForm.reason,
             notes: appointmentForm.notes,
         };
@@ -848,6 +972,26 @@ function patientName(appointment) {
     return `${patient.first_name ?? ''} ${patient.last_name ?? ''}`.trim() || patient.code;
 }
 
+function patientLabel(patient) {
+    return [
+        `${patient.first_name ?? ''} ${patient.last_name ?? ''}`.trim() || `Paciente #${patient.id}`,
+        patient.code,
+        patient.dpi,
+    ].filter(Boolean).join(' · ');
+}
+
+function addKnownPatient(patient) {
+    if (! patient || patients.value.some((item) => Number(item.id) === Number(patient.id))) {
+        return;
+    }
+
+    patients.value = [patient, ...patients.value];
+}
+
+function canCancelAppointment(appointment) {
+    return ['pendiente', 'confirmada'].includes(appointment.status);
+}
+
 function formatDate(value) {
     if (! value) {
         return '';
@@ -906,6 +1050,22 @@ function specialtyDoctorCount(specialtyId) {
 function specialtyAppointmentCount(specialtyId) {
     return appointments.value.filter((appointment) => Number(appointment.specialty_id) === Number(specialtyId)).length;
 }
+
+let appointmentFilterTimeout = null;
+watch(appointmentFilters, () => {
+    window.clearTimeout(appointmentFilterTimeout);
+    appointmentFilterTimeout = window.setTimeout(() => loadAppointments(1), 300);
+});
+
+let patientSearchTimeout = null;
+watch(patientSearch, () => {
+    if (! drawer.open || drawer.type !== 'appointment') {
+        return;
+    }
+
+    window.clearTimeout(patientSearchTimeout);
+    patientSearchTimeout = window.setTimeout(loadPatients, 300);
+});
 
 onMounted(loadAll);
 </script>
@@ -1175,6 +1335,22 @@ onMounted(loadAll);
 
 .medical-module__table-wrap {
     overflow-x: auto;
+}
+
+.medical-module__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    border-top: 1px solid var(--clinical-border);
+    padding-top: 0.9rem;
+    margin-top: 0.9rem;
+}
+
+.medical-module__pagination span {
+    color: var(--clinical-muted);
+    font-size: 0.84rem;
+    font-weight: 800;
 }
 
 .medical-module__table {
