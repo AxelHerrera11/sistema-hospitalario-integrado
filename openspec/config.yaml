@@ -1,0 +1,123 @@
+schema: spec-driven
+
+context: |
+  Project: Integrated Hospital System (HIS), a teaching repository organized around vertical modules.
+  Backend: PHP 8.2+, Laravel 12, Eloquent, JWT, Spatie Permission, and Stancl Tenancy.
+  Frontend: Vue 3, Pinia, Vue Router, Axios, Tailwind CSS 4, and Vite 7.
+  Architecture: Laravel MVC/API with middleware and Eloquent; Vue feature modules with shared components.
+  Persistence: SQLite is the current default; PostgreSQL support is declared but the federated rebuild is not implemented.
+  Testing: PHPUnit 11 unit/feature suites through `composer test`; no frontend or E2E runner is configured.
+  Style: EditorConfig and Laravel Pint; no static type checker or JavaScript linter is configured.
+  Delivery: force-chained PRs, stacked-to-main strategy, 400-line review budget.
+
+strict_tdd: true
+
+initialization:
+  status: success
+  persistence: hybrid
+  validated_at: 2026-08-12
+  scope: SDD bootstrap only; no dependencies, PostgreSQL service, or schema changes were provisioned.
+  downstream_apply_prerequisites:
+    - Install Composer dependencies before executing PHPUnit or Laravel Pint.
+    - Install Node dependencies before executing the Vite build.
+    - Provision and verify PostgreSQL 15+ before PostgreSQL-specific implementation or acceptance testing.
+
+testing:
+  detected_at: 2026-08-12
+  strict_tdd: true
+  runner:
+    framework: PHPUnit 11
+    command: composer test
+    configured: true
+    currently_executable: false
+    blocker: Composer dependencies are not installed; vendor/autoload.php is missing.
+  layers:
+    unit:
+      available: true
+      tool: PHPUnit
+    integration:
+      available: true
+      tool: Laravel Feature tests with in-memory SQLite
+      limitation: Current tests do not validate PostgreSQL-specific behavior or the planned federated topology.
+    e2e:
+      available: false
+      tool: null
+  coverage:
+    available: false
+    command: null
+    limitation: No coverage command or Xdebug/PCOV driver is configured.
+  quality:
+    linter:
+      available: false
+      command: null
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: true
+      tool: Laravel Pint
+      command: vendor/bin/pint
+      currently_executable: false
+  frontend:
+    build_command: npm run build
+    tests_available: false
+    currently_executable: false
+    blocker: Node dependencies are not installed; vite is unavailable.
+
+postgresql:
+  readiness: partial
+  target_version: "15+"
+  application_connection_declared: true
+  php_extensions:
+    pdo_pgsql: true
+    pgsql: true
+  client_available: false
+  service_verified: false
+  current_default: sqlite
+  central_connection_current_driver: sqlite
+  authoritative_testing_ready: false
+  notes:
+    - PostgreSQL-specific config exists, but no verified PostgreSQL service or executable psql client is available.
+    - PHPUnit currently forces SQLite in memory and cannot prove PostgreSQL-only constraints, JSONB, exclusion constraints, or triggers.
+    - The database rebuild is explicitly outside this initialization scope.
+
+delivery:
+  execution_mode: auto
+  artifact_store: hybrid
+  chained_pr_strategy: force-chained
+  chain_strategy: stacked-to-main
+  review_budget_lines: 400
+
+rules:
+  proposal:
+    - Include rollback plans for risky or destructive changes.
+    - Identify affected vertical modules and cross-module contracts.
+    - Do not treat the PostgreSQL rebuild plan as implemented state.
+  specs:
+    - Use Given/When/Then format for scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+    - Specify tenant, authorization, and clinical-data boundaries where applicable.
+  design:
+    - Include sequence diagrams for complex or cross-database flows.
+    - Record architecture decisions and PostgreSQL-specific assumptions with rationale.
+  tasks:
+    - Group tasks by phase and use hierarchical numbering.
+    - Keep review units at or below 400 changed lines where practical.
+    - Plan chained delivery using force-chained and stacked-to-main.
+  apply:
+    guidelines:
+      - Follow existing Laravel and Vue conventions.
+      - Preserve unrelated worktree changes.
+      - Do not implement the database rebuild without an approved change.
+    tdd: true
+    test_command: composer test
+  verify:
+    test_command: composer test
+    build_command: npm run build
+    coverage_threshold: 0
+    guidelines:
+      - PostgreSQL acceptance requires PostgreSQL 15+, pdo_pgsql, distinct test databases, and PostgreSQL-specific integration tests.
+      - A skipped PostgreSQL integrity suite does not constitute acceptance.
+  archive:
+    - Warn before merging destructive deltas.
+    - Preserve archived change artifacts as an immutable audit trail.
