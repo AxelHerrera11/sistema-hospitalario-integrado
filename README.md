@@ -11,10 +11,10 @@ Sistema Hospitalario Integrado del **grupo de 9 integrantes** para el **Proyecto
 | Stack backend | Laravel 12, PHP 8.2+, PostgreSQL 13+, JWT (`tymon/jwt-auth`) y Spatie Laravel Permission. |
 | Stack frontend | Vue 3, Vite, Pinia, Vue Router y Axios. |
 | Seguridad base | JWT con validación token ↔ `X-Tenant-ID`, aislamiento automático por hospital (trait `BelongsToTenant`), RBAC con 6 roles y 45 permisos `modulo.accion`. |
-| Modelo clínico | Migraciones, modelos Eloquent (22), factories y seeders demo para pacientes, médicos, camas, admisiones, EMR, laboratorio, auditoría y notificaciones. |
-| API actual | Autenticación bajo `/api/v1`: login, usuario actual (con permisos), refresh, logout y alta de usuarios (solo Admin). |
-| Pruebas | 18 pruebas automatizadas (autenticación, permisos, aislamiento entre hospitales y búsqueda), verificadas en SQLite y PostgreSQL. |
-| Pendiente | Endpoints, pantallas y pruebas de cada área clínica. |
+| Modelo clínico | Migraciones y modelos Eloquent (22) para pacientes, médicos, camas, admisiones, EMR, laboratorio, auditoría y notificaciones; seeders demo para todo el modelo. Factories disponibles: `Tenant`, `User`, `Patient`, `MedicalRecord`, `Specialty`, `Doctor`, `Ward` y `Bed` (las demás las crea cada área). |
+| API actual | Bajo `/api/v1`: autenticación, pacientes (área 2) y médicos, especialidades y citas (área 3). Formato común en [`docs/contrato-api.md`](docs/contrato-api.md). |
+| Pruebas | 69 pruebas automatizadas (autenticación, permisos, aislamiento entre hospitales, búsqueda, pacientes y citas), verificadas en SQLite y PostgreSQL. El CI de GitHub Actions las corre en cada PR. |
+| Pendiente | Endpoints, pantallas y pruebas de las áreas 1 y 4 a 8; UI de pacientes. |
 
 ## Trabajo por áreas verticales
 
@@ -57,9 +57,29 @@ Dependencias clave entre áreas (acordar contratos temprano):
 
 - Todo modelo con `tenant_id` usa el trait `BelongsToTenant`. **Nunca** filtrar `tenant_id` a mano ni usar `withoutGlobalScope('tenant')` sin revisión del líder técnico.
 - Rutas protegidas: `Route::middleware(['tenant', 'auth.jwt'])` + `->middleware('permission:modulo.accion')`. No usar `jwt.auth` (ese alias pertenece al paquete JWT y se salta la validación de hospital).
+- El binding implícito (`Appointment $appointment`) es seguro: `bootstrap/app.php` resuelve el hospital antes que el modelo, así que un id de otro hospital responde 404. Cubierto en `tests/Feature/TenantIsolationTest.php`.
+- Respuestas, paginación y errores según [`docs/contrato-api.md`](docs/contrato-api.md).
 - Permisos nuevos: se agregan en `database/seeders/RoleSeeder.php` mediante PR, con la convención `modulo.accion`.
 - Cada área agrega sus rutas en su bloque comentado de `routes/api.php` y sus pantallas en `resources/js/modules/<area>/`.
-- Toda PR debe pasar `php artisan test` y `npm run build`.
+
+### Convención de frontend
+
+- Pantallas en `resources/js/modules/<area>/pages/<Nombre>Page.vue`; componentes propios en `resources/js/modules/<area>/components/`.
+- Rutas en `resources/js/router/index.js`, **solo dentro del bloque comentado del área**, con carga diferida y `meta`:
+
+  ```js
+  // ── Área 7: Laboratorio ─────────────────────────────
+  {
+      path: '/laboratorio/ordenes',
+      name: 'laboratorio-ordenes',          // <area>-<pantalla>
+      component: () => import('@/modules/laboratorio/pages/LabOrdersPage.vue'),
+      meta: { requiresAuth: true, permission: 'laboratorio.ver' },
+  },
+  ```
+
+- Enlace del menú en `resources/js/shared/components/AppLayout.vue`, dentro del bloque del área, con `v-if="auth.can('<permiso>')"`.
+- Llamadas a la API con `api` de `@/plugins/axios` (ya agrega el token y `X-Tenant-ID`).
+- Toda PR debe pasar `php artisan test` (SQLite y PostgreSQL) y `npm run build`; el CI lo verifica automáticamente.
 
 ## Flujo de trabajo con Git
 
@@ -120,6 +140,10 @@ php artisan test --configuration=phpunit.pgsql.xml     # contra PostgreSQL real
 La segunda corrida es la que vale antes de integrar: hay comportamientos que
 solo aparecen en PostgreSQL (ver reglas abajo).
 
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) ejecuta en cada PR
+las pruebas en SQLite y en PostgreSQL 16 y el `npm run build`. Un PR con el CI en rojo
+no se integra.
+
 ### Reglas específicas de PostgreSQL
 
 - **Búsquedas de texto:** usar siempre `->whereSearch(['columna1', 'columna2'], $termino)`.
@@ -143,6 +167,16 @@ Todas las rutas están bajo `/api/v1` y requieren la cabecera `X-Tenant-ID`.
 | POST | `/auth/refresh` | JWT refresh |
 | POST | `/auth/logout` | Bearer JWT |
 | POST | `/auth/register` | Bearer JWT, solo rol **Admin** — crea usuarios del hospital con un rol |
+| GET | `/patients` · `/patients/{id}` | `pacientes.ver` — listado con búsqueda/orden y detalle |
+| POST · PUT | `/patients` · `/patients/{id}` | `pacientes.crear` · `pacientes.editar` |
+| GET | `/specialties` · `/doctors` | `medicos.ver` |
+| POST · PUT | `/specialties` · `/doctors` (y `/{id}`) | `medicos.gestionar` |
+| GET | `/appointments` | `citas.ver` — filtros por fecha, médico, paciente, especialidad y estado |
+| POST · PUT | `/appointments` · `/appointments/{id}` | `citas.crear` · `citas.editar` |
+| POST | `/appointments/{id}/status` | `citas.editar` |
+| POST | `/appointments/{id}/cancel` | `citas.cancelar` |
+
+Detalle por área en [`docs/modulo-pacientes-expediente.md`](docs/modulo-pacientes-expediente.md) y [`docs/modulo-medicos-citas.md`](docs/modulo-medicos-citas.md).
 
 Datos demo tras `php artisan migrate:fresh --seed` (contraseña `password`):
 
@@ -215,6 +249,8 @@ Un área se considera terminada cuando cumple todo lo siguiente:
 
 ## Documentos de apoyo
 
+- [`docs/arquitectura-c4.md`](docs/arquitectura-c4.md): arquitectura global (C4) y mapa de dependencias entre áreas.
+- [`docs/contrato-api.md`](docs/contrato-api.md): formato común de respuestas, paginación y errores.
 - [`docs/weekly-plan.md`](docs/weekly-plan.md): cronograma detallado de semanas 1 a 18.
 - [`docs/CAMBIOS-BASE.md`](docs/CAMBIOS-BASE.md): correcciones aplicadas a la base del curso.
 - [`docs/worktree-guide.md`](docs/worktree-guide.md): guía opcional de worktrees.
