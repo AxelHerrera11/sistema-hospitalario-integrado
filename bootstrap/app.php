@@ -24,6 +24,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // 'tenant' debe correr ANTES que SubstituteBindings (grupo 'api'): si no, el
+        // binding implícito ({appointment}, {doctor}, ...) resuelve el modelo sin
+        // currentTenant, el global scope de BelongsToTenant no se aplica y un id de
+        // otro hospital se puede leer o modificar. Cubierto en TenantIsolationTest.
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\TenantMiddleware::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Respuestas JSON uniformes cuando falta rol o permiso.
