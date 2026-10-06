@@ -18,11 +18,13 @@ use Illuminate\Validation\Rule;
  * del trait BelongsToTenant. Por eso un paciente de otro hospital no resuelve
  * y findOrFail responde 404 sin revelar que existe.
  *
- * IMPORTANTE: {patient} NO usa binding implícito de modelo. SubstituteBindings
- * pertenece al grupo 'api' y corre ANTES del middleware 'tenant', así que al
- * resolver el modelo todavía no existe currentTenant, el global scope no se
- * aplica y un paciente de otro hospital se colaría en la respuesta. Por eso
- * show/update reciben el id y lo resuelven aquí, ya con el tenant resuelto.
+ * {patient} se resuelve aquí con findOrFail y no con binding implícito de
+ * modelo. Ya no es una necesidad de seguridad: desde el PR #17,
+ * bootstrap/app.php hace que 'tenant' corra ANTES que SubstituteBindings, así
+ * que el binding implícito también encuentra currentTenant y respeta el
+ * hospital (cubierto en TenantIsolationTest). Resolver por id en el controller
+ * sigue siendo válido y equivalente: en ambos casos el global scope ya está
+ * activo y un id de otro hospital responde 404.
  */
 class PatientController extends Controller
 {
