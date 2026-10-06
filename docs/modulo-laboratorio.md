@@ -5,9 +5,10 @@ Ramas: `feature/asii-07-laboratorio-<tema>-Jhos-hgnu` (una por fase, desde `deve
 Área asignada: laboratorio (órdenes, catálogo, muestras, resultados y validación)  
 Módulos originales: 16, 17, 18, 19 y 20
 
-Este documento cubre la **Fase 0** del área: análisis, requerimientos, reglas de negocio y
-dependencias. Es la base de las fases de implementación (sección 12). Las vistas
-arquitectónicas detalladas y el contrato API definitivo se entregan en un PR posterior.
+Este documento cubre el análisis del área (**Fase 0**: requerimientos, reglas de negocio y
+dependencias) y los endpoints de cada fase ya implementada (sección 13). Sigue el
+[contrato común de la API](contrato-api.md). Las vistas arquitectónicas detalladas se entregan
+en un PR posterior.
 
 ## 1. Alcance del módulo
 
@@ -270,9 +271,55 @@ desde `develop`, título `ASII-07: laboratorio - <tema> - Jhos-hgnu`, y `php art
 compartidos (`routes/api.php`, `router/index.js`, `AppLayout.vue`) solo se tocan en el bloque
 del área 7.
 
-## 13. Avance
+## 13. Endpoints
+
+Todas las rutas usan `['tenant', 'auth.jwt']` y el permiso indicado. Formato de listados,
+recursos y errores según [`contrato-api.md`](contrato-api.md).
+
+### 13.1 Catálogo (CAT)
+
+| Método | Ruta | Permiso | Respuesta |
+|---|---|---|---|
+| `GET` | `/api/v1/lab-tests` | `laboratorio.ver` | Paginator de Laravel, orden por `name` |
+| `GET` | `/api/v1/lab-tests/{id}` | `laboratorio.ver` | `200 {"lab_test": {...}}` |
+| `POST` | `/api/v1/lab-tests` | `laboratorio.gestionar_catalogo` | `201 {"lab_test": {...}}` |
+| `PUT` | `/api/v1/lab-tests/{id}` | `laboratorio.gestionar_catalogo` | `200 {"lab_test": {...}}` |
+
+No hay `DELETE`: una prueba se desactiva con `PUT … {"active": false}` (RF-CAT-03).
+
+Filtros del listado, además de `page`, `per_page` y `q` (busca en `name` y `category`):
+
+| Parámetro | Regla |
+|---|---|
+| `category` | Coincidencia exacta con la categoría. |
+| `active` | `1`/`0` (o `true`/`false`). Sin el parámetro devuelve activas e inactivas. |
+
+Cuerpo de `POST` y `PUT`:
+
+| Campo | Regla |
+|---|---|
+| `name` | Obligatorio, máx. 100, único por hospital. |
+| `category`, `unit` | Opcionales, máx. 100 y 50. |
+| `reference_min`, `reference_max`, `critical_min`, `critical_max` | Opcionales, numéricos (`decimal(10,4)`). Se devuelven como texto con 4 decimales (`"70.0000"`). |
+| `turnaround_min` | Opcional, entero de 1 a 65535 minutos. |
+| `active` | Opcional, booleano; por defecto `true`. |
+
+Errores de negocio (422, asociados al campo):
+
+| Campo | Mensaje | Regla |
+|---|---|---|
+| `reference_max` | El máximo de referencia debe ser mayor o igual que el mínimo de referencia. | `reference_min ≤ reference_max` |
+| `critical_min` | El mínimo crítico debe ser menor que el rango de referencia. | `critical_min < reference_min` (o `reference_max` si no hay mínimo) |
+| `critical_max` | El máximo crítico debe ser mayor que el rango de referencia. | `critical_max > reference_max` (o `reference_min` si no hay máximo) |
+| `critical_max` | El máximo crítico debe ser mayor que el mínimo crítico. | `critical_min < critical_max` |
+
+Con estas reglas, un valor nunca queda clasificado como normal y crítico a la vez (regla 8.3).
+En `PUT`, un límite que no se envía se compara con el valor guardado.
+
+## 14. Avance
 
 | Fecha | Avance | Evidencia |
 |---|---|---|
 | 2026-10-01 | Fase 0: análisis, submódulos, casos de uso, RF/RNF, criterios de aceptación, reglas de negocio, SOLID, dependencias y plan de fases. | Este documento. |
 | 2026-10-05 | Fase 1 (parte 1): 6 factories de laboratorio con un solo hospital por cadena. | `LabFactoriesTest`. |
+| 2026-10-05 | Fase 1 (parte 2): catálogo de pruebas (CAT): listar, ver, crear, editar y desactivar. | `LabCatalogTest`; sección 13.1. |
