@@ -123,13 +123,19 @@ class DemoDataSeeder2026 extends Seeder
         ));
     }
 
-    /** @return array{admin: User, labTech: User, recep: User, doctors: Collection<int, Doctor>} */
+    /** @return array{admin: User, labTech: User, bioquimico: User, recep: User, doctors: Collection<int, Doctor>} */
     private function seedStaff(Tenant $tenant, Collection $specialties): array
     {
         $prefix = $this->tenantPrefix($tenant);
 
         $admin = $this->seedUserWithRole($tenant, "admin+{$tenant->slug}@demo.local", 'Administrador Demo', 'Admin');
         $labTech = $this->seedUserWithRole($tenant, "lab+{$tenant->slug}@demo.local", 'Técnico Laboratorio Demo', 'TecnicoLab');
+        $bioquimico = $this->seedUserWithRole(
+            $tenant,
+            "bioq+{$tenant->slug}@demo.local",
+            'Bioquímico Demo',
+            'Bioquimico'
+        );
         $recep = $this->seedUserWithRole($tenant, "recep+{$tenant->slug}@demo.local", 'Recepción Demo', 'Recepcionista');
 
         $doctors = collect(range(1, 5))->map(function (int $i) use ($tenant, $specialties, $prefix) {
@@ -152,7 +158,7 @@ class DemoDataSeeder2026 extends Seeder
             );
         });
 
-        return compact('admin', 'labTech', 'recep', 'doctors');
+        return compact('admin', 'labTech', 'bioquimico', 'recep', 'doctors');
     }
 
     private function seedUserWithRole(Tenant $tenant, string $email, string $name, string $role): User
@@ -182,7 +188,7 @@ class DemoDataSeeder2026 extends Seeder
         return collect(range(1, self::PATIENTS_PER_TENANT))->map(function (int $i) use ($tenant, $prefix, $male, $female, $lastNames) {
             $gender = ['M', 'F', 'otro'][$i % 3];
             $firstName = $gender === 'F' ? $female[($i - 1) % count($female)] : $male[($i - 1) % count($male)];
-            $lastName = $lastNames[($i - 1) % count($lastNames)] . ' ' . $lastNames[($i + 3) % count($lastNames)];
+            $lastName = $lastNames[($i - 1) % count($lastNames)].' '.$lastNames[($i + 3) % count($lastNames)];
 
             return Patient::query()->create([
                 'tenant_id' => $tenant->id,
@@ -194,10 +200,10 @@ class DemoDataSeeder2026 extends Seeder
                 'dpi' => $this->generateDpi(),
                 'nit' => null,
                 'phone' => $this->generateGuatemalaPhone(),
-                'email' => strtolower(Str::slug($firstName)) . '.' . $i . '@demo.local',
+                'email' => strtolower(Str::slug($firstName)).'.'.$i.'@demo.local',
                 'address' => $this->randomAddress(),
                 'insurance_company' => random_int(0, 1) ? 'IGSS' : 'Seguro Privado',
-                'insurance_policy' => random_int(0, 1) ? 'POL-' . random_int(10000, 99999) : null,
+                'insurance_policy' => random_int(0, 1) ? 'POL-'.random_int(10000, 99999) : null,
                 'emergency_contact_name' => fake()->name(),
                 'emergency_contact_phone' => $this->generateGuatemalaPhone(),
                 'blood_type' => $this->randomBloodType(),
@@ -489,7 +495,7 @@ class DemoDataSeeder2026 extends Seeder
         $barcodeSeq = 0;
 
         $patients->each(function (Patient $patient, int $pIdx) use ($soapNotes, $labTests, $staff, $tenant, $prefix, &$labSeq, &$barcodeSeq) {
-            if (random_int(1, 10) > 7) {
+            if ($pIdx >= 3 && random_int(1, 10) > 7) {
                 return;
             }
 
@@ -500,6 +506,11 @@ class DemoDataSeeder2026 extends Seeder
             }
 
             $labSeq++;
+            $orderStatus = match (($labSeq - 1) % 3) {
+                0 => 'pendiente',
+                1 => 'en_proceso',
+                default => 'completada',
+            };
             $orderCode = sprintf('LAB-%s-%s%04d', $prefix, Carbon::now()->format('Y'), $labSeq);
             $orderedAt = Carbon::now()->subDays(random_int(0, 10));
 
@@ -511,7 +522,7 @@ class DemoDataSeeder2026 extends Seeder
                 'ordered_by' => $staff['doctors'][$pIdx % $staff['doctors']->count()]->user_id,
                 'code' => $orderCode,
                 'priority' => ['rutina', 'urgente', 'STAT'][random_int(0, 2)],
-                'status' => 'completada',
+                'status' => $orderStatus,
                 'clinical_info' => 'Control de rutina / seguimiento clínico.',
                 'ordered_at' => $orderedAt,
                 'created_at' => now(),
@@ -523,12 +534,19 @@ class DemoDataSeeder2026 extends Seeder
             $sampleId = DB::table('samples')->insertGetId([
                 'tenant_id' => $tenant->id,
                 'lab_order_id' => $orderId,
-                'received_by' => $staff['labTech']->id,
+                'received_by' => $orderStatus === 'pendiente'
+                ? null : $staff['labTech']->id,
                 'barcode' => sprintf('BC-%s-%06d', $prefix, $barcodeSeq),
                 'sample_type' => 'sangre',
-                'collected_at' => $orderedAt->copy()->addHours(1),
-                'received_at' => $orderedAt->copy()->addHours(2),
-                'status' => 'procesando',
+                'collected_at' => $orderStatus === 'pendiente'
+                 ? null : $orderedAt->copy()->addHours(1),
+                'received_at' => $orderStatus === 'pendiente'
+                ? null : $orderedAt->copy()->addHours(2),
+                'status' => match ($orderStatus) {
+                    'pendiente' => 'pendiente',
+                    'en_proceso' => 'recibida',
+                    default => 'procesando',
+                },
                 'notes' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -540,32 +558,59 @@ class DemoDataSeeder2026 extends Seeder
                 $itemId = DB::table('lab_order_items')->insertGetId([
                     'lab_order_id' => $orderId,
                     'lab_test_id' => $test->id,
-                    'status' => 'resultado_listo',
+                    'status' => match ($orderStatus) {
+                        'pendiente' => 'pendiente',
+                        'en_proceso' => 'muestra_recibida',
+                        default => 'resultado_listo',
+                    },
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                $forceCritical = random_int(1, 100) <= 25;
-                $refMin = (float) $test->reference_min;
-                $refMax = (float) $test->reference_max;
-                $critMax = $test->critical_max !== null ? (float) $test->critical_max : $refMax * 1.5;
-
-                if ($forceCritical && $critMax > 0) {
-                    $numericValue = $critMax * 1.2;
-                    $isCritical = true;
-                    $isAbnormal = true;
-                } else {
-                    $numericValue = $refMin + ($refMax - $refMin) * (random_int(0, 100) / 100);
-                    $isCritical = false;
-                    $isAbnormal = $numericValue < $refMin || $numericValue > $refMax;
+                if ($orderStatus !== 'completada') {
+                    continue;
                 }
+
+                $forceCritical = random_int(1, 100) <= 25;
+
+                $refMin = $test->reference_min !== null
+                    ? (float) $test->reference_min : null;
+                $refMax = $test->reference_max !== null
+                    ? (float) $test->reference_max : null;
+                $critMin = $test->critical_min !== null
+                    ? (float) $test->critical_min : null;
+                $critMax = $test->critical_max !== null
+                    ? (float) $test->critical_max : null;
+
+                // Generar un valor demo dentro del rango de referencia.
+                $numericValue = ($refMin !== null && $refMax !== null)
+                    ? $refMin + ($refMax - $refMin) * (random_int(0, 100) / 100)
+                    : ($refMin ?? $refMax ?? 0);
+
+                $criticalLimits = array_values(array_filter(
+                    [$critMin, $critMax],
+                    fn ($limit) => $limit !== null
+                ));
+
+                if ($forceCritical && $criticalLimits !== []) {
+                    $numericValue = $criticalLimits[array_rand($criticalLimits)];
+                }
+
+                $numericValue = round($numericValue, 4);
+
+                $isCritical = ($critMin !== null && $numericValue <= $critMin)
+                    || ($critMax !== null && $numericValue >= $critMax);
+
+                $isAbnormal = $isCritical
+                    || ($refMin !== null && $numericValue < $refMin)
+                    || ($refMax !== null && $numericValue > $refMax);
 
                 $resultId = DB::table('lab_results')->insertGetId([
                     'tenant_id' => $tenant->id,
                     'lab_order_item_id' => $itemId,
                     'sample_id' => $sampleId,
                     'entered_by' => $staff['labTech']->id,
-                    'validated_by' => $staff['admin']->id,
+                    'validated_by' => $staff['bioquimico']->id,
                     'numeric_value' => round($numericValue, 4),
                     'text_value' => null,
                     'is_critical' => $isCritical,
@@ -579,6 +624,8 @@ class DemoDataSeeder2026 extends Seeder
                 ]);
 
                 if ($isCritical) {
+                    $acknowledged = random_int(0, 1) === 1;
+
                     DB::table('critical_alerts')->insert([
                         'tenant_id' => $tenant->id,
                         'lab_result_id' => $resultId,
@@ -593,8 +640,9 @@ class DemoDataSeeder2026 extends Seeder
                             $test->reference_min,
                             $test->reference_max
                         ),
-                        'acknowledged' => random_int(0, 1) === 1,
-                        'acknowledged_at' => random_int(0, 1) === 1 ? now() : null,
+
+                        'acknowledged' => $acknowledged,
+                        'acknowledged_at' => $acknowledged ? now() : null,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
@@ -607,7 +655,7 @@ class DemoDataSeeder2026 extends Seeder
     {
         $statuses = ['pendiente', 'confirmada', 'completada', 'cancelada', 'no_asistio'];
 
-        $patients->random(min(15, $patients->count()))->each(function (Patient $patient, int $idx) use ($staff, $specialties, $tenant, $statuses) {
+        $patients->random(min(15, $patients->count()))->each(function (Patient $patient, int $idx) use ($staff, $tenant, $statuses) {
             $doctor = $staff['doctors'][$idx % $staff['doctors']->count()];
 
             DB::table('appointments')->insert([
