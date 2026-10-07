@@ -248,3 +248,37 @@ PostgreSQL). Suite completa: 65 pasan, 1 se omite.
   falta definir que rol archiva un paciente y que pasa con su expediente.
 - **Sin UI.** No hay pantallas Vue ni store Pinia de pacientes;Area 3 ya tiene
   selectores de pacientes pendientes de estos endpoints.
+
+
+## Resumen de paciente para otras áreas (`PatientSummaryResource`)
+
+Cuando un paciente aparece anidado en respuestas de otras áreas
+(laboratorio, admisiones, notas SOAP, prescripciones, alertas), se debe
+usar `App\Http\Resources\PatientSummaryResource` para que todas devuelvan
+la misma forma.
+
+### Campos
+
+| Campo        | Tipo    | Ejemplo        |
+|--------------|---------|----------------|
+| `id`         | integer | `7`            |
+| `code`       | string  | `"PAC-0007"`   |
+| `first_name` | string  | `"Ana"`        |
+| `last_name`  | string  | `"Pérez"`      |
+| `birth_date` | string (`YYYY-MM-DD`) | `"1990-05-14"` |
+| `gender`     | string (`M`, `F`, `otro`) | `"F"` |
+
+### Datos excluidos a propósito
+
+No incluye DPI, NIT, teléfono, email, dirección, seguro, contacto de
+emergencia, tipo de sangre ni notas. Son datos personales sensibles y el
+resumen viaja en respuestas de áreas cuyos roles no necesariamente tienen
+el permiso `pacientes.ver`. Para el detalle completo usar
+`GET /api/v1/patients/{patient}` (requiere `pacientes.ver`).
+
+### Uso desde otra área
+
+    'patient' => new PatientSummaryResource($this->whenLoaded('patient')),
+
+`whenLoaded` incluye el paciente solo si el controlador cargó la relación
+con `->load('patient')` o `->with('patient')`, evitando consultas extra.
