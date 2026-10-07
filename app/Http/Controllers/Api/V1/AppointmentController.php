@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChangeAppointmentStatusRequest;
+use App\Http\Requests\StoreAppointmentRequest;
+use App\Http\Requests\UpdateAppointmentRequest;
 use App\Models\Appointment;
-use App\Models\Doctor;
+use App\Services\AppointmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class AppointmentController extends Controller
 {
-    private const STATUSES = ['pendiente', 'confirmada', 'completada', 'cancelada', 'no_asistio'];
+    public function __construct(private readonly AppointmentService $appointments) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -46,30 +47,21 @@ class AppointmentController extends Controller
         return response()->json($appointments);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAppointmentRequest $request): JsonResponse
     {
-        $validated = $this->validateAppointment($request);
-        $this->ensureDoctorSpecialtyMatches($validated['doctor_id'], $validated['specialty_id']);
-
-        $appointment = Appointment::query()->create([
-            ...$validated,
-            'status' => $validated['status'] ?? 'pendiente',
-        ]);
+        $appointment = $this->appointments->create($request->validated());
 
         return response()->json([
             'appointment' => $this->loadAppointment($appointment),
         ], 201);
     }
 
-    public function update(Request $request, Appointment $appointment): JsonResponse
+    public function update(UpdateAppointmentRequest $request, Appointment $appointment): JsonResponse
     {
-        $validated = $this->validateAppointment($request, updating: true);
-        $this->ensureDoctorSpecialtyMatches($validated['doctor_id'], $validated['specialty_id']);
-
-        $appointment->update($validated);
+        $appointment = $this->appointments->update($appointment, $request->validated());
 
         return response()->json([
-            'appointment' => $this->loadAppointment($appointment->fresh()),
+            'appointment' => $this->loadAppointment($appointment),
         ]);
     }
 
@@ -79,73 +71,21 @@ class AppointmentController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $appointment->update([
-            'status' => 'cancelada',
-            'notes' => $validated['notes'] ?? $appointment->notes,
-        ]);
+        $appointment = $this->appointments->cancel($appointment, $validated['notes'] ?? null);
 
         return response()->json([
-            'appointment' => $this->loadAppointment($appointment->fresh()),
+            'appointment' => $this->loadAppointment($appointment),
         ]);
     }
 
-    public function status(Request $request, Appointment $appointment): JsonResponse
+    public function status(ChangeAppointmentStatusRequest $request, Appointment $appointment): JsonResponse
     {
-        $validated = $request->validate([
-            'status' => ['required', 'string', Rule::in(self::STATUSES)],
-            'notes' => ['nullable', 'string'],
-        ]);
-
-        $appointment->update([
-            'status' => $validated['status'],
-            'notes' => $validated['notes'] ?? $appointment->notes,
-        ]);
+        $validated = $request->validated();
+        $appointment = $this->appointments->changeStatus($appointment, $validated['status'], $validated['notes'] ?? null);
 
         return response()->json([
-            'appointment' => $this->loadAppointment($appointment->fresh()),
+            'appointment' => $this->loadAppointment($appointment),
         ]);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validateAppointment(Request $request, bool $updating = false): array
-    {
-        $tenant = $request->attributes->get('tenant');
-
-        return $request->validate([
-            'patient_id' => [
-                'required',
-                'integer',
-                Rule::exists('patients', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'doctor_id' => [
-                'required',
-                'integer',
-                Rule::exists('doctors', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'specialty_id' => [
-                'required',
-                'integer',
-                Rule::exists('specialties', 'id')->where('tenant_id', $tenant->id),
-            ],
-            'scheduled_at' => [$updating ? 'sometimes' : 'required', 'date'],
-            'duration_min' => ['required', 'integer', 'min:10', 'max:240'],
-            'status' => ['sometimes', 'string', Rule::in(self::STATUSES)],
-            'reason' => ['nullable', 'string'],
-            'notes' => ['nullable', 'string'],
-        ]);
-    }
-
-    private function ensureDoctorSpecialtyMatches(int $doctorId, int $specialtyId): void
-    {
-        $doctor = Doctor::query()->findOrFail($doctorId);
-
-        if ((int) $doctor->specialty_id !== $specialtyId) {
-            throw ValidationException::withMessages([
-                'specialty_id' => ['La especialidad indicada no coincide con la especialidad del médico.'],
-            ]);
-        }
     }
 
     private function loadAppointment(Appointment $appointment): Appointment
