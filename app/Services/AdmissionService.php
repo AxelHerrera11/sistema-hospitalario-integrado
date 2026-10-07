@@ -21,7 +21,7 @@ class AdmissionService
     public function create(array $data, User $user, Tenant $tenant): Admission
     {
         return DB::transaction(function () use ($data, $user, $tenant): Admission {
-            /*
+            /**
              * Bloqueamos al paciente durante la operación para evitar que dos
              * solicitudes creen simultáneamente dos admisiones activas.
              */
@@ -45,7 +45,7 @@ class AdmissionService
                 ]);
             }
 
-            /*
+            /**
              * La cama también se bloquea mientras se crea la admisión para
              * evitar que dos pacientes reciban la misma cama simultáneamente.
              */
@@ -63,7 +63,7 @@ class AdmissionService
 
             $doctor = Doctor::query()->findOrFail($data['doctor_id']);
 
-            /*
+            /**
              * Serializamos la generación del correlativo por hospital.
              */
             Tenant::query()
@@ -105,7 +105,7 @@ class AdmissionService
         $lastSequence = Admission::query()
             ->where('code', 'like', sprintf('ADM-%s-%s%%', $prefix, $year))
             ->pluck('code')
-            ->map(fn (string $code): int => $this->trailingNumber($code))
+            ->map(fn (string $code): int => $this->trailingNumber($code, $year))
             ->max() ?? 0;
 
         return sprintf(
@@ -127,9 +127,9 @@ class AdmissionService
         );
     }
 
-    private function trailingNumber(string $code): int
+    private function trailingNumber(string $code, string $year): int
     {
-        return preg_match('/(\d{4})$/', $code, $matches) === 1
+        return preg_match('/'.preg_quote($year, '/').'(\d+)$/', $code, $matches) === 1
             ? (int) $matches[1]
             : 0;
     }

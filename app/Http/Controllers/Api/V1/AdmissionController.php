@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAdmissionRequest;
+use App\Http\Resources\PatientSummaryResource;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\AdmissionService;
@@ -36,14 +37,9 @@ class AdmissionController extends Controller
                 'admitted_at' => $admission->admitted_at,
                 'status' => $admission->status,
 
-                'patient' => [
-                    'id' => $admission->patient->id,
-                    'code' => $admission->patient->code,
-                    'first_name' => $admission->patient->first_name,
-                    'last_name' => $admission->patient->last_name,
-                    'birth_date' => $admission->patient->birth_date?->toDateString(),
-                    'gender' => $admission->patient->gender,
-                ],
+                'patient' => PatientSummaryResource::make(
+                    $admission->patient
+                )->resolve($request),
 
                 'bed' => [
                     'id' => $admission->bed->id,
