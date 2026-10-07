@@ -41,7 +41,7 @@ flowchart LR
 
 | Contrato con | Qué usa laboratorio | Issue | Estado |
 |---|---|---|---|
-| Área 2 | Paciente anidado con `id`, `code`, `first_name`, `last_name`, `birth_date`, `gender` (`PatientSummaryResource`) | #13 | Acordado en `contrato-api.md` §3; PR #16 en revisión |
+| Área 2 | Paciente anidado con `id`, `code`, `first_name`, `last_name`, `birth_date`, `gender` (`PatientSummaryResource`) | #13 | Acordado en `contrato-api.md` §3; mergeado (#16) |
 | Área 5 | Nota SOAP como origen de la orden; `SoapNoteFactory`, `SoapNote::labOrders()`, borrado y firma | #11 | Pendiente |
 | Área 8 | Registro de la alerta `valor_critico_lab` dentro de la transacción de validación | #12 | Pendiente; el área 9 propone un servicio común `registrar(tipo, paciente, destinatario, mensaje, origen)` |
 | Área 1 | `AuditLogger` para acciones clínicas (RNF-LAB-05) | #9 | PR #14 en revisión |
@@ -98,14 +98,14 @@ flowchart TB
 
 | Componente | Responsabilidad | Fase | Estado |
 |---|---|---|---|
-| `LabTestController` + `LabTestRequest` | Catálogo: listar, ver, crear, editar y desactivar; coherencia de rangos | F1 | PR de catálogo en revisión |
+| `LabTestController` + `LabTestRequest` | Catálogo: listar, ver, crear, editar y desactivar; coherencia de rangos | F1 | Mergeado (#31) |
 | `LabOrderController` | Crear, listar, ver y cancelar órdenes; worklist | F2 | Planeado |
 | `LabOrderService` | Resuelve paciente y expediente desde la nota SOAP, valida pruebas activas, genera el código y crea orden + ítems en una transacción | F2 | Planeado |
 | `LabCodeGenerator` | Códigos `LAB-{PREFIJO}-{AAAA}{NNNN}` y `BC-{PREFIJO}-{NNNNNN}` (regla 8.2), reintento ante colisión | F2-F3 | Planeado |
 | `SampleController` + `SampleService` | Toma, recepción y descarte; mueve ítems a `muestra_recibida` y la orden a `en_proceso` | F3 | Planeado |
 | `LabResultController` + `LabResultService` | Ingreso (clasifica con el evaluador), validación con segregación, cierre de la orden y alerta crítica | F4 | Planeado |
 | `CriticalValueEvaluator` | Regla 8.3 como función pura: valor + límites → `is_abnormal`, `is_critical` | F4 | Planeado |
-| Factories de laboratorio | Datos de prueba de toda la cadena en un solo hospital | F1 | PR de factories en revisión |
+| Factories de laboratorio | Datos de prueba de toda la cadena en un solo hospital | F1 | Mergeado (#30) |
 
 ### 2.1 Flujo de validación con valor crítico
 
@@ -468,8 +468,8 @@ Desde #18, el PR solo se mergea con los checks `backend (SQLite + PostgreSQL)` y
 | Fase | Rama | Contenido | Depende de |
 |---|---|---|---|
 | F0 | `feature/asii-07-laboratorio-docs-analisis-Jhos-hgnu` | Análisis (`modulo-laboratorio.md`) | Mergeado (#5) |
-| F1 | `feature/asii-07-laboratorio-factories-Jhos-hgnu` | 6 factories | — |
-| F1 | `feature/asii-07-laboratorio-catalogo-Jhos-hgnu` | Catálogo (CAT) | Rama de factories |
+| F1 | `feature/asii-07-laboratorio-factories-Jhos-hgnu` | 6 factories | Mergeado (#30) |
+| F1 | `feature/asii-07-laboratorio-catalogo-Jhos-hgnu` | Catálogo (CAT) | Mergeado (#31) |
 | F0 | `feature/asii-07-laboratorio-arquitectura-Jhos-hgnu` | Este documento | — |
 | F2 | `feature/asii-07-laboratorio-ordenes-Jhos-hgnu` | ORD + worklist | F1, #11, PR #14 |
 | F3 | `feature/asii-07-laboratorio-muestras-Jhos-hgnu` | MUE | F2 |
@@ -491,7 +491,8 @@ git push -u origin feature/asii-07-laboratorio-ordenes-Jhos-hgnu
 ```
 
 Cuando una fase depende de otra aún no mergeada, la rama sale de la rama anterior y el PR se
-abre contra ella; al mergear la anterior, GitHub cambia la base a `develop`.
+abre contra ella. Al mergear la anterior, la rama no se borra y GitHub no cambia la base: antes
+de mergear, cambia la base del PR a `develop` (botón Edit o `gh pr edit <n> --base develop`).
 
 Reglas de cada PR:
 
