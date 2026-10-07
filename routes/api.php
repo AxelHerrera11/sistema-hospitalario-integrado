@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\Api\V1\AdmissionController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BedController;
@@ -100,6 +100,9 @@ Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
 
     Route::patch('/beds/{bed}/status', [BedController::class, 'updateStatus'])
         ->middleware('permission:camas.gestionar');
+
+    Route::post('/admissions', [AdmissionController::class, 'store'])
+        ->middleware('permission:admisiones.crear');
 });
 // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────────────
 Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
