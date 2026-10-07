@@ -322,7 +322,7 @@ class SoapNoteTest extends TestCase
         $this->withHeaders($headers)
             ->putJson("/api/v1/soap-notes/{$noteId}", ['plan' => 'Cambio ilegal.'])
             ->assertUnprocessable()
-            ->assertJsonPath('message', 'La nota SOAP ya está firmada y no puede modificarse.');
+            ->assertJsonValidationErrors('status');
     }
 
     public function test_signed_note_cannot_be_signed_again(): void
@@ -347,7 +347,7 @@ class SoapNoteTest extends TestCase
                 'electronic_sign' => 'Dr. Dos',
             ])
             ->assertUnprocessable()
-            ->assertJsonPath('message', 'La nota SOAP ya está firmada.');
+            ->assertJsonValidationErrors('status');
     }
 
     public function test_sign_requires_electronic_sign(): void
@@ -501,6 +501,71 @@ class SoapNoteTest extends TestCase
         $this->withHeaders($this->headersFor($doctorUser))
             ->putJson("/api/v1/diagnoses/{$foreignDiagId}", ['description' => 'Intrusión'])
             ->assertStatus(404);
+    }
+
+    public function test_diagnosis_of_a_signed_note_cannot_be_updated(): void
+    {
+        [$doctorUser, $doctor, $record] = $this->soapFixture();
+        $headers = $this->headersFor($doctorUser);
+
+        $noteId = $this->withHeaders($headers)
+            ->postJson('/api/v1/soap-notes', $this->payload([
+                'medical_record_id' => $record->id,
+                'doctor_id' => $doctor->id,
+            ]))
+            ->assertCreated()->json('soap_note.id');
+
+        $diagnosisId = $this->withHeaders($headers)
+            ->postJson("/api/v1/soap-notes/{$noteId}/diagnoses", [
+                'cie10_code' => 'G43.9',
+                'description' => 'Migraña sin aura',
+                'type' => 'presuntivo',
+            ])
+            ->assertCreated()->json('diagnosis.id');
+
+        $this->withHeaders($headers)
+            ->postJson("/api/v1/soap-notes/{$noteId}/sign", [
+                'electronic_sign' => 'Dr. Juan Pérez',
+            ])->assertOk();
+
+        $this->withHeaders($headers)
+            ->putJson("/api/v1/diagnoses/{$diagnosisId}", [
+                'description' => 'Cambio ilegal',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+    }
+
+    public function test_diagnosis_of_a_signed_note_cannot_be_deleted(): void
+    {
+        [$doctorUser, $doctor, $record] = $this->soapFixture();
+        $headers = $this->headersFor($doctorUser);
+
+        $noteId = $this->withHeaders($headers)
+            ->postJson('/api/v1/soap-notes', $this->payload([
+                'medical_record_id' => $record->id,
+                'doctor_id' => $doctor->id,
+            ]))
+            ->assertCreated()->json('soap_note.id');
+
+        $diagnosisId = $this->withHeaders($headers)
+            ->postJson("/api/v1/soap-notes/{$noteId}/diagnoses", [
+                'cie10_code' => 'G43.9',
+                'description' => 'Migraña sin aura',
+            ])
+            ->assertCreated()->json('diagnosis.id');
+
+        $this->withHeaders($headers)
+            ->postJson("/api/v1/soap-notes/{$noteId}/sign", [
+                'electronic_sign' => 'Dr. Juan Pérez',
+            ])->assertOk();
+
+        $this->withHeaders($headers)
+            ->deleteJson("/api/v1/diagnoses/{$diagnosisId}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseHas('diagnoses', ['id' => $diagnosisId]);
     }
 
     // ── Listado ────────────────────────────────────────────────────────────
