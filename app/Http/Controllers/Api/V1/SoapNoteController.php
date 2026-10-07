@@ -30,7 +30,7 @@ class SoapNoteController extends Controller
     private const SORTABLE = ['created_at', 'signed_at'];
 
     /** Carga perezosa del detalle: evita N+1 y expone lo que pide el contrato. */
-    private const DETAIL_RELATIONS = ['diagnoses', 'prescriptions', 'doctor:id,name', 'medicalRecord:id,tenant_id,record_number'];
+    private const DETAIL_RELATIONS = ['diagnoses', 'prescriptions', 'doctor:id,tenant_id,user_id,specialty_id,license_number,phone', 'doctor.user:id,tenant_id,name,email', 'medicalRecord:id,tenant_id,record_number'];
 
     public function index(Request $request): JsonResponse
     {
