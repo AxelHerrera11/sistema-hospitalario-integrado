@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AllergyController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BedController;
 use App\Http\Controllers\Api\V1\DoctorController;
 use App\Http\Controllers\Api\V1\LabTestController;
+use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\PatientController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
 use App\Http\Controllers\Api\V1\WardController;
@@ -100,6 +102,23 @@ Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
 });
 // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────────────
 // ── Área 6: Alergias, medicamentos y prescripciones ───────────────────────
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/patients/{patient}/allergies', [AllergyController::class, 'index'])
+        ->middleware('permission:alergias.ver');
+    Route::post('/patients/{patient}/allergies', [AllergyController::class, 'store'])
+        ->middleware('permission:alergias.registrar');
+    Route::put('/allergies/{allergy}', [AllergyController::class, 'update'])
+        ->middleware('permission:alergias.editar');
+
+    Route::get('/medications', [MedicationController::class, 'index'])
+        ->middleware('permission:medicamentos.ver');
+    Route::get('/medications/{medication}', [MedicationController::class, 'show'])
+        ->middleware('permission:medicamentos.ver');
+    Route::post('/medications', [MedicationController::class, 'store'])
+        ->middleware('permission:medicamentos.gestionar');
+    Route::put('/medications/{medication}', [MedicationController::class, 'update'])
+        ->middleware('permission:medicamentos.gestionar');
+});
 // ── Área 7: Laboratorio ───────────────────────────────────────────────────
 Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
     Route::get('/lab-tests', [LabTestController::class, 'index'])

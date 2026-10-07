@@ -213,6 +213,13 @@ return [
         // ── Área 4: Salas, camas, admisión, traslados y altas ─────────────
         // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────
         // ── Área 6: Alergias, medicamentos y prescripciones ───────────────
+        'allergen' => 'alérgeno',
+        'allergen_type' => 'tipo de alérgeno',
+        'severity' => 'gravedad',
+        'reaction' => 'reacción',
+        'generic_name' => 'nombre genérico',
+        'presentation' => 'presentación',
+        'concentration' => 'concentración',
         // ── Área 7: Laboratorio ───────────────────────────────────────────
         'category' => 'categoría',
         'unit' => 'unidad',

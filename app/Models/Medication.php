@@ -21,6 +21,10 @@ class Medication extends Model
         'active',
     ];
 
+    protected $casts = [
+        'active' => 'boolean',
+    ];
+
     public function prescriptions()
     {
         return $this->hasMany(Prescription::class);
