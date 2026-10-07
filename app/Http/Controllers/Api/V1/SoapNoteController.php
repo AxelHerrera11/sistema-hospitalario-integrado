@@ -10,6 +10,7 @@ use App\Models\Diagnosis;
 use App\Models\SoapNote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Notas SOAP — Área 5.
@@ -19,10 +20,10 @@ use Illuminate\Http\Request;
  * BelongsToTenant: un registro de otro hospital no resuelve y findOrFail
  * responde 404 sin revelar que existe.
  *
- * IMPORTANTE: {soap_note} NO usa binding implícito de modelo por el mismo
- * motivo que en PatientController: SubstituteBindings corre antes que el
- * middleware 'tenant'. show/update/sign/addDiagnosis reciben el id y lo
- * resuelven aquí, ya con el tenant resuelto.
+ * Desde el #17, TenantMiddleware corre ANTES que SubstituteBindings
+ * (prependToPriorityList en bootstrap/app.php), así que el binding implícito
+ * {soap_note} ya respetaría el hospital. show/update/sign/addDiagnosis
+ * reciben igual el id y lo resuelven aquí para responder el 404 uniforme.
  */
 class SoapNoteController extends Controller
 {
@@ -81,9 +82,9 @@ class SoapNoteController extends Controller
 
         // RF-SOAP-03: una nota firmada es un documento clínico inmodificable.
         if ($note->signed_at !== null) {
-            return response()->json([
-                'message' => 'La nota SOAP ya está firmada y no puede modificarse.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'status' => ['La nota SOAP ya está firmada y no puede modificarse.'],
+            ]);
         }
 
         $note->update($request->validated());
@@ -103,9 +104,9 @@ class SoapNoteController extends Controller
 
         // No se puede firmar dos veces; el sello ya puesto prevalece.
         if ($note->signed_at !== null) {
-            return response()->json([
-                'message' => 'La nota SOAP ya está firmada.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'status' => ['La nota SOAP ya está firmada.'],
+            ]);
         }
 
         $note->update([
@@ -124,9 +125,9 @@ class SoapNoteController extends Controller
 
         // RF-SOAP-03 aplica también a sus diagnósticos: nada cambia tras firmar.
         if ($note->signed_at !== null) {
-            return response()->json([
-                'message' => 'La nota SOAP ya está firmada y no admite nuevos diagnósticos.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'status' => ['La nota SOAP ya está firmada y no admite nuevos diagnósticos.'],
+            ]);
         }
 
         $diagnosis = Diagnosis::query()->create(array_merge(
