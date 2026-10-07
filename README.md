@@ -11,10 +11,10 @@ Sistema Hospitalario Integrado del **grupo de 9 integrantes** para el **Proyecto
 | Stack backend | Laravel 12, PHP 8.2+, PostgreSQL 13+, JWT (`tymon/jwt-auth`) y Spatie Laravel Permission. |
 | Stack frontend | Vue 3, Vite, Pinia, Vue Router y Axios. |
 | Seguridad base | JWT con validación token ↔ `X-Tenant-ID`, aislamiento automático por hospital (trait `BelongsToTenant`), RBAC con 6 roles y 45 permisos `modulo.accion`. |
-| Modelo clínico | Migraciones y modelos Eloquent (22) para pacientes, médicos, camas, admisiones, EMR, laboratorio, auditoría y notificaciones; seeders demo para todo el modelo. Factories disponibles: `Tenant`, `User`, `Patient`, `MedicalRecord`, `Specialty`, `Doctor`, `Ward` y `Bed` (las demás las crea cada área). |
-| API actual | Bajo `/api/v1`: autenticación, pacientes (área 2) y médicos, especialidades y citas (área 3). Formato común en [`docs/contrato-api.md`](docs/contrato-api.md). |
-| Pruebas | 69 pruebas automatizadas (autenticación, permisos, aislamiento entre hospitales, búsqueda, pacientes y citas), verificadas en SQLite y PostgreSQL. El CI de GitHub Actions las corre en cada PR. |
-| Pendiente | Endpoints, pantallas y pruebas de las áreas 1 y 4 a 8; UI de pacientes. |
+| Modelo clínico | Migraciones y modelos Eloquent (22) para pacientes, médicos, camas, admisiones, EMR, laboratorio, auditoría y notificaciones; seeders demo para todo el modelo. Factories disponibles: `Tenant`, `User`, `Patient`, `MedicalRecord`, `Specialty`, `Doctor`, `Ward`, `Bed` y las de laboratorio (`LabTest`, `LabOrder`, `LabOrderItem`, `Sample`, `LabResult`, `CriticalAlert`); las demás las crea cada área. |
+| API actual | Bajo `/api/v1`: autenticación, pacientes (área 2), médicos, especialidades y citas (área 3), salas y camas (área 4) y catálogo de laboratorio (área 7). Formato común en [`docs/contrato-api.md`](docs/contrato-api.md). |
+| Pruebas | 110 pruebas automatizadas (autenticación, permisos, aislamiento entre hospitales, formato de errores, búsqueda, pacientes, citas, salas y camas, factories y catálogo de laboratorio), verificadas en SQLite y PostgreSQL. El CI de GitHub Actions las corre en cada PR. |
+| Pendiente | Usuarios y auditoría (área 1); admisiones, traslados y altas (área 4); áreas 5, 6 y 8; órdenes, muestras y resultados de laboratorio; UI de pacientes, camas y laboratorio. |
 
 ## Trabajo por áreas verticales
 
@@ -184,8 +184,12 @@ Todas las rutas están bajo `/api/v1` y requieren la cabecera `X-Tenant-ID`.
 | POST · PUT | `/appointments` · `/appointments/{id}` | `citas.crear` · `citas.editar` |
 | POST | `/appointments/{id}/status` | `citas.editar` |
 | POST | `/appointments/{id}/cancel` | `citas.cancelar` |
+| GET | `/wards` · `/wards/{id}/beds` · `/beds` | `camas.ver` — salas con conteo de camas, camas por sala y estado |
+| PATCH | `/beds/{id}/status` | `camas.gestionar` — no permite `ocupada` ni cambiar una cama con admisión activa |
+| GET | `/lab-tests` · `/lab-tests/{id}` | `laboratorio.ver` — catálogo con búsqueda, categoría y activas |
+| POST · PUT | `/lab-tests` · `/lab-tests/{id}` | `laboratorio.gestionar_catalogo` |
 
-Detalle por área en [`docs/modulo-pacientes-expediente.md`](docs/modulo-pacientes-expediente.md) y [`docs/modulo-medicos-citas.md`](docs/modulo-medicos-citas.md).
+Detalle por área en [`docs/modulo-pacientes-expediente.md`](docs/modulo-pacientes-expediente.md), [`docs/modulo-medicos-citas.md`](docs/modulo-medicos-citas.md) y [`docs/modulo-laboratorio.md`](docs/modulo-laboratorio.md).
 
 Datos demo tras `php artisan migrate:fresh --seed` (contraseña `password`):
 
@@ -259,6 +263,7 @@ Un área se considera terminada cuando cumple todo lo siguiente:
 ## Documentos de apoyo
 
 - [`docs/arquitectura-c4.md`](docs/arquitectura-c4.md): arquitectura global (C4) y mapa de dependencias entre áreas.
+- [`docs/modulo-integracion-transversal.md`](docs/modulo-integracion-transversal.md): área 9 — contrato API, UI transversal, QA/CI e integración.
 - [`docs/contrato-api.md`](docs/contrato-api.md): formato común de respuestas, paginación y errores.
 - [`docs/weekly-plan.md`](docs/weekly-plan.md): cronograma detallado de semanas 1 a 18.
 - [`docs/CAMBIOS-BASE.md`](docs/CAMBIOS-BASE.md): correcciones aplicadas a la base del curso.
