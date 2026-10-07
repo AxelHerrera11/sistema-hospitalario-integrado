@@ -1,4 +1,31 @@
 <?php
+// ?"??"? ??rea 5: Notas SOAP, diagn??sticos y signos vitales ?"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"??"?
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/soap-notes', [App\Http\Controllers\Api\V1\SoapNoteController::class, 'index'])
+        ->middleware('permission:soap.ver');
+    Route::post('/soap-notes', [App\Http\Controllers\Api\V1\SoapNoteController::class, 'store'])
+        ->middleware('permission:soap.crear');
+    Route::get('/soap-notes/{soap_note}', [App\Http\Controllers\Api\V1\SoapNoteController::class, 'show'])
+        ->middleware('permission:soap.ver');
+    Route::put('/soap-notes/{soap_note}', [App\Http\Controllers\Api\V1\SoapNoteController::class, 'update'])
+        ->middleware('permission:soap.crear');
+    Route::post('/soap-notes/{soap_note}/sign', [App\Http\Controllers\Api\V1\SoapNoteController::class, 'sign'])
+        ->middleware('permission:soap.firmar');
+    Route::post('/soap-notes/{soap_note}/diagnoses', [App\Http\Controllers\Api\V1\SoapNoteController::class, 'addDiagnosis'])
+        ->middleware('permission:soap.crear');
+
+    Route::put('/diagnoses/{diagnosis}', [App\Http\Controllers\Api\V1\DiagnosisController::class, 'update'])
+        ->middleware('permission:soap.crear');
+    Route::delete('/diagnoses/{diagnosis}', [App\Http\Controllers\Api\V1\DiagnosisController::class, 'destroy'])
+        ->middleware('permission:soap.crear');
+
+    Route::get('/vital-signs', [App\Http\Controllers\Api\V1\VitalSignController::class, 'index'])
+        ->middleware('permission:signos_vitales.ver');
+    Route::post('/vital-signs', [App\Http\Controllers\Api\V1\VitalSignController::class, 'store'])
+        ->middleware('permission:signos_vitales.registrar');
+    Route::get('/medical-records/{medical_record}/vital-signs', [App\Http\Controllers\Api\V1\VitalSignController::class, 'indexByMedicalRecord'])
+        ->middleware('permission:signos_vitales.ver');
+});
 
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
