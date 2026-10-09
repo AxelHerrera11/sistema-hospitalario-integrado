@@ -1,13 +1,4 @@
-# CODEOWNERS — Proyecto Final ASII 2026
-# Los administradores académicos revisan la base, documentación y cambios transversales.
+# CODEOWNERS — Proyecto Final ASII 2026 (G3)
+# The teacher and this group's integration lead review and merge changes.
 
-* @rortizs @Josuemart555 @joshuacirilo
-
-README.md @rortizs @Josuemart555 @joshuacirilo
-docs/ @rortizs @Josuemart555 @joshuacirilo
-.github/ @rortizs @Josuemart555 @joshuacirilo
-composer.json @rortizs @Josuemart555 @joshuacirilo
-package.json @rortizs @Josuemart555 @joshuacirilo
-routes/ @rortizs @Josuemart555 @joshuacirilo
-config/ @rortizs @Josuemart555 @joshuacirilo
-database/migrations/ @rortizs @Josuemart555 @joshuacirilo
+* @rortizs @Yamilet1235
