@@ -1,0 +1,32 @@
+---
+title: "Actividad - traslado o alta con liberación consistente de cama"
+---
+%%{init: {"theme":"base","look":"classic","themeVariables":{"fontFamily":"Arial, sans-serif"}}}%%
+flowchart TD
+  classDef ok fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+  classDef err fill:#FDECEC,stroke:#B3261E,color:#7F1D1D
+  classDef dec fill:#FFF8E1,stroke:#8A6D00,color:#4E3D00
+  classDef tx fill:#EEF4FF,stroke:#315B8A,color:#183B63
+
+  I([Inicio]) --> S[Recibir solicitud con operación<br/>y estancia origen esperada]
+  S --> A{¿Autorizada?}:::dec
+  A -- No --> E1[Rechazar antes de transacción]:::err --> F1([Fin])
+  A -- Sí --> T[Determinar T al ejecutar]
+  T --> B[BEGIN HOSPITAL<br/>bloquear y releer episodio y estancia]:::tx
+  B --> V{¿Episodio abierto, estancia actual = esperada<br/>y T produce intervalos válidos?}:::dec
+  V -- No --> R1[ROLLBACK, liberar bloqueos<br/>y rechazar]:::err --> F2([Fin])
+  V -- Sí --> O{¿Operación?}:::dec
+
+  O -- Traslado UC-TA-01 --> D{"¿Destino operativo y sin bed_stays<br/>solapados en [T, infinito)?"}:::dec
+  D -- No --> R2[ROLLBACK, liberar bloqueos<br/>y rechazar destino]:::err --> F3([Fin])
+  D -- Sí --> M1[Cerrar estancia origen en T<br/>y crear estancia destino desde T]:::tx
+  M1 --> P[Episodio permanece abierto]
+
+  O -- Alta UC-TA-02 --> M2[Cerrar estancia y episodio en T<br/>en la misma transacción]:::tx
+  P --> X{¿Fallo confirmado<br/>antes de COMMIT?}:::dec
+  M2 --> X
+  X -- Sí --> R3[ROLLBACK, liberar bloqueos<br/>y responder error]:::err --> F4([Fin])
+  X -- No --> C[COMMIT HOSPITAL]:::tx
+  C --> Q{¿Resultado confirmado<br/>para el cliente?}:::dec
+  Q -- Sí --> OK[Responder traslado o alta registrado]:::ok --> F5([Fin])
+  Q -- No, conexión perdida --> U[Resultado incierto:<br/>consultar estado antes de reintentar]:::err --> F6([Fin])

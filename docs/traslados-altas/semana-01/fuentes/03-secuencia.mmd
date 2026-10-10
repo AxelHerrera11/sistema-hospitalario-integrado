@@ -1,0 +1,57 @@
+---
+title: "Secuencia - traslado o alta con consistencia transaccional"
+---
+%%{init: {"theme":"base","look":"classic","themeVariables":{"fontFamily":"Arial, sans-serif"}}}%%
+sequenceDiagram
+  autonumber
+  actor P as Personal autorizado
+  participant UI as Interfaz (propuesta)
+  participant AUT as Autorización interna (propuesta)
+  participant S as Servicio traslados/altas (propuesto)
+  participant H as HOSPITAL (existente)<br/>care_episodes · bed_stays · beds
+
+  P->>UI: Solicitar operación, episodio,<br/>estancia esperada, destino si aplica
+  UI->>AUT: Validar identidad y permiso
+  alt No autorizado
+    AUT-->>UI: Rechazo
+    UI-->>P: Operación rechazada
+  else Autorizado
+    AUT-->>UI: Autorizado
+    UI->>S: Registrar traslado (UC-TA-01)<br/>o alta (UC-TA-02)
+    S->>S: Determinar T al ejecutar
+    S->>H: BEGIN y bloquear/releer<br/>episodio + estancia actual
+    H-->>S: Estado actual
+    break Episodio/estancia inválidos, solicitud desactualizada o T inválido
+      S->>H: ROLLBACK (libera bloqueos)
+      S-->>UI: Rechazo
+      UI-->>P: No se realizó la operación
+    end
+    alt Traslado (UC-TA-01)
+      S->>H: Validar estado operativo y ausencia<br/>de solape bed_stays en [T, infinito)
+      H-->>S: Resultado de disponibilidad
+      break Destino no disponible
+        S->>H: ROLLBACK (libera bloqueos)
+        S-->>UI: Rechazo de destino
+        UI-->>P: No se realizó el traslado
+      end
+      S->>H: UPDATE estancia origen ended_at=T<br/>INSERT estancia destino started_at=T
+      Note over S,H: El episodio permanece abierto
+    else Alta (UC-TA-02)
+      S->>H: UPDATE estancia ended_at=T<br/>UPDATE episodio status=closed, ended_at=T
+    end
+    alt Fallo confirmado antes de COMMIT
+      S->>H: ROLLBACK (libera bloqueos)
+      S-->>UI: Error sin cambios parciales
+      UI-->>P: Operación fallida
+    else Escrituras preparadas
+      S->>H: COMMIT
+      alt Commit confirmado
+        H-->>S: Confirmación
+        S-->>UI: Operación registrada
+        UI-->>P: Éxito
+      else Conexión perdida durante COMMIT
+        S-->>UI: Resultado incierto
+        UI-->>P: Consultar estado antes de reintentar
+      end
+    end
+  end

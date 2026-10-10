@@ -1,0 +1,40 @@
+@startuml
+left to right direction
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #EEF4FF
+  BorderColor #315B8A
+  ArrowColor #315B8A
+}
+
+actor "Personal autorizado\npara traslado" as Traslado
+actor "Personal autorizado\npara alta" as Alta
+
+rectangle "Sistema Hospitalario Integrado" {
+  usecase "UC-TA-01\nRegistrar traslado interno" as UC01
+  usecase "UC-TA-02\nRegistrar alta hospitalaria" as UC02
+  usecase "Validar autorización, episodio,\nestancia esperada y T" as Validar
+  usecase "Validar destino para\n[T, infinito)" as Destino
+  usecase "Persistir cambio atómico\nen HOSPITAL" as Atomico
+  UC01 -[hidden]down- UC02
+  Validar -[hidden]down- Destino
+  Destino -[hidden]down- Atomico
+}
+
+Traslado --> UC01
+Alta --> UC02
+UC01 .right.> Validar : <<include>>
+UC02 .right.> Validar : <<include>>
+UC01 .right.> Destino : <<include>>
+UC01 .right.> Atomico : <<include>>
+UC02 .right.> Atomico : <<include>>
+
+legend bottom
+  Autorización interna propuesta; roles concretos pendientes.
+  Ocupación derivada de bed_stays; beds.status no basta.
+  Traslado: cerrar origen y crear destino; alta: cerrar estancia y episodio.
+  Rollback solo es una excepción.
+endlegend
+@enduml
