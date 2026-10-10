@@ -1,0 +1,79 @@
+---
+title: "Secuencia — RBAC: asignación de rol y denegación trazable"
+---
+sequenceDiagram
+  autonumber
+  actor Admin as Administrador del hospital
+  participant UI as Vue SPA<br/>(RolesPage + store Pinia)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as RoleAssignmentController
+  participant S as RoleAssignmentService
+  participant DB as CENTRAL<br/>(central_users · hospital_memberships)
+  participant AUD as AuditLogger<br/>(Gobernanza)
+  actor U as Usuario clínico
+
+  rect rgb(238, 243, 251)
+  Note over Admin,AUD: Escenario A — asignar rol (UC-RBAC-01, 04, 07, 06)
+  Admin->>UI: elige usuario, rol, hospital y vigencia
+  UI->>MW: POST /api/v1/rbac/users/{id}/roles<br/>Bearer JWT + X-Tenant-ID
+  MW->>MW: validar JWT y tenant (UC-RBAC-04)
+  alt JWT inválido o vencido
+    MW-->>UI: 401 No autenticado
+  else JWT válido
+    MW->>DB: membresía activa y permisos del administrador
+    DB-->>MW: rol AdminHospital → permisos
+    alt sin rbac.roles.asignar
+      MW->>AUD: registrarDenegacion(admin, tenant, ruta, permiso)
+      AUD-->>MW: trace_id
+      MW-->>UI: 403 RBAC_DENIED + trace_id
+    else con permiso
+      MW->>C: store(request)
+      C->>C: validar payload (role_code, valid_to)
+      C->>S: asignar(admin, destino, rol, vigencia)
+      S->>S: validarPrivilegio(admin, rol) (UC-RBAC-07)
+      S->>DB: ¿destino existe y está activo? ¿rol ya vigente?
+      alt rol supera el privilegio del administrador
+        S-->>C: PrivilegioInsuficiente
+        C->>AUD: registrarDenegacion(...)
+        C-->>UI: 403 RBAC_DENIED + trace_id
+      else destino inválido
+        S-->>C: UsuarioInvalido
+        C-->>UI: 422
+      else rol ya vigente
+        S-->>C: RolDuplicado
+        C-->>UI: 409
+      else asignación válida
+        S->>DB: BEGIN · INSERT hospital_memberships (role_code, valid_from)
+        S->>AUD: registrar("rol.asignado", admin, destino, rol)
+        alt auditoría falla
+          S->>DB: ROLLBACK
+          S-->>C: error
+          C-->>UI: 500 (sin cambio de rol)
+        else auditoría registrada
+          S->>DB: COMMIT
+          S->>S: invalidar caché de permisos del destino
+          S-->>C: asignación creada
+          C-->>UI: 201 Created
+          UI-->>Admin: rol asignado
+        end
+      end
+    end
+  end
+  end
+
+  rect rgb(253, 236, 234)
+  Note over U,UI: Escenario B — operación denegada y trazada (UC-RBAC-03, 04, 05, 06)
+  U->>UI: abre una vista protegida
+  UI->>UI: guard de Vue Router revisa meta.permission<br/>con GET /api/v1/auth/me/permissions (UC-RBAC-08)
+  UI->>MW: GET /api/v1/{ruta protegida}<br/>Bearer JWT + X-Tenant-ID
+  MW->>DB: permisos efectivos del usuario (con caché)
+  alt el rol incluye el permiso de la ruta
+    MW->>MW: continuar al controlador del módulo
+    MW-->>UI: 2xx respuesta del módulo
+  else falta el permiso o la membresía no está vigente
+    MW->>AUD: registrarDenegacion(usuario, tenant, ruta, permiso, motivo, IP)
+    AUD-->>MW: trace_id
+    MW-->>UI: 403 RBAC_DENIED + trace_id
+    UI-->>U: pantalla "Acceso denegado" con trace_id
+  end
+  end

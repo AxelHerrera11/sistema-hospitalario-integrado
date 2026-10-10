@@ -1,0 +1,58 @@
+---
+title: "Actividad — RBAC: asignación de rol, autorización y denegación trazable"
+---
+flowchart TD
+  classDef ini fill:#1f2a44,stroke:#1f2a44,color:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  subgraph A["A · Asignar o revocar rol (UC-RBAC-01, 02, 07, 06)"]
+    a0(( )):::ini --> a1["Administrador elige usuario, rol,<br/>hospital y vigencia"]
+    a1 --> a2{"¿JWT válido?"}:::dec
+    a2 -- No --> a401["401 No autenticado"]:::err
+    a2 -- Sí --> a3{"¿X-Tenant-ID coincide<br/>con una membresía<br/>activa suya?"}:::dec
+    a3 -- No --> aden["Denegar (UC-RBAC-05)<br/>403 + registro de denegación"]:::err
+    a3 -- Sí --> a4{"¿Tiene el permiso<br/>rbac.roles.asignar o revocar<br/>y el rol no supera<br/>su privilegio?<br/>(UC-RBAC-07)"}:::dec
+    a4 -- No --> aden
+    a4 -- Sí --> a5{"¿Usuario destino existe<br/>y está activo?"}:::dec
+    a5 -- No --> a422["422 Usuario inválido"]:::err
+    a5 -- Sí --> a6{"¿Operación?"}:::dec
+    a6 -- Revocar --> a7r["Marcar membresía como revoked<br/>y fijar valid_to"]
+    a6 -- Asignar --> a6b{"¿Ya tiene ese rol vigente<br/>en el hospital?"}:::dec
+    a6b -- Sí --> a409["409 Rol ya asignado"]:::err
+    a6b -- No --> a7["Crear membresía con role_code<br/>y valid_from"]
+    a7 --> a8["Registrar evento de auditoría<br/>en la misma transacción<br/>(UC-RBAC-06)"]
+    a7r --> a8
+    a8 --> a9{"¿Auditoría registrada?"}:::dec
+    a9 -- No --> a500["Revertir transacción — 500<br/>(no hay cambio de rol sin traza)"]:::err
+    a9 -- Sí --> a10["Invalidar caché de permisos<br/>del usuario destino"]
+    a10 --> aok["201 asignado / 200 revocado"]:::ok
+  end
+
+  subgraph B["B · Autorizar o denegar una operación (UC-RBAC-03, 04, 05, 06)"]
+    b0(( )):::ini --> b1["Usuario ejecuta una operación<br/>protegida (ruta API o vista Vue)"]
+    b1 --> b2{"¿JWT válido?"}:::dec
+    b2 -- No --> b401["401 No autenticado"]:::err
+    b2 -- Sí --> b3{"¿Membresía activa y vigente<br/>en el tenant del header?"}:::dec
+    b3 -- No --> bden["Denegar (UC-RBAC-05): usuario, tenant, ruta,<br/>permiso requerido, motivo, IP y hora<br/>— sin datos clínicos"]:::err
+    b3 -- Sí --> b4{"¿El rol incluye el permiso<br/>que exige la ruta?"}:::dec
+    b4 -- No --> bden
+    b4 -- Sí --> b6["Ejecutar la operación del módulo"]
+    b6 --> bok["2xx respuesta del módulo"]:::ok
+    bden --> b5{"¿Se registró en la bitácora?<br/>(UC-RBAC-06)"}:::dec
+    b5 -- No --> b5e["Escribir en log de aplicación como respaldo;<br/>la operación sigue denegada"]
+    b5 -- Sí --> b403["403 RBAC_DENIED + trace_id"]:::err
+    b5e --> b403
+  end
+
+  a401 --> f1((( ))):::fin
+  aden --> f1
+  a422 --> f1
+  a409 --> f1
+  a500 --> f1
+  aok --> f1
+  b401 --> f2((( ))):::fin
+  b403 --> f2
+  bok --> f2
