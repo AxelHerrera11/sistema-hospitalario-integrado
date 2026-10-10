@@ -1,0 +1,87 @@
+---
+title: "Secuencia — Creación de prescripción con verificación previa de alergias"
+---
+sequenceDiagram
+  autonumber
+  actor M as Médico tratante
+  participant UI as Vue SPA<br/>(PrescriptionForm)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as PrescriptionController
+  participant S as PrescriptionService
+  participant CAT as MedicationCatalog<br/>«interfaz»
+  participant AL as AllergyChecker<br/>«interfaz»
+  participant R as PrescriptionRepository<br/>(HOSPITAL)
+  participant AUD as AuditLogger
+
+  M->>UI: completa medicamento, dosis, vía, frecuencia y duración
+  UI->>MW: POST /api/v1/patients/{patient}/prescriptions<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin prescripciones.crear
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-PRE-08)
+    MW->>C: store(request)
+    C->>C: validar payload (StorePrescriptionRequest)
+    alt datos inválidos
+      C-->>UI: 422 errores por campo
+    else datos válidos
+      C->>S: crear(médico, paciente, datos)
+      S->>R: ¿médico asignado a un episodio activo del paciente?
+      R-->>S: sí / no
+      opt no es médico tratante
+        S-->>C: NoEsMedicoTratante
+        C-->>UI: 403
+      end
+      S->>CAT: obtener(medication_id) (UC-PRE-02)
+      CAT-->>S: medicamento + principio activo + grupo
+      opt medicamento inactivo
+        S-->>C: MedicamentoNoDisponible
+        C-->>UI: 422
+      end
+      S->>AL: conflictos(paciente, principio activo, grupo) (UC-PRE-03)
+      alt registro de alergias no disponible
+        AL-->>S: error
+        S-->>C: VerificacionNoDisponible
+        C-->>UI: 503 (no se guarda sin verificar)
+      else sin coincidencias
+        AL-->>S: []
+        S->>R: guardarBorrador(prescripción)
+        S-->>C: borrador
+        C-->>UI: 201 Created
+      else coincidencia severe / life_threatening
+        AL-->>S: [alergia grave]
+        S->>AUD: registrar("prescripcion.bloqueada", detalle)
+        S-->>C: ConflictoAlergico(excepcion_permitida=false)
+        C-->>UI: 422 ALLERGY_CONFLICT
+        UI-->>M: alerta roja: bloqueo sin excepción (UC-PRE-04)
+      else coincidencia mild / moderate / unknown / intolerancia
+        AL-->>S: [alergia no grave]
+        alt sin justificación o sin prescripciones.excepcion_alergia
+          S->>AUD: registrar("prescripcion.bloqueada", detalle)
+          S-->>C: ConflictoAlergico(excepcion_permitida=true)
+          C-->>UI: 422 ALLERGY_CONFLICT
+          UI-->>M: alerta: puede justificar si tiene permiso
+        else con justificación y permiso (UC-PRE-05)
+          S->>AUD: registrar("prescripcion.excepcion", médico, justificación)
+          S->>R: guardarBorrador(prescripción + excepción)
+          S-->>C: borrador con excepción
+          C-->>UI: 201 Created
+        end
+      end
+    end
+  end
+
+  Note over M,AUD: Firma (UC-PRE-06): las alergias pudieron cambiar desde el borrador
+  M->>UI: Firmar
+  UI->>MW: POST /api/v1/prescriptions/{id}/sign
+  MW->>C: sign(id) con permiso prescripciones.firmar
+  C->>S: firmar(id, médico)
+  S->>AL: conflictos(paciente, principio activo, grupo)
+  alt conflicto nuevo no cubierto por una excepción
+    S-->>C: ConflictoAlergico
+    C-->>UI: 422 ALLERGY_CONFLICT
+  else sin conflicto nuevo
+    S->>R: firmar(id) → estado signed (inmutable)
+    S->>AUD: registrar("prescripcion.firmada")
+    S-->>C: prescripción firmada
+    C-->>UI: 200 OK
+    UI-->>M: prescripción firmada
+  end
