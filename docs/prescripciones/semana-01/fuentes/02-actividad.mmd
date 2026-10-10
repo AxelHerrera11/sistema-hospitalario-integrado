@@ -8,37 +8,58 @@ flowchart TD
   classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
   classDef dec fill:#fff8e1,stroke:#8a6d00
 
-  i(( )):::ini --> p1["Médico abre al paciente y elige<br/>Nueva prescripción (UC-PRE-01)"]
-  p1 --> p2{"¿JWT, tenant y permiso<br/>prescripciones.crear?<br/>(UC-PRE-08)"}:::dec
-  p2 -- No --> p403["401/403 + denegación<br/>registrada por RBAC"]:::err
-  p2 -- Sí --> p2b{"¿Es médico asignado<br/>a un episodio activo<br/>del paciente?"}:::dec
-  p2b -- No --> p403b["403 No es médico tratante"]:::err
-  p2b -- Sí --> p3["Seleccionar medicamento<br/>del catálogo (UC-PRE-02)"]
-  p3 --> p4{"¿Medicamento activo<br/>en el catálogo?"}:::dec
-  p4 -- No --> p4e["422 Medicamento no disponible"]:::err
-  p4e --> p3
-  p4 -- Sí --> p5["Ingresar dosis, vía,<br/>frecuencia y duración"]
-  p5 --> p6{"¿Datos completos<br/>y válidos?"}:::dec
-  p6 -- No --> p6e["422 Errores de validación"]:::err
-  p6e --> p5
-  p6 -- Sí --> p7["Consultar alergias activas<br/>del paciente (UC-PRE-03)"]
-  p7 --> p8{"¿Registro de alergias<br/>disponible?"}:::dec
-  p8 -- No --> p503["503 Falla segura: no se guarda<br/>ni se firma sin verificar alergias"]:::err
-  p8 -- Sí --> p9{"¿Alguna alergia activa coincide<br/>con el principio activo<br/>o su grupo?"}:::dec
-  p9 -- No --> p12["Guardar borrador (201)"]
-  p9 -- Sí --> p10{"¿Severidad severe<br/>o life_threatening?"}:::dec
-  p10 -- Sí --> pblk["Bloquear (UC-PRE-04)<br/>422 ALLERGY_CONFLICT + auditoría"]:::err
-  p10 -- No --> p11{"¿Tiene permiso<br/>prescripciones.excepcion_alergia<br/>y escribió justificación?"}:::dec
-  p11 -- No --> pblk
-  p11 -- Sí --> p11b["Registrar excepción con<br/>justificación (UC-PRE-05)<br/>+ auditoría"]
-  p11b --> p12
-  p12 --> p13["Médico firma la prescripción<br/>(UC-PRE-06)"]
-  p13 --> p14{"¿Sin conflicto nuevo<br/>al re-verificar alergias?"}:::dec
-  p14 -- No --> p10
-  p14 -- Sí --> p15["Estado signed: inmutable<br/>+ auditoría de la firma"]
-  p15 --> pok["200 Prescripción firmada"]:::ok
-  p403 --> f((( ))):::fin
-  p403b --> f
-  p503 --> f
-  pblk --> f
-  pok --> f
+  subgraph A["A · Crear borrador (UC-PRE-01, 02, 03, 04, 05, 08)"]
+    i(( )):::ini --> p1["Médico abre al paciente y elige<br/>Nueva prescripción (UC-PRE-01)"]
+    p1 --> p2{"¿JWT, tenant y permiso<br/>prescripciones.crear?<br/>(UC-PRE-08)"}:::dec
+    p2 -- No --> p403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    p2 -- Sí --> p3["Seleccionar medicamento e ingresar<br/>dosis, vía, frecuencia y duración<br/>(UC-PRE-02)"]
+    p3 --> p6{"¿Datos completos<br/>y válidos?"}:::dec
+    p6 -- No --> p6e["422 Errores de validación"]:::err
+    p6 -- Sí --> p2b{"¿Es médico asignado<br/>a un episodio activo<br/>del paciente?"}:::dec
+    p2b -- No --> p403b["403 No es médico tratante"]:::err
+    p2b -- Sí --> p4{"¿Medicamento existe<br/>y está activo<br/>en el catálogo?"}:::dec
+    p4 -- No --> p4e["422 Medicamento no disponible"]:::err
+    p4 -- Sí --> p7["Consultar alergias activas<br/>del paciente (UC-PRE-03)"]
+    p7 --> p8{"¿Registro de alergias<br/>disponible?"}:::dec
+    p8 -- No --> p503["503 Falla segura:<br/>no se guarda sin verificar"]:::err
+    p8 -- Sí --> p9{"¿Alguna alergia activa coincide<br/>con el principio activo<br/>o su grupo?"}:::dec
+    p9 -- No --> p12["Guardar borrador"]
+    p9 -- Sí --> p10{"¿Severidad severe<br/>o life_threatening?"}:::dec
+    p10 -- Sí --> pblk["Bloquear (UC-PRE-04)<br/>422 ALLERGY_CONFLICT + auditoría"]:::err
+    p10 -- No --> p11{"¿Tiene permiso<br/>prescripciones.excepcion_alergia<br/>y escribió justificación?"}:::dec
+    p11 -- No --> pblk
+    p11 -- Sí --> p11b["Registrar excepción con<br/>justificación (UC-PRE-05)<br/>+ auditoría"]
+    p11b --> p12
+    p12 --> pok["201 Borrador creado"]:::ok
+  end
+
+  subgraph B["B · Firmar un borrador existente (UC-PRE-06, 03, 08)"]
+    j(( )):::ini --> s1["Médico abre el borrador<br/>y pulsa Firmar (UC-PRE-06)"]
+    s1 --> s2{"¿JWT, tenant y permiso<br/>prescripciones.firmar?"}:::dec
+    s2 -- No --> s403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    s2 -- Sí --> s3{"¿El borrador existe en<br/>el tenant y sigue en<br/>estado borrador?"}:::dec
+    s3 -- No --> s404["404 No existe /<br/>409 Ya firmada o anulada"]:::err
+    s3 -- Sí --> s4{"¿Sigue siendo médico<br/>tratante del episodio?"}:::dec
+    s4 -- No --> s403b["403 No es médico tratante"]:::err
+    s4 -- Sí --> s5["Re-verificar alergias activas<br/>(UC-PRE-03)"]
+    s5 --> s6{"¿Registro de alergias<br/>disponible?"}:::dec
+    s6 -- No --> s503["503 No se firma;<br/>queda en borrador"]:::err
+    s6 -- Sí --> s7{"¿Hay un conflicto nuevo no<br/>cubierto por la excepción<br/>registrada?"}:::dec
+    s7 -- Sí --> s422["422 ALLERGY_CONFLICT + auditoría;<br/>el borrador queda sin firmar"]:::err
+    s7 -- No --> s8["Estado signed: inmutable<br/>+ auditoría de la firma"]
+    s8 --> sok["200 Prescripción firmada"]:::ok
+  end
+
+  p403 --> f1((( ))):::fin
+  p403b --> f1
+  p6e --> f1
+  p4e --> f1
+  p503 --> f1
+  pblk --> f1
+  pok --> f1
+  s403 --> f2((( ))):::fin
+  s404 --> f2
+  s403b --> f2
+  s503 --> f2
+  s422 --> f2
+  sok --> f2
