@@ -52,12 +52,20 @@ El objetivo es que **ninguna prescripción se guarde ni se firme sin verificar a
 
 ### Descripción
 
-Recorre el proceso con sus decisiones y excepciones:
+Recorre el proceso en dos particiones, con sus decisiones, excepciones y resultados.
 
-- **Acceso y datos:** acceso (401/403), médico asignado a un episodio activo (403), medicamento activo (422) y datos de la indicación (422).
+**A · Crear borrador**
+
+- **Validaciones:** acceso (401/403), datos de la indicación (422), médico asignado a un episodio activo (403) y medicamento existente y activo (422).
 - **Falla segura:** si el registro de alergias no responde, se responde **503** y no se guarda nada.
 - **Severidad:** una coincidencia `severe` o `life_threatening` **bloquea sin excepción** (`422 ALLERGY_CONFLICT`). En `mild`, `moderate`, `unknown` o intolerancia se permite una excepción con justificación y permiso.
-- **Firma:** al firmar se vuelve a verificar. Una prescripción firmada es **inmutable**.
+- **Resultado:** borrador en estado `draft` (201).
+
+**B · Firmar un borrador existente** (precondición: borrador en `draft`)
+
+- **Validaciones:** permiso `prescripciones.firmar` (401/403), borrador existente (404), en estado `draft` (409) y médico todavía tratante (403).
+- **Re-verificación de alergias:** si el registro no responde, no se firma (503). Si aparece una alergia nueva no cubierta por la excepción registrada, no se firma (422). En ambos casos el borrador **sigue en `draft`**; la firma nunca vuelve a crear ni guardar otro borrador.
+- **Resultado:** prescripción `signed`, **inmutable** (200).
 
 ## 3. Diagrama de secuencia
 
@@ -69,7 +77,8 @@ Recorre el proceso con sus decisiones y excepciones:
 
 - **Participantes:** Vue (`PrescriptionForm`), middlewares, `PrescriptionController`, `PrescriptionService`, `MedicationCatalog` «interfaz», `AllergyChecker` «interfaz», `PrescriptionRepository` (HOSPITAL) y `AuditLogger`.
 - **Dependencias como interfaces:** `MedicationCatalog` y `AllergyChecker` se modelan como interfaces. El servicio no depende del código de otros módulos sino de un contrato, y esa decisión se desarrolla en la Semana 2 con el principio DIP.
-- **Bloques:** `alt` para 401/403, 422, 503, "sin coincidencias" (201), "coincidencia grave" (422 sin excepción) y "coincidencia no grave" (422 o 201 con excepción), más el escenario de firma.
+- **Escenario A (crear borrador):** `alt` para 401/403 y para datos inválidos (422). Bloques `break` para médico no tratante (403) y medicamento inexistente o inactivo (422), de modo que esos caminos terminan ahí y no continúan hacia la verificación de alergias. `alt` para 503, "sin coincidencias" (201), "coincidencia grave" (422 sin excepción) y "coincidencia no grave" (422 o 201 con excepción).
+- **Escenario B (firmar):** precondición de borrador existente en `draft`. Valida el permiso de firma, recupera el borrador (`obtenerBorrador`) y usa `alt` para 404, 409 y 403, que terminan sin firmar. Re-verifica alergias con `alt` para 503 (no se firma), conflicto nuevo (422, sigue en `draft`) y firma exitosa (200).
 
 ## 4. Narrativa de alcance y trazabilidad
 
