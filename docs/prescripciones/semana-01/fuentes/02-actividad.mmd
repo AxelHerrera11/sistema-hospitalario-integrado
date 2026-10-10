@@ -1,0 +1,44 @@
+---
+title: "Actividad — Creación de prescripción con verificación previa de alergias"
+---
+flowchart TD
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  i(( )):::ini --> p1["Médico abre al paciente y elige<br/>Nueva prescripción (UC-PRE-01)"]
+  p1 --> p2{"¿JWT, tenant y permiso<br/>prescripciones.crear?<br/>(UC-PRE-08)"}:::dec
+  p2 -- No --> p403["401/403 + denegación<br/>registrada por RBAC"]:::err
+  p2 -- Sí --> p2b{"¿Es médico asignado<br/>a un episodio activo<br/>del paciente?"}:::dec
+  p2b -- No --> p403b["403 No es médico tratante"]:::err
+  p2b -- Sí --> p3["Seleccionar medicamento<br/>del catálogo (UC-PRE-02)"]
+  p3 --> p4{"¿Medicamento activo<br/>en el catálogo?"}:::dec
+  p4 -- No --> p4e["422 Medicamento no disponible"]:::err
+  p4e --> p3
+  p4 -- Sí --> p5["Ingresar dosis, vía,<br/>frecuencia y duración"]
+  p5 --> p6{"¿Datos completos<br/>y válidos?"}:::dec
+  p6 -- No --> p6e["422 Errores de validación"]:::err
+  p6e --> p5
+  p6 -- Sí --> p7["Consultar alergias activas<br/>del paciente (UC-PRE-03)"]
+  p7 --> p8{"¿Registro de alergias<br/>disponible?"}:::dec
+  p8 -- No --> p503["503 Falla segura: no se guarda<br/>ni se firma sin verificar alergias"]:::err
+  p8 -- Sí --> p9{"¿Alguna alergia activa coincide<br/>con el principio activo<br/>o su grupo?"}:::dec
+  p9 -- No --> p12["Guardar borrador (201)"]
+  p9 -- Sí --> p10{"¿Severidad severe<br/>o life_threatening?"}:::dec
+  p10 -- Sí --> pblk["Bloquear (UC-PRE-04)<br/>422 ALLERGY_CONFLICT + auditoría"]:::err
+  p10 -- No --> p11{"¿Tiene permiso<br/>prescripciones.excepcion_alergia<br/>y escribió justificación?"}:::dec
+  p11 -- No --> pblk
+  p11 -- Sí --> p11b["Registrar excepción con<br/>justificación (UC-PRE-05)<br/>+ auditoría"]
+  p11b --> p12
+  p12 --> p13["Médico firma la prescripción<br/>(UC-PRE-06)"]
+  p13 --> p14{"¿Sin conflicto nuevo<br/>al re-verificar alergias?"}:::dec
+  p14 -- No --> p10
+  p14 -- Sí --> p15["Estado signed: inmutable<br/>+ auditoría de la firma"]
+  p15 --> pok["200 Prescripción firmada"]:::ok
+  p403 --> f((( ))):::fin
+  p403b --> f
+  p503 --> f
+  pblk --> f
+  pok --> f
