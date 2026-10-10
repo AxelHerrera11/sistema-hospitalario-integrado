@@ -13,6 +13,8 @@ sequenceDiagram
   participant R as PrescriptionRepository<br/>(HOSPITAL)
   participant AUD as AuditLogger
 
+  rect rgb(238, 243, 251)
+  Note over M,AUD: Escenario A — crear borrador (UC-PRE-01, 02, 03, 04, 05, 08, 09)
   M->>UI: completa medicamento, dosis, vía, frecuencia y duración
   UI->>MW: POST /api/v1/patients/{patient}/prescriptions<br/>Bearer JWT + X-Tenant-ID
   alt sin JWT válido o sin prescripciones.crear
@@ -26,13 +28,13 @@ sequenceDiagram
       C->>S: crear(médico, paciente, datos)
       S->>R: ¿médico asignado a un episodio activo del paciente?
       R-->>S: sí / no
-      opt no es médico tratante
+      break no es médico tratante
         S-->>C: NoEsMedicoTratante
         C-->>UI: 403
       end
       S->>CAT: obtener(medication_id) (UC-PRE-02)
-      CAT-->>S: medicamento + principio activo + grupo
-      opt medicamento inactivo
+      CAT-->>S: medicamento + principio activo + grupo + estado
+      break medicamento inactivo o inexistente
         S-->>C: MedicamentoNoDisponible
         C-->>UI: 422
       end
@@ -68,20 +70,47 @@ sequenceDiagram
       end
     end
   end
+  end
 
-  Note over M,AUD: Firma (UC-PRE-06): las alergias pudieron cambiar desde el borrador
-  M->>UI: Firmar
-  UI->>MW: POST /api/v1/prescriptions/{id}/sign
-  MW->>C: sign(id) con permiso prescripciones.firmar
-  C->>S: firmar(id, médico)
-  S->>AL: conflictos(paciente, principio activo, grupo)
-  alt conflicto nuevo no cubierto por una excepción
-    S-->>C: ConflictoAlergico
-    C-->>UI: 422 ALLERGY_CONFLICT
-  else sin conflicto nuevo
-    S->>R: firmar(id) → estado signed (inmutable)
-    S->>AUD: registrar("prescripcion.firmada")
-    S-->>C: prescripción firmada
-    C-->>UI: 200 OK
-    UI-->>M: prescripción firmada
+  rect rgb(230, 244, 234)
+  Note over M,AUD: Escenario B — firmar (UC-PRE-06, 03, 08, 09). Precondición: existe un borrador creado en el escenario A
+  M->>UI: abre el borrador y pulsa Firmar
+  UI->>MW: POST /api/v1/prescriptions/{id}/sign<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin prescripciones.firmar
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-PRE-08)
+    MW->>C: sign(id)
+    C->>S: firmar(id, médico)
+    S->>R: obtenerBorrador(id)
+    R-->>S: prescripción + estado + médico tratante + excepción registrada
+    alt no existe en el tenant
+      S-->>C: PrescripcionNoEncontrada
+      C-->>UI: 404
+    else ya firmada o anulada
+      S-->>C: EstadoInvalido
+      C-->>UI: 409
+    else el médico ya no es tratante del episodio
+      S-->>C: NoEsMedicoTratante
+      C-->>UI: 403
+    else borrador válido
+      S->>AL: conflictos(paciente, principio activo, grupo) (UC-PRE-03)
+      alt registro de alergias no disponible
+        AL-->>S: error
+        S-->>C: VerificacionNoDisponible
+        C-->>UI: 503 (no se firma sin verificar, sigue en borrador)
+      else conflicto nuevo no cubierto por la excepción registrada
+        AL-->>S: [alergia nueva]
+        S->>AUD: registrar("prescripcion.firma_bloqueada", detalle)
+        S-->>C: ConflictoAlergico
+        C-->>UI: 422 ALLERGY_CONFLICT (el borrador queda sin firmar)
+      else sin conflicto nuevo
+        AL-->>S: [] o solo conflictos ya justificados
+        S->>R: firmar(id) → estado signed (inmutable)
+        S->>AUD: registrar("prescripcion.firmada")
+        S-->>C: prescripción firmada
+        C-->>UI: 200 OK
+        UI-->>M: prescripción firmada
+      end
+    end
+  end
   end
