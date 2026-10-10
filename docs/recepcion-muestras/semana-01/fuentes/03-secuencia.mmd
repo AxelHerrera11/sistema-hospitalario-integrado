@@ -1,0 +1,71 @@
+---
+title: "Secuencia — Recepción, identificación inequívoca y rechazo controlado de muestra"
+---
+sequenceDiagram
+  autonumber
+  actor T as Técnico de laboratorio
+  participant UI as Vue SPA<br/>(RecepcionMuestras)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as SpecimenController
+  participant S as ReceiveSpecimenService
+  participant ORD as LabOrderGateway<br/>«interfaz»
+  participant REQ as LabTestRequirements<br/>«interfaz»
+  participant GEN as SpecimenCodeGenerator
+  participant R as SpecimenRepository<br/>(HOSPITAL)
+  participant N as Notifier<br/>«interfaz»
+
+  T->>UI: escanea la orden y registra lo observado en el tubo
+  UI->>MW: POST /api/v1/lab/specimens<br/>{lab_order_item_id, identificadores, contenedor,<br/>volumen, hora_toma, temperatura}
+  alt sin JWT válido o sin muestras.recibir
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC) (UC-MUE-09)
+  else acceso válido
+    MW->>C: store(request)
+    C->>C: validar payload (422 si falta un campo)
+    C->>S: recibir(técnico, datos)
+    S->>ORD: obtenerItem(lab_order_item_id) (UC-MUE-02)
+    ORD-->>S: ítem + paciente + prueba + estado
+    alt ítem inexistente
+      S-->>C: OrdenNoEncontrada
+      C-->>UI: 404
+    else ítem cancelado o con muestra ya aceptada
+      S-->>C: EstadoInvalido
+      C-->>UI: 409
+    else ítem pendiente de muestra
+      S->>S: comparar dos identificadores con el paciente de la orden (UC-MUE-03)
+      S->>REQ: requisitos(prueba) (UC-MUE-04)
+      REQ-->>S: tipo, contenedor, volumen mínimo,<br/>estabilidad, temperatura
+      S->>S: validador del tipo de muestra (sangre, orina, hisopado...)
+      alt identidad discordante o requisito incumplido
+        S->>R: guardarRechazo(ítem, motivo, técnico, hora) (UC-MUE-06)
+        S->>ORD: marcarPendienteNuevaMuestra(ítem)
+        S->>N: notificarRechazo(solicitante, motivo) (UC-MUE-08)
+        alt notificación falla
+          N-->>S: error
+          S->>S: encolar reintento (el rechazo ya está guardado)
+        else notificación entregada
+          N-->>S: ok
+        end
+        S-->>C: rechazo registrado
+        C-->>UI: 201 {estado: rejected, motivo}
+        UI-->>T: muestra rechazada y motivo
+      else muestra conforme
+        loop hasta 3 intentos
+          S->>GEN: generar(hospital, fecha)
+          GEN-->>S: código con dígito verificador
+          S->>R: guardarAceptada(ítem, código, técnico, hora) (UC-MUE-05)
+          R-->>S: ok o violación de unicidad
+        end
+        alt sin código único tras 3 intentos
+          S-->>C: CodigoNoGenerado
+          C-->>UI: 500 (no se acepta sin código)
+        else código guardado
+          S->>ORD: marcarMuestraRecibida(ítem)
+          S-->>C: muestra aceptada
+          C-->>UI: 201 {estado: accepted, código}
+          UI-->>T: imprime la etiqueta con el código
+        end
+      end
+    end
+  end
+
+  Note over UI,R: Consulta posterior (UC-MUE-07): Ingreso de resultados usa GET /api/v1/lab/specimens/{código}
