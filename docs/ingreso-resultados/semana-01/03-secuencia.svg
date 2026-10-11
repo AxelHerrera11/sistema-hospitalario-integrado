@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="860" viewBox="0 0 1260 860">
+  <title>Secuencia - Ingreso de resultados de laboratorio</title>
+  <rect width="1260" height="860" fill="#ffffff"/>
+  <text x="630" y="32" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2a44">Secuencia - captura y correccion controlada de resultados pendientes</text>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#1f2a44" stroke="#2b4c7e" stroke-width="1.2">
+    <rect x="40" y="70" width="120" height="42" fill="#eef3fb"/><text x="100" y="95" text-anchor="middle" stroke="none">Tecnico</text>
+    <rect x="210" y="70" width="135" height="42" fill="#eef3fb"/><text x="278" y="95" text-anchor="middle" stroke="none">Vue</text>
+    <rect x="395" y="70" width="150" height="42" fill="#eef3fb"/><text x="470" y="95" text-anchor="middle" stroke="none">Controller</text>
+    <rect x="595" y="70" width="150" height="42" fill="#eef3fb"/><text x="670" y="95" text-anchor="middle" stroke="none">Service</text>
+    <rect x="795" y="70" width="150" height="42" fill="#eef3fb"/><text x="870" y="95" text-anchor="middle" stroke="none">Repository</text>
+    <rect x="995" y="70" width="150" height="42" fill="#eef3fb"/><text x="1070" y="95" text-anchor="middle" stroke="none">DB/Audit/Notify</text>
+  </g>
+  <g stroke="#8a8f98" stroke-dasharray="5 5">
+    <line x1="100" y1="112" x2="100" y2="820"/>
+    <line x1="278" y1="112" x2="278" y2="820"/>
+    <line x1="470" y1="112" x2="470" y2="820"/>
+    <line x1="670" y1="112" x2="670" y2="820"/>
+    <line x1="870" y1="112" x2="870" y2="820"/>
+    <line x1="1070" y1="112" x2="1070" y2="820"/>
+  </g>
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#1f2a44" stroke-width="1.4"/></marker></defs>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#1f2a44" stroke="#1f2a44" stroke-width="1.3">
+    <line x1="100" y1="150" x2="278" y2="150" marker-end="url(#arr)"/><text x="189" y="142" text-anchor="middle" stroke="none">Abrir pendientes</text>
+    <line x1="278" y1="190" x2="470" y2="190" marker-end="url(#arr)"/><text x="374" y="182" text-anchor="middle" stroke="none">GET pendientes</text>
+    <line x1="470" y1="230" x2="670" y2="230" marker-end="url(#arr)"/><text x="570" y="222" text-anchor="middle" stroke="none">listPending</text>
+    <line x1="670" y1="270" x2="870" y2="270" marker-end="url(#arr)"/><text x="770" y="262" text-anchor="middle" stroke="none">buscar por tenant</text>
+    <line x1="870" y1="310" x2="1070" y2="310" marker-end="url(#arr)"/><text x="970" y="302" text-anchor="middle" stroke="none">SELECT pendientes</text>
+    <line x1="1070" y1="350" x2="278" y2="350" marker-end="url(#arr)" stroke-dasharray="4 4"/><text x="674" y="342" text-anchor="middle" stroke="none">200 lista</text>
+    <line x1="100" y1="410" x2="278" y2="410" marker-end="url(#arr)"/><text x="189" y="402" text-anchor="middle" stroke="none">Ingresar valor/unidad</text>
+    <line x1="278" y1="450" x2="470" y2="450" marker-end="url(#arr)"/><text x="374" y="442" text-anchor="middle" stroke="none">POST resultado</text>
+    <line x1="470" y1="490" x2="670" y2="490" marker-end="url(#arr)"/><text x="570" y="482" text-anchor="middle" stroke="none">capture(command)</text>
+    <line x1="670" y1="530" x2="870" y2="530" marker-end="url(#arr)"/><text x="770" y="522" text-anchor="middle" stroke="none">validar contexto</text>
+    <line x1="870" y1="570" x2="1070" y2="570" marker-end="url(#arr)"/><text x="970" y="562" text-anchor="middle" stroke="none">INSERT version</text>
+    <line x1="670" y1="620" x2="1070" y2="620" marker-end="url(#arr)"/><text x="870" y="612" text-anchor="middle" stroke="none">auditar y notificar</text>
+    <line x1="1070" y1="670" x2="278" y2="670" marker-end="url(#arr)" stroke-dasharray="4 4"/><text x="674" y="662" text-anchor="middle" stroke="none">201/200 resultado registrado</text>
+  </g>
+  <rect x="360" y="710" width="540" height="72" fill="#fff8d6" stroke="#8a7a2a"/>
+  <text x="630" y="738" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Errores alternos: 409 estado invalido, 422 valor/unidad/motivo invalido,</text>
+  <text x="630" y="760" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">403 sin permiso y 500 si la persistencia o auditoria falla.</text>
+</svg>
