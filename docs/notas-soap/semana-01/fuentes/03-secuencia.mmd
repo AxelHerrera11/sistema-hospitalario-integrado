@@ -10,7 +10,7 @@ sequenceDiagram
   participant S as SoapNoteService
   participant CIE as Icd10Catalog<br/>«interfaz»
   participant R as ClinicalNoteRepository<br/>(HOSPITAL)
-  participant AUD as AuditLogger
+  participant AUD as AuditLogger<br/>(HOSPITAL · local_access_audits)
 
   rect rgb(238, 243, 251)
   Note over M,AUD: Escenario A — registrar nota SOAP en borrador (UC-SOAP-01, 07)
@@ -103,7 +103,7 @@ sequenceDiagram
   end
 
   rect rgb(230, 244, 234)
-  Note over M,AUD: Escenario C — firmar la nota SOAP (UC-SOAP-05, 07, 08)
+  Note over M,AUD: Escenario C — firmar la nota SOAP (UC-SOAP-05, 07, 08). Escenario independiente#59; precondición: nota existente en borrador
   M->>UI: revisa la nota y pulsa Firmar
   UI->>MW: POST /api/v1/soap-notes/{note}/sign<br/>Bearer JWT + X-Tenant-ID
   alt sin JWT válido o sin notas_soap.firmar
@@ -126,16 +126,21 @@ sequenceDiagram
       S-->>C: SoapIncompleta
       C-->>UI: 422 SOAP_INCOMPLETE (sigue en borrador)
     else nota completa
-      S->>R: BEGIN · firmar(note) → status signed, signed_at
+      S->>R: BEGIN (conexión hospital) · firmar(note) → status signed, signed_at
       S->>AUD: registrar("nota_soap.firmada", médico, nota, diagnósticos)
+      AUD->>R: INSERT local_access_audits (misma conexión y transacción)
       alt la auditoría falla
-        AUD-->>S: error
-        S->>R: ROLLBACK
+        R-->>AUD: error
+        AUD-->>S: AuditoriaFallida
+        S->>R: ROLLBACK (revierte la firma y la auditoría)
         S-->>C: AuditoriaNoDisponible
         C-->>UI: 500 (no hay firma sin traza)
       else auditoría registrada
+        R-->>AUD: ok
         AUD-->>S: ok
-        S->>R: COMMIT
+        S->>R: INSERT outbox_events ("nota_soap.firmada", solo metadatos)
+        S->>R: COMMIT (firma + auditoría + outbox)
+        Note over R,AUD: el outbox se publica después hacia CENTRAL (asíncrono)<br/>si CENTRAL no responde, la firma local no se revierte
         S-->>C: nota firmada (inmutable)
         C-->>UI: 200 OK
         UI-->>M: nota firmada, cambios futuros solo por corrección (UC-SOAP-06)
