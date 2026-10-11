@@ -1,0 +1,35 @@
+classDiagram
+  class PendingResultReader {
+    <<interface>>
+    +listPending(tenantId, filters)
+  }
+  class ResultCapturePort {
+    <<interface>>
+    +capture(command)
+  }
+  class ResultCorrectionPort {
+    <<interface>>
+    +correct(command)
+  }
+  class ResultRuleValidator {
+    <<interface>>
+    +validate(command)
+  }
+  class ResultAuditPort {
+    <<interface>>
+    +record(event)
+  }
+  class ResultNotificationPort {
+    <<interface>>
+    +notify(event)
+  }
+  class ResultEntryController
+  class CorrectionController
+  class PendingResultsPage
+  PendingResultsPage --> PendingResultReader
+  ResultEntryController --> ResultCapturePort
+  ResultEntryController --> ResultRuleValidator
+  CorrectionController --> ResultCorrectionPort
+  CorrectionController --> ResultRuleValidator
+  ResultCapturePort --> ResultAuditPort
+  ResultCapturePort --> ResultNotificationPort
