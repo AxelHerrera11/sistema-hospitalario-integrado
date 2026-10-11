@@ -1,0 +1,38 @@
+classDiagram
+  class ResultReviewController {
+    +validate(request)
+    +reject(request)
+  }
+  class DecideLabResultReview {
+    +validate(command)
+    +reject(command)
+  }
+  class PendingResultRepository {
+    <<interface>>
+    +findPending(resultId, tenantId)
+    +saveDecision(decision)
+  }
+  class ReviewPolicy {
+    <<interface>>
+    +assertCanDecide(result, user)
+  }
+  class ReviewAuditPort {
+    <<interface>>
+    +record(event)
+  }
+  class ReviewNotificationPort {
+    <<interface>>
+    +notify(event)
+  }
+  class PdoPendingResultRepository
+  class DatabaseReviewAudit
+  class InternalReviewNotifier
+
+  ResultReviewController --> DecideLabResultReview
+  DecideLabResultReview --> PendingResultRepository
+  DecideLabResultReview --> ReviewPolicy
+  DecideLabResultReview --> ReviewAuditPort
+  DecideLabResultReview --> ReviewNotificationPort
+  PdoPendingResultRepository ..|> PendingResultRepository
+  DatabaseReviewAudit ..|> ReviewAuditPort
+  InternalReviewNotifier ..|> ReviewNotificationPort
