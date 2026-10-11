@@ -64,18 +64,18 @@ flowchart LR
 
   subgraph D["D · Reconocer la alerta clínica (UC-SV-06, 07, 08)"]
     direction TB
-    k(( )):::ini --> d1["Médico abre la alerta desde la<br/>notificación o la bandeja (UC-SV-06)"]
-    d1 --> d2{"¿JWT, tenant y permiso<br/>alertas_clinicas.reconocer?"}:::dec
+    k(( )):::ini --> d1["Médico abre la alerta desde la<br/>notificación o la bandeja y escribe<br/>la conducta tomada (UC-SV-06)"]
+    d1 --> d2{"¿JWT, tenant y permiso<br/>alertas_clinicas.reconocer?<br/>(UC-SV-07)"}:::dec
     d2 -- No --> d403["401/403 + denegación<br/>registrada por RBAC"]:::err
-    d2 -- Sí --> d3{"¿La alerta existe<br/>en el tenant?"}:::dec
+    d2 -- Sí --> d6{"¿Registró la conducta<br/>tomada (nota obligatoria)?"}:::dec
+    d6 -- No --> d422["422 Nota de reconocimiento<br/>obligatoria"]:::err
+    d6 -- Sí --> d3{"¿La alerta existe<br/>en el tenant?"}:::dec
     d3 -- No --> d404["404 Alerta no encontrada"]:::err
-    d3 -- Sí --> d4{"¿Es médico asignado y activo<br/>en el episodio de la alerta?"}:::dec
+    d3 -- Sí --> d4{"¿Es médico asignado y activo<br/>en el episodio de la alerta?<br/>(UC-SV-07)"}:::dec
     d4 -- No --> d403b["403 No es médico tratante"]:::err
     d4 -- Sí --> d5{"¿La alerta sigue abierta?"}:::dec
     d5 -- No --> d409["409 Alerta ya reconocida"]:::err
-    d5 -- Sí --> d6{"¿Registró la conducta<br/>tomada (nota obligatoria)?"}:::dec
-    d6 -- No --> d422["422 Nota de reconocimiento<br/>obligatoria"]:::err
-    d6 -- Sí --> d7["BEGIN (conexión hospital):<br/>status = acknowledged,<br/>acknowledged_by, acknowledged_at<br/>+ INSERT local_access_audits (UC-SV-08)"]
+    d5 -- Sí --> d7["BEGIN (conexión hospital):<br/>status = acknowledged,<br/>acknowledged_by, acknowledged_at<br/>+ INSERT local_access_audits (UC-SV-08)"]
     d7 --> d8{"¿Auditoría registrada?"}:::dec
     d8 -- No --> d500["ROLLBACK<br/>500 No hay reconocimiento sin traza"]:::err
     d8 -- Sí --> dok["COMMIT · 200 Alerta reconocida"]:::ok

@@ -1,0 +1,150 @@
+---
+title: "Secuencia — Captura de signos vitales, evaluación de umbrales y generación de alerta"
+---
+sequenceDiagram
+  autonumber
+  actor M as Médico tratante
+  participant UI as Vue SPA<br/>(VitalSignsForm · AlertInbox)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as VitalSignController<br/>ClinicalAlertController
+  participant S as VitalSignService
+  participant TP as ThresholdPolicy<br/>«interfaz»
+  participant R as VitalSignRepository<br/>(HOSPITAL)
+  participant AUD as AuditLogger<br/>(HOSPITAL · local_access_audits)
+  participant N as AlertNotifier<br/>«interfaz» (cola)
+
+  rect rgb(238, 243, 251)
+  Note over M,N: Escenario A — capturar signos vitales, evaluar umbrales y generar alerta (UC-SV-01, 02, 03, 04, 07, 08)
+  M->>UI: abre el episodio y captura los signos medidos y la hora de medición
+  UI->>MW: POST /api/v1/care-episodes/{episode}/vital-signs<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin signos_vitales.registrar
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-SV-07)
+    MW->>C: store(episode, request)
+    C->>C: validar payload (StoreVitalSignRequest)
+    alt sin signos, valores no numéricos o measured_at futura
+      C-->>UI: 422 errores por campo
+    else payload válido
+      C->>S: registrar(médico, episodio, medición)
+      S->>S: verificar rangos fisiológicos plausibles (UC-SV-03)
+      break medición no plausible (p. ej. FC 400 o sistólica < diastólica)
+        S-->>C: MedicionNoPlausible (UC-SV-03)
+        C-->>UI: 422 VITAL_SIGN_IMPLAUSIBLE
+      end
+      S->>R: ¿médico asignado y activo en el episodio?
+      R-->>S: sí / no
+      break no es médico tratante
+        S-->>C: NoEsMedicoTratante
+        C-->>UI: 403
+      end
+      S->>R: estado del episodio y del expediente + birth_date del paciente
+      R-->>S: episodio + medical_record_id + estados + birth_date
+      break episodio o expediente cerrado
+        S-->>C: ContextoClinicoCerrado
+        C-->>UI: 409
+      end
+      S->>TP: perfilPara(edad del paciente) (UC-SV-02)
+      alt sin perfil de umbrales aplicable
+        TP-->>S: null
+        S->>R: BEGIN (conexión hospital) · INSERT vital_signs (status validated)
+        S->>AUD: registrar("signo_vital.sin_evaluacion", médico, signo)
+        AUD->>R: INSERT local_access_audits (misma transacción)
+        S->>R: COMMIT
+        S-->>C: registrado sin evaluación
+        C-->>UI: 201 Created + aviso THRESHOLDS_NOT_APPLICABLE
+        UI-->>M: aviso: requiere evaluación clínica manual
+      else perfil vigente
+        TP-->>S: umbrales + versión del perfil
+        S->>S: comparar cada signo con su umbral y calcular la severidad máxima
+        alt todos los valores dentro de umbral
+          S->>R: BEGIN · INSERT vital_signs (status validated) · COMMIT
+          R-->>S: signo vital
+          S-->>C: registrado sin alerta
+          C-->>UI: 201 Created (vital_sign_id)
+          UI-->>M: signos registrados, sin alerta
+        else al menos un valor fuera de umbral (UC-SV-04)
+          S->>R: BEGIN (conexión hospital) · INSERT vital_signs (status validated)
+          S->>R: INSERT critical_alerts (source_type vital_sign, open, severidad, hallazgos)
+          S->>AUD: registrar("signo_vital.alerta_generada", médico, signo, alerta)
+          AUD->>R: INSERT local_access_audits (misma conexión y transacción)
+          alt falla el INSERT de la alerta o de la auditoría
+            R-->>S: error
+            S->>R: ROLLBACK (no se guarda ni el signo ni la alerta)
+            S-->>C: AlertaNoRegistrada
+            C-->>UI: 500 (no hay valor anormal sin alerta)
+          else alerta y auditoría registradas
+            R-->>S: ok
+            S->>R: COMMIT (signo + alerta + auditoría)
+            S->>N: encolar(alerta) después del COMMIT (afterCommit)
+            S-->>C: signo vital + alerta
+            C-->>UI: 201 Created (vital_sign_id, critical_alert_id, severidad)
+            UI-->>M: alerta resaltada en pantalla
+          end
+        end
+      end
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over M,N: Escenario B — notificar la alerta (UC-SV-05). Asíncrono#59; precondición: alerta confirmada con COMMIT en A
+  N->>R: médicos con care_assignment activo en el episodio de la alerta
+  R-->>N: médicos tratantes
+  N->>UI: notificación en tiempo real y en la bandeja (paciente, signo, valor, severidad)
+  alt el envío falla
+    loop reintentos con espera exponencial
+      N->>UI: reenviar notificación
+    end
+    Note over N,R: reintentos agotados: se registra en el log,<br/>la alerta sigue abierta y visible en la bandeja
+  else notificación entregada
+    N->>R: UPDATE critical_alerts SET notified_at
+    UI-->>M: aviso de alerta (prioridad según severidad)
+  end
+  end
+
+  rect rgb(230, 244, 234)
+  Note over M,N: Escenario C — reconocer la alerta clínica (UC-SV-06, 07, 08). Escenario independiente#59; precondición: alerta abierta
+  M->>UI: abre la alerta y escribe la conducta tomada
+  UI->>MW: POST /api/v1/clinical-alerts/{alert}/acknowledge<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin alertas_clinicas.reconocer
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-SV-07)
+    MW->>C: acknowledge(alert, request)
+    C->>C: validar la nota (AcknowledgeAlertRequest)
+    alt nota vacía
+      C-->>UI: 422 nota de reconocimiento obligatoria
+    else nota válida
+      C->>S: reconocerAlerta(médico, alerta, nota)
+      S->>R: obtenerAlerta(alert) con su episodio y asignaciones
+      R-->>S: alerta + estado + episodio
+      alt no existe en el tenant
+        S-->>C: AlertaNoEncontrada
+        C-->>UI: 404
+      else no es médico tratante del episodio
+        S-->>C: NoEsMedicoTratante
+        C-->>UI: 403
+      else ya reconocida
+        S-->>C: AlertaYaReconocida
+        C-->>UI: 409
+      else alerta abierta
+        S->>R: BEGIN · UPDATE critical_alerts → acknowledged, acknowledged_by, acknowledged_at, nota
+        S->>AUD: registrar("alerta_clinica.reconocida", médico, alerta)
+        AUD->>R: INSERT local_access_audits (misma transacción)
+        alt la auditoría falla
+          R-->>AUD: error
+          AUD-->>S: AuditoriaFallida
+          S->>R: ROLLBACK
+          S-->>C: AuditoriaNoDisponible
+          C-->>UI: 500 (no hay reconocimiento sin traza)
+        else auditoría registrada
+          R-->>AUD: ok
+          AUD-->>S: ok
+          S->>R: COMMIT
+          S-->>C: alerta reconocida
+          C-->>UI: 200 OK
+          UI-->>M: alerta cerrada en la bandeja
+        end
+      end
+    end
+  end
+  end
