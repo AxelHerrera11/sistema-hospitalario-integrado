@@ -1,0 +1,150 @@
+---
+title: "Secuencia — Registro de nota SOAP y asociación de diagnóstico clínico"
+---
+sequenceDiagram
+  autonumber
+  actor M as Médico tratante
+  participant UI as Vue SPA<br/>(SoapNoteEditor)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as SoapNoteController
+  participant S as SoapNoteService
+  participant CIE as Icd10Catalog<br/>«interfaz»
+  participant R as ClinicalNoteRepository<br/>(HOSPITAL)
+  participant AUD as AuditLogger<br/>(HOSPITAL · local_access_audits)
+
+  rect rgb(238, 243, 251)
+  Note over M,AUD: Escenario A — registrar nota SOAP en borrador (UC-SOAP-01, 07)
+  M->>UI: abre el episodio y captura Subjetivo, Objetivo, Análisis y Plan
+  UI->>MW: POST /api/v1/care-episodes/{episode}/soap-notes<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin notas_soap.crear
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-SOAP-07)
+    MW->>C: store(episode, request)
+    C->>C: validar payload (StoreSoapNoteRequest)
+    alt secciones inválidas
+      C-->>UI: 422 errores por sección
+    else secciones válidas
+      C->>S: registrar(médico, episodio, secciones)
+      S->>R: ¿médico asignado y activo en el episodio?
+      R-->>S: sí / no
+      break no es médico tratante
+        S-->>C: NoEsMedicoTratante
+        C-->>UI: 403
+      end
+      S->>R: estado del episodio y del expediente del paciente
+      R-->>S: episodio + medical_record_id + estados
+      break episodio o expediente cerrado
+        S-->>C: ContextoClinicoCerrado
+        C-->>UI: 409
+      end
+      S->>R: guardarBorrador(note_type=soap, version_no=1, content)
+      R-->>S: nota en draft
+      S-->>C: nota
+      C-->>UI: 201 Created (clinical_note_id)
+      UI-->>M: nota en borrador lista para diagnósticos
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over M,AUD: Escenario B — asociar diagnóstico clínico (UC-SOAP-02, 03, 04, 07). Precondición: nota en borrador del escenario A
+  M->>UI: busca el código CIE-10 e indica tipo y fecha de inicio
+  UI->>MW: POST /api/v1/soap-notes/{note}/diagnoses<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin diagnosticos.asociar
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-SOAP-07)
+    MW->>C: attachDiagnosis(note, request)
+    C->>C: validar code, type y onset_date (AttachDiagnosisRequest)
+    alt datos inválidos
+      C-->>UI: 422 errores por campo
+    else datos válidos
+      C->>S: asociarDiagnostico(médico, nota, datos)
+      S->>R: obtenerNota(note) con diagnósticos activos
+      R-->>S: nota + estado + autor + episodio + diagnósticos
+      break la nota no existe en el tenant
+        S-->>C: NotaNoEncontrada
+        C-->>UI: 404
+      end
+      break la nota ya está firmada
+        S-->>C: NotaFirmada
+        C-->>UI: 409 (usar corrección)
+      end
+      break el usuario no es el autor o ya no es tratante
+        S-->>C: NoEsAutorTratante
+        C-->>UI: 403
+      end
+      S->>CIE: buscar(code) (UC-SOAP-03)
+      alt catálogo no disponible
+        CIE-->>S: error
+        S-->>C: CatalogoNoDisponible
+        C-->>UI: 503 (no se asocia sin validar)
+      else código inexistente o no vigente
+        CIE-->>S: null
+        S-->>C: CodigoInvalido (UC-SOAP-04)
+        C-->>UI: 422 DIAGNOSIS_CODE_INVALID
+      else código válido
+        CIE-->>S: código + descripción oficial
+        alt código ya asociado a la nota
+          S-->>C: DiagnosticoDuplicado (UC-SOAP-04)
+          C-->>UI: 409 DIAGNOSIS_DUPLICATED
+        else tipo primary y ya hay un principal
+          S-->>C: PrincipalYaExiste (UC-SOAP-04)
+          C-->>UI: 409 PRIMARY_DIAGNOSIS_EXISTS
+        else asociación válida
+          S->>R: guardarDiagnostico(nota, episodio, autor, código, tipo, fecha, status=active)
+          R-->>S: diagnóstico
+          S-->>C: diagnóstico asociado
+          C-->>UI: 201 Created
+          UI-->>M: diagnóstico visible en la sección Análisis
+        end
+      end
+    end
+  end
+  end
+
+  rect rgb(230, 244, 234)
+  Note over M,AUD: Escenario C — firmar la nota SOAP (UC-SOAP-05, 07, 08). Escenario independiente#59; precondición: nota existente en borrador
+  M->>UI: revisa la nota y pulsa Firmar
+  UI->>MW: POST /api/v1/soap-notes/{note}/sign<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin notas_soap.firmar
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-SOAP-07)
+    MW->>C: sign(note)
+    C->>S: firmar(médico, nota)
+    S->>R: obtenerNota(note) con diagnósticos activos
+    R-->>S: nota + estado + autor + diagnósticos
+    alt no existe en el tenant
+      S-->>C: NotaNoEncontrada
+      C-->>UI: 404
+    else ya firmada
+      S-->>C: EstadoInvalido
+      C-->>UI: 409
+    else no es el autor o ya no es tratante
+      S-->>C: NoEsAutorTratante
+      C-->>UI: 403
+    else falta una sección o no hay exactamente un principal
+      S-->>C: SoapIncompleta
+      C-->>UI: 422 SOAP_INCOMPLETE (sigue en borrador)
+    else nota completa
+      S->>R: BEGIN (conexión hospital) · firmar(note) → status signed, signed_at
+      S->>AUD: registrar("nota_soap.firmada", médico, nota, diagnósticos)
+      AUD->>R: INSERT local_access_audits (misma conexión y transacción)
+      alt la auditoría falla
+        R-->>AUD: error
+        AUD-->>S: AuditoriaFallida
+        S->>R: ROLLBACK (revierte la firma y la auditoría)
+        S-->>C: AuditoriaNoDisponible
+        C-->>UI: 500 (no hay firma sin traza)
+      else auditoría registrada
+        R-->>AUD: ok
+        AUD-->>S: ok
+        S->>R: INSERT outbox_events ("nota_soap.firmada", solo metadatos)
+        S->>R: COMMIT (firma + auditoría + outbox)
+        Note over R,AUD: el outbox se publica después hacia CENTRAL (asíncrono)<br/>si CENTRAL no responde, la firma local no se revierte
+        S-->>C: nota firmada (inmutable)
+        C-->>UI: 200 OK
+        UI-->>M: nota firmada, cambios futuros solo por corrección (UC-SOAP-06)
+      end
+    end
+  end
+  end

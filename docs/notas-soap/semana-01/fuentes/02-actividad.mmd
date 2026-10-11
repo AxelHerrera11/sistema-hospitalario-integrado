@@ -1,0 +1,87 @@
+---
+title: "Actividad — Registro de nota SOAP y asociación de diagnóstico clínico"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  subgraph A["A · Registrar nota SOAP en borrador (UC-SOAP-01, 07)"]
+    direction TB
+    i(( )):::ini --> a1["Médico abre el episodio del paciente<br/>y elige Nueva nota SOAP (UC-SOAP-01)"]
+    a1 --> a5["Capturar Subjetivo, Objetivo,<br/>Análisis y Plan"]
+    a5 --> a2{"¿JWT, tenant y permiso<br/>notas_soap.crear?<br/>(UC-SOAP-07)"}:::dec
+    a2 -- No --> a403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    a2 -- Sí --> a6{"¿Secciones con formato válido<br/>y al menos S y O con contenido?"}:::dec
+    a6 -- No --> a422["422 Errores por sección"]:::err
+    a6 -- Sí --> a3{"¿Es médico asignado<br/>y activo en el episodio?"}:::dec
+    a3 -- No --> a403b["403 No es médico tratante"]:::err
+    a3 -- Sí --> a4{"¿Episodio activo y<br/>expediente del paciente<br/>abierto?"}:::dec
+    a4 -- No --> a409["409 Episodio cerrado /<br/>expediente cerrado"]:::err
+    a4 -- Sí --> a7["Guardar nota: note_type = soap,<br/>status = draft, version_no = 1"]
+    a7 --> aok["201 Nota SOAP en borrador"]:::ok
+    a403 & a403b & a409 & a422 & aok --> f1((( ))):::fin
+  end
+
+  subgraph B["B · Asociar diagnóstico clínico a la nota (UC-SOAP-02, 03, 04, 07)"]
+    direction TB
+    j(( )):::ini --> b1["Médico busca el diagnóstico e indica<br/>tipo y fecha de inicio (UC-SOAP-02)"]
+    b1 --> b2{"¿JWT, tenant y permiso<br/>diagnosticos.asociar?"}:::dec
+    b2 -- No --> b403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    b2 -- Sí --> b5{"¿Código, tipo y fecha de inicio<br/>presentes y válidos?<br/>(fecha no futura)"}:::dec
+    b5 -- No --> b422["422 Errores de validación"]:::err
+    b5 -- Sí --> b3{"¿La nota existe en el tenant<br/>y sigue en borrador?"}:::dec
+    b3 -- No --> b404["404 No existe /<br/>409 Nota firmada: usar corrección"]:::err
+    b3 -- Sí --> b4{"¿El usuario es el autor<br/>de la nota y sigue tratante?"}:::dec
+    b4 -- No --> b403b["403 Solo el autor tratante<br/>asocia diagnósticos"]:::err
+    b4 -- Sí --> b6["Validar código en el catálogo CIE-10<br/>(UC-SOAP-03)"]
+    b6 --> b7{"¿Catálogo CIE-10<br/>disponible?"}:::dec
+    b7 -- No --> b503["503 Falla segura:<br/>no se asocia sin validar"]:::err
+    b7 -- Sí --> b8{"¿El código existe y está<br/>vigente en el catálogo?"}:::dec
+    b8 -- No --> brej["Rechazar (UC-SOAP-04)<br/>422 DIAGNOSIS_CODE_INVALID"]:::err
+    b8 -- Sí --> b9{"¿El código ya está asociado<br/>a esta nota?"}:::dec
+    b9 -- Sí --> bdup["Rechazar (UC-SOAP-04)<br/>409 DIAGNOSIS_DUPLICATED"]:::err
+    b9 -- No --> b10{"¿Tipo primary y la nota ya<br/>tiene un diagnóstico principal?"}:::dec
+    b10 -- Sí --> bpri["Rechazar (UC-SOAP-04)<br/>409 PRIMARY_DIAGNOSIS_EXISTS"]:::err
+    b10 -- No --> b11["Guardar diagnóstico: status = active,<br/>mismo episodio y autor de la nota"]
+    b11 --> bok["201 Diagnóstico asociado"]:::ok
+    b403 & b404 & b403b & b422 & b503 & brej & bdup & bpri & bok --> f2((( ))):::fin
+  end
+
+  subgraph C["C · Firmar la nota SOAP (UC-SOAP-05, 07, 08)"]
+    direction TB
+    k(( )):::ini --> c1["Médico revisa la nota y pulsa Firmar<br/>(UC-SOAP-05)"]
+    c1 --> c2{"¿JWT, tenant y permiso<br/>notas_soap.firmar?"}:::dec
+    c2 -- No --> c403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    c2 -- Sí --> c3{"¿La nota existe en el tenant<br/>y sigue en borrador?"}:::dec
+    c3 -- No --> c404["404 No existe /<br/>409 Ya firmada"]:::err
+    c3 -- Sí --> c4{"¿Es el autor y sigue siendo<br/>médico tratante del episodio?"}:::dec
+    c4 -- No --> c403b["403 No es autor tratante"]:::err
+    c4 -- Sí --> c5{"¿S, O, A y P completas y<br/>exactamente un diagnóstico<br/>principal activo?"}:::dec
+    c5 -- No --> c422["422 SOAP_INCOMPLETE<br/>(la nota sigue en borrador)"]:::err
+    c5 -- Sí --> c6["BEGIN en la conexión hospital:<br/>status = signed, signed_at = ahora<br/>+ INSERT local_access_audits<br/>(UC-SOAP-08) + outbox_events"]
+    c6 --> c7{"¿Auditoría registrada?"}:::dec
+    c7 -- No --> c500["ROLLBACK: se revierten<br/>firma y auditoría<br/>500 No hay firma sin traza"]:::err
+    c7 -- Sí --> cok["COMMIT · 200 Nota firmada<br/>e inmutable (el outbox se<br/>publica después a CENTRAL)"]:::ok
+    c403 & c404 & c403b & c422 & c500 & cok --> f3((( ))):::fin
+  end
+
+  subgraph D["D · Corregir una nota firmada (UC-SOAP-06, 07, 08)"]
+    direction TB
+    m(( )):::ini --> d1["Médico detecta un error en una<br/>nota firmada y pide Corregir (UC-SOAP-06)"]
+    d1 --> d2{"¿JWT, tenant y permiso<br/>notas_soap.corregir y<br/>médico tratante?"}:::dec
+    d2 -- No --> d403["401/403"]:::err
+    d2 -- Sí --> d3{"¿La nota está firmada y es<br/>la última versión?"}:::dec
+    d3 -- No --> d409["409 Solo se corrige la última<br/>versión firmada"]:::err
+    d3 -- Sí --> d4{"¿Escribió el motivo<br/>de la corrección?"}:::dec
+    d4 -- No --> d422["422 Motivo obligatorio"]:::err
+    d4 -- Sí --> d5["Crear versión n + 1 en borrador con<br/>supersedes_id y correction_reason<br/>+ auditoría en local_access_audits<br/>(misma transacción, UC-SOAP-08)"]
+    d5 --> dok["201 Nueva versión en borrador,<br/>se completa con B y se firma con C"]:::ok
+    d403 & d409 & d422 & dok --> f4((( ))):::fin
+  end
+
+
+  %% Enlaces invisibles: solo ordenan las particiones de izquierda a derecha
+  A ~~~ B ~~~ C ~~~ D
