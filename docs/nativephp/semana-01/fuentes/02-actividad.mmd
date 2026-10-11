@@ -1,0 +1,28 @@
+---
+title: "Actividad - Evaluacion y prototipo NativePHP"
+---
+flowchart TD
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef warn fill:#fff8e1,stroke:#8a6d00,color:#1f2a44
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  a0((Inicio)) --> a1["Seleccionar flujo HIS acotado"]
+  a1 --> a2["Definir criterios de viabilidad"]
+  a2 --> a3{"Entorno cumple prerequisitos NativePHP?"}:::dec
+  a3 -- No --> b1["Documentar bloqueo de entorno"]:::warn
+  b1 --> b2["Diseñar simulacion tecnica equivalente"]:::warn
+  a3 -- Si --> a4["Configurar prototipo NativePHP"]
+  b2 --> a5["Preparar datos ficticios o API controlada"]
+  a4 --> a5
+  a5 --> a6["Ejecutar flujo piloto"]
+  a6 --> a7{"Flujo ejecuta sin errores criticos?"}:::dec
+  a7 -- No --> e1["Registrar fallos tecnicos y limitaciones"]:::err
+  a7 -- Si --> a8["Registrar evidencia de ejecucion"]:::ok
+  e1 --> a9["Evaluar seguridad, rendimiento e integracion"]
+  a8 --> a9
+  a9 --> a10{"Riesgos aceptables para continuidad?"}:::dec
+  a10 -- Si --> ok1["Decision: viable o viable con restricciones"]:::ok
+  a10 -- No --> ok2["Decision: no recomendado por ahora"]:::warn
+  ok1 --> fin((Fin))
+  ok2 --> fin

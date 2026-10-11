@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="840" viewBox="0 0 1260 840">
+  <title>Secuencia - Evaluacion NativePHP</title>
+  <rect width="1260" height="840" fill="#ffffff"/>
+  <text x="630" y="32" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2a44">Secuencia - evaluacion y prototipo NativePHP</text>
+  <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#1f2a44" stroke-width="1.4"/></marker></defs>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#1f2a44" stroke="#2b4c7e" stroke-width="1.2">
+    <rect x="25" y="70" width="150" height="42" fill="#eef3fb"/><text x="100" y="95" text-anchor="middle" stroke="none">Investigador</text>
+    <rect x="225" y="70" width="150" height="42" fill="#eef3fb"/><text x="300" y="95" text-anchor="middle" stroke="none">Lider tecnico</text>
+    <rect x="425" y="70" width="150" height="42" fill="#eef3fb"/><text x="500" y="95" text-anchor="middle" stroke="none">NativePHP</text>
+    <rect x="625" y="70" width="150" height="42" fill="#eef3fb"/><text x="700" y="95" text-anchor="middle" stroke="none">API HIS</text>
+    <rect x="825" y="70" width="150" height="42" fill="#eef3fb"/><text x="900" y="95" text-anchor="middle" stroke="none">Storage local</text>
+    <rect x="1025" y="70" width="150" height="42" fill="#eef3fb"/><text x="1100" y="95" text-anchor="middle" stroke="none">Informe</text>
+  </g>
+  <g stroke="#8a8f98" stroke-dasharray="5 5">
+    <line x1="100" y1="112" x2="100" y2="800"/><line x1="300" y1="112" x2="300" y2="800"/><line x1="500" y1="112" x2="500" y2="800"/><line x1="700" y1="112" x2="700" y2="800"/><line x1="900" y1="112" x2="900" y2="800"/><line x1="1100" y1="112" x2="1100" y2="800"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#1f2a44" stroke="#1f2a44" stroke-width="1.3">
+    <line x1="100" y1="150" x2="300" y2="150" marker-end="url(#arr)"/><text x="200" y="142" text-anchor="middle" stroke="none">Proponer flujo piloto</text>
+    <line x1="300" y1="190" x2="100" y2="190" marker-end="url(#arr)" stroke-dasharray="4 4"/><text x="200" y="182" text-anchor="middle" stroke="none">Confirmar alcance</text>
+    <line x1="100" y1="240" x2="500" y2="240" marker-end="url(#arr)"/><text x="300" y="232" text-anchor="middle" stroke="none">Verificar prerequisitos</text>
+    <line x1="500" y1="290" x2="100" y2="290" marker-end="url(#arr)" stroke-dasharray="4 4"/><text x="300" y="282" text-anchor="middle" stroke="none">Resultado de entorno</text>
+    <line x1="100" y1="350" x2="500" y2="350" marker-end="url(#arr)"/><text x="300" y="342" text-anchor="middle" stroke="none">Configurar prototipo</text>
+    <line x1="500" y1="400" x2="700" y2="400" marker-end="url(#arr)"/><text x="600" y="392" text-anchor="middle" stroke="none">Solicitar datos ficticios</text>
+    <line x1="700" y1="450" x2="500" y2="450" marker-end="url(#arr)" stroke-dasharray="4 4"/><text x="600" y="442" text-anchor="middle" stroke="none">Respuesta piloto</text>
+    <line x1="500" y1="500" x2="900" y2="500" marker-end="url(#arr)"/><text x="700" y="492" text-anchor="middle" stroke="none">Guardar config no sensible</text>
+    <line x1="100" y1="570" x2="1100" y2="570" marker-end="url(#arr)"/><text x="600" y="562" text-anchor="middle" stroke="none">Registrar evidencia y riesgos</text>
+    <line x1="1100" y1="640" x2="100" y2="640" marker-end="url(#arr)" stroke-dasharray="4 4"/><text x="600" y="632" text-anchor="middle" stroke="none">Viable / restringido / no recomendado</text>
+    <line x1="100" y1="710" x2="300" y2="710" marker-end="url(#arr)"/><text x="200" y="702" text-anchor="middle" stroke="none">Entregar recomendacion</text>
+  </g>
+</svg>
