@@ -1,0 +1,151 @@
+---
+title: "Secuencia — Registro de médico, asociación de especialidad y consulta de disponibilidad"
+---
+sequenceDiagram
+  autonumber
+  actor AD as Administrador<br/>del hospital
+  actor RE as Recepcionista
+  participant UI as Vue SPA<br/>(DoctorForm · AvailabilitySearch)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as DoctorController<br/>AvailabilityController
+  participant S as DoctorService<br/>AvailabilityService
+  participant R as DoctorRepository<br/>(HOSPITAL)
+  participant HP as DoctorScheduleProvider<br/>«interfaz»
+  participant AP as AppointmentReader<br/>«interfaz» (lectura)
+  participant AUD as AuditLogger<br/>(HOSPITAL · local_access_audits)
+
+  rect rgb(238, 243, 251)
+  Note over AD,AUD: Escenario A — registrar médico con especialidad principal (UC-MED-01, 02, 03, 04, 07, 08)
+  AD->>UI: busca al usuario del hospital y captura licencia, valid_from y especialidad principal
+  UI->>MW: POST /api/v1/doctors<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin medicos.registrar
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-MED-07)
+    MW->>C: store(request)
+    C->>C: validar payload (StoreDoctorRequest)
+    alt faltan campos o formato inválido
+      C-->>UI: 422 errores por campo
+    else payload válido
+      C->>S: registrar(local_user_ref_id, licencia, valid_from, especialidad)
+      S->>R: usuario local: estado, vigencia y role_code
+      R-->>S: local_user_ref
+      break usuario inactivo, vencido o sin rol Medico
+        S-->>C: UsuarioNoElegible
+        C-->>UI: 422 USER_NOT_ELIGIBLE
+      end
+      S->>R: ¿perfil activo abierto del usuario? ¿licencia registrada?
+      R-->>S: sí / no
+      break ya registrado (UC-MED-03)
+        S-->>C: MedicoDuplicado
+        C-->>UI: 409 DOCTOR_ALREADY_REGISTERED / LICENSE_ALREADY_REGISTERED
+      end
+      S->>R: especialidad principal (UC-MED-04)
+      R-->>S: specialty + status
+      break especialidad inexistente o inactiva
+        S-->>C: EspecialidadInactiva
+        C-->>UI: 422 SPECIALTY_INACTIVE
+      end
+      S->>R: BEGIN (conexión hospital) · INSERT doctor_profiles (active)
+      S->>R: INSERT doctor_specialties (is_primary = true, valid_from)
+      S->>AUD: registrar("medico.registrado", administrador, perfil)
+      AUD->>R: INSERT local_access_audits (misma transacción)
+      alt violación UNIQUE por concurrencia (UC-MED-03)
+        R-->>S: unique_violation
+        S->>R: ROLLBACK
+        S-->>C: MedicoDuplicado
+        C-->>UI: 409 LICENSE_ALREADY_REGISTERED
+      else la auditoría falla
+        R-->>AUD: error
+        AUD-->>S: AuditoriaFallida
+        S->>R: ROLLBACK (no se crea el perfil)
+        S-->>C: AuditoriaNoDisponible
+        C-->>UI: 500 (no hay alta sin traza)
+      else todo correcto
+        S->>R: COMMIT (perfil + especialidad principal + auditoría)
+        S-->>C: médico registrado
+        C-->>UI: 201 Created (doctor_profile_id, especialidad principal)
+        UI-->>AD: médico registrado
+      end
+    end
+  end
+  end
+
+  rect rgb(232, 245, 233)
+  Note over AD,AUD: Escenario B — asociar especialidad adicional (UC-MED-02, 03, 04, 07, 08)
+  AD->>UI: elige especialidad, vigencia y si es principal
+  UI->>MW: POST /api/v1/doctors/{doctor}/specialties
+  alt sin medicos.asociar_especialidad
+    MW-->>UI: 403 (denegación trazada por RBAC)
+  else acceso válido (UC-MED-07)
+    MW->>C: attachSpecialty(doctor, request)
+    C->>S: asociar(doctor, especialidad, periodo, is_primary)
+    S->>R: perfil del médico (status, valid_from, valid_to) y especialidad (status)
+    R-->>S: perfil + especialidad
+    break médico no activo, periodo fuera de su vigencia o especialidad inactiva
+      S-->>C: AsociacionInvalida
+      C-->>UI: 409 DOCTOR_NOT_ACTIVE / 422 PERIOD_OUTSIDE_PROFILE / SPECIALTY_INACTIVE
+    end
+    S->>R: ¿misma especialidad solapada? ¿principal en el periodo?
+    R-->>S: conflictos
+    break hay conflicto (UC-MED-03)
+      S-->>C: ConflictoDeEspecialidad
+      C-->>UI: 409 SPECIALTY_ALREADY_ASSOCIATED / PRIMARY_SPECIALTY_CONFLICT
+    end
+    S->>R: BEGIN · INSERT doctor_specialties
+    S->>AUD: registrar("medico.especialidad_asociada", administrador, asociación)
+    AUD->>R: INSERT local_access_audits (misma transacción)
+    alt violación EXCLUDE por concurrencia o falla la auditoría
+      S->>R: ROLLBACK
+      S-->>C: ConflictoDeEspecialidad / AuditoriaNoDisponible
+      C-->>UI: 409 SPECIALTY_ALREADY_ASSOCIATED / 500
+    else todo correcto
+      S->>R: COMMIT (asociación + auditoría)
+      S-->>C: especialidad asociada
+      C-->>UI: 201 Created (doctor_specialty_id)
+      UI-->>AD: especialidad asociada con su vigencia
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over AD,AUD: Escenario C — consultar disponibilidad (UC-MED-04, 05, 06, 07). Solo lectura, sin transacción
+  RE->>UI: elige especialidad, rango de fechas y, opcional, un médico
+  UI->>MW: GET /api/v1/doctors/availability?specialty_id&from&to[&doctor_id]
+  alt sin medicos.ver_disponibilidad
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-MED-07)
+    MW->>C: availability(request)
+    C->>C: validar rango (desde ≥ hoy, hasta ≥ desde, máximo 14 días)
+    alt rango inválido
+      C-->>UI: 422 INVALID_DATE_RANGE
+    else rango válido
+      C->>S: consultar(especialidad, rango, médico?)
+      S->>R: especialidad + médicos con perfil y asociación vigentes en el rango
+      R-->>S: especialidad + médicos y periodos de vigencia
+      break especialidad inexistente o inactiva
+        S-->>C: EspecialidadInactiva
+        C-->>UI: 422 SPECIALTY_INACTIVE
+      end
+      alt ningún médico con la especialidad
+        S-->>C: lista vacía
+        C-->>UI: 200 [] + NO_DOCTORS_FOR_SPECIALTY
+      else hay médicos
+        loop por cada médico (UC-MED-06)
+          S->>HP: horarioPara(médico, rango)
+          alt sin horario configurado
+            HP-->>S: null
+            S->>S: marcar SCHEDULE_NOT_CONFIGURED
+          else horario vigente
+            HP-->>S: bloques de atención y duración de franja
+            S->>AP: citas scheduled / confirmed del médico en el rango
+            AP-->>S: intervalos ocupados
+            S->>S: franjas = horario − ocupadas − pasadas − fechas sin vigencia
+          end
+        end
+        S-->>C: disponibilidad por médico
+        C-->>UI: 200 OK (médicos, franjas libres, generated_at)
+        UI-->>RE: franjas libres por médico
+      end
+    end
+  end
+  end
