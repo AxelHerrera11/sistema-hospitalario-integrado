@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="980" viewBox="0 0 1160 980">
+  <title>Actividad - Ingreso de resultados de laboratorio</title>
+  <rect width="1160" height="980" fill="#ffffff"/>
+  <text x="580" y="32" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2a44">Actividad - captura y correccion controlada de resultados pendientes</text>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#1f2a44" stroke="#1f2a44" stroke-width="1.2">
+    <circle cx="580" cy="70" r="12" fill="#1f2a44"/>
+    <rect x="420" y="105" width="320" height="48" rx="4" fill="#eef3fb" stroke="#2b4c7e"/>
+    <text x="580" y="134" text-anchor="middle" stroke="none">Consultar bandeja de resultados pendientes</text>
+    <polygon points="580,185 720,255 580,325 440,255" fill="#fff8e1" stroke="#8a6d00"/>
+    <text x="580" y="252" text-anchor="middle" stroke="none">JWT, tenant y permiso</text>
+    <text x="580" y="270" text-anchor="middle" stroke="none">validos?</text>
+    <rect x="820" y="232" width="210" height="48" rx="4" fill="#fdecea" stroke="#c62828"/>
+    <text x="925" y="261" text-anchor="middle" stroke="none" fill="#8e1c1c">401/403 acceso rechazado</text>
+    <polygon points="580,360 720,430 580,500 440,430" fill="#fff8e1" stroke="#8a6d00"/>
+    <text x="580" y="427" text-anchor="middle" stroke="none">Orden y muestra</text>
+    <text x="580" y="445" text-anchor="middle" stroke="none">aptas?</text>
+    <rect x="160" y="407" width="210" height="48" rx="4" fill="#fdecea" stroke="#c62828"/>
+    <text x="265" y="436" text-anchor="middle" stroke="none" fill="#8e1c1c">409 estado invalido</text>
+    <rect x="420" y="535" width="320" height="48" rx="4" fill="#eef3fb" stroke="#2b4c7e"/>
+    <text x="580" y="564" text-anchor="middle" stroke="none">Ingresar valor, unidad y observacion</text>
+    <polygon points="580,620 720,690 580,760 440,690" fill="#fff8e1" stroke="#8a6d00"/>
+    <text x="580" y="687" text-anchor="middle" stroke="none">Valor valido y motivo</text>
+    <text x="580" y="705" text-anchor="middle" stroke="none">si es correccion?</text>
+    <rect x="820" y="666" width="210" height="48" rx="4" fill="#fdecea" stroke="#c62828"/>
+    <text x="925" y="695" text-anchor="middle" stroke="none" fill="#8e1c1c">422 datos invalidos</text>
+    <rect x="420" y="795" width="320" height="48" rx="4" fill="#eef3fb" stroke="#2b4c7e"/>
+    <text x="580" y="824" text-anchor="middle" stroke="none">Crear resultado/version y auditar</text>
+    <rect x="405" y="880" width="350" height="48" rx="4" fill="#e6f4ea" stroke="#2e7d32"/>
+    <text x="580" y="909" text-anchor="middle" stroke="none" fill="#1b5e20">Disponible o pendiente de revision</text>
+  </g>
+  <g stroke="#1f2a44" stroke-width="1.4" fill="none" marker-end="url(#arrow)">
+    <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#1f2a44" stroke-width="1.4"/></marker></defs>
+    <line x1="580" y1="82" x2="580" y2="105"/>
+    <line x1="580" y1="153" x2="580" y2="185"/>
+    <line x1="720" y1="255" x2="820" y2="255"/>
+    <line x1="580" y1="325" x2="580" y2="360"/>
+    <line x1="440" y1="430" x2="370" y2="430"/>
+    <line x1="580" y1="500" x2="580" y2="535"/>
+    <line x1="580" y1="583" x2="580" y2="620"/>
+    <line x1="720" y1="690" x2="820" y2="690"/>
+    <line x1="580" y1="760" x2="580" y2="795"/>
+    <line x1="580" y1="843" x2="580" y2="880"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#1f2a44">
+    <text x="755" y="245">No</text>
+    <text x="595" y="348">Si</text>
+    <text x="385" y="420">No</text>
+    <text x="595" y="523">Si</text>
+    <text x="755" y="680">No</text>
+    <text x="595" y="783">Si</text>
+  </g>
+</svg>

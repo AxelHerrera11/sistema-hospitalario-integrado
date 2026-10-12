@@ -1,0 +1,40 @@
+---
+title: "Actividad - Ingreso de resultados: captura y correccion controlada"
+---
+flowchart TD
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  a0((Inicio)) --> a1["Tecnico consulta bandeja de resultados pendientes"]
+  a1 --> a2{"JWT, tenant y permiso validos?"}:::dec
+  a2 -- No --> e401["401/403: acceso rechazado"]:::err
+  a2 -- Si --> a3{"Hay pruebas pendientes para el tenant?"}:::dec
+  a3 -- No --> ok0["Mostrar bandeja vacia"]:::ok
+  a3 -- Si --> a4["Seleccionar prueba y muestra"]
+  a4 --> a5{"Orden y muestra aptas para resultado?"}:::dec
+  a5 -- No --> e409["409: estado no permite captura"]:::err
+  a5 -- Si --> a6["Ingresar valor, unidad y observacion"]
+  a6 --> a7{"Es correccion de resultado existente?"}:::dec
+  a7 -- No --> a8["Validar formato, unidad y rango"]
+  a7 -- Si --> a9{"Motivo de correccion informado?"}:::dec
+  a9 -- No --> e422m["422: motivo obligatorio"]:::err
+  a9 -- Si --> a10["Conservar version anterior"]
+  a10 --> a8
+  a8 --> a11{"Valor valido segun catalogo?"}:::dec
+  a11 -- No --> e422["422: valor, unidad o rango invalido"]:::err
+  a11 -- Si --> a12["Crear resultado o nueva version"]
+  a12 --> a13["Registrar auditoria de captura/correccion"]
+  a13 --> a14{"Auditoria registrada?"}:::dec
+  a14 -- No --> e500["500: revertir operacion sin traza"]:::err
+  a14 -- Si --> a15{"Resultado requiere revision bioquimica?"}:::dec
+  a15 -- Si --> ok1["Guardar como pendiente de revision y notificar bioquimico"]:::ok
+  a15 -- No --> ok2["Guardar como disponible y notificar medico solicitante"]:::ok
+  e401 --> fin((Fin))
+  e409 --> fin
+  e422m --> fin
+  e422 --> fin
+  e500 --> fin
+  ok0 --> fin
+  ok1 --> fin
+  ok2 --> fin

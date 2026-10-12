@@ -1,0 +1,53 @@
+---
+title: "Secuencia - Ingreso de resultados de laboratorio"
+---
+sequenceDiagram
+  autonumber
+  actor Tecnico as Tecnico de laboratorio
+  participant Vue as Vue / Bandeja de laboratorio
+  participant Ctrl as ResultEntryController
+  participant Svc as ResultEntryService
+  participant Repo as ResultRepository
+  participant Audit as AuditLogger
+  participant Notify as NotificationService
+  participant DB as PostgreSQL HOSPITAL
+
+  Tecnico->>Vue: Abrir resultados pendientes
+  Vue->>Ctrl: GET /api/v1/lab/results/pending
+  Ctrl->>Svc: listPending(user, tenant)
+  Svc->>Repo: buscar pendientes por tenant y estado
+  Repo->>DB: SELECT ordenes/muestras/pruebas pendientes
+  DB-->>Repo: pendientes
+  Repo-->>Svc: pendientes
+  Svc-->>Ctrl: pendientes filtrados
+  Ctrl-->>Vue: 200 lista de pendientes
+
+  Tecnico->>Vue: Ingresar valor, unidad y observacion
+  Vue->>Ctrl: POST /api/v1/lab/results
+  Ctrl->>Svc: capture(command)
+  Svc->>Repo: cargar orden, muestra, prueba y resultado previo
+  Repo->>DB: SELECT contexto de laboratorio
+  DB-->>Repo: contexto
+  Repo-->>Svc: contexto
+
+  alt orden o muestra no apta
+    Svc-->>Ctrl: error de estado
+    Ctrl-->>Vue: 409 RESULT_NOT_ALLOWED
+  else valor, unidad o rango invalido
+    Svc-->>Ctrl: error de validacion
+    Ctrl-->>Vue: 422 INVALID_RESULT_VALUE
+  else correccion sin motivo
+    Svc-->>Ctrl: motivo obligatorio
+    Ctrl-->>Vue: 422 CORRECTION_REASON_REQUIRED
+  else captura/correccion valida
+    Svc->>Repo: crear resultado o nueva version
+    Repo->>DB: INSERT result / result_version
+    DB-->>Repo: resultado persistido
+    Repo-->>Svc: resultado
+    Svc->>Audit: registrar captura/correccion sin datos clinicos innecesarios
+    Audit-->>Svc: trace_id
+    Svc->>Notify: notificar disponibilidad o revision
+    Notify-->>Svc: notificacion registrada
+    Svc-->>Ctrl: resultado + trace_id
+    Ctrl-->>Vue: 201/200 resultado registrado
+  end

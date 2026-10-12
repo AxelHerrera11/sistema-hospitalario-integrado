@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="780" viewBox="0 0 1220 780">
+  <title>Casos de uso - Ingreso de resultados de laboratorio</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M1,1 L9,5 L1,9" fill="none" stroke="#1f2a44" stroke-width="1.4"/>
+    </marker>
+  </defs>
+  <rect width="1220" height="780" fill="#ffffff"/>
+  <text x="610" y="34" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2a44">Casos de uso - Captura y correccion controlada de resultados pendientes</text>
+  <rect x="250" y="70" width="730" height="610" rx="6" fill="#fbfcfe" stroke="#1f2a44" stroke-width="1.6"/>
+  <text x="615" y="98" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="#1f2a44">Sistema Hospitalario Integrado - Modulo Ingreso de resultados</text>
+
+  <g font-family="Arial, Helvetica, sans-serif" fill="#1f2a44" stroke="#2b4c7e" stroke-width="1.4">
+    <ellipse cx="445" cy="170" rx="120" ry="35" fill="#eef3fb"/>
+    <text x="445" y="160" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-01</text>
+    <text x="445" y="180" font-size="13" text-anchor="middle" stroke="none">Consultar pendientes</text>
+
+    <ellipse cx="445" cy="280" rx="120" ry="35" fill="#eef3fb"/>
+    <text x="445" y="270" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-02</text>
+    <text x="445" y="290" font-size="13" text-anchor="middle" stroke="none">Capturar resultado</text>
+
+    <ellipse cx="700" cy="280" rx="125" ry="35" fill="#eef3fb"/>
+    <text x="700" y="270" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-03</text>
+    <text x="700" y="290" font-size="13" text-anchor="middle" stroke="none">Validar unidad/rango</text>
+
+    <ellipse cx="700" cy="390" rx="125" ry="35" fill="#eef3fb"/>
+    <text x="700" y="380" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-04</text>
+    <text x="700" y="400" font-size="13" text-anchor="middle" stroke="none">Guardar resultado</text>
+
+    <ellipse cx="445" cy="500" rx="120" ry="35" fill="#eef3fb"/>
+    <text x="445" y="490" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-05</text>
+    <text x="445" y="510" font-size="13" text-anchor="middle" stroke="none">Corregir resultado</text>
+
+    <ellipse cx="700" cy="500" rx="125" ry="35" fill="#eef3fb"/>
+    <text x="700" y="490" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-06</text>
+    <text x="700" y="510" font-size="13" text-anchor="middle" stroke="none">Versionar y auditar</text>
+
+    <ellipse cx="700" cy="610" rx="125" ry="35" fill="#eef3fb"/>
+    <text x="700" y="600" font-size="12" font-weight="700" text-anchor="middle" fill="#2b4c7e" stroke="none">UC-LAB-07</text>
+    <text x="700" y="620" font-size="13" text-anchor="middle" stroke="none">Notificar disponibilidad</text>
+
+    <ellipse cx="880" cy="280" rx="80" ry="28" fill="#fff8e1" stroke="#8a6d00"/>
+    <text x="880" y="285" font-size="12" text-anchor="middle" stroke="none">UC-LAB-08</text>
+  </g>
+
+  <g stroke="#1f2a44" stroke-width="1.4" fill="none">
+    <line x1="565" y1="280" x2="575" y2="280" marker-end="url(#arrow)"/>
+    <line x1="700" y1="315" x2="700" y2="355" marker-end="url(#arrow)"/>
+    <line x1="565" y1="500" x2="575" y2="500" marker-end="url(#arrow)"/>
+    <line x1="700" y1="535" x2="700" y2="575" marker-end="url(#arrow)"/>
+    <path d="M792 300 C822 318 846 315 866 302" marker-end="url(#arrow)"/>
+  </g>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="11" fill="#1f2a44">
+    <text x="548" y="262" text-anchor="middle" font-style="italic">include</text>
+    <text x="720" y="338" text-anchor="middle" font-style="italic">include</text>
+    <text x="548" y="482" text-anchor="middle" font-style="italic">include</text>
+    <text x="720" y="558" text-anchor="middle" font-style="italic">include</text>
+    <text x="840" y="322" text-anchor="middle" font-style="italic">extend error</text>
+  </g>
+
+  <g font-family="Arial, Helvetica, sans-serif" fill="#1f2a44" stroke="#1f2a44" stroke-width="1.5">
+    <circle cx="115" cy="175" r="11" fill="#fff"/>
+    <line x1="115" y1="186" x2="115" y2="222"/>
+    <line x1="92" y1="198" x2="138" y2="198"/>
+    <line x1="115" y1="222" x2="98" y2="252"/>
+    <line x1="115" y1="222" x2="132" y2="252"/>
+    <text x="115" y="278" font-size="13" font-weight="700" text-anchor="middle" stroke="none">Tecnico de laboratorio</text>
+
+    <circle cx="115" cy="475" r="11" fill="#fff"/>
+    <line x1="115" y1="486" x2="115" y2="522"/>
+    <line x1="92" y1="498" x2="138" y2="498"/>
+    <line x1="115" y1="522" x2="98" y2="552"/>
+    <line x1="115" y1="522" x2="132" y2="552"/>
+    <text x="115" y="578" font-size="13" font-weight="700" text-anchor="middle" stroke="none">Bioquimico</text>
+
+    <circle cx="1090" cy="595" r="11" fill="#fff"/>
+    <line x1="1090" y1="606" x2="1090" y2="642"/>
+    <line x1="1067" y1="618" x2="1113" y2="618"/>
+    <line x1="1090" y1="642" x2="1073" y2="672"/>
+    <line x1="1090" y1="642" x2="1107" y2="672"/>
+    <text x="1090" y="698" font-size="13" font-weight="700" text-anchor="middle" stroke="none">Medico solicitante</text>
+  </g>
+  <g stroke="#1f2a44" stroke-width="1.3" fill="none">
+    <line x1="150" y1="205" x2="335" y2="174"/>
+    <line x1="150" y1="215" x2="335" y2="275"/>
+    <line x1="150" y1="505" x2="335" y2="498"/>
+    <line x1="150" y1="515" x2="575" y2="500"/>
+    <line x1="1048" y1="610" x2="825" y2="610"/>
+  </g>
+
+  <rect x="250" y="700" width="730" height="46" fill="#fff8d6" stroke="#8a7a2a"/>
+  <text x="265" y="728" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#1f2a44">Fuera de alcance: recepcion de muestras, catalogo de pruebas, validacion final por bioquimico y alertas criticas.</text>
+</svg>
