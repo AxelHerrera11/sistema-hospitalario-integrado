@@ -1,32 +1,56 @@
 ---
 title: "Actividad - traslado o alta con liberación consistente de cama"
+config:
+  theme: base
+  look: classic
+  themeVariables:
+    background: "#FFFFFF"
+    primaryColor: "#EAF2FF"
+    primaryBorderColor: "#203453"
+    primaryTextColor: "#203453"
+    secondaryColor: "#FDECEC"
+    tertiaryColor: "#FFF6D5"
+    lineColor: "#203453"
+    edgeLabelBackground: "#FFFFFF"
+    titleColor: "#203453"
+    fontFamily: "Arial, sans-serif"
+    fontSize: "17px"
+  flowchart:
+    curve: linear
+    nodeSpacing: 48
+    rankSpacing: 54
+    diagramPadding: 28
+    useMaxWidth: false
 ---
-%%{init: {"theme":"base","look":"classic","themeVariables":{"fontFamily":"Arial, sans-serif"}}}%%
 flowchart TD
-  classDef ok fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
-  classDef err fill:#FDECEC,stroke:#B3261E,color:#7F1D1D
-  classDef dec fill:#FFF8E1,stroke:#8A6D00,color:#4E3D00
-  classDef tx fill:#EEF4FF,stroke:#315B8A,color:#183B63
+  classDef main fill:#EAF2FF,stroke:#203453,color:#203453,stroke-width:2px
+  classDef err fill:#FDECEC,stroke:#203453,color:#203453,stroke-width:2px
+  classDef dec fill:#FFF6D5,stroke:#203453,color:#203453,stroke-width:2px
+  classDef note fill:#FFF6D5,stroke:#203453,color:#203453,stroke-width:2px
 
-  I([Inicio]) --> S[Recibir solicitud con operación<br/>y estancia origen esperada]
+  I([Inicio]):::main --> S[Recibir operación y estancia esperada;<br/>destino y reason si es traslado]:::main
   S --> A{¿Autorizada?}:::dec
-  A -- No --> E1[Rechazar antes de transacción]:::err --> F1([Fin])
-  A -- Sí --> T[Determinar T al ejecutar]
-  T --> B[BEGIN HOSPITAL<br/>bloquear y releer episodio y estancia]:::tx
-  B --> V{¿Episodio abierto, estancia actual = esperada<br/>y T produce intervalos válidos?}:::dec
-  V -- No --> R1[ROLLBACK, liberar bloqueos<br/>y rechazar]:::err --> F2([Fin])
+  A -- No --> E1[Rechazar antes de transacción]:::err --> F1([Fin]):::main
+  A -- Sí --> B[Propuesta: BEGIN HOSPITAL · SELECT FOR UPDATE<br/>episodio, estancia y destino si aplica]:::main
+  B --> T[Fijar una T timestamptz y reutilizarla]:::main
+  T --> V{¿Inpatient abierto, estancia actual = esperada<br/>y T es posterior a ambos inicios?}:::dec
+  V -- No --> R1[ROLLBACK, liberar bloqueos<br/>y rechazar]:::err --> F2([Fin]):::main
   V -- Sí --> O{¿Operación?}:::dec
 
-  O -- Traslado UC-TA-01 --> D{"¿Destino operativo y sin bed_stays<br/>solapados en [T, infinito)?"}:::dec
-  D -- No --> R2[ROLLBACK, liberar bloqueos<br/>y rechazar destino]:::err --> F3([Fin])
-  D -- Sí --> M1[Cerrar estancia origen en T<br/>y crear estancia destino desde T]:::tx
-  M1 --> P[Episodio permanece abierto]
+  O -- Traslado UC-TA-01 --> D{"¿Reason no vacío; destino distinto, existente,<br/>available propuesto y libre por GiST en [T, infinito)?"}:::dec
+  D -- No --> R2[ROLLBACK, liberar bloqueos<br/>y rechazar destino]:::err --> F3([Fin]):::main
+  D -- Sí --> M1["Cerrar origen [inicio,T) y crear destino<br/>[T,infinito) en el mismo episodio"]:::main
+  M1 --> P[Episodio permanece abierto]:::note
 
-  O -- Alta UC-TA-02 --> M2[Cerrar estancia y episodio en T<br/>en la misma transacción]:::tx
+  O -- Alta UC-TA-02 --> M2[Cerrar estancia y episodio en T<br/>en la misma transacción]:::main
   P --> X{¿Fallo confirmado<br/>antes de COMMIT?}:::dec
   M2 --> X
-  X -- Sí --> R3[ROLLBACK, liberar bloqueos<br/>y responder error]:::err --> F4([Fin])
-  X -- No --> C[COMMIT HOSPITAL]:::tx
-  C --> Q{¿Resultado confirmado<br/>para el cliente?}:::dec
-  Q -- Sí --> OK[Responder traslado o alta registrado]:::ok --> F5([Fin])
-  Q -- No, conexión perdida --> U[Resultado incierto:<br/>consultar estado antes de reintentar]:::err --> F6([Fin])
+  X -- Sí --> R3[ROLLBACK, liberar bloqueos<br/>y responder error]:::err --> F4([Fin]):::main
+  X -- No --> C[COMMIT HOSPITAL]:::main
+  C --> Q{¿Resultado del COMMIT?}:::dec
+  Q -- Éxito confirmado --> OK[Responder traslado o alta registrado]:::main --> F5([Fin]):::main
+  Q -- Fallo confirmado --> RC[Cerrar la transacción;<br/>ROLLBACK si sigue activa]:::err
+  RC --> EC[Responder error]:::err --> F6([Fin]):::main
+  Q -- Incierto: conexión perdida --> U[No garantizar ROLLBACK;<br/>consultar estado antes de reintentar]:::err --> F7([Fin]):::main
+
+  linkStyle default stroke:#203453,stroke-width:2px,color:#203453

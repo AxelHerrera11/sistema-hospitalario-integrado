@@ -46,8 +46,8 @@ Desde la raíz del repositorio:
 
 ```bash
 java -jar <ruta-a-plantuml.jar> -tsvg docs/traslados-altas/semana-01/fuentes/01-casos-de-uso.puml -o ..
-npx -y @mermaid-js/mermaid-cli -i docs/traslados-altas/semana-01/fuentes/02-actividad.mmd -o docs/traslados-altas/semana-01/02-actividad.svg -b transparent
-npx -y @mermaid-js/mermaid-cli -i docs/traslados-altas/semana-01/fuentes/03-secuencia.mmd -o docs/traslados-altas/semana-01/03-secuencia.svg -b transparent
+npx -y @mermaid-js/mermaid-cli -i docs/traslados-altas/semana-01/fuentes/02-actividad.mmd -o docs/traslados-altas/semana-01/02-actividad.svg -b "#FFFFFF"
+npx -y @mermaid-js/mermaid-cli -i docs/traslados-altas/semana-01/fuentes/03-secuencia.mmd -o docs/traslados-altas/semana-01/03-secuencia.svg -b "#FFFFFF"
 ```
 
 El futuro PR irá hacia `develop` con `Refs #9`.

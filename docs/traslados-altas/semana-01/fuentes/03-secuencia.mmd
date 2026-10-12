@@ -1,7 +1,47 @@
 ---
 title: "Secuencia - traslado o alta con consistencia transaccional"
+config:
+  theme: base
+  look: classic
+  themeVariables:
+    background: "#FFFFFF"
+    primaryColor: "#EAF2FF"
+    primaryBorderColor: "#203453"
+    primaryTextColor: "#203453"
+    secondaryColor: "#FDECEC"
+    tertiaryColor: "#FFF6D5"
+    lineColor: "#203453"
+    actorBkg: "#EAF2FF"
+    actorBorder: "#203453"
+    actorTextColor: "#203453"
+    actorLineColor: "#203453"
+    signalColor: "#203453"
+    signalTextColor: "#203453"
+    labelBoxBkgColor: "#FDECEC"
+    labelBoxBorderColor: "#203453"
+    labelTextColor: "#203453"
+    loopTextColor: "#203453"
+    noteBkgColor: "#FFF6D5"
+    noteBorderColor: "#203453"
+    noteTextColor: "#203453"
+    activationBkgColor: "#EAF2FF"
+    activationBorderColor: "#203453"
+    titleColor: "#203453"
+    fontFamily: "Arial, sans-serif"
+    fontSize: "17px"
+  sequence:
+    diagramMarginX: 48
+    diagramMarginY: 32
+    actorMargin: 70
+    width: 230
+    height: 72
+    boxMargin: 12
+    noteMargin: 14
+    messageMargin: 42
+    mirrorActors: true
+    useMaxWidth: false
+    wrap: true
 ---
-%%{init: {"theme":"base","look":"classic","themeVariables":{"fontFamily":"Arial, sans-serif"}}}%%
 sequenceDiagram
   autonumber
   actor P as Personal autorizado
@@ -10,48 +50,71 @@ sequenceDiagram
   participant S as Servicio traslados/altas (propuesto)
   participant H as HOSPITAL (existente)<br/>care_episodes · bed_stays · beds
 
-  P->>UI: Solicitar operación, episodio,<br/>estancia esperada, destino si aplica
+  P->>UI: Solicitar operación, episodio, estancia esperada,<br/>destino y reason si es traslado
   UI->>AUT: Validar identidad y permiso
   alt No autorizado
-    AUT-->>UI: Rechazo
-    UI-->>P: Operación rechazada
+    rect rgb(253, 236, 236)
+      AUT-->>UI: Rechazo
+      UI-->>P: Operación rechazada
+    end
   else Autorizado
     AUT-->>UI: Autorizado
     UI->>S: Registrar traslado (UC-TA-01)<br/>o alta (UC-TA-02)
-    S->>S: Determinar T al ejecutar
-    S->>H: BEGIN y bloquear/releer<br/>episodio + estancia actual
+    S->>H: Propuesta: BEGIN y SELECT FOR UPDATE de episodio,<br/>estancia actual y destino si aplica
     H-->>S: Estado actual
-    break Episodio/estancia inválidos, solicitud desactualizada o T inválido
-      S->>H: ROLLBACK (libera bloqueos)
-      S-->>UI: Rechazo
-      UI-->>P: No se realizó la operación
+    S->>S: Fijar una T timestamptz, validar que sea<br/>posterior a los inicios y reutilizarla
+    break No inpatient/abierto, estancia inválida, solicitud desactualizada o T inválido
+      rect rgb(253, 236, 236)
+        S->>H: ROLLBACK (libera bloqueos)
+        S-->>UI: Rechazo
+        UI-->>P: No se realizó la operación
+      end
     end
     alt Traslado (UC-TA-01)
-      S->>H: Validar estado operativo y ausencia<br/>de solape bed_stays en [T, infinito)
+      S->>S: Validar reason no vacío y destino distinto
+      S->>H: Validar destino existente, status available (propuesto)<br/>y sin solape bed_stays en [T, infinito) (GiST existente)
       H-->>S: Resultado de disponibilidad
-      break Destino no disponible
-        S->>H: ROLLBACK (libera bloqueos)
-        S-->>UI: Rechazo de destino
-        UI-->>P: No se realizó el traslado
+      break Reason vacío, destino igual al origen, inexistente, no operativo o solapado
+        rect rgb(253, 236, 236)
+          S->>H: ROLLBACK (libera bloqueos)
+          S-->>UI: Rechazo del traslado
+          UI-->>P: No se realizó el traslado
+        end
       end
-      S->>H: UPDATE estancia origen ended_at=T<br/>INSERT estancia destino started_at=T
+      S->>H: UPDATE origen [inicio,T), INSERT destino<br/>[T,infinito), mismo episodio, reason y actorRef
+      Note over S,H: FOR UPDATE es propuesto, índice único y GiST existen en HOSPITAL
       Note over S,H: El episodio permanece abierto
     else Alta (UC-TA-02)
       S->>H: UPDATE estancia ended_at=T<br/>UPDATE episodio status=closed, ended_at=T
     end
     alt Fallo confirmado antes de COMMIT
-      S->>H: ROLLBACK (libera bloqueos)
-      S-->>UI: Error sin cambios parciales
-      UI-->>P: Operación fallida
+      rect rgb(253, 236, 236)
+        S->>H: ROLLBACK (libera bloqueos)
+        S-->>UI: Error sin cambios parciales
+        UI-->>P: Operación fallida
+      end
     else Escrituras preparadas
       S->>H: COMMIT
-      alt Commit confirmado
+      alt Éxito confirmado
         H-->>S: Confirmación
         S-->>UI: Operación registrada
         UI-->>P: Éxito
-      else Conexión perdida durante COMMIT
-        S-->>UI: Resultado incierto
-        UI-->>P: Consultar estado antes de reintentar
+      else Fallo confirmado
+        rect rgb(253, 236, 236)
+          H-->>S: COMMIT rechazado con resultado conocido
+          S->>H: Cerrar transacción y hacer<br/>ROLLBACK si sigue activa
+          H-->>S: Transacción cerrada
+          S-->>UI: Error sin cambios confirmados
+          UI-->>P: Operación fallida
+        end
+      else Resultado incierto por conexión perdida
+        rect rgb(253, 236, 236)
+          Note over S,H: No se puede garantizar ROLLBACK ni inferir el resultado
+          S->>H: Consultar estado antes de reintentar<br/>cuando haya conexión
+          H-->>S: Estado de la operación
+          S-->>UI: Resultado incierto
+          UI-->>P: No reintentar hasta confirmar el estado
+        end
       end
     end
   end

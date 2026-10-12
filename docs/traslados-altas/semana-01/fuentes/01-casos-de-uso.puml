@@ -1,40 +1,66 @@
 @startuml
-left to right direction
-skinparam backgroundColor transparent
+title ASII-08 - Casos de uso: traslados, altas y liberación de camas
+top to bottom direction
+skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam packageStyle rectangle
+skinparam roundcorner 12
+skinparam defaultFontName Arial
+skinparam defaultFontSize 16
+skinparam defaultFontColor #203453
+skinparam ArrowColor #203453
+skinparam ArrowThickness 1.5
+skinparam actor {
+  BorderColor #203453
+  FontColor #203453
+}
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #203453
+  FontColor #203453
+}
 skinparam usecase {
-  BackgroundColor #EEF4FF
-  BorderColor #315B8A
-  ArrowColor #315B8A
+  BackgroundColor #EAF2FF
+  BorderColor #203453
+  FontColor #203453
+}
+skinparam legend {
+  BackgroundColor #FFF6D5
+  BorderColor #203453
+  FontColor #203453
 }
 
 actor "Personal autorizado\npara traslado" as Traslado
 actor "Personal autorizado\npara alta" as Alta
+Traslado -[hidden]down- Alta
 
 rectangle "Sistema Hospitalario Integrado" {
   usecase "UC-TA-01\nRegistrar traslado interno" as UC01
   usecase "UC-TA-02\nRegistrar alta hospitalaria" as UC02
-  usecase "Validar autorización, episodio,\nestancia esperada y T" as Validar
-  usecase "Validar destino para\n[T, infinito)" as Destino
+  usecase "Validar autorización, episodio inpatient,\nestancia esperada y T única" as Validar
+  usecase "Validar reason y destino distinto, available\ny libre para [T, infinito)" as Destino
   usecase "Persistir cambio atómico\nen HOSPITAL" as Atomico
-  UC01 -[hidden]down- UC02
-  Validar -[hidden]down- Destino
-  Destino -[hidden]down- Atomico
+  Validar -[hidden]down- UC01
+  UC01 -[hidden]right- UC02
+  UC01 -[hidden]down- Destino
+  UC02 -[hidden]down- Atomico
+  Destino -[hidden]right- Atomico
 }
 
-Traslado --> UC01
-Alta --> UC02
-UC01 .right.> Validar : <<include>>
-UC02 .right.> Validar : <<include>>
-UC01 .right.> Destino : <<include>>
-UC01 .right.> Atomico : <<include>>
-UC02 .right.> Atomico : <<include>>
+Traslado -down-> UC01
+Alta -down-> UC02
+UC01 .up.> Validar : <<include>>
+UC02 .up.> Validar : <<include>>
+UC01 .down.> Destino : <<include>>
+UC01 .down.> Atomico : <<include>>
+UC02 .down.> Atomico : <<include>>
 
 legend bottom
-  Autorización interna propuesta; roles concretos pendientes.
-  Ocupación derivada de bed_stays; beds.status no basta.
-  Traslado: cerrar origen y crear destino; alta: cerrar estancia y episodio.
-  Rollback solo es una excepción.
+  |= Criterio |= Regla aplicada |
+  | Autorización | Componente interno propuesto; roles concretos pendientes. |
+  | Existente | reason no vacío, estancia abierta única y exclusión GiST de solapes. |
+  | Propuesto | Bloqueos FOR UPDATE y exigir beds.status=available; el estado solo no basta. |
+  | Atomicidad | Traslado: cerrar origen y crear destino; alta: cerrar estancia y episodio. |
+  | Tiempo | Fijar una T tras bloquear, validar ambos inicios y reutilizarla. |
 endlegend
 @enduml
