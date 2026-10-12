@@ -1,0 +1,15 @@
+classDiagram
+  class LaboratoryResultService {
+    +listPending()
+    +captureResult()
+    +validateValue()
+    +correctResult()
+    +auditChange()
+    +notifyAvailability()
+  }
+  class ResultEntryController
+  class CorrectionController
+  class PendingResultsPage
+  ResultEntryController --> LaboratoryResultService
+  CorrectionController --> LaboratoryResultService
+  PendingResultsPage --> LaboratoryResultService
