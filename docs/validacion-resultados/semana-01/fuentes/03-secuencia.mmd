@@ -1,0 +1,50 @@
+---
+title: "Secuencia - Validacion de resultados por bioquimico"
+---
+sequenceDiagram
+  autonumber
+  actor Bioquimico
+  participant Vue as Vue / Bandeja de validacion
+  participant Ctrl as ResultValidationController
+  participant Svc as ResultValidationService
+  participant Repo as ResultRepository
+  participant Audit as AuditLogger
+  participant Notify as NotificationService
+  participant DB as PostgreSQL HOSPITAL
+
+  Bioquimico->>Vue: Abrir pendientes de validacion
+  Vue->>Ctrl: GET /api/v1/lab/results/to-validate
+  Ctrl->>Svc: listToValidate(user, tenant)
+  Svc->>Repo: buscar resultados pendientes
+  Repo->>DB: SELECT resultados preliminares
+  DB-->>Repo: resultados
+  Repo-->>Svc: resultados
+  Svc-->>Ctrl: resultados filtrados
+  Ctrl-->>Vue: 200 lista
+
+  Bioquimico->>Vue: Revisar resultado y decidir
+  Vue->>Ctrl: POST /api/v1/lab/results/{id}/validation
+  Ctrl->>Svc: validateResult(command)
+  Svc->>Repo: cargar resultado, prueba, muestra y versiones
+  Repo->>DB: SELECT contexto de validacion
+  DB-->>Repo: contexto
+  Repo-->>Svc: contexto
+
+  alt resultado no validable
+    Svc-->>Ctrl: estado no permitido
+    Ctrl-->>Vue: 409 RESULT_NOT_VALIDATABLE
+  else decision requiere observacion y no fue enviada
+    Svc-->>Ctrl: observacion obligatoria
+    Ctrl-->>Vue: 422 VALIDATION_NOTE_REQUIRED
+  else decision valida
+    Svc->>Repo: actualizar estado y decision
+    Repo->>DB: UPDATE resultado / INSERT decision
+    DB-->>Repo: decision persistida
+    Repo-->>Svc: resultado actualizado
+    Svc->>Audit: registrar decision trazable
+    Audit-->>Svc: trace_id
+    Svc->>Notify: notificar medico o tecnico
+    Notify-->>Svc: notificacion registrada
+    Svc-->>Ctrl: resultado + trace_id
+    Ctrl-->>Vue: 200 decision registrada
+  end

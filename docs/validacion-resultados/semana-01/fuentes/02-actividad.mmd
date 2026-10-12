@@ -1,0 +1,39 @@
+---
+title: "Actividad - Validacion de resultados por bioquimico"
+---
+flowchart TD
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  a0((Inicio)) --> a1["Bioquimico consulta bandeja de pendientes"]
+  a1 --> a2{"JWT, tenant y permiso de bioquimico validos?"}:::dec
+  a2 -- No --> e403["401/403 acceso rechazado"]:::err
+  a2 -- Si --> a3{"Hay resultados pendientes de validacion?"}:::dec
+  a3 -- No --> ok0["Mostrar bandeja vacia"]:::ok
+  a3 -- Si --> a4["Abrir detalle del resultado"]
+  a4 --> a5{"Resultado pertenece al tenant y esta en estado validable?"}:::dec
+  a5 -- No --> e409["404/409 resultado no validable"]:::err
+  a5 -- Si --> a6["Revisar valor, unidad, rango, observaciones y versiones"]
+  a6 --> a7{"Decision del bioquimico"}:::dec
+  a7 -- Aprobar --> a8["Marcar resultado como aprobado y disponible"]
+  a7 -- Rechazar --> a9["Solicitar observacion de rechazo"]
+  a7 -- Devolver --> a10["Solicitar observacion para correccion"]
+  a9 --> a11{"Observacion informada?"}:::dec
+  a10 --> a11
+  a11 -- No --> e422["422 observacion obligatoria"]:::err
+  a11 -- Si --> a12["Cambiar estado y conservar decision"]
+  a8 --> a13["Registrar auditoria de la decision"]
+  a12 --> a13
+  a13 --> a14{"Auditoria registrada?"}:::dec
+  a14 -- No --> e500["500 revertir decision sin traza"]:::err
+  a14 -- Si --> a15{"Resultado aprobado?"}:::dec
+  a15 -- Si --> ok1["Notificar disponibilidad al medico solicitante"]:::ok
+  a15 -- No --> ok2["Notificar al tecnico para correccion o cierre"]:::ok
+  e403 --> fin((Fin))
+  e409 --> fin
+  e422 --> fin
+  e500 --> fin
+  ok0 --> fin
+  ok1 --> fin
+  ok2 --> fin

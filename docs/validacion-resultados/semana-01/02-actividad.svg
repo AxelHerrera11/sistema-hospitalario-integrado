@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="980" viewBox="0 0 1160 980">
+  <title>Actividad - Validacion de resultados por bioquimico</title>
+  <rect width="1160" height="980" fill="#ffffff"/>
+  <text x="580" y="32" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#1f2a44">Actividad - revision, aprobacion o rechazo trazable de resultados</text>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#1f2a44" stroke-width="1.4"/></marker></defs>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#1f2a44" stroke="#1f2a44" stroke-width="1.2">
+    <circle cx="580" cy="70" r="12" fill="#1f2a44"/>
+    <rect x="420" y="105" width="320" height="48" rx="4" fill="#eef3fb" stroke="#2b4c7e"/><text x="580" y="134" text-anchor="middle" stroke="none">Consultar pendientes de validacion</text>
+    <polygon points="580,185 720,255 580,325 440,255" fill="#fff8e1" stroke="#8a6d00"/><text x="580" y="252" text-anchor="middle" stroke="none">Permiso de bioquimico</text><text x="580" y="270" text-anchor="middle" stroke="none">valido?</text>
+    <rect x="820" y="232" width="210" height="48" rx="4" fill="#fdecea" stroke="#c62828"/><text x="925" y="261" text-anchor="middle" stroke="none" fill="#8e1c1c">401/403 rechazado</text>
+    <rect x="420" y="360" width="320" height="48" rx="4" fill="#eef3fb" stroke="#2b4c7e"/><text x="580" y="389" text-anchor="middle" stroke="none">Abrir detalle y revisar contexto</text>
+    <polygon points="580,445 720,515 580,585 440,515" fill="#fff8e1" stroke="#8a6d00"/><text x="580" y="512" text-anchor="middle" stroke="none">Estado validable y</text><text x="580" y="530" text-anchor="middle" stroke="none">coherente?</text>
+    <rect x="160" y="492" width="210" height="48" rx="4" fill="#fdecea" stroke="#c62828"/><text x="265" y="521" text-anchor="middle" stroke="none" fill="#8e1c1c">409 no validable</text>
+    <polygon points="580,620 720,690 580,760 440,690" fill="#fff8e1" stroke="#8a6d00"/><text x="580" y="687" text-anchor="middle" stroke="none">Decision</text><text x="580" y="705" text-anchor="middle" stroke="none">aprobar/rechazar/devolver</text>
+    <rect x="820" y="666" width="210" height="48" rx="4" fill="#fdecea" stroke="#c62828"/><text x="925" y="695" text-anchor="middle" stroke="none" fill="#8e1c1c">422 falta observacion</text>
+    <rect x="420" y="795" width="320" height="48" rx="4" fill="#eef3fb" stroke="#2b4c7e"/><text x="580" y="824" text-anchor="middle" stroke="none">Guardar decision y auditar</text>
+    <rect x="405" y="880" width="350" height="48" rx="4" fill="#e6f4ea" stroke="#2e7d32"/><text x="580" y="909" text-anchor="middle" stroke="none" fill="#1b5e20">Notificar medico o tecnico</text>
+  </g>
+  <g stroke="#1f2a44" stroke-width="1.4" fill="none" marker-end="url(#arrow)">
+    <line x1="580" y1="82" x2="580" y2="105"/><line x1="580" y1="153" x2="580" y2="185"/><line x1="720" y1="255" x2="820" y2="255"/><line x1="580" y1="325" x2="580" y2="360"/><line x1="580" y1="408" x2="580" y2="445"/><line x1="440" y1="515" x2="370" y2="515"/><line x1="580" y1="585" x2="580" y2="620"/><line x1="720" y1="690" x2="820" y2="690"/><line x1="580" y1="760" x2="580" y2="795"/><line x1="580" y1="843" x2="580" y2="880"/>
+  </g>
+</svg>
