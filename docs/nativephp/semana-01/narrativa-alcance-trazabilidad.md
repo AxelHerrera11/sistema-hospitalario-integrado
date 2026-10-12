@@ -11,7 +11,7 @@ Evaluar de forma controlada si **NativePHP** puede usarse como una extension mov
 - Seleccion de un flujo HIS pequeno y verificable para prototipo.
 - Revision de prerequisitos tecnicos: PHP, Laravel, NativePHP, sistema operativo y empaquetado.
 - Definicion de criterios de viabilidad: seguridad, rendimiento, experiencia de usuario, mantenimiento e integracion.
-- Configuracion inicial del prototipo o simulacion documentada si el entorno no permite ejecucion completa.
+- Configuracion inicial del prototipo NativePHP o simulacion documentada si el entorno no permite ejecucion completa.
 - Consumo de datos ficticios o API controlada.
 - Registro de hallazgos, limitaciones y riesgos.
 - Recomendacion final: viable, viable con restricciones o no recomendado.
@@ -32,19 +32,23 @@ Evaluar de forma controlada si **NativePHP** puede usarse como una extension mov
 - El flujo piloto debe ser pequeno: por ejemplo consulta de pendientes, dashboard simple o lectura de resultados.
 - Cualquier almacenamiento local debe justificarse y evitar informacion sensible.
 - La decision de viabilidad debe basarse en evidencia observable, no solo en opinion.
+- La evidencia de una simulacion no se presenta como ejecucion real de NativePHP.
+- Si NativePHP no puede ejecutarse en el entorno disponible o quedan fallos criticos sin resolver, la viabilidad tecnica queda pendiente o con restricciones; no se declara como validada en produccion.
 
 ## Trazabilidad entre los diagramas
 
-| UC | Objetivo | Actividad (decision o paso) | Secuencia (mensajes) |
+| UC | Objetivo | Actividad (decision o paso) | Secuencia (mensajes trazables) |
 |---|---|---|---|
-| UC-NP-01 | Definir flujo piloto | "Seleccionar flujo HIS acotado" | 1-2 |
-| UC-NP-02 | Verificar entorno NativePHP | Decision "Entorno cumple prerequisitos" | 3-6 |
-| UC-NP-03 | Configurar prototipo | "Crear estructura o simulacion del prototipo" | 7-9 |
-| UC-NP-04 | Ejecutar flujo HIS | "Consumir datos ficticios/API controlada" | 10-13 |
-| UC-NP-05 | Registrar hallazgos | "Documentar evidencia y limitaciones" | 14-15 |
-| UC-NP-06 | Evaluar seguridad y riesgos | Decision "Riesgos aceptables" | 16-18 |
-| UC-NP-07 | Emitir decision de viabilidad | "Clasificar resultado final" | 19-21 |
-| UC-NP-08 | Reportar al lider tecnico | "Entregar informe y recomendacion" | 22-23 |
+| UC-NP-01 | Definir flujo piloto | "Seleccionar flujo HIS acotado" | Proponer flujo HIS acotado; confirmar alcance piloto |
+| UC-NP-02 | Verificar entorno NativePHP | Decision "Entorno cumple prerequisitos" | Verificar prerequisitos NativePHP |
+| UC-NP-03 | Resolver el estado del entorno | Rama no: "Bloqueo tecnico" y "Registrar causa y alternativa de simulacion"; rama si: "Configurar prototipo" | Bloqueo tecnico; registrar causa y alternativa de simulacion; configurar prototipo |
+| UC-NP-04 | Ejecutar o simular el flujo HIS | "Solicitar datos ficticios/controlados" y "Respuesta del flujo piloto" | Solicitar datos ficticios/controlados; respuesta del flujo piloto |
+| UC-NP-05 | Mantener configuracion local segura | "Guardar configuracion no sensible" y "Confirmacion" | Guardar configuracion no sensible; confirmacion |
+| UC-NP-06 | Registrar evidencia del resultado | "Mostrar flujo ejecutado" y "Registrar evidencia tecnica" | Mostrar flujo ejecutado; registrar evidencia tecnica |
+| UC-NP-07 | Evaluar riesgos | "Evaluar seguridad, rendimiento e integracion" | Evaluar seguridad, rendimiento e integracion |
+| UC-NP-08 | Emitir y comunicar decision | "Resultado viable / restringido / no recomendado"; "Entregar recomendacion"; "Aprobar continuidad o cierre" | Resultado viable / restringido / no recomendado; entregar recomendacion; aprobar continuidad o cierre |
+
+La secuencia contiene 16 mensajes posibles al contar ambas ramas del bloque `alt`; una ejecucion concreta recorre solo la rama que corresponda. Los mensajes se trazan por nombre para evitar referencias numericas ambiguas.
 
 ## Flujo principal
 
@@ -53,7 +57,7 @@ Evaluar de forma controlada si **NativePHP** puede usarse como una extension mov
 3. Verifica si el entorno local cumple prerequisitos de NativePHP.
 4. Si el entorno no cumple, documenta bloqueo y alternativa de simulacion.
 5. Configura un prototipo acotado o una maqueta tecnica.
-6. Ejecuta el flujo con datos ficticios o API controlada.
+6. Ejecuta el flujo con datos ficticios o API controlada; si solo existe una simulacion, la identifica como tal.
 7. Registra hallazgos de experiencia, seguridad, rendimiento e integracion.
 8. Emite recomendacion de viabilidad para que el lider tecnico decida continuidad.
 
@@ -63,6 +67,7 @@ Evaluar de forma controlada si **NativePHP** puede usarse como una extension mov
 - `Viable con restricciones`: requiere ajustes de seguridad, empaquetado, rendimiento o integracion.
 - `No recomendado`: los riesgos o costos superan el beneficio para el HIS.
 - `Bloqueado por entorno`: no se pudo ejecutar NativePHP, pero se documenta causa y alternativa.
+- `Viabilidad pendiente`: la simulacion aporta evidencia de diseño, pero NativePHP no fue ejecutado realmente o persisten fallos criticos.
 
 ## Dependencias con otros modulos
 

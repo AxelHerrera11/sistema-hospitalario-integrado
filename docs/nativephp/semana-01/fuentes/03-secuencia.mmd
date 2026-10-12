@@ -17,6 +17,7 @@ sequenceDiagram
   alt entorno no cumple
     App-->>Inv: Bloqueo tecnico
     Inv->>Report: Registrar causa y alternativa de simulacion
+    Note over Inv,Report: La simulacion no equivale a una ejecucion real de NativePHP; la viabilidad queda pendiente o restringida.
   else entorno cumple
     Inv->>App: Configurar prototipo
     App->>API: Solicitar datos ficticios/controlados
@@ -24,7 +25,7 @@ sequenceDiagram
     App->>Local: Guardar configuracion no sensible
     Local-->>App: Confirmacion
     App-->>Inv: Mostrar flujo ejecutado
-    Inv->>Report: Registrar evidencia tecnica
+    Inv->>Report: Registrar evidencia de ejecucion real
   end
 
   Inv->>Report: Evaluar seguridad, rendimiento e integracion

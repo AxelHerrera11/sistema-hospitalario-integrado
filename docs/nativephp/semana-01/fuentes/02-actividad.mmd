@@ -13,12 +13,12 @@ flowchart TD
   a3 -- No --> b1["Documentar bloqueo de entorno"]:::warn
   b1 --> b2["Diseñar simulacion tecnica equivalente"]:::warn
   a3 -- Si --> a4["Configurar prototipo NativePHP"]
-  b2 --> a5["Preparar datos ficticios o API controlada"]
+  b2 --> a5["Preparar datos ficticios o API controlada (simulacion)"]:::warn
   a4 --> a5
   a5 --> a6["Ejecutar flujo piloto"]
   a6 --> a7{"Flujo ejecuta sin errores criticos?"}:::dec
-  a7 -- No --> e1["Registrar fallos tecnicos y limitaciones"]:::err
-  a7 -- Si --> a8["Registrar evidencia de ejecucion"]:::ok
+  a7 -- No --> e1["Registrar fallos tecnicos, restricciones y viabilidad pendiente"]:::err
+  a7 -- Si --> a8["Registrar evidencia de ejecucion real"]:::ok
   e1 --> a9["Evaluar seguridad, rendimiento e integracion"]
   a8 --> a9
   a9 --> a10{"Riesgos aceptables para continuidad?"}:::dec
