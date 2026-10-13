@@ -1,0 +1,12 @@
+sequenceDiagram
+  participant BIO as Cliente bioquimico
+  participant API as Validation API
+  participant RES as Results API
+  participant DB as Validation DB
+  BIO->>API: POST /api/v1/lab-results/{id}/validation
+  API->>RES: GET resultado + version
+  RES-->>API: valor/version/tenant
+  API->>API: permiso y transicion de estado
+  API->>DB: guardar decision y auditoria
+  DB-->>API: decision persistida
+  API-->>BIO: 201 decision + correlation_id
