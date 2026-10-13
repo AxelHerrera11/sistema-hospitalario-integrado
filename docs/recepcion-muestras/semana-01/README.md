@@ -51,10 +51,10 @@ El objetivo es que **cada muestra que entra al laboratorio quede identificada si
 
 ### Descripción
 
-- **Validaciones previas:** acceso (401/403) y orden válida (404/409).
+- **Validaciones previas:** acceso (401/403), payload (422) y orden válida (404/409).
 - **Identidad:** si la etiqueta no coincide con la orden, el rechazo es **obligatorio** (no admite excepción).
 - **Requisitos:** se revisan tipo, contenedor, volumen, tiempo desde la toma y temperatura. Si alguno falla, se rechaza con un motivo del catálogo.
-- **Aceptación:** se genera un código y se reintenta hasta 3 veces si choca con uno existente. Nunca se acepta una muestra sin código (500). Si falla la impresión, se reimprime **el mismo** código.
+- **Aceptación:** se genera un código y se reintenta hasta 3 veces si choca con uno existente (solo se reintenta por colisión). Nunca se acepta una muestra sin código (500). La etiqueta se imprime **después de responder el 201**; si la impresora falla, la muestra ya quedó guardada (sin rollback) y se reimprime **el mismo** código.
 - **Rechazo:** el ítem vuelve a "pendiente de nueva muestra" y se notifica al solicitante. Si la notificación falla, queda en cola y el rechazo ya está registrado.
 
 ## 3. Diagrama de secuencia
@@ -67,7 +67,7 @@ El objetivo es que **cada muestra que entra al laboratorio quede identificada si
 
 - **Participantes:** Vue (`RecepcionMuestras`), middlewares, `SpecimenController`, `ReceiveSpecimenService`, `LabOrderGateway` «interfaz», `LabTestRequirements` «interfaz», `SpecimenCodeGenerator`, `SpecimenRepository` (HOSPITAL) y `Notifier` «interfaz».
 - **Validadores por tipo de muestra:** sangre, orina, hisopado, etc. Se modelan como validadores intercambiables, base del principio LSP que se trabaja en la Semana 2.
-- **Bloques:** `alt` para 401/403, 404, 409, rechazo (con `alt` interno por fallo de notificación) y aceptación, con `loop` de hasta 3 intentos de código único.
+- **Bloques:** `alt` para 401/403, 422 (payload inválido), 404, 409, rechazo (con `alt` interno por fallo de notificación) y aceptación; `loop` de reintento por colisión de código (hasta el primer guardado exitoso, máx. 3); impresión y reimpresión de la etiqueta **después del 201**, con `alt` por falla de impresora.
 
 ## 4. Narrativa de alcance y trazabilidad
 
