@@ -1,0 +1,89 @@
+---
+title: "Actividad — Registro de alergia y emisión de alerta al consultar el expediente"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+  classDef warn fill:#fff3e0,stroke:#b26a00,color:#7a4a00
+  classDef tx fill:#eef3fb,stroke:#3a5a8c,color:#1f2a44
+
+  subgraph A["A · Registrar alergia (UC-ALG-01, 02, 03, 07, 08)"]
+    direction TB
+    ai(( )):::ini --> a1["Médico o enfermería abre el expediente<br/>y elige Registrar alergia (UC-ALG-01)"]
+    a1 --> a2["Capturar alérgeno (código o nombre), tipo,<br/>severidad, reacción y fecha de inicio"]
+    a2 --> a3{"¿JWT, tenant y permiso<br/>alergias.registrar?<br/>(UC-ALG-07)"}:::dec
+    a3 -- No --> a401["401/403 + denegación<br/>registrada por RBAC"]:::err
+    a3 -- Sí --> a6{"¿Alérgeno presente, tipo y severidad<br/>del catálogo, reacción no vacía<br/>y fecha de inicio no futura? (UC-ALG-02)"}:::dec
+    a6 -- No --> a422["422 Errores por campo<br/>(UC-ALG-03)"]:::err
+    a6 -- Sí --> a4{"¿El paciente existe en el tenant<br/>y no está fallecido?"}:::dec
+    a4 -- No --> a404["404 Paciente no encontrado /<br/>409 PATIENT_INACTIVE"]:::err
+    a4 -- Sí --> a5{"¿Tiene relación de cuidado?<br/>médico con care_assignment activa<br/>o enfermería del servicio (UC-ALG-07)"}:::dec
+    a5 -- No --> a403["403 Sin relación de cuidado<br/>con el paciente"]:::err
+    a5 -- Sí --> a7{"¿Ya existe una alergia activa<br/>equivalente (mismo tipo y alérgeno)?"}:::dec
+    a7 -- Sí --> a409["409 ALLERGY_DUPLICATED<br/>muestra la alergia existente (UC-ALG-03)"]:::err
+    a7 -- No --> a8["BEGIN conexión hospital:<br/>INSERT allergies (status = active,<br/>verified_by = usuario) + INSERT<br/>local_access_audits + outbox_events (UC-ALG-08)"]:::tx
+    a8 --> a9{"¿INSERT y auditoría<br/>correctos?"}:::dec
+    a9 -- "Índice único violado<br/>(registro concurrente)" --> a409b["ROLLBACK + 409<br/>ALLERGY_DUPLICATED"]:::err
+    a9 -- "Falla de auditoría" --> a500["ROLLBACK + 500<br/>no hay alergia sin traza"]:::err
+    a9 -- Sí --> aok["COMMIT · 201 Alergia registrada<br/>la alerta del expediente se actualiza"]:::ok
+    a401 & a404 & a403 & a422 & a409 & a409b & a500 & aok --> af((( ))):::fin
+  end
+
+  subgraph B["B · Consultar expediente con alerta visual (UC-ALG-04, 05, 07, 08)"]
+    direction TB
+    bi(( )):::ini --> b1["Usuario abre el expediente<br/>del paciente (UC-ALG-04)"]
+    b1 --> b2{"¿JWT, tenant y permiso<br/>alergias.ver? (UC-ALG-07)"}:::dec
+    b2 -- No --> b401["401/403 · el expediente<br/>no se muestra"]:::err
+    b2 -- Sí --> b3{"¿El paciente existe<br/>en el tenant?"}:::dec
+    b3 -- No --> b404["404 Paciente no encontrado"]:::err
+    b3 -- Sí --> b4["Consultar alergias activas<br/>del paciente (UC-ALG-05)"]
+    b4 --> b5{"¿Consulta de alergias<br/>exitosa?"}:::dec
+    b5 -- No --> b6["Banner gris persistente:<br/>«Alergias no disponibles —<br/>verifique antes de prescribir»<br/>(falla segura, nunca «sin alergias»)"]:::warn
+    b5 -- Sí --> b7{"¿Hay alergias<br/>activas?"}:::dec
+    b7 -- No --> b8["Indicador neutro:<br/>«Sin alergias registradas»"]
+    b7 -- Sí --> b9{"¿Alguna severe o<br/>life_threatening?"}:::dec
+    b9 -- Sí --> b10["Banner rojo no descartable:<br/>alérgeno, reacción y severidad,<br/>ordenado por severidad"]:::err
+    b9 -- No --> b11["Banner ámbar: alergias leves,<br/>moderadas, desconocidas<br/>o intolerancias"]:::warn
+    b6 & b8 & b10 & b11 --> b12["Registrar la lectura en<br/>local_access_audits (UC-ALG-08)"]:::tx
+    b12 --> b13{"¿Auditoría de lectura<br/>registrada?"}:::dec
+    b13 -- No --> b14["Log de aplicación + reintento;<br/>la consulta clínica no se bloquea"]:::warn
+    b13 -- Sí --> bok["200 Expediente con<br/>alerta visual de alergias"]:::ok
+    b14 --> bok
+    b401 & b404 & bok --> bf((( ))):::fin
+  end
+
+  subgraph C["C · Resolver o inactivar alergia (UC-ALG-06, 07, 08)"]
+    direction TB
+    ci(( )):::ini --> c1["Médico selecciona la alergia y elige<br/>Resolver (ya no la presenta) o Inactivar<br/>(registrada por error), con motivo y fecha"]
+    c1 --> c2{"¿JWT, tenant y permiso<br/>alergias.resolver? (UC-ALG-07)"}:::dec
+    c2 -- No --> c401["401/403"]:::err
+    c2 -- Sí --> c3{"¿La alergia existe en el tenant<br/>y está active?"}:::dec
+    c3 -- No --> c404["404 No existe /<br/>409 ALLERGY_NOT_ACTIVE"]:::err
+    c3 -- Sí --> c4{"¿Es médico con care_assignment<br/>activa en un episodio del paciente?"}:::dec
+    c4 -- No --> c403["403 Solo el médico tratante<br/>resuelve alergias"]:::err
+    c4 -- Sí --> c5{"¿Motivo escrito y fecha de resolución<br/>no futura y ≥ fecha de inicio?"}:::dec
+    c5 -- No --> c422["422 Errores de validación"]:::err
+    c5 -- Sí --> c6["BEGIN conexión hospital:<br/>UPDATE allergies (status, resolved_at)<br/>+ auditoría con motivo (UC-ALG-08)"]:::tx
+    c6 --> c7{"¿Auditoría<br/>registrada?"}:::dec
+    c7 -- No --> c500["ROLLBACK + 500"]:::err
+    c7 -- Sí --> cok["COMMIT · 200 Alergia resuelta o<br/>inactiva; sale de la alerta visual"]:::ok
+    c401 & c404 & c403 & c422 & c500 & cok --> cf((( ))):::fin
+  end
+
+  subgraph D["D · Verificar alergias activas para Prescripciones (UC-ALG-09)"]
+    direction TB
+    di(( )):::ini --> d1["Prescripciones (ASII-15) solicita las<br/>alergias activas del paciente"]
+    d1 --> d2{"¿Token de servicio, tenant y<br/>permiso alergias.ver?"}:::dec
+    d2 -- No --> d401["401/403"]:::err
+    d2 -- Sí --> d3{"¿Paciente existe y la<br/>consulta responde?"}:::dec
+    d3 -- "Paciente inexistente" --> d404["404"]:::err
+    d3 -- "Base no disponible" --> d503["503 ALLERGIES_UNAVAILABLE:<br/>Prescripciones no guarda ni firma"]:::err
+    d3 -- Sí --> dok["200 Lista de alergias activas:<br/>código, nombre, tipo, severidad<br/>(lista vacía ≠ sin alergias conocidas)"]:::ok
+    d401 & d404 & d503 & dok --> df((( ))):::fin
+  end
+
+  %% Enlaces invisibles: solo ordenan las particiones de izquierda a derecha
+  A ~~~ B ~~~ C ~~~ D
