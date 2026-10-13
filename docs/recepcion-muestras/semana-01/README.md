@@ -1,0 +1,83 @@
+# Recepción de muestras y códigos identificadores — Semana 1
+
+## Ficha de la asignación
+
+- **Estudiante:** López Fajardo, María de los Ángeles (`Mar-03`)
+- **Módulo:** Recepción de muestras y códigos identificadores
+- **Semana:** Semana 1 — Conceptos generales, orientación a objetos y UML
+- **Tarea individual:** Modele el proceso «recepción, identificación inequívoca y rechazo controlado de muestra». Casos de uso: delimitar actores y objetivo; el de actividad debe incluir decisiones, excepciones y resultado; el de secuencia debe mostrar participantes, mensajes, validaciones y respuesta. Mantenga trazabilidad entre los tres diagramas.
+- **Entregable / evidencia:** UML de casos de uso y narrativa de alcance.
+- **Estructura:** Sistema Hospitalario Integrado 2026 | Semanas 1–15.
+
+---
+
+## Contexto arquitectónico
+
+- **Backend:** Laravel 12 (PHP 8.2+), JWT y RBAC por permisos (`muestras.recibir`, `muestras.rechazar`, `muestras.ver`).
+- **Base de datos HOSPITAL (PostgreSQL):** las tablas `lab_test`, `lab_order`, `lab_order_item` y `specimen` están planificadas en la porción H6 del esquema. Este módulo es dueño de `specimen`.
+- **Multitenancy:** el código identificador es único por hospital (tenant `X-Tenant-ID`).
+- **Frontend:** Vue 3, Pinia y Axios (pantalla de recepción con lector de código e impresión de etiqueta).
+- **Endpoints preliminares** (se formalizan en la Semana 5):
+  - `POST /api/v1/lab/specimens` (recibir: acepta o rechaza)
+  - `GET /api/v1/lab/specimens/{código}`
+
+---
+
+## 1. Diagrama de casos de uso
+
+![Diagrama de casos de uso](./01-casos-de-uso.svg)
+
+[Abrir el diagrama de casos de uso en SVG](./01-casos-de-uso.svg)
+
+### Descripción
+
+El objetivo es que **cada muestra que entra al laboratorio quede identificada sin ambigüedad o rechazada con un motivo registrado**.
+
+- **Actor principal:** *Técnico de laboratorio (recepción)*.
+- **Actores secundarios (sistemas):**
+  - *Órdenes de laboratorio:* dice qué se pidió y para quién.
+  - *Catálogo de pruebas:* define los requisitos de la muestra.
+  - *Notificaciones internas:* avisa al solicitante de un rechazo.
+  - *RBAC:* controla el acceso.
+  - *Ingreso de resultados:* consulta la muestra por código.
+- **UC-MUE-01 (Recibir muestra):** incluye `<<include>>` localizar la orden (UC-MUE-02), verificar la identidad con dos identificadores (UC-MUE-03), validar los requisitos (UC-MUE-04) y validar el acceso (UC-MUE-09).
+- **UC-MUE-05 (Aceptar y generar código)** y **UC-MUE-06 (Rechazar con motivo)** extienden `<<extend>>` a UC-MUE-01 según la muestra sea conforme o no. El rechazo incluye la notificación al solicitante (UC-MUE-08).
+
+## 2. Diagrama de actividades
+
+![Diagrama de actividades](./02-actividad.svg)
+
+[Abrir el diagrama de actividades en SVG](./02-actividad.svg)
+
+### Descripción
+
+- **Validaciones previas:** acceso (401/403), payload (422) y orden válida (404/409).
+- **Identidad:** si la etiqueta no coincide con la orden, el rechazo es **obligatorio** (no admite excepción).
+- **Requisitos:** se revisan tipo, contenedor, volumen, tiempo desde la toma y temperatura. Si alguno falla, se rechaza con un motivo del catálogo.
+- **Aceptación:** se genera un código y se reintenta hasta 3 veces si choca con uno existente (solo se reintenta por colisión). Nunca se acepta una muestra sin código (500). La etiqueta se imprime **después de responder el 201**; si la impresora falla, la muestra ya quedó guardada (sin rollback) y se reimprime **el mismo** código.
+- **Rechazo:** el ítem vuelve a "pendiente de nueva muestra" y se notifica al solicitante. Si la notificación falla, queda en cola y el rechazo ya está registrado.
+
+## 3. Diagrama de secuencia
+
+![Diagrama de secuencia](./03-secuencia.svg)
+
+[Abrir el diagrama de secuencia en SVG](./03-secuencia.svg)
+
+### Descripción
+
+- **Participantes:** Vue (`RecepcionMuestras`), middlewares, `SpecimenController`, `ReceiveSpecimenService`, `LabOrderGateway` «interfaz», `LabTestRequirements` «interfaz», `SpecimenCodeGenerator`, `SpecimenRepository` (HOSPITAL) y `Notifier` «interfaz».
+- **Validadores por tipo de muestra:** sangre, orina, hisopado, etc. Se modelan como validadores intercambiables, base del principio LSP que se trabaja en la Semana 2.
+- **Bloques:** `alt` para 401/403, 422 (payload inválido), 404, 409, rechazo (con `alt` interno por fallo de notificación) y aceptación; `loop` de reintento por colisión de código (hasta el primer guardado exitoso, máx. 3); impresión y reimpresión de la etiqueta **después del 201**, con `alt` por falla de impresora.
+
+## 4. Narrativa de alcance y trazabilidad
+
+La narrativa completa y la tabla de trazabilidad están en [narrativa-alcance-trazabilidad.md](./narrativa-alcance-trazabilidad.md).
+
+## Fuentes editables
+
+- Casos de uso: el SVG es editable en draw.io o Inkscape.
+- Actividad y secuencia: [`fuentes/02-actividad.mmd`](./fuentes/02-actividad.mmd) y [`fuentes/03-secuencia.mmd`](./fuentes/03-secuencia.mmd) (Mermaid).
+
+## Declaración de uso de IA
+
+Se usó Claude (Anthropic) para proponer la estructura de los diagramas, generar los SVG y redactar el primer borrador de este documento a partir del repositorio del proyecto y del enunciado de la tarea. La estudiante revisó los actores, las reglas de recepción y rechazo, el formato del código y la trazabilidad, y es responsable del contenido final.

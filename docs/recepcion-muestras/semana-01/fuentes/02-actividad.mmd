@@ -1,0 +1,47 @@
+---
+title: "Actividad — Recepción, identificación inequívoca y rechazo controlado de muestra"
+---
+flowchart TD
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+
+  i(( )):::ini --> m1["Técnico escanea o busca la orden<br/>y el ítem (UC-MUE-02)"]
+  m1 --> m2{"¿Rol con permiso<br/>muestras.recibir<br/>en el tenant? (UC-MUE-09)"}:::dec
+  m2 -- No --> m403["401/403 + denegación<br/>registrada por RBAC"]:::err
+  m2 -- Sí --> m3{"¿Orden e ítem existen<br/>y esperan muestra?"}:::dec
+  m3 -- No --> m404["404 Orden no encontrada /<br/>409 Ítem cancelado o ya recibido"]:::err
+  m3 -- Sí --> m4["Verificar identidad con dos identificadores:<br/>nombre completo + fecha de nacimiento<br/>o código de paciente (UC-MUE-03)"]
+  m4 --> m5{"¿La etiqueta coincide<br/>con la orden?"}:::dec
+  m5 -- No --> mr0["Motivo obligatorio:<br/>identificación discordante"]
+  m5 -- Sí --> m6["Validar requisitos contra el catálogo:<br/>tipo, contenedor, volumen,<br/>tiempo desde la toma, temperatura<br/>(UC-MUE-04)"]
+  m6 --> m7{"¿Cumple todos<br/>los requisitos?"}:::dec
+  m7 -- No --> mr1["Elegir motivo del catálogo de rechazo<br/>(hemolizada, coagulada, volumen<br/>insuficiente, contenedor incorrecto...)"]
+  m7 -- Sí --> m8["Generar código identificador<br/>(UC-MUE-05)"]
+  m8 --> m9{"¿Código único<br/>en el hospital?"}:::dec
+  m9 -- No --> m9b{"¿Menos de<br/>3 intentos?"}:::dec
+  m9b -- Sí --> m8
+  m9b -- No --> m500["500 No se acepta<br/>una muestra sin código"]:::err
+  m9 -- Sí --> m10["Guardar muestra accepted<br/>con usuario y hora"]
+  m10 --> mok["201 Muestra aceptada<br/>y lista para análisis"]:::ok
+  mok --> m11["Imprimir etiqueta<br/>(después del 201)"]
+  m11 --> m12{"¿Impresión<br/>correcta?"}:::dec
+  m12 -- Sí --> f
+  m12 -- "No (falla de impresora;<br/>la muestra ya quedó guardada)" --> m13{"¿Reintentar<br/>impresión?"}:::dec
+  m13 -- Sí --> m14["Reimprimir el mismo código<br/>(no se genera otro)"]
+  m14 --> m11
+  m13 -- No --> mpend["Muestra registrada;<br/>etiqueta pendiente de reimpresión"]
+  mr0 --> mr2["Registrar rechazo (UC-MUE-06): motivo,<br/>usuario y hora; el ítem vuelve a<br/>pendiente de nueva muestra"]
+  mr1 --> mr2
+  mr2 --> mr3["Notificar al solicitante (UC-MUE-08)"]
+  mr3 --> mr4{"¿Notificación<br/>entregada?"}:::dec
+  mr4 -- No --> mr5["Dejar en cola de reintento;<br/>el rechazo ya quedó registrado"]
+  mr4 -- Sí --> mrok["201 Rechazo registrado"]:::ok
+  mr5 --> mrok
+  m403 --> f((( ))):::fin
+  m404 --> f
+  m500 --> f
+  mpend --> f
+  mrok --> f
