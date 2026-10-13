@@ -1,0 +1,46 @@
+---
+title: "Después de OCP — reglas extensibles con AllergyAlertRule"
+---
+classDiagram
+  direction LR
+  class AllergyController {
+    +index(patient)
+  }
+  class AllergyAlertEvaluator {
+    -rules : iterable~AllergyAlertRule~
+    +evaluate(allergies) AlertResult
+  }
+  class AllergyAlertRule {
+    <<interface>>
+    +appliesTo(Allergy) bool
+    +level() AlertLevel
+  }
+  class SevereAllergyRule {
+    severe · life_threatening → Red
+  }
+  class NonSevereAllergyRule {
+    mild · moderate · unknown → Amber
+  }
+  class LatexAllergyRule {
+    <<extensión>>
+    látex → Red
+  }
+  class AlertLevel {
+    <<enumeration>>
+    Neutral
+    Amber
+    Red
+    Unavailable
+  }
+  class AllergyRepository {
+    <<interface>>
+    +listarActivas(patientId)
+  }
+  AllergyController --> AllergyAlertEvaluator
+  AllergyController --> AllergyRepository
+  AllergyAlertEvaluator --> AllergyAlertRule : recorre
+  AllergyAlertRule <|.. SevereAllergyRule
+  AllergyAlertRule <|.. NonSevereAllergyRule
+  AllergyAlertRule <|.. LatexAllergyRule
+  AllergyAlertEvaluator ..> AlertLevel
+  note for LatexAllergyRule "Requisito nuevo: clase nueva + registro<br>en el contenedor (tag allergy.alert_rules)"
