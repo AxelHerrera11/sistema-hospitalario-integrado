@@ -1,0 +1,55 @@
+sequenceDiagram
+    autonumber
+    actor U as Usuario autorizado
+    participant UI as Dashboard Vue
+    participant MW as Autenticación / hospital / permiso
+    participant C as OccupancyDashboardController
+    participant S as OccupancyAggregator
+    participant R as OccupancyReadRepository
+    participant DB as PostgreSQL HOSPITAL
+
+    U->>UI: Abrir dashboard y aplicar filtro opcional de sala
+    UI->>MW: Solicitar resumen de ocupación(filtros)
+    alt Sesión ausente o token inválido
+        MW-->>UI: 401 Autenticación requerida
+        UI-->>U: Mostrar acceso requerido
+    else Hospital ausente o desconocido
+        MW-->>UI: 400/404 Contexto hospitalario inválido
+        UI-->>U: Mostrar error de hospital
+    else Sin permiso de consulta
+        MW-->>UI: 403 Acceso denegado
+        UI-->>U: Mostrar acceso denegado
+    else Acceso autorizado
+        MW->>C: consultar(filtros, hospital activo)
+        C->>C: Validar filtros
+        alt Filtros inválidos
+            C-->>UI: 422 Errores por campo
+            UI-->>U: Solicitar corrección
+        else Filtros válidos
+            C->>C: Fijar fecha y hora de corte
+            C->>S: consolidar(filtros, fechaCorte)
+            S->>R: obtenerInventarioEnFecha(filtros, fechaCorte)
+            R->>DB: Consultar wards + beds + intervalos bed_stays
+            alt Fallo o indisponibilidad de datos
+                DB--xR: Error de consulta
+                R--xS: Fuente no disponible
+                S-->>C: Resultado no disponible
+                C-->>UI: 503 Sin cifras parciales
+                UI-->>U: Mostrar estado de error y reintento
+            else Datos disponibles
+                DB-->>R: Salas, camas e intervalo activo opcional
+                R-->>S: Inventario del hospital activo
+                loop Cero o más camas
+                    S->>S: Evaluar started_at <= corte < ended_at o infinito
+                    S->>S: Clasificar estado operativo
+                    S->>S: Detectar discrepancias
+                end
+                S->>S: Agregar totales y porcentajes por sala y hospital
+                S-->>C: Resumen + fecha de corte + inconsistencias
+                C-->>UI: 200 Respuesta agregada
+                UI-->>U: Mostrar resumen hospitalario por sala y estado
+            end
+        end
+    end
+
+    Note over MW,DB: Respuestas HTTP ilustrativas. El contrato definitivo se formaliza en Semana 5.

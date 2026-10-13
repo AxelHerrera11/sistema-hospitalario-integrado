@@ -1,0 +1,54 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #ECFEFF
+  BorderColor #0F766E
+  ArrowColor #334155
+}
+skinparam actor {
+  BorderColor #0F172A
+  FontColor #0F172A
+}
+
+actor "Usuario autorizado" as User
+actor "Coordinación de camas" as Coordinator
+actor "Dirección hospitalaria" as Director
+
+Coordinator --|> User
+Director --|> User
+
+rectangle "ASII-09 - Dashboard de ocupación hospitalaria" {
+  usecase "UC-OCC-01\nConsultar ocupación\nhospitalaria" as UC01
+  usecase "UC-OCC-02\nConsolidar ocupación\npor sala" as UC02
+  usecase "UC-OCC-03\nClasificar camas por\nestado operativo" as UC03
+  usecase "UC-OCC-04\nFiltrar por sala" as UC04
+  usecase "UC-OCC-05\nDetectar y mostrar\ninconsistencias" as UC05
+  usecase "UC-OCC-06\nValidar acceso y\nhospital activo" as UC06
+}
+
+User --> UC01
+UC01 .> UC06 : <<include>>
+UC01 .> UC02 : <<include>>
+UC02 .> UC03 : <<include>>
+UC02 .> UC05 : <<include>>
+UC04 .> UC01 : <<extend>>\n[filtro solicitado]
+
+note bottom of UC02
+  La ocupación en la fecha de corte se deriva del
+  intervalo de bed_stays que contiene ese instante.
+end note
+
+note bottom of UC05
+  beds.status no es fuente autoritativa de ocupación.
+  Las discrepancias se informan, no se ocultan.
+end note
+
+note left of UC03
+  Fuentes internas de la base HOSPITAL:
+  wards, beds y bed_stays.
+  Propietarios funcionales: ASII-06/07/08.
+end note
+@enduml
