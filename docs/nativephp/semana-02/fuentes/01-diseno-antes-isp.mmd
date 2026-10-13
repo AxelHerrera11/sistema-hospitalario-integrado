@@ -1,0 +1,17 @@
+classDiagram
+  class NativeHisPrototypeService {
+    +login()
+    +loadPendingItems()
+    +saveLocalAction()
+    +syncQueue()
+    +encryptLocalData()
+    +recordTelemetry()
+    +showConnectivity()
+  }
+  class PrototypeWindow
+  class SyncButton
+  class LocalQueueView
+
+  PrototypeWindow --> NativeHisPrototypeService
+  SyncButton --> NativeHisPrototypeService
+  LocalQueueView --> NativeHisPrototypeService

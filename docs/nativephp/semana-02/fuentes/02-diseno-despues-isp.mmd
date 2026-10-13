@@ -1,0 +1,40 @@
+classDiagram
+  class SessionPort {
+    <<interface>>
+    +currentUser()
+    +assertAuthenticated()
+  }
+  class PendingItemReader {
+    <<interface>>
+    +listForTenant(tenantId)
+  }
+  class LocalActionQueue {
+    <<interface>>
+    +enqueue(action)
+    +pending()
+    +markSynced(id)
+    +markFailed(id, reason)
+  }
+  class SyncGateway {
+    <<interface>>
+    +push(action)
+  }
+  class ConnectivityProbe {
+    <<interface>>
+    +status()
+  }
+  class PrototypeTelemetry {
+    <<interface>>
+    +record(event)
+  }
+  class PrototypeWindow
+  class SyncButton
+  class LocalQueueView
+
+  PrototypeWindow --> SessionPort
+  PrototypeWindow --> PendingItemReader
+  PrototypeWindow --> ConnectivityProbe
+  SyncButton --> LocalActionQueue
+  SyncButton --> SyncGateway
+  SyncButton --> PrototypeTelemetry
+  LocalQueueView --> LocalActionQueue
