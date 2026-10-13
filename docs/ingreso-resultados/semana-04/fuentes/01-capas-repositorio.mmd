@@ -1,0 +1,16 @@
+flowchart TB
+  UI[Presentation: formulario de resultado pendiente]
+  C[Controller: CapturePendingResultController]
+  UC[Application: CapturePendingResult]
+  D[Domain: PendingResult + ResultPolicy]
+  R[Port: LabResultRepository]
+  A[Adapter: PdoLabResultRepository]
+  M[Adapter: InMemoryLabResultRepository]
+  DB[(PostgreSQL / HIS)]
+  AU[AuditLogPort]
+
+  UI --> C --> UC --> D
+  UC --> R
+  R --> A --> DB
+  R --> M
+  UC --> AU
