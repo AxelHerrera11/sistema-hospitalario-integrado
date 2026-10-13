@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant UI as Cliente HIS
+  participant API as Results API
+  participant APP as Application
+  participant CAT as Catalog API
+  participant DB as Results DB
+  UI->>API: POST /api/v1/lab-results
+  API->>APP: CapturePendingResult(command)
+  APP->>CAT: validar prueba/unidad (timeout)
+  CAT-->>APP: metadata o error
+  APP->>DB: guardar version y auditoria
+  DB-->>APP: resultado persistido
+  APP-->>API: resultado + correlation_id
+  API-->>UI: 201 Created
