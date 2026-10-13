@@ -1,0 +1,76 @@
+---
+title: "Actividad — Alta y consulta de prueba con requisitos de muestra y vigencia"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+  classDef warn fill:#fff3e0,stroke:#b26a00,color:#7a4a00
+  classDef tx fill:#eef3fb,stroke:#3a5a8c,color:#1f2a44
+
+  subgraph A["A · Registrar prueba en el catálogo (UC-LAB-01, 02, 03, 04, 08, 09)"]
+    direction TB
+    ai(( )):::ini --> a1["Jefatura de laboratorio elige<br/>Nueva prueba (UC-LAB-01)"]
+    a1 --> a2["Capturar código, nombre y sección;<br/>requisitos de muestra (UC-LAB-02): tipo, recipiente,<br/>volumen mínimo, ayuno, preparación y transporte"]
+    a2 --> a3["Capturar tipo de resultado, unidad, rangos<br/>de referencia y críticos, y vigencia desde/hasta<br/>(UC-LAB-03)"]
+    a3 --> a4{"¿JWT, tenant y permiso<br/>laboratorio.catalogo.administrar?<br/>(UC-LAB-08)"}:::dec
+    a4 -- No --> a401["401/403 + denegación<br/>registrada por RBAC"]:::err
+    a4 -- Sí --> a5{"¿Campos obligatorios y requisitos<br/>de muestra completos?<br/>(ayuno ⇒ horas de ayuno #gt; 0)"}:::dec
+    a5 -- No --> a422a["422 Requisito de muestra<br/>faltante o inválido (UC-LAB-04)"]:::err
+    a5 -- Sí --> a6{"¿Resultado numérico con unidad y<br/>crítico bajo #lt; referencia baja ≤<br/>referencia alta #lt; crítico alto?"}:::dec
+    a6 -- No --> a422b["422 RANGES_INCOHERENT<br/>(UC-LAB-04)"]:::err
+    a6 -- Sí --> a7{"¿Vigencia desde ≥ hoy y<br/>vigencia hasta #gt; desde?"}:::dec
+    a7 -- No --> a422c["422 VALIDITY_INVALID<br/>(sin altas retroactivas)"]:::err
+    a7 -- Sí --> a8{"¿El código ya tiene una versión<br/>activa cuya vigencia se solapa?"}:::dec
+    a8 -- Sí --> a409["409 LAB_TEST_VALIDITY_OVERLAP<br/>cerrar primero la vigencia<br/>anterior (UC-LAB-07)"]:::err
+    a8 -- No --> a9["BEGIN conexión hospital:<br/>INSERT lab_tests (version_no = n + 1,<br/>status = active) + local_access_audits<br/>+ outbox_events (UC-LAB-09)"]:::tx
+    a9 --> a10{"¿Resultado de<br/>la transacción?"}:::dec
+    a10 -- "Exclusión GiST de vigencia<br/>violada (alta concurrente)" --> a409b["ROLLBACK + 409<br/>LAB_TEST_VALIDITY_OVERLAP"]:::err
+    a10 -- "Falla de auditoría" --> a500["ROLLBACK + 500"]:::err
+    a10 -- Correcto --> aok["COMMIT · 201 Prueba registrada<br/>visible en el catálogo desde su vigencia"]:::ok
+    a401 & a422a & a422b & a422c & a409 & a409b & a500 & aok --> af((( ))):::fin
+  end
+
+  subgraph B["B · Consultar catálogo vigente y requisitos (UC-LAB-05, 06, 08)"]
+    direction TB
+    bi(( )):::ini --> b1["Médico, técnico u Órdenes de laboratorio<br/>buscan por código, nombre o sección<br/>a una fecha (hoy por defecto) (UC-LAB-05)"]
+    b1 --> b2{"¿JWT o token de servicio, tenant<br/>y permiso laboratorio.catalogo.ver?"}:::dec
+    b2 -- No --> b401["401/403"]:::err
+    b2 -- Sí --> b3{"¿Filtros válidos<br/>(fecha y texto)?"}:::dec
+    b3 -- No --> b422["422 Filtro inválido"]:::err
+    b3 -- Sí --> b4["Filtrar status = active y<br/>vigencia_desde ≤ fecha #lt; vigencia_hasta"]
+    b4 --> b5{"¿Hay pruebas<br/>vigentes?"}:::dec
+    b5 -- No --> b6["200 lista vacía:<br/>ninguna prueba vigente coincide"]:::warn
+    b5 -- Sí --> b7["200 Lista: código, nombre,<br/>sección, tipo de muestra y versión"]:::ok
+    b7 --> b8["Usuario abre el detalle de una prueba<br/>(UC-LAB-06)"]
+    b8 --> b9{"¿La prueba existe<br/>en el tenant?"}:::dec
+    b9 -- No --> b404["404 LAB_TEST_NOT_FOUND"]:::err
+    b9 -- Sí --> b10{"¿Está vigente a la<br/>fecha consultada?"}:::dec
+    b10 -- No --> b11["200 Detalle histórico marcado<br/>«no vigente: no se puede ordenar»"]:::warn
+    b10 -- Sí --> bok["200 Requisitos de muestra, preparación,<br/>unidad y rangos de la versión vigente"]:::ok
+    b401 & b422 & b6 & b404 & b11 & bok --> bf((( ))):::fin
+  end
+
+  subgraph C["C · Cerrar vigencia o desactivar prueba (UC-LAB-07, 08, 09)"]
+    direction TB
+    ci(( )):::ini --> c1["Jefatura de laboratorio selecciona la prueba<br/>y elige Cerrar vigencia (fecha hasta)<br/>o Desactivar, con motivo (UC-LAB-07)"]
+    c1 --> c2{"¿JWT, tenant y permiso<br/>laboratorio.catalogo.administrar?"}:::dec
+    c2 -- No --> c401["401/403"]:::err
+    c2 -- Sí --> c3{"¿La versión existe en el tenant,<br/>está active y su vigencia sigue abierta?"}:::dec
+    c3 -- No --> c404["404 No existe /<br/>409 LAB_TEST_ALREADY_CLOSED"]:::err
+    c3 -- Sí --> c4{"¿Motivo escrito y fecha hasta<br/>≥ hoy y #gt; vigencia desde?"}:::dec
+    c4 -- No --> c422["422 Errores de validación"]:::err
+    c4 -- Sí --> c5{"¿Hay órdenes pendientes<br/>con esta versión?"}:::dec
+    c5 -- Sí --> c6["Advertir: las órdenes emitidas conservan<br/>su versión (no se cancelan)"]:::warn
+    c5 -- No --> c7
+    c6 --> c7["BEGIN conexión hospital:<br/>UPDATE lab_tests (valid_to o status = inactive)<br/>+ auditoría con motivo (UC-LAB-09)"]:::tx
+    c7 --> c8{"¿Auditoría<br/>registrada?"}:::dec
+    c8 -- No --> c500["ROLLBACK + 500"]:::err
+    c8 -- Sí --> cok["COMMIT · 200 Vigencia cerrada:<br/>deja de ofrecerse para nuevas órdenes"]:::ok
+    c401 & c404 & c422 & c500 & cok --> cf((( ))):::fin
+  end
+
+  %% Enlaces invisibles: solo ordenan las particiones de izquierda a derecha
+  A ~~~ B ~~~ C
