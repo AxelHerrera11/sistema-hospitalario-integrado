@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** la definición de OCP se cita de la fuente indicada por el curso. Las reglas de la alerta se basan en los valores reales de la migración `000401` (`severity`, `allergy_type`, `status`). La demo se ejecutó localmente con PHP 8.4 y su salida se copió sin cambios en `evidencia-verificable.md`. Los umbrales de rendimiento de los RNF son propuestas que deben confirmarse con el grupo.
 
-**Validación humana:** pendiente. Axel Eliú Herrera Sánchez debe revisar los requerimientos, el diseño, ejecutar la demo y revisar esta declaración antes de que el PR se integre a `develop`.
+**Validación humana:** realizada el 2026-10-13. Axel Eliú Herrera Sánchez revisó los requerimientos, el diseño, la documentación y esta declaración, y la aprueba.
