@@ -1,0 +1,86 @@
+---
+title: "Secuencia — ASII-03 Pacientes"
+---
+sequenceDiagram
+    autonumber
+
+    actor U as Usuario autorizado
+    participant UI as Interfaz
+    participant GP as Gestión de pacientes
+    participant DB as Base de datos HOSPITAL
+
+    Note over U,DB: REGISTRO DE PACIENTE
+
+    U->>UI: Seleccionar registrar paciente
+    U->>UI: Ingresar datos
+    UI->>GP: Enviar datos del paciente
+
+    GP->>GP: Validar información
+
+    alt Datos inválidos
+        GP-->>UI: Enviar errores de validación
+        UI-->>U: Mostrar errores
+    else Datos válidos
+        GP->>DB: Registrar paciente
+        DB-->>GP: Paciente registrado
+        GP-->>UI: Registro exitoso
+        UI-->>U: Mostrar confirmación
+    end
+
+
+    Note over U,DB: BÚSQUEDA DE PACIENTE
+
+    U->>UI: Ingresar criterio de búsqueda
+    UI->>GP: Solicitar búsqueda
+
+    GP->>DB: Consultar pacientes
+    DB-->>GP: Retornar resultados
+
+    alt Existen coincidencias
+        GP-->>UI: Lista de pacientes
+        UI-->>U: Mostrar resultados
+
+        opt Consultar detalle
+            U->>UI: Seleccionar paciente
+            UI->>GP: Solicitar detalle
+            GP->>DB: Consultar paciente
+            DB-->>GP: Datos del paciente
+            GP-->>UI: Información del paciente
+            UI-->>U: Mostrar detalle
+        end
+
+    else Sin coincidencias
+        GP-->>UI: Sin resultados
+        UI-->>U: Mostrar paciente no encontrado
+    end
+
+
+    Note over U,DB: ACTUALIZACIÓN DE PACIENTE
+
+    U->>UI: Seleccionar paciente
+    U->>UI: Modificar datos
+    UI->>GP: Solicitar actualización
+
+    GP->>DB: Verificar existencia
+    DB-->>GP: Resultado
+
+    alt Paciente no existe
+        GP-->>UI: Paciente no encontrado
+        UI-->>U: Mostrar error
+
+    else Paciente existe
+
+        GP->>GP: Validar nuevos datos
+
+        alt Datos inválidos
+            GP-->>UI: Errores de validación
+            UI-->>U: Mostrar errores
+
+        else Datos válidos
+            GP->>DB: Actualizar paciente
+            DB-->>GP: Registro actualizado
+            GP-->>UI: Actualización exitosa
+            UI-->>U: Mostrar confirmación
+        end
+
+    end
