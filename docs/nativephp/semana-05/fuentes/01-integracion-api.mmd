@@ -1,0 +1,13 @@
+sequenceDiagram
+  participant APP as NativePHP prototype
+  participant API as HIS Results API
+  participant AUTH as Auth/Tenant
+  participant DB as Results service
+  APP->>AUTH: authenticate + select tenant
+  AUTH-->>APP: short-lived token
+  APP->>API: GET /api/v1/lab-results/pending
+  API->>DB: query tenant-scoped pending results
+  DB-->>API: results or timeout
+  API-->>APP: 200 data + correlation_id
+  APP->>API: POST /api/v1/lab-results/{id}/corrections
+  API-->>APP: 201 version or 409 conflict
