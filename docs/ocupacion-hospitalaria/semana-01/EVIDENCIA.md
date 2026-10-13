@@ -6,7 +6,7 @@
 - Issue principal: https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/issues/36
 - Rama: `feature/asii-09-semana-01-dashboard-ocupacion-javifa2324`
 - Árbol de archivos: https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/tree/feature/asii-09-semana-01-dashboard-ocupacion-javifa2324/docs/ocupacion-hospitalaria/semana-01
-- Commit documental evaluado: se completa después de crear el commit verificable.
+- Commit documental evaluado: [`659719f`](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/commit/659719f).
 - Pull Request: se completa después de publicar la rama.
 
 ## Validaciones ejecutadas
