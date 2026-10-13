@@ -1,0 +1,92 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #ECFEFF
+  BorderColor #0F766E
+  DiamondBackgroundColor #FFFBEB
+  DiamondBorderColor #D97706
+  ArrowColor #334155
+}
+
+|Usuario autorizado|
+start
+:Solicitar dashboard con filtro opcional de sala;
+
+|Control de acceso|
+if (¿Sesión autenticada?) then (No)
+  :Resultado: autenticación requerida\n(referencia preliminar 401);
+  stop
+else (Sí)
+endif
+
+if (¿Hospital activo válido?) then (No)
+  :Resultado: contexto hospitalario inválido\n(referencia preliminar 400/404);
+  stop
+else (Sí)
+endif
+
+if (¿Tiene permiso de consulta?) then (No)
+  :Resultado: acceso denegado\n(referencia preliminar 403);
+  stop
+else (Sí)
+endif
+
+|API propuesta|
+if (¿Filtros válidos?) then (No)
+  :Resultado: errores de validación\n(referencia preliminar 422);
+  stop
+else (Sí)
+  :Fijar fecha y hora de corte;
+endif
+
+|Persistencia HOSPITAL|
+:Consultar salas, camas e intervalos de estancia;
+if (¿Fuente disponible?) then (No)
+  :Resultado: servicio no disponible,\nsin presentar cifras parciales\n(referencia preliminar 503);
+  stop
+else (Sí)
+endif
+
+|Agregador de ocupación|
+if (¿Hay camas?) then (No)
+  :Preparar resumen vacío;
+else (Sí)
+  while (¿Quedan camas?) is (Sí)
+    :Seleccionar siguiente cama;
+    if (¿Estancia activa en la fecha de corte?) then (Sí)
+      :Clasificar como ocupada;
+      if (¿beds.status = occupied?) then (No)
+        :Marcar inconsistencia;
+      else (Sí)
+        :Mantener registro consistente;
+      endif
+    else (No)
+      if (¿beds.status = available?) then (Sí)
+        :Clasificar como disponible;
+      else (No)
+        if (¿beds.status = maintenance?) then (Sí)
+          :Clasificar en mantenimiento;
+        else (No)
+          if (¿beds.status = inactive?) then (Sí)
+            :Clasificar como inactiva;
+          else (occupied sin estancia)
+            :Clasificar como no verificada\ny marcar inconsistencia;
+          endif
+        endif
+      endif
+    endif
+  endwhile (No)
+endif
+
+:Consolidar conteos por sala y hospital;
+:Calcular distribución y tasa de ocupación;
+:Incluir fecha de corte e inconsistencias;
+
+|API propuesta|
+:Resultado: resumen agregado exitoso\n(referencia preliminar 200);
+
+|Usuario autorizado|
+:Visualizar ocupación por sala y estado;
+stop
+@enduml
