@@ -1,0 +1,26 @@
+---
+title: "Antes de OCP — la elegibilidad de cama es una cadena de if"
+---
+classDiagram
+  direction LR
+  class AdmissionController {
+    +availableBeds(filtros)
+    +assignBed(episode, request)
+  }
+  class AdmissionService {
+    +listarCamasDisponibles(sala, tipo)
+    +asignarCama(episodio, cama, motivo)
+    -if episodio no inpatient/open → 409
+    -if episodio con cama → 409
+    -if cama no available o sala inactiva → 409
+    -if tipo distinto → 409
+    -if sala pediátrica y adulto → ? (requiere editar)
+  }
+  class BedRepository {
+    <<interface>>
+    +listarDisponibles(sala, tipo)
+    +bloquear(cama) FOR UPDATE
+  }
+  AdmissionController --> AdmissionService
+  AdmissionService --> BedRepository
+  note for AdmissionService "Las mismas condiciones se repiten en la búsqueda<br>y en la asignación; cada regla nueva edita ambas"

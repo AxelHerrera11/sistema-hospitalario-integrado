@@ -1,0 +1,53 @@
+---
+title: "Después de OCP — reglas de elegibilidad extensibles"
+---
+classDiagram
+  direction LR
+  class AdmissionController {
+    +availableBeds(filtros)
+    +assignBed(episode, request)
+  }
+  class BedAssignmentService {
+    +asignarCama(episodio, cama, motivo)
+  }
+  class BedEligibilityChecker {
+    -rules : iterable~BedEligibilityRule~
+    +rejection(Bed, AdmissionContext) ?string
+    +eligibleCodes(beds, AdmissionContext) list
+  }
+  class BedEligibilityRule {
+    <<interface>>
+    +evaluate(Bed, AdmissionContext) RuleResult
+  }
+  class EpisodeOpenInpatientRule {
+    → EPISODE_NOT_OPEN
+  }
+  class EpisodeHasNoOpenBedRule {
+    → EPISODE_ALREADY_HAS_BED
+  }
+  class BedAvailableRule {
+    → BED_NOT_AVAILABLE
+  }
+  class BedTypeMatchesRule {
+    → BED_TYPE_MISMATCH
+  }
+  class PediatricWardAgeRule {
+    <<extensión>>
+    → PEDIATRIC_WARD_AGE
+  }
+  class BedRepository {
+    <<interface>>
+    +listarDisponibles(sala, tipo)
+    +bloquear(cama) FOR UPDATE
+  }
+  AdmissionController --> BedEligibilityChecker : búsqueda UC-ADM-03
+  AdmissionController --> BedAssignmentService : asignación UC-ADM-04
+  BedAssignmentService --> BedEligibilityChecker : revalida tras el bloqueo
+  BedAssignmentService --> BedRepository
+  BedEligibilityChecker --> BedEligibilityRule : recorre en orden
+  BedEligibilityRule <|.. EpisodeOpenInpatientRule
+  BedEligibilityRule <|.. EpisodeHasNoOpenBedRule
+  BedEligibilityRule <|.. BedAvailableRule
+  BedEligibilityRule <|.. BedTypeMatchesRule
+  BedEligibilityRule <|.. PediatricWardAgeRule
+  note for PediatricWardAgeRule "Requisito nuevo: clase nueva + registro<br>(tag admission.bed_rules)"
