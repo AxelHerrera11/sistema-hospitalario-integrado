@@ -1,0 +1,26 @@
+---
+title: "Antes de OCP — la alerta de alergias se decide con un switch"
+---
+classDiagram
+  direction LR
+  class AllergyController {
+    +index(patient)
+  }
+  class AllergyAlertService {
+    +nivel(allergies) AlertLevel
+    -switch(severity) severe→rojo · resto→ámbar
+    -if latex → ? (requiere editar)
+    -if anafilaxia previa → ? (requiere editar)
+  }
+  class AllergyRepository {
+    <<interface>>
+    +listarActivas(patientId)
+  }
+  class AllergyBanner {
+    <<Vue>>
+    +render(level)
+  }
+  AllergyController --> AllergyAlertService : usa
+  AllergyAlertService --> AllergyRepository : lee alergias
+  AllergyController ..> AllergyBanner : responde nivel
+  note for AllergyAlertService "Cada regla clínica nueva modifica esta clase<br>y obliga a volver a probar todas las anteriores"
