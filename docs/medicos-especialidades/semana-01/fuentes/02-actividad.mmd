@@ -1,0 +1,80 @@
+---
+title: "Actividad — Registro de médico, asociación de especialidad y consulta de disponibilidad"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef warn fill:#fff3e0,stroke:#e65100,color:#8a3a00
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+  classDef con fill:#ffffff,stroke:#1f2a44,stroke-width:2px,color:#1f2a44
+
+  subgraph A["A · Registrar médico con especialidad principal (UC-MED-01, 02, 03, 04, 07, 08)"]
+    direction TB
+    i(( )):::ini --> a1["Administrador elige Registrar médico<br/>y busca al usuario del hospital (UC-MED-01)"]
+    a1 --> a2["Capturar número de colegiado,<br/>fecha de inicio (valid_from) y<br/>especialidad principal (UC-MED-04)"]
+    a2 --> a3{"¿JWT, tenant y permiso<br/>medicos.registrar?<br/>(UC-MED-07)"}:::dec
+    a3 -- No --> a403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    a3 -- Sí --> a4{"¿Campos obligatorios y<br/>formato de licencia y<br/>fechas válidos?"}:::dec
+    a4 -- No --> a422["422 Errores por campo"]:::err
+    a4 -- Sí --> a5{"¿Usuario local activo,<br/>vigente y con rol Medico?"}:::dec
+    a5 -- No --> a422u["422 USER_NOT_ELIGIBLE"]:::err
+    a5 -- Sí --> a6{"¿Ya tiene un perfil activo<br/>o la licencia ya está<br/>registrada? (UC-MED-03)"}:::dec
+    a6 -- Sí --> a409["Rechazar (UC-MED-03)<br/>409 DOCTOR_ALREADY_REGISTERED /<br/>LICENSE_ALREADY_REGISTERED"]:::err
+    a6 -- No --> a7{"¿Especialidad principal<br/>existe y está activa?"}:::dec
+    a7 -- No --> a422s["422 SPECIALTY_INACTIVE"]:::err
+    a7 -- Sí --> a8["BEGIN (conexión hospital):<br/>INSERT doctor_profiles (active)<br/>+ INSERT doctor_specialties (is_primary)<br/>+ INSERT local_access_audits<br/>medico.registrado (UC-MED-08)"]
+    a8 --> a9{"¿Restricciones y<br/>auditoría correctas?"}:::dec
+    a9 -- "Violación UNIQUE<br/>(concurrencia)" --> a409b["ROLLBACK · 409<br/>LICENSE_ALREADY_REGISTERED"]:::err
+    a9 -- "Falla la auditoría" --> a500["ROLLBACK: no se crea el perfil<br/>500 No hay alta sin traza"]:::err
+    a9 -- Sí --> a10["COMMIT · 201 Médico registrado<br/>con especialidad principal"]:::ok
+    a10 --> toB(("B")):::con
+    a403 & a422 & a422u & a409 & a422s & a409b & a500 --> f1((( ))):::fin
+  end
+
+  subgraph B["B · Asociar especialidad adicional (UC-MED-02, 03, 04, 07, 08)"]
+    direction TB
+    fromA(("A")):::con --> b1["Administrador abre el médico y elige<br/>Asociar especialidad: especialidad (UC-MED-04),<br/>valid_from, valid_to opcional, is_primary"]
+    b1 --> b2{"¿Permiso<br/>medicos.asociar_especialidad?<br/>(UC-MED-07)"}:::dec
+    b2 -- No --> b403["403 + denegación<br/>registrada por RBAC"]:::err
+    b2 -- Sí --> b3{"¿Médico activo y periodo<br/>dentro de la vigencia del<br/>perfil (valid_to > valid_from)?"}:::dec
+    b3 -- No --> b422["422 PERIOD_OUTSIDE_PROFILE /<br/>409 DOCTOR_NOT_ACTIVE"]:::err
+    b3 -- Sí --> b4{"¿Especialidad<br/>existe y está activa?"}:::dec
+    b4 -- No --> b422s["422 SPECIALTY_INACTIVE"]:::err
+    b4 -- Sí --> b5{"¿Misma especialidad vigente en<br/>un periodo solapado, o ya hay<br/>principal en ese periodo? (UC-MED-03)"}:::dec
+    b5 -- Sí --> b409["Rechazar (UC-MED-03)<br/>409 SPECIALTY_ALREADY_ASSOCIATED /<br/>PRIMARY_SPECIALTY_CONFLICT"]:::err
+    b5 -- No --> b6["BEGIN (conexión hospital):<br/>INSERT doctor_specialties<br/>+ INSERT local_access_audits<br/>medico.especialidad_asociada (UC-MED-08)"]
+    b6 --> b7{"¿Restricciones y<br/>auditoría correctas?"}:::dec
+    b7 -- "Violación EXCLUDE<br/>(concurrencia)" --> b409b["ROLLBACK · 409<br/>SPECIALTY_ALREADY_ASSOCIATED"]:::err
+    b7 -- "Falla la auditoría" --> b500["ROLLBACK · 500<br/>No hay asociación sin traza"]:::err
+    b7 -- Sí --> b8["COMMIT · 201 Especialidad<br/>asociada con su vigencia"]:::ok
+    b8 --> toC(("C")):::con
+    b403 & b422 & b422s & b409 & b409b & b500 --> f2((( ))):::fin
+  end
+
+  subgraph C["C · Consultar disponibilidad (UC-MED-04, 05, 06, 07)"]
+    direction TB
+    fromB(("B")):::con --> c1["Recepcionista elige especialidad (UC-MED-04),<br/>rango de fechas y, opcional, un médico<br/>(UC-MED-05)"]
+    c1 --> c2{"¿JWT, tenant y permiso<br/>medicos.ver_disponibilidad?<br/>(UC-MED-07)"}:::dec
+    c2 -- No --> c403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    c2 -- Sí --> c3{"¿Rango válido: desde ≥ hoy,<br/>hasta ≥ desde y<br/>máximo 14 días?"}:::dec
+    c3 -- No --> c422["422 INVALID_DATE_RANGE"]:::err
+    c3 -- Sí --> c4{"¿Especialidad<br/>existe y está activa?"}:::dec
+    c4 -- No --> c422s["422 SPECIALTY_INACTIVE"]:::err
+    c4 -- Sí --> c5["Buscar médicos con perfil activo y<br/>asociación activa a la especialidad<br/>vigente en el rango"]
+    c5 --> c6{"¿Hay médicos<br/>con la especialidad?"}:::dec
+    c6 -- No --> c200e["200 Lista vacía<br/>NO_DOCTORS_FOR_SPECIALTY"]:::warn
+    c6 -- Sí --> c7["Por cada médico: obtener su horario<br/>de atención en el rango<br/>(DoctorScheduleProvider) (UC-MED-06)"]
+    c7 --> c8{"¿Tiene horario<br/>configurado?"}:::dec
+    c8 -- No --> c9["Marcar al médico como<br/>SCHEDULE_NOT_CONFIGURED<br/>(sin franjas)"]:::warn
+    c8 -- Sí --> c10["Generar franjas del horario y restar:<br/>citas scheduled / confirmed (lectura de<br/>appointments), franjas pasadas y fechas<br/>sin asociación o perfil vigente"]
+    c9 & c10 --> c11{"¿Quedan médicos<br/>por procesar?"}:::dec
+    c11 -- Sí --> c7
+    c11 -- No --> c200["200 Disponibilidad por médico:<br/>franjas libres (solo lectura;<br/>la reserva la valida Citas)"]:::ok
+    c403 & c422 & c422s & c200e & c200 --> f3((( ))):::fin
+  end
+
+  %% Los conectores (B) y (C) enlazan las particiones según la notación UML.
+  %% Enlaces invisibles: solo ordenan las particiones de izquierda a derecha
+  A ~~~ B ~~~ C
