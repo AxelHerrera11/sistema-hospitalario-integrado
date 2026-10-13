@@ -14,7 +14,7 @@ Que el médico tratante pueda indicar un medicamento de forma electrónica y que
   - `severe` y `life_threatening`: bloqueo sin excepción.
   - `mild`, `moderate`, `unknown` e intolerancias: excepción posible solo con el permiso `prescripciones.excepcion_alergia` y una justificación escrita.
 - Firmar la prescripción: se vuelve a verificar y, una vez firmada, es inmutable (no se edita; se anula y se crea otra).
-- Consultar las prescripciones de un paciente (médico y enfermería).
+- Consultar las prescripciones de un paciente (médico y enfermería) — UC-PRE-07: caso adicional, fuera del escenario desarrollado en Semana 1; su consulta se detallará en la Semana 5.
 - Auditar bloqueos, excepciones y firmas.
 
 **Fuera de alcance**
@@ -30,6 +30,7 @@ Que el médico tratante pueda indicar un medicamento de forma electrónica y que
 - El catálogo de medicamentos y el registro de alergias deben usar **el mismo código de principio activo**. Si no, la comparación no encontraría coincidencias. Este acuerdo se coordina con los responsables de ambos módulos.
 - **Falla segura:** si no se puede consultar el registro de alergias, no se guarda ni se firma (`503`). Nunca se asume que el paciente "no tiene alergias".
 - La auditoría guarda metadatos (médico, paciente, medicamento, alergia que coincidió, decisión y justificación), no el expediente completo.
+- **SD-PRE-01 — Política de bloqueo/excepción por severidad (pendiente de validación):** `severe` y `life_threatening` bloquean sin excepción; `mild`, `moderate`, `unknown` e intolerancias permiten excepción solo con el permiso `prescripciones.excepcion_alergia` y una justificación escrita. No existe todavía un requisito confirmado en el repositorio que fije esta regla; el esquema HOSPITAL (`database/migrations/hospital/2026_08_11_000401_create_allergy_and_vital_sign_tables.php`, constraint `allergies_severity_check`) confirma los valores admitidos de `severity` y `allergy_type`, pero no la política de bloqueo.
 
 ## Trazabilidad entre los diagramas
 
@@ -38,10 +39,10 @@ Que el médico tratante pueda indicar un medicamento de forma electrónica y que
 | UC-PRE-01 | Crear prescripción (borrador) | Partición A: "Médico abre al paciente…", "¿Datos completos y válidos?" → "Guardar borrador" → "201 Borrador creado" | 1–2, 4–7, 20–23 |
 | UC-PRE-02 | Seleccionar medicamento del catálogo | "Seleccionar medicamento e ingresar dosis…" y "¿Medicamento existe y está activo en el catálogo?" | 12–15 |
 | UC-PRE-03 | Verificar alergias activas | A: "Consultar alergias activas…", "¿Registro de alergias disponible?", "¿Alguna alergia activa coincide…?". B: "Re-verificar alergias activas", "¿Registro de alergias disponible?", "¿Hay un conflicto nuevo no cubierto por la excepción registrada?" | 16–20, 24, 29, 51–55, 59 |
-| UC-PRE-04 | Bloquear por conflicto alérgico | A: "Bloquear (UC-PRE-04) 422 ALLERGY_CONFLICT". B: "422 ALLERGY_CONFLICT + auditoría; el borrador queda sin firmar" | 24–33, 55–58 |
+| UC-PRE-04 | Bloquear por conflicto alérgico | A: "Bloquear (UC-PRE-04) 422 ALLERGY_CONFLICT". B: "422 ALLERGY_CONFLICT + auditoría; el borrador queda sin firmar" | 24–33, 55–58 (regla de severidad: SD-PRE-01) |
 | UC-PRE-05 | Registrar excepción con justificación | "¿Tiene permiso… y escribió justificación?" → "Registrar excepción…" | 34–37 |
 | UC-PRE-06 | Firmar prescripción | Partición B completa: recuperar borrador, validar estado, re-verificar y "Estado signed: inmutable + auditoría de la firma" | 38–64 |
-| UC-PRE-07 | Consultar prescripciones del paciente | Reutiliza la validación de acceso (permiso `prescripciones.ver`) | `GET /patients/{patient}/prescriptions` (se detalla en la Semana 5) |
+| UC-PRE-07 | Consultar prescripciones del paciente | — (no cubierto por los diagramas de actividad o secuencia de Semana 1) | — (se detallará en la Semana 5) |
 | UC-PRE-08 | Validar acceso y médico asignado | A: "¿JWT, tenant y permiso prescripciones.crear?" y "¿Es médico asignado…?". B: "¿JWT, tenant y permiso prescripciones.firmar?" y "¿Sigue siendo médico tratante…?" | 2–3, 8–11, 39–40, 49–50 |
 | UC-PRE-09 | Registrar evento de auditoría | "+ auditoría" en bloqueo, excepción, firma bloqueada y firma | 25, 30, 34, 56, 61 |
 
@@ -76,8 +77,12 @@ Precondición: existe un borrador en estado `draft`, creado en la partición A.
   - *RBAC* (permisos).
   - *Médicos* y *Expediente* (episodio y asignación; las tablas ya existen).
 
-  Para avanzar sin esperar a los demás módulos, el catálogo y las alergias se consumen a través de las interfaces `MedicationCatalog` y `AllergyChecker`, con una implementación en memoria hasta la integración.
+  Para avanzar sin esperar a los demás módulos, el catálogo y las alergias se consumirán a través de las interfaces propuestas `MedicationCatalog` y `AllergyChecker`, con una implementación en memoria propuesta hasta la integración.
 - **Dependen de este módulo:** *Expediente* (mostrar las prescripciones), *Gobernanza* (auditoría de excepciones) y los reportes.
+
+## Componentes propuestos (todavía no implementados)
+
+Los componentes del módulo son propuestos y todavía no están implementados; ver la tabla en README.md, sección Componentes propuestos.
 
 ## Archivos relacionados
 

@@ -26,6 +26,20 @@
 
 ---
 
+## Componentes propuestos (todavía no implementados)
+
+| Componente | Responsabilidad | Estado |
+|---|---|---|
+| `PrescriptionController` | Recibir las peticiones HTTP (`store`, `sign`, `index`) y traducirlas al servicio; sin SQL ni reglas de negocio. | Propuesto, no implementado |
+| `StorePrescriptionRequest` | Validar el payload de creación (dosis, vía, frecuencia y duración). | Propuesto, no implementado |
+| `PrescriptionService` | Orquestar las reglas de acceso, médico tratante, catálogo, alergias, firma e inmutabilidad. | Propuesto, no implementado |
+| `MedicationCatalog` (interfaz) | Contrato para consultar medicamento, principio activo y grupo. | Propuesto, no implementado |
+| `AllergyChecker` (interfaz) | Contrato para consultar conflictos de alergias activas. | Propuesto, no implementado |
+| Implementaciones en memoria de `MedicationCatalog` y `AllergyChecker` | Adaptadores temporales hasta integrar los módulos *Catálogo de medicamentos* y *Alergias clínicas*. | Propuesto, no implementado |
+| `PrescriptionRepository` | Persistencia del borrador y de la firma en la base HOSPITAL. | Propuesto, no implementado |
+
+Dependencia externa: el registro de auditoría lo provee el módulo de auditoría (`AuditLogger`), que no forma parte de este módulo.
+
 ## 1. Diagrama de casos de uso
 
 ![Diagrama de casos de uso](./01-casos-de-uso.svg)
@@ -67,6 +81,8 @@ Recorre el proceso en dos particiones, con sus decisiones, excepciones y resulta
 - **Re-verificación de alergias:** si el registro no responde, no se firma (503). Si aparece una alergia nueva no cubierta por la excepción registrada, no se firma (422). En ambos casos el borrador **sigue en `draft`**; la firma nunca vuelve a crear ni guardar otro borrador.
 - **Resultado:** prescripción `signed`, **inmutable** (200).
 
+**Política de severidad (SD-PRE-01):** la regla de bloqueo/excepción no está confirmada aún en el repositorio; se documenta como supuesto de diseño **SD-PRE-01 — pendiente de validación**. El esquema HOSPITAL solo confirma los valores de `severity` y `allergy_type` (`database/migrations/hospital/2026_08_11_000401_create_allergy_and_vital_sign_tables.php`, constraints `allergies_severity_check` y `allergies_type_check`), no la política de bloqueo.
+
 ## 3. Diagrama de secuencia
 
 ![Diagrama de secuencia](./03-secuencia.svg)
@@ -75,8 +91,8 @@ Recorre el proceso en dos particiones, con sus decisiones, excepciones y resulta
 
 ### Descripción
 
-- **Participantes:** Vue (`PrescriptionForm`), middlewares, `PrescriptionController`, `PrescriptionService`, `MedicationCatalog` «interfaz», `AllergyChecker` «interfaz», `PrescriptionRepository` (HOSPITAL) y `AuditLogger`.
-- **Dependencias como interfaces:** `MedicationCatalog` y `AllergyChecker` se modelan como interfaces. El servicio no depende del código de otros módulos sino de un contrato, y esa decisión se desarrolla en la Semana 2 con el principio DIP.
+- **Participantes (componentes propuestos, todavía no implementados):** Vue (`PrescriptionForm`), middlewares, `PrescriptionController`, `PrescriptionService`, `MedicationCatalog` «interfaz», `AllergyChecker` «interfaz», `PrescriptionRepository` (HOSPITAL) y `AuditLogger` (externo).
+- **Dependencias como interfaces:** `MedicationCatalog` y `AllergyChecker` se modelan como interfaces. El servicio propuesto no dependerá del código de otros módulos sino de un contrato, y esa decisión se desarrolla en la Semana 2 con el principio DIP.
 - **Escenario A (crear borrador):** `alt` para 401/403 y para datos inválidos (422). Bloques `break` para médico no tratante (403) y medicamento inexistente o inactivo (422), de modo que esos caminos terminan ahí y no continúan hacia la verificación de alergias. `alt` para 503, "sin coincidencias" (201), "coincidencia grave" (422 sin excepción) y "coincidencia no grave" (422 o 201 con excepción).
 - **Escenario B (firmar):** precondición de borrador existente en `draft`. Valida el permiso de firma, recupera el borrador (`obtenerBorrador`) y usa `alt` para 404, 409 y 403, que terminan sin firmar. Re-verifica alergias con `alt` para 503 (no se firma), conflicto nuevo (422, sigue en `draft`) y firma exitosa (200).
 
