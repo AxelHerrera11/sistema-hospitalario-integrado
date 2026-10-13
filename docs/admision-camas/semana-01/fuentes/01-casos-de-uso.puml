@@ -1,0 +1,49 @@
+@startuml
+title Casos de uso — Admisión de paciente y asignación de una cama disponible
+left to right direction
+skinparam actorStyle awesome
+
+actor "Personal de admisión" as adm
+actor "Jefatura de enfermería de sala" as enf
+actor "Médico tratante" as med
+actor "Pacientes (ASII-03)" as pac <<sistema>>
+actor "Catálogo de camas (ASII-06)" as cam <<sistema>>
+actor "RBAC / JWT (ASII-01/02)" as rbac <<sistema>>
+actor "Bitácora de auditoría (HOSPITAL)" as aud <<sistema>>
+
+rectangle "HIS · Admisión hospitalaria (tenant = hospital activo)" {
+  usecase "UC-ADM-01\nRegistrar admisión hospitalaria" as UC_ADM_01
+  usecase "UC-ADM-02\nVerificar paciente y hospitalización abierta" as UC_ADM_02
+  usecase "UC-ADM-03\nBuscar cama disponible" as UC_ADM_03
+  usecase "UC-ADM-04\nAsignar cama al episodio" as UC_ADM_04
+  usecase "UC-ADM-05\nRechazar asignación de cama" as UC_ADM_05
+  usecase "UC-ADM-06\nValidar acceso y permisos" as UC_ADM_06
+  usecase "UC-ADM-07\nRegistrar auditoría" as UC_ADM_07
+  usecase "UC-ADM-08\nConsultar admisión y cama asignada" as UC_ADM_08
+  usecase "UC-ADM-09\nDejar admisión en espera de cama" as UC_ADM_09
+}
+
+adm -- UC_ADM_01
+adm -- UC_ADM_03
+adm -- UC_ADM_04
+enf -- UC_ADM_04
+enf -- UC_ADM_08
+med -- UC_ADM_08
+pac -- UC_ADM_02
+cam -- UC_ADM_03
+rbac -- UC_ADM_06
+aud -- UC_ADM_07
+UC_ADM_01 ..> UC_ADM_02 : <<include>>
+UC_ADM_01 ..> UC_ADM_06 : <<include>>
+UC_ADM_01 ..> UC_ADM_07 : <<include>>
+UC_ADM_04 ..> UC_ADM_03 : <<include>>
+UC_ADM_04 ..> UC_ADM_06 : <<include>>
+UC_ADM_04 ..> UC_ADM_07 : <<include>>
+UC_ADM_08 ..> UC_ADM_06 : <<include>>
+UC_ADM_08 ..> UC_ADM_07 : <<include>>
+UC_ADM_05 ..> UC_ADM_04 : <<extend>>
+UC_ADM_09 ..> UC_ADM_03 : <<extend>>
+' UC-ADM-05 extiende a UC-ADM-04 si la cama no está disponible, la sala está inactiva, el episodio ya tiene cama o la exclusión GiST de bed_stays detecta otra asignación simultánea.
+' UC-ADM-09 extiende a UC-ADM-03 cuando no hay camas disponibles: el episodio inpatient queda abierto sin bed_stay hasta que se asigne una.
+' La liberación de camas, los traslados y las altas pertenecen a ASII-08; el tablero de ocupación, a ASII-09.
+@enduml
