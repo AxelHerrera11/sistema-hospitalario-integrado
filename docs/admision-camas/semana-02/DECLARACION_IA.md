@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** la definición de OCP se cita de la fuente indicada por el curso. Las reglas y los códigos de rechazo vienen de la Semana 1 y de las restricciones reales de las migraciones `000200` y `000300`. La regla pediátrica se marca como supuesto porque `wards` aún no identifica el tipo de sala. La demo se ejecutó localmente con PHP 8.4 y su salida se copió sin cambios en `evidencia-verificable.md`. Los umbrales de los RNF son propuestas que deben confirmarse con el grupo.
 
-**Validación humana:** pendiente. Axel Eliú Herrera Sánchez debe revisar los requerimientos, el diseño, ejecutar la demo y revisar esta declaración antes de que el PR se integre a `develop`.
+**Validación humana:** realizada el 2026-10-13. Axel Eliú Herrera Sánchez revisó los requerimientos, el diseño, la documentación y esta declaración, y la aprueba.
