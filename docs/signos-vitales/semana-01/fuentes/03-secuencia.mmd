@@ -1,0 +1,106 @@
+---
+title: "Secuencia — Captura de signos vitales, evaluación de umbrales y generación de alerta"
+---
+sequenceDiagram
+  autonumber
+  actor M as Médico tratante
+  participant UI as Vue SPA<br/>(VitalSignsForm · NotificationCenter)
+  participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
+  participant C as VitalSignController
+  participant S as VitalSignService
+  participant TP as ThresholdPolicy<br/>«interfaz»
+  participant R as VitalSignRepository<br/>(HOSPITAL)
+  participant AUD as AuditLogger<br/>(HOSPITAL · local_access_audits)
+  participant N as AlertNotifier<br/>«interfaz» (cola)
+
+  rect rgb(238, 243, 251)
+  Note over M,N: Escenario A — capturar signos vitales, evaluar umbrales y generar alerta (UC-SV-01, 02, 03, 04, 06, 07)
+  M->>UI: abre el episodio y captura los signos medidos y la hora de medición
+  UI->>MW: POST /api/v1/care-episodes/{episode}/vital-signs<br/>Bearer JWT + X-Tenant-ID
+  alt sin JWT válido o sin signos_vitales.registrar
+    MW-->>UI: 401 / 403 (denegación trazada por RBAC)
+  else acceso válido (UC-SV-06)
+    MW->>C: store(episode, request)
+    C->>C: validar payload (StoreVitalSignRequest)
+    alt sin signos, valores no numéricos o measured_at futura
+      C-->>UI: 422 errores por campo
+    else payload válido
+      C->>S: registrar(médico, episodio, medición)
+      S->>S: verificar rangos fisiológicos plausibles (UC-SV-03)
+      break medición no plausible (p. ej. FC 400 o sistólica < diastólica)
+        S-->>C: MedicionNoPlausible (UC-SV-03)
+        C-->>UI: 422 VITAL_SIGN_IMPLAUSIBLE
+      end
+      S->>R: ¿médico asignado y activo en el episodio?
+      R-->>S: sí / no
+      break no es médico tratante
+        S-->>C: NoEsMedicoTratante
+        C-->>UI: 403
+      end
+      S->>R: estado del episodio y del expediente + birth_date del paciente
+      R-->>S: episodio + medical_record_id + estados + birth_date
+      break episodio o expediente cerrado
+        S-->>C: ContextoClinicoCerrado
+        C-->>UI: 409
+      end
+      S->>TP: perfilPara(edad del paciente, measured_at) (UC-SV-02)
+      alt sin perfil de umbrales aplicable
+        TP-->>S: null
+        S->>R: BEGIN (conexión hospital) · INSERT vital_signs (status validated)
+        S->>AUD: registrar("signo_vital.sin_evaluacion", médico, signo)
+        AUD->>R: INSERT local_access_audits (misma transacción)
+        S->>R: COMMIT
+        S-->>C: registrado sin evaluación
+        C-->>UI: 201 Created + aviso THRESHOLDS_NOT_APPLICABLE
+        UI-->>M: aviso: requiere evaluación clínica manual
+      else perfil vigente
+        TP-->>S: umbrales + versión del perfil
+        S->>S: comparar cada signo con su umbral y calcular la severidad máxima
+        alt todos los valores dentro de umbral
+          S->>R: BEGIN · INSERT vital_signs (status validated) · COMMIT
+          R-->>S: signo vital
+          S-->>C: registrado sin alerta
+          C-->>UI: 201 Created (vital_sign_id)
+          UI-->>M: signos registrados, sin alerta
+        else al menos un valor fuera de umbral (UC-SV-04)
+          S->>S: generar alerta (severidad, hallazgos, versión del perfil), sin tabla propia
+          S->>R: BEGIN (conexión hospital) · INSERT vital_signs (status validated)
+          S->>AUD: registrar("signo_vital.alerta_generada", médico, signo, alerta)
+          AUD->>R: INSERT local_access_audits (misma conexión y transacción)
+          alt la auditoría falla
+            R-->>AUD: error
+            AUD-->>S: AuditoriaFallida
+            S->>R: ROLLBACK (no se guarda el signo vital)
+            S-->>C: AuditoriaNoDisponible
+            C-->>UI: 500 (no hay valor anormal sin traza)
+          else auditoría registrada
+            R-->>AUD: ok
+            AUD-->>S: ok
+            S->>R: COMMIT (signo vital + auditoría)
+            S->>N: encolar(alerta) después del COMMIT (afterCommit)
+            S-->>C: signo vital + alerta
+            C-->>UI: 201 Created (vital_sign_id, alerta: severidad y hallazgos)
+            UI-->>M: alerta resaltada en pantalla
+          end
+        end
+      end
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over M,N: Escenario B — notificar la alerta (UC-SV-05, 07). Asíncrono#59; precondición: signo vital y auditoría confirmados con COMMIT en A
+  N->>R: médicos con care_assignment activo en el episodio
+  R-->>N: médicos tratantes
+  N->>UI: notificación en tiempo real (paciente, signo, valor, severidad)
+  alt el envío falla
+    loop reintentos con espera exponencial
+      N->>UI: reenviar notificación
+    end
+    Note over N,R: reintentos agotados: se registra en el log#59;<br/>el signo anormal sigue marcado en la consulta del episodio
+  else notificación entregada
+    N->>AUD: registrar("signo_vital.alerta_notificada", destinatarios)
+    AUD->>R: INSERT local_access_audits
+    UI-->>M: aviso de alerta (prioridad según severidad)
+  end
+  end

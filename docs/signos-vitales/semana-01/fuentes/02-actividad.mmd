@@ -1,0 +1,68 @@
+---
+title: "Actividad — Captura de signos vitales, evaluación de umbrales y generación de alerta"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef warn fill:#fff3e0,stroke:#e65100,color:#8a3a00
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+  classDef con fill:#ffffff,stroke:#1f2a44,stroke-width:2px,color:#1f2a44
+
+  subgraph A["A · Capturar signos vitales y validar plausibilidad (UC-SV-01, 03, 06)"]
+    direction TB
+    i(( )):::ini --> a1["Médico abre el episodio del paciente<br/>y elige Registrar signos vitales (UC-SV-01)"]
+    a1 --> a2["Capturar los signos medidos y la<br/>hora de medición (measured_at)"]
+    a2 --> a3{"¿JWT, tenant y permiso<br/>signos_vitales.registrar?<br/>(UC-SV-06)"}:::dec
+    a3 -- No --> a403["401/403 + denegación<br/>registrada por RBAC"]:::err
+    a3 -- Sí --> a4{"¿Al menos un signo, valores<br/>numéricos y measured_at<br/>no futura?"}:::dec
+    a4 -- No --> a422["422 Errores por campo"]:::err
+    a4 -- Sí --> a5{"¿Valores dentro de los rangos<br/>fisiológicos plausibles y<br/>sistólica ≥ diastólica?"}:::dec
+    a5 -- No --> arej["Rechazar (UC-SV-03)<br/>422 VITAL_SIGN_IMPLAUSIBLE<br/>(no se guarda nada)"]:::err
+    a5 -- Sí --> a6{"¿Es médico asignado<br/>y activo en el episodio?<br/>(UC-SV-06)"}:::dec
+    a6 -- No --> a403b["403 No es médico tratante"]:::err
+    a6 -- Sí --> a7{"¿Episodio abierto y<br/>expediente del paciente<br/>abierto?"}:::dec
+    a7 -- No --> a409["409 Episodio cerrado /<br/>expediente cerrado"]:::err
+    a7 -- Sí --> a8["Medición aceptada"]
+    a8 --> toB(("B")):::con
+    a403 & a422 & arej & a403b & a409 --> f1((( ))):::fin
+  end
+
+  subgraph B["B · Evaluar umbrales y generar alerta (UC-SV-02, 04, 07)"]
+    direction TB
+    fromA(("A")):::con --> b1["Obtener el perfil de umbrales<br/>vigente para la edad del paciente<br/>y la fecha de medición (UC-SV-02)"]
+    b1 --> b2{"¿Existe un perfil de<br/>umbrales aplicable?"}:::dec
+    b2 -- No --> b3["BEGIN (conexión hospital):<br/>INSERT vital_signs (validated)<br/>+ INSERT local_access_audits<br/>signo_vital.sin_evaluacion (UC-SV-07)"]
+    b3 --> b3ok["COMMIT · 201 Registrado con aviso<br/>THRESHOLDS_NOT_APPLICABLE:<br/>requiere evaluación clínica manual"]:::warn
+    b2 -- Sí --> b4["Comparar cada signo con su umbral<br/>y calcular la severidad máxima<br/>(warning / critical)"]
+    b4 --> b5{"¿Algún valor fuera<br/>de umbral?"}:::dec
+    b5 -- No --> b6["BEGIN: INSERT vital_signs<br/>(validated) → COMMIT"]
+    b6 --> b6ok["201 Signos registrados,<br/>sin alerta"]:::ok
+    b5 -- Sí --> b7["Generar la alerta (UC-SV-04):<br/>severidad, hallazgos y versión<br/>del perfil (sin tabla propia)"]
+    b7 --> b8["BEGIN (conexión hospital):<br/>INSERT vital_signs (validated)<br/>+ INSERT local_access_audits<br/>signo_vital.alerta_generada (UC-SV-07)"]
+    b8 --> b9{"¿Auditoría<br/>registrada?"}:::dec
+    b9 -- No --> b500["ROLLBACK: no se guarda<br/>el signo vital<br/>500 No hay valor anormal sin traza"]:::err
+    b9 -- Sí --> b10["COMMIT · 201 Signos registrados<br/>+ alerta (severidad y hallazgos)"]:::ok
+    b10 --> b11["Encolar la notificación<br/>después del COMMIT"]
+    b11 --> toC(("C")):::con
+    b3ok & b6ok & b500 --> f2((( ))):::fin
+  end
+
+  subgraph C["C · Notificar la alerta a los médicos tratantes (UC-SV-05, 07)"]
+    direction TB
+    fromB(("B")):::con --> c1["Job de notificación toma la alerta<br/>(asíncrono, fuera de la transacción)"]
+    c1 --> c2["Obtener los médicos con<br/>care_assignment activo en el episodio"]
+    c2 --> c3["Enviar notificación en la aplicación<br/>(tiempo real): paciente, signo,<br/>valor y severidad"]
+    c3 --> c4{"¿Envío exitoso?"}:::dec
+    c4 -- Sí --> cok["Alerta notificada<br/>+ INSERT local_access_audits<br/>signo_vital.alerta_notificada (UC-SV-07)"]:::ok
+    c4 -- No --> c5{"¿Quedan reintentos?"}:::dec
+    c5 -- Sí --> c6["Reintentar con espera<br/>exponencial"]
+    c6 --> c3
+    c5 -- No --> cfail["Registrar el fallo en el log:<br/>el signo anormal sigue marcado<br/>en la consulta del episodio"]:::warn
+    cok & cfail --> f3((( ))):::fin
+  end
+
+  %% Los conectores (B) y (C) enlazan las particiones según la notación UML.
+  %% Enlaces invisibles: solo ordenan las particiones de izquierda a derecha
+  A ~~~ B ~~~ C
