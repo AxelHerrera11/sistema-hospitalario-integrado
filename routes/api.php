@@ -1,14 +1,18 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdmissionController;
 use App\Http\Controllers\Api\V1\AllergyController;
 use App\Http\Controllers\Api\V1\AppointmentController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BedController;
+use App\Http\Controllers\Api\V1\DiagnosisController;
 use App\Http\Controllers\Api\V1\DoctorController;
 use App\Http\Controllers\Api\V1\LabTestController;
 use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\PatientController;
+use App\Http\Controllers\Api\V1\SoapNoteController;
 use App\Http\Controllers\Api\V1\SpecialtyController;
+use App\Http\Controllers\Api\V1\VitalSignController;
 use App\Http\Controllers\Api\V1\WardController;
 use Illuminate\Support\Facades\Route;
 
@@ -99,8 +103,37 @@ Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
 
     Route::patch('/beds/{bed}/status', [BedController::class, 'updateStatus'])
         ->middleware('permission:camas.gestionar');
+
+    Route::post('/admissions', [AdmissionController::class, 'store'])
+        ->middleware('permission:admisiones.crear');
 });
 // ── Área 5: Notas SOAP, diagnósticos y signos vitales ─────────────────────
+Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
+    Route::get('/soap-notes', [SoapNoteController::class, 'index'])
+        ->middleware('permission:soap.ver');
+    Route::post('/soap-notes', [SoapNoteController::class, 'store'])
+        ->middleware('permission:soap.crear');
+    Route::get('/soap-notes/{soap_note}', [SoapNoteController::class, 'show'])
+        ->middleware('permission:soap.ver');
+    Route::put('/soap-notes/{soap_note}', [SoapNoteController::class, 'update'])
+        ->middleware('permission:soap.crear');
+    Route::post('/soap-notes/{soap_note}/sign', [SoapNoteController::class, 'sign'])
+        ->middleware('permission:soap.firmar');
+    Route::post('/soap-notes/{soap_note}/diagnoses', [SoapNoteController::class, 'addDiagnosis'])
+        ->middleware('permission:soap.crear');
+
+    Route::put('/diagnoses/{diagnosis}', [DiagnosisController::class, 'update'])
+        ->middleware('permission:soap.crear');
+    Route::delete('/diagnoses/{diagnosis}', [DiagnosisController::class, 'destroy'])
+        ->middleware('permission:soap.crear');
+
+    Route::get('/vital-signs', [VitalSignController::class, 'index'])
+        ->middleware('permission:signos_vitales.ver');
+    Route::post('/vital-signs', [VitalSignController::class, 'store'])
+        ->middleware('permission:signos_vitales.registrar');
+    Route::get('/medical-records/{medical_record}/vital-signs', [VitalSignController::class, 'indexByMedicalRecord'])
+        ->middleware('permission:signos_vitales.ver');
+});
 // ── Área 6: Alergias, medicamentos y prescripciones ───────────────────────
 Route::middleware(['tenant', 'auth.jwt'])->group(function (): void {
     Route::get('/patients/{patient}/allergies', [AllergyController::class, 'index'])

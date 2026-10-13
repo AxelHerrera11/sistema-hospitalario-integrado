@@ -7,6 +7,7 @@ use App\Models\Bed;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class BedController extends Controller
 {
@@ -64,14 +65,31 @@ class BedController extends Controller
             ],
         ]);
 
+        $newStatus = $validated['status'];
+
+        if ($newStatus === 'ocupada') {
+            throw ValidationException::withMessages([
+                'status' => [
+                    'El estado ocupada solo puede asignarse mediante una admisión.',
+                ],
+            ]);
+        }
+
+        if ($bed->admissions()->active()->exists()) {
+            throw ValidationException::withMessages([
+                'status' => [
+                    'No se puede cambiar el estado de una cama con una admisión activa.',
+                ],
+            ]);
+        }
+
         $bed->update([
-            'status' => $validated['status'],
+            'status' => $newStatus,
         ]);
 
         $bed->load('ward:id,tenant_id,name,floor,building');
 
         return response()->json([
-            'message' => 'Estado de la cama actualizado correctamente.',
             'bed' => $bed,
         ]);
     }

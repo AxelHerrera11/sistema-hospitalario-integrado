@@ -52,4 +52,9 @@ class SoapNote extends Model
     {
         return $this->hasMany(Prescription::class);
     }
+
+    public function labOrders()
+    {
+        return $this->hasMany(LabOrder::class);
+    }
 }
