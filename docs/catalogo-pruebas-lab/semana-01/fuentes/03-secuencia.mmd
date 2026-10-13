@@ -1,0 +1,96 @@
+---
+title: "Secuencia — Alta y consulta de prueba con requisitos de muestra y vigencia"
+---
+sequenceDiagram
+  autonumber
+  actor U as Jefatura de laboratorio /<br/>Médico / Técnico
+  participant V as Vue · LabTestCatalogView<br/>+ LabTestForm
+  participant MW as Middlewares<br/>JWT · Tenant · RBAC
+  participant C as LabTestController
+  participant S as LabTestCatalogService
+  participant RV as LabTestRules «interfaz»<br/>(muestra · rangos · vigencia)
+  participant R as LabTestRepository «interfaz»<br/>(HOSPITAL · lab_tests)
+  participant AU as AuditLogger<br/>(HOSPITAL · local_access_audits)
+
+  rect rgb(238, 243, 251)
+  Note over U,AU: A · Registrar prueba en el catálogo (UC-LAB-01, 02, 03, 04, 08, 09)
+  U->>V: Completa código, nombre, sección, requisitos de muestra, resultado, rangos y vigencia
+  V->>MW: POST /api/v1/lab-tests + Bearer JWT + X-Tenant-ID
+  alt JWT inválido, tenant ajeno o sin laboratorio.catalogo.administrar
+    MW-->>V: 401 / 403 (denegación registrada por RBAC)
+  else Acceso válido (UC-LAB-08)
+    MW->>C: store(request)
+    C->>C: Validar formato del payload (StoreLabTestRequest)
+    alt Campos obligatorios ausentes o tipos inválidos
+      C-->>V: 422 errores por campo
+    else Payload válido
+      C->>S: registrar(datos, usuario)
+      S->>RV: validarRequisitosDeMuestra(datos) (UC-LAB-02)
+      break Requisito faltante o incoherente (ayuno sin horas, volumen ≤ 0)
+        RV-->>S: SpecimenRequirementInvalid
+        C-->>V: 422 SPECIMEN_REQUIREMENT_INVALID (UC-LAB-04)
+      end
+      S->>RV: validarResultadoYRangos(datos) (UC-LAB-03)
+      break Sin unidad o crítico bajo ≥ referencia baja, etc.
+        RV-->>S: RangesIncoherent
+        C-->>V: 422 RANGES_INCOHERENT (UC-LAB-04)
+      end
+      S->>RV: validarVigencia(desde, hasta, hoy)
+      break Alta retroactiva o hasta ≤ desde
+        C-->>V: 422 VALIDITY_INVALID
+      end
+      S->>R: versionActivaQueSeSolapa(código, desde, hasta)
+      break Ya existe una versión activa solapada
+        R-->>S: versión vigente
+        C-->>V: 409 LAB_TEST_VALIDITY_OVERLAP + versión vigente (UC-LAB-04)
+      end
+      S->>R: BEGIN (conexión hospital)
+      S->>R: INSERT lab_tests (version_no = n + 1, status = active, valid_from, valid_to)
+      S->>AU: registrar("prueba_lab.registrada", código, versión, usuario)
+      AU->>R: INSERT local_access_audits + outbox_events (misma transacción)
+      alt Exclusión GiST de vigencia violada (alta concurrente)
+        S->>R: ROLLBACK
+        C-->>V: 409 LAB_TEST_VALIDITY_OVERLAP
+      else Falla de auditoría
+        S->>R: ROLLBACK
+        C-->>V: 500
+      else Correcto
+        S->>R: COMMIT
+        C-->>V: 201 { lab_test_id, code, version_no, valid_from }
+        V-->>U: Prueba registrada en el catálogo
+      end
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over U,AU: B · Consultar catálogo vigente y requisitos de muestra (UC-LAB-05, 06, 08)
+  U->>V: Busca por código, nombre o sección (fecha = hoy)
+  V->>MW: GET /api/v1/lab-tests?search={texto}#38;section={sección}#38;on={fecha}
+  alt Sin JWT o sin laboratorio.catalogo.ver
+    MW-->>V: 401 / 403
+  else Acceso válido (UC-LAB-08)
+    MW->>C: index(filtros)
+    C->>S: vigentes(filtros, fecha)
+    S->>R: buscar(status = active, valid_from ≤ fecha #lt; valid_to)
+    R-->>S: versiones vigentes
+    alt Ninguna coincide
+      C-->>V: 200 lista vacía
+    else Hay pruebas vigentes (UC-LAB-05)
+      C-->>V: 200 lista (código, nombre, sección, muestra, versión)
+      U->>V: Abre el detalle de una prueba (UC-LAB-06)
+      V->>MW: GET /api/v1/lab-tests/{labTest}?on={fecha}
+      MW->>C: show(labTest, fecha)
+      C->>S: detalle(labTestId, fecha)
+      S->>R: obtener(labTestId)
+      alt No existe en el tenant
+        C-->>V: 404 LAB_TEST_NOT_FOUND
+      else Existe pero no está vigente a la fecha
+        C-->>V: 200 { vigente: false } · no se puede ordenar
+      else Vigente
+        C-->>V: 200 requisitos de muestra, preparación, unidad y rangos
+        V-->>U: Requisitos de muestra de la versión vigente
+      end
+    end
+  end
+  end

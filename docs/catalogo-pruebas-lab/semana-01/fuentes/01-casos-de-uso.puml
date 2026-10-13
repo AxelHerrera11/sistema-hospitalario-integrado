@@ -1,0 +1,47 @@
+@startuml
+title Casos de uso — Alta y consulta de prueba con requisitos de muestra y vigencia
+left to right direction
+skinparam actorStyle awesome
+
+actor "Jefatura de laboratorio" as jef
+actor "Médico solicitante" as med
+actor "Técnico de recepción de muestras" as tec
+actor "Órdenes de laboratorio (ASII-16)" as ord <<sistema>>
+actor "Resultados y alertas (ASII-19/20/21)" as res <<sistema>>
+actor "RBAC / JWT (ASII-01/02)" as rbac <<sistema>>
+actor "Bitácora de auditoría (HOSPITAL)" as aud <<sistema>>
+
+rectangle "HIS · Catálogo de pruebas de laboratorio (tenant = hospital activo)" {
+  usecase "UC-LAB-01\nRegistrar prueba en el catálogo" as UC_LAB_01
+  usecase "UC-LAB-02\nDefinir requisitos de muestra" as UC_LAB_02
+  usecase "UC-LAB-03\nDefinir resultado, rangos y vigencia" as UC_LAB_03
+  usecase "UC-LAB-04\nRechazar alta inválida o solapada" as UC_LAB_04
+  usecase "UC-LAB-05\nConsultar catálogo vigente" as UC_LAB_05
+  usecase "UC-LAB-06\nConsultar requisitos de muestra de una prueba" as UC_LAB_06
+  usecase "UC-LAB-07\nCerrar vigencia o desactivar prueba" as UC_LAB_07
+  usecase "UC-LAB-08\nValidar acceso y permisos" as UC_LAB_08
+  usecase "UC-LAB-09\nRegistrar auditoría" as UC_LAB_09
+}
+
+jef -- UC_LAB_01
+jef -- UC_LAB_07
+jef -- UC_LAB_05
+med -- UC_LAB_05
+tec -- UC_LAB_06
+ord -- UC_LAB_05
+res -- UC_LAB_06
+rbac -- UC_LAB_08
+aud -- UC_LAB_09
+UC_LAB_01 ..> UC_LAB_02 : <<include>>
+UC_LAB_01 ..> UC_LAB_03 : <<include>>
+UC_LAB_01 ..> UC_LAB_08 : <<include>>
+UC_LAB_01 ..> UC_LAB_09 : <<include>>
+UC_LAB_07 ..> UC_LAB_08 : <<include>>
+UC_LAB_07 ..> UC_LAB_09 : <<include>>
+UC_LAB_05 ..> UC_LAB_08 : <<include>>
+UC_LAB_06 ..> UC_LAB_08 : <<include>>
+UC_LAB_04 ..> UC_LAB_01 : <<extend>>
+' UC-LAB-04 extiende a UC-LAB-01 si el código tiene una versión vigente que se solapa, faltan requisitos o los rangos son incoherentes.
+' Cambiar requisitos o rangos de una prueba vigente = cerrar su vigencia (UC-LAB-07) y registrar una nueva versión: las órdenes ya emitidas conservan la versión con la que se pidieron.
+' Los umbrales críticos que se definen aquí son los que usa Alertas críticas (ASII-21) para detectar un valor crítico.
+@enduml
