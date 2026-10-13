@@ -1,0 +1,17 @@
+classDiagram
+  class ResultReviewController {
+    +validate(request)
+    +reject(request)
+  }
+  class BiochemistValidationService {
+    +validateResult(resultId)
+    +rejectResult(resultId, reason)
+  }
+  class PdoConnection
+  class MailNotifier
+  class AuditTableWriter
+
+  ResultReviewController --> BiochemistValidationService
+  BiochemistValidationService --> PdoConnection
+  BiochemistValidationService --> MailNotifier
+  BiochemistValidationService --> AuditTableWriter
