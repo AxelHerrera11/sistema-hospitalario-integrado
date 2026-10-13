@@ -1,0 +1,14 @@
+flowchart TB
+  W[NativePHP Window / Mobile Shell]
+  VM[Presentation: ResultPendingViewModel]
+  UC[Application: GetPendingResults]
+  D[Domain: PendingResultPolicy]
+  R[Port: PendingResultRepository]
+  HTTP[Adapter: HisApiRepository]
+  MEM[Adapter: InMemoryRepository]
+  API[(HIS REST API)]
+
+  W --> VM --> UC --> D
+  UC --> R
+  R --> HTTP --> API
+  R --> MEM
