@@ -1,0 +1,46 @@
+@startuml
+title Casos de uso — Registro de alergia y emisión de alerta al consultar el expediente
+left to right direction
+skinparam actorStyle awesome
+
+actor "Médico tratante" as med
+actor "Enfermería" as enf
+actor "Expediente médico (ASII-10)" as exp <<sistema>>
+actor "RBAC / JWT (ASII-01/02)" as rbac <<sistema>>
+actor "Prescripciones (ASII-15)" as pre <<sistema>>
+actor "Bitácora de auditoría (HOSPITAL)" as aud <<sistema>>
+
+rectangle "HIS · Alergias clínicas (tenant = hospital activo)" {
+  usecase "UC-ALG-01\nRegistrar alergia" as UC_ALG_01
+  usecase "UC-ALG-02\nValidar alérgeno, tipo y severidad" as UC_ALG_02
+  usecase "UC-ALG-03\nRechazar alergia duplicada o inválida" as UC_ALG_03
+  usecase "UC-ALG-04\nConsultar expediente del paciente" as UC_ALG_04
+  usecase "UC-ALG-05\nEmitir alerta visual de alergias" as UC_ALG_05
+  usecase "UC-ALG-06\nResolver o inactivar alergia" as UC_ALG_06
+  usecase "UC-ALG-07\nValidar acceso y relación de cuidado" as UC_ALG_07
+  usecase "UC-ALG-08\nRegistrar auditoría" as UC_ALG_08
+  usecase "UC-ALG-09\nVerificar alergias activas" as UC_ALG_09
+}
+
+med -- UC_ALG_01
+med -- UC_ALG_04
+med -- UC_ALG_06
+enf -- UC_ALG_01
+enf -- UC_ALG_04
+exp -- UC_ALG_04
+rbac -- UC_ALG_07
+pre -- UC_ALG_09
+aud -- UC_ALG_08
+UC_ALG_01 ..> UC_ALG_02 : <<include>>
+UC_ALG_01 ..> UC_ALG_07 : <<include>>
+UC_ALG_01 ..> UC_ALG_08 : <<include>>
+UC_ALG_04 ..> UC_ALG_05 : <<include>>
+UC_ALG_04 ..> UC_ALG_07 : <<include>>
+UC_ALG_04 ..> UC_ALG_08 : <<include>>
+UC_ALG_06 ..> UC_ALG_07 : <<include>>
+UC_ALG_06 ..> UC_ALG_08 : <<include>>
+UC_ALG_03 ..> UC_ALG_01 : <<extend>>
+' UC-ALG-03 extiende a UC-ALG-01 cuando ya existe una alergia activa equivalente (allergies_active_equivalent_unique) o faltan datos obligatorios.
+' UC-ALG-05 es falla segura: si las alergias no se pueden leer, la alerta dice «Alergias no disponibles», nunca «Sin alergias».
+' UC-ALG-09 es el contrato de solo lectura (AllergyChecker) que consume Prescripciones; usa la misma consulta de alergias activas que UC-ALG-05.
+@enduml

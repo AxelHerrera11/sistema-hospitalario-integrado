@@ -1,0 +1,134 @@
+---
+title: "Secuencia — Registro de alergia y emisión de alerta al consultar el expediente"
+---
+sequenceDiagram
+  autonumber
+  actor U as Médico / Enfermería
+  participant V as Vue · PatientRecordView<br/>+ AllergyForm
+  participant MW as Middlewares<br/>JWT · Tenant · RBAC
+  participant C as AllergyController
+  participant S as AllergyService
+  participant P as CareRelationPolicy «interfaz»<br/>(care_assignments)
+  participant R as AllergyRepository «interfaz»<br/>(HOSPITAL · allergies)
+  participant AU as AuditLogger<br/>(HOSPITAL · local_access_audits)
+
+  rect rgb(238, 243, 251)
+  Note over U,AU: A · Registrar alergia (UC-ALG-01, 02, 03, 07, 08)
+  U->>V: Completa alérgeno, tipo, severidad, reacción y fecha de inicio
+  V->>MW: POST /api/v1/patients/{patient}/allergies + Bearer JWT + X-Tenant-ID
+  alt JWT inválido, tenant ajeno o sin alergias.registrar
+    MW-->>V: 401 / 403 (denegación registrada por RBAC)
+  else Acceso válido (UC-ALG-07)
+    MW->>C: store(request, patient)
+    C->>C: Validar formato del payload (UC-ALG-02)
+    alt Datos inválidos
+      C-->>V: 422 errores por campo (UC-ALG-03)
+    else Payload válido
+      C->>S: registrar(patientId, datos, usuario)
+      S->>R: buscarPaciente(patientId)
+      break Paciente inexistente o fallecido
+        S-->>C: PatientNotFound / PatientInactive
+        C-->>V: 404 / 409 PATIENT_INACTIVE
+      end
+      S->>P: tieneRelacionDeCuidado(usuario, paciente)
+      break Sin relación de cuidado
+        P-->>S: false
+        S-->>C: CareRelationRequired
+        C-->>V: 403
+      end
+      S->>R: existeActivaEquivalente(paciente, tipo, alérgeno normalizado)
+      break Alergia activa equivalente
+        R-->>S: alergia existente
+        S-->>C: AllergyDuplicated
+        C-->>V: 409 ALLERGY_DUPLICATED + alergia existente (UC-ALG-03)
+      end
+      S->>R: BEGIN (conexión hospital)
+      S->>R: INSERT allergies (status = active, verified_by_user_ref_id = usuario)
+      S->>AU: registrar("alergia.registrada", metadatos sin texto clínico libre)
+      AU->>R: INSERT local_access_audits + outbox_events (misma transacción)
+      alt Índice allergies_active_equivalent_unique violado (concurrencia)
+        S->>R: ROLLBACK
+        C-->>V: 409 ALLERGY_DUPLICATED
+      else Falla de auditoría
+        S->>R: ROLLBACK
+        C-->>V: 500 (no se registra alergia sin traza)
+      else Todo correcto
+        S->>R: COMMIT
+        S-->>C: AllergyRegistered(allergy_id)
+        C-->>V: 201 { allergy_id, severity, status: active }
+        V-->>U: Confirmación y alerta del expediente actualizada
+      end
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over U,AU: B · Consultar expediente con alerta visual (UC-ALG-04, 05, 07, 08)
+  U->>V: Abre el expediente del paciente (UC-ALG-04)
+  V->>MW: GET /api/v1/patients/{patient}/allergies?status=active
+  alt Sin JWT, tenant ajeno o sin alergias.ver
+    MW-->>V: 401 / 403
+  else Acceso válido (UC-ALG-07)
+    MW->>C: index(patient)
+    C->>S: alergiasActivas(patientId, usuario)
+    S->>R: listarActivas(patientId) ordenadas por severidad
+    alt Paciente inexistente
+      R-->>S: PatientNotFound
+      C-->>V: 404
+    else Base de alergias no disponible
+      R-->>S: excepción / timeout
+      C-->>V: 503 ALLERGIES_UNAVAILABLE
+      V-->>U: Banner gris «Alergias no disponibles — verifique antes de prescribir»
+    else Consulta exitosa (UC-ALG-05)
+      R-->>S: lista de alergias activas
+      S->>AU: registrar("alergias.consultadas", paciente, usuario)
+      opt Falla la auditoría de lectura
+        AU-->>S: error
+        S->>S: Log de aplicación + reintento (no bloquea la consulta)
+      end
+      S-->>C: AllergySummary (máxima severidad, lista)
+      C-->>V: 200 { highest_severity, allergies[] }
+      alt Alguna severe o life_threatening
+        V-->>U: Banner rojo no descartable con alérgeno y reacción
+      else Solo mild, moderate, unknown o intolerancias
+        V-->>U: Banner ámbar
+      else Lista vacía
+        V-->>U: Indicador neutro «Sin alergias registradas»
+      end
+    end
+  end
+  end
+
+  rect rgb(230, 244, 234)
+  Note over U,AU: C · Resolver o inactivar alergia (UC-ALG-06, 07, 08)
+  U->>V: Elige Resolver o Inactivar, con motivo y fecha
+  V->>MW: PATCH /api/v1/allergies/{allergy}/status
+  alt Sin alergias.resolver
+    MW-->>V: 401 / 403
+  else Acceso válido (UC-ALG-07)
+    MW->>C: updateStatus(allergy, request)
+    C->>S: cambiarEstado(allergyId, estado, fecha, motivo, usuario)
+    S->>R: obtener(allergyId)
+    break No existe o no está active
+      S-->>C: AllergyNotFound / AllergyNotActive
+      C-->>V: 404 / 409 ALLERGY_NOT_ACTIVE
+    end
+    S->>P: esMedicoTratante(usuario, paciente)
+    break No es médico tratante
+      C-->>V: 403
+    end
+    break Motivo vacío o fecha inválida
+      C-->>V: 422
+    end
+    S->>R: BEGIN · UPDATE allergies (status, resolved_at)
+    S->>AU: registrar("alergia.resuelta" | "alergia.inactivada", motivo)
+    alt Falla de auditoría
+      S->>R: ROLLBACK
+      C-->>V: 500
+    else Correcto
+      S->>R: COMMIT
+      C-->>V: 200 { status, resolved_at }
+      V-->>U: La alergia sale de la alerta visual
+    end
+  end
+  end

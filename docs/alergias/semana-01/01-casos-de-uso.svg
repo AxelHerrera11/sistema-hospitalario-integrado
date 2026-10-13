@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1250" height="860" viewBox="0 0 1250 860">
+<title>Casos de uso — Registro de alergia y emisión de alerta al consultar el expediente</title>
+<defs><marker id="open-inc" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#2e7d32" stroke-width="1.6"/></marker><marker id="open-ext" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#b26a00" stroke-width="1.6"/></marker></defs>
+<rect width="1250" height="860" fill="#ffffff"/>
+<text x="625.0" y="36" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#1f2a44">Casos de uso — Registro de alergia y emisión de alerta al consultar el expediente</text>
+<text x="625.0" y="60" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#5b6478">ASII-12 · Alergias clínicas y alerta visual en expediente · base HOSPITAL (tabla allergies)</text>
+<rect x="245" y="95" width="760" height="645" rx="10" fill="#fbfcfe" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="625.0" y="121" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="#1f2a44">HIS · Alergias clínicas (tenant = hospital activo)</text>
+<line x1="147.0" y1="384.0" x2="331.0" y2="224.0" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="384.0" x2="262.0" y2="399.5" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="384.0" x2="331.7" y2="548.0" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="204.8" x2="254.7" y2="197.7" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="204.8" x2="333.5" y2="379.8" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="546.4" x2="316.1" y2="446.0" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="356.0" x2="743.0" y2="357.5" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="524.0" x2="997.9" y2="524.9" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="647.2" x2="742.8" y2="640.3" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="488.0" y1="190.0" x2="762.0" y2="190.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="419.6" y1="222.7" x2="575.4" y2="325.3" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="390.2" y1="225.5" x2="604.8" y2="602.5" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="488.0" y1="414.0" x2="762.0" y2="414.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="465.8" y1="393.0" x2="529.2" y2="379.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="408.7" y1="448.0" x2="586.3" y2="604.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="408.7" y1="548.0" x2="586.3" y2="392.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="465.8" y1="603.0" x2="529.2" y2="617.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="784.2" y1="281.0" x2="465.8" y2="211.0" stroke="#b26a00" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-ext)"/>
+<ellipse cx="370" cy="190" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="370" y="184" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-01</text>
+<text x="370" y="200" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Registrar alergia</text>
+<ellipse cx="880" cy="190" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="176" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-02</text>
+<text x="880" y="192" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Validar alérgeno, tipo</text>
+<text x="880" y="207" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">y severidad</text>
+<ellipse cx="880" cy="302" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="288" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-03</text>
+<text x="880" y="304" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Rechazar alergia</text>
+<text x="880" y="319" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">duplicada o inválida</text>
+<ellipse cx="370" cy="414" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="370" y="400" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-04</text>
+<text x="370" y="416" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Consultar expediente</text>
+<text x="370" y="431" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">del paciente</text>
+<ellipse cx="880" cy="414" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="400" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-05</text>
+<text x="880" y="416" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Emitir alerta visual</text>
+<text x="880" y="431" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">de alergias</text>
+<ellipse cx="370" cy="582.0" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="370" y="568.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-06</text>
+<text x="370" y="584.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Resolver o inactivar</text>
+<text x="370" y="599.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">alergia</text>
+<ellipse cx="625" cy="358.0" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="625" y="344.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-07</text>
+<text x="625" y="360.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Validar acceso y</text>
+<text x="625" y="375.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">relación de cuidado</text>
+<ellipse cx="625" cy="638" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="625" y="632" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-08</text>
+<text x="625" y="648" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Registrar auditoría</text>
+<ellipse cx="880" cy="526" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="512" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ALG-09</text>
+<text x="880" y="528" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Verificar alergias</text>
+<text x="880" y="543" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">activas</text>
+<rect x="593.0" y="180.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="625.0" y="194.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="264.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="278.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="404.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="418.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="593.0" y="404.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="625.0" y="418.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="376.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="390.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="516.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="530.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="460.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="474.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="600.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="614.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="593.0" y="236.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="625.0" y="250.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#b26a00">«extend»</text>
+<circle cx="115" cy="356.0" r="11" fill="#ffffff" stroke="#1f2a44" stroke-width="1.6"/>
+<path d="M115,367.0 L115,396.0 M97,378.0 L133,378.0 M115,396.0 L101,418.0 M115,396.0 L129,418.0" fill="none" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="115" y="436.0" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Médico tratante</text>
+<circle cx="115" cy="176.8" r="11" fill="#ffffff" stroke="#1f2a44" stroke-width="1.6"/>
+<path d="M115,187.8 L115,216.8 M97,198.8 L133,198.8 M115,216.8 L101,238.8 M115,216.8 L129,238.8" fill="none" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="115" y="256.8" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Enfermería</text>
+<rect x="49" y="514.4000000000001" width="132" height="66" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="115" y="532.4000000000001" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="115" y="550.4000000000001" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Expediente médico</text>
+<text x="115" y="565.4000000000001" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(ASII-10)</text>
+<rect x="1069" y="324.0" width="132" height="66" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="342.0" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="360.0" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">RBAC / JWT</text>
+<text x="1135" y="375.0" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(ASII-01/02)</text>
+<rect x="1069" y="492" width="132" height="66" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="510" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="528" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Prescripciones</text>
+<text x="1135" y="543" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(ASII-15)</text>
+<rect x="1069" y="615.1999999999999" width="132" height="81" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="633.1999999999999" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="651.1999999999999" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Bitácora de</text>
+<text x="1135" y="666.1999999999999" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">auditoría</text>
+<text x="1135" y="681.1999999999999" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(HOSPITAL)</text>
+<text x="245" y="768" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">Línea continua: asociación actor–caso de uso.  <tspan fill="#2e7d32">«include»</tspan>: comportamiento obligatorio reutilizado.  <tspan fill="#b26a00">«extend»</tspan>: comportamiento condicional sobre el caso base.</text>
+<text x="245" y="788" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">UC-ALG-03 extiende a UC-ALG-01 cuando ya existe una alergia activa equivalente (allergies_active_equivalent_unique) o faltan datos obligatorios.</text>
+<text x="245" y="806" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">UC-ALG-05 es falla segura: si las alergias no se pueden leer, la alerta dice «Alergias no disponibles», nunca «Sin alergias».</text>
+<text x="245" y="824" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">UC-ALG-09 es el contrato de solo lectura (AllergyChecker) que consume Prescripciones; usa la misma consulta de alergias activas que UC-ALG-05.</text>
+</svg>
