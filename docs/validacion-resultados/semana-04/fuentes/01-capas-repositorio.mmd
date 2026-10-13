@@ -1,0 +1,19 @@
+flowchart TB
+  UI[Presentation: bandeja de resultados]
+  C[Controller: ValidateLabResultController]
+  UC[Application: ValidateLabResult]
+  D[Domain: ValidationDecision + StatusTransition]
+  R[Port: ValidationRepository]
+  A[Adapter: PdoValidationRepository]
+  M[Adapter: InMemoryValidationRepository]
+  DB[(PostgreSQL / HIS)]
+  P[PermissionPort: CanValidateResult]
+  AU[AuditLogPort]
+
+  UI --> C --> UC
+  UC --> P
+  UC --> D
+  UC --> R
+  R --> A --> DB
+  R --> M
+  UC --> AU
