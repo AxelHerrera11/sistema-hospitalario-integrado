@@ -1,0 +1,74 @@
+---
+title: "Actividad — Admisión de paciente y asignación de una cama disponible"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+  classDef warn fill:#fff3e0,stroke:#b26a00,color:#7a4a00
+  classDef tx fill:#eef3fb,stroke:#3a5a8c,color:#1f2a44
+
+  subgraph A["A · Registrar admisión hospitalaria (UC-ADM-01, 02, 06, 07)"]
+    direction TB
+    ai(( )):::ini --> a1["Personal de admisión busca al paciente<br/>y elige Admitir (UC-ADM-01)"]
+    a1 --> a2["Capturar médico responsable, especialidad,<br/>servicio, motivo y fecha y hora de ingreso"]
+    a2 --> a3{"¿JWT, tenant y permiso<br/>admisiones.registrar?<br/>(UC-ADM-06)"}:::dec
+    a3 -- No --> a401["401/403 + denegación<br/>registrada por RBAC"]:::err
+    a3 -- Sí --> a4{"¿Motivo, médico, especialidad<br/>y fecha de ingreso válidos<br/>(no futura)?"}:::dec
+    a4 -- No --> a422["422 Errores por campo"]:::err
+    a4 -- Sí --> a5{"¿El paciente existe en el tenant<br/>y está activo? (UC-ADM-02)"}:::dec
+    a5 -- No --> a404["404 Paciente no encontrado /<br/>409 PATIENT_INACTIVE"]:::err
+    a5 -- Sí --> a6{"¿Ya tiene un episodio inpatient<br/>abierto? (UC-ADM-02)"}:::dec
+    a6 -- Sí --> a409["409 ADMISSION_ALREADY_OPEN<br/>muestra la admisión vigente"]:::err
+    a6 -- No --> a8["BEGIN conexión hospital:<br/>INSERT care_episodes (type = inpatient, status = open)<br/>+ INSERT care_assignments (médico responsable,<br/>source = episode) + local_access_audits<br/>+ outbox_events (UC-ADM-07)"]:::tx
+    a8 --> a9{"¿INSERT y auditoría<br/>correctos?"}:::dec
+    a9 -- "Trigger de especialidad:<br/>el médico no tiene la<br/>especialidad activa" --> a422b["ROLLBACK + 422<br/>DOCTOR_SPECIALTY_INVALID"]:::err
+    a9 -- "Falla de auditoría" --> a500["ROLLBACK + 500<br/>no hay admisión sin traza"]:::err
+    a9 -- Sí --> aok["COMMIT · 201 Admisión registrada<br/>sin cama: continúa en B"]:::ok
+    a401 & a422 & a404 & a409 & a422b & a500 & aok --> af((( ))):::fin
+  end
+
+  subgraph B["B · Buscar y asignar cama (UC-ADM-03, 04, 05, 06, 07, 09)"]
+    direction TB
+    bi(( )):::ini --> b1["Admisión o jefatura de enfermería elige<br/>sala y tipo de cama para el episodio (UC-ADM-03)"]
+    b1 --> b2{"¿JWT, tenant y permiso<br/>camas.asignar? (UC-ADM-06)"}:::dec
+    b2 -- No --> b401["401/403"]:::err
+    b2 -- Sí --> b3{"¿El episodio existe, es inpatient<br/>y está open?"}:::dec
+    b3 -- No --> b404["404 No existe /<br/>409 EPISODE_NOT_OPEN"]:::err
+    b3 -- Sí --> b4{"¿El episodio ya tiene una<br/>bed_stay abierta?"}:::dec
+    b4 -- Sí --> b409a["409 EPISODE_ALREADY_HAS_BED<br/>(cambios de cama: ASII-08)"]:::err
+    b4 -- No --> b5["Listar camas available en salas active<br/>sin bed_stay abierta (UC-ADM-03)"]
+    b5 --> b6{"¿Hay camas<br/>disponibles?"}:::dec
+    b6 -- No --> b7["200 lista vacía: la admisión queda<br/>en espera de cama (UC-ADM-09)<br/>episodio abierto sin bed_stay"]:::warn
+    b6 -- Sí --> b8["Usuario selecciona la cama<br/>y confirma (UC-ADM-04)"]
+    b8 --> b9["BEGIN conexión hospital:<br/>SELECT bed … FOR UPDATE"]:::tx
+    b9 --> b10{"¿La cama sigue available<br/>y su sala sigue active?"}:::dec
+    b10 -- No --> b409b["ROLLBACK + 409 BED_NOT_AVAILABLE<br/>refrescar lista (UC-ADM-05)"]:::err
+    b10 -- Sí --> b11["INSERT bed_stays (started_at ≥ inicio<br/>del episodio, reason) + UPDATE beds<br/>status = occupied + local_access_audits<br/>+ outbox_events (UC-ADM-07)"]:::tx
+    b11 --> b12{"¿Resultado de<br/>la transacción?"}:::dec
+    b12 -- "Exclusión GiST o índice<br/>único violado" --> b409c["ROLLBACK + 409<br/>BED_ALREADY_ASSIGNED (UC-ADM-05)"]:::err
+    b12 -- "Falla de auditoría" --> b500["ROLLBACK + 500"]:::err
+    b12 -- Correcto --> bok["COMMIT · 201 Cama asignada:<br/>paciente hospitalizado en sala y cama"]:::ok
+    b401 & b404 & b409a & b7 & b409b & b409c & b500 & bok --> bf((( ))):::fin
+  end
+
+  subgraph C["C · Consultar admisión y cama asignada (UC-ADM-08, 06, 07)"]
+    direction TB
+    ci(( )):::ini --> c1["Médico, enfermería o admisión<br/>abre la admisión (UC-ADM-08)"]
+    c1 --> c2{"¿JWT, tenant y permiso<br/>admisiones.ver?"}:::dec
+    c2 -- No --> c401["401/403"]:::err
+    c2 -- Sí --> c3{"¿El episodio existe<br/>en el tenant?"}:::dec
+    c3 -- No --> c404["404"]:::err
+    c3 -- Sí --> c4["Leer episodio, médico responsable,<br/>bed_stay abierta, cama y sala"]
+    c4 --> c5{"¿Tiene bed_stay<br/>abierta?"}:::dec
+    c5 -- Sí --> c6["Mostrar sala, cama y<br/>fecha de asignación"]
+    c5 -- No --> c7["Mostrar «En espera de cama»<br/>y tiempo de espera"]:::warn
+    c6 & c7 --> c8["Registrar la lectura en<br/>local_access_audits (UC-ADM-07)<br/>sin bloquear la consulta"]:::tx
+    c8 --> cok["200 Detalle de la admisión"]:::ok
+    c401 & c404 & cok --> cf((( ))):::fin
+  end
+
+  %% Enlaces invisibles: solo ordenan las particiones de izquierda a derecha
+  A ~~~ B ~~~ C

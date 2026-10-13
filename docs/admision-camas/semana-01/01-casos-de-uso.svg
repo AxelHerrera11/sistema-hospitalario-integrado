@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1250" height="748" viewBox="0 0 1250 748">
+<title>Casos de uso — Admisión de paciente y asignación de una cama disponible</title>
+<defs><marker id="open-inc" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#2e7d32" stroke-width="1.6"/></marker><marker id="open-ext" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#b26a00" stroke-width="1.6"/></marker></defs>
+<rect width="1250" height="748" fill="#ffffff"/>
+<text x="625.0" y="36" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#1f2a44">Casos de uso — Admisión de paciente y asignación de una cama disponible</text>
+<text x="625.0" y="60" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#5b6478">ASII-07 · Admisión hospitalaria y asignación de cama · base HOSPITAL (care_episodes, care_assignments, beds, bed_stays)</text>
+<rect x="245" y="95" width="760" height="533" rx="10" fill="#fbfcfe" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="625.0" y="121" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="#1f2a44">HIS · Admisión hospitalaria (tenant = hospital activo)</text>
+<line x1="147.0" y1="227.2" x2="266.5" y2="207.3" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="227.2" x2="274.7" y2="274.3" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="227.2" x2="329.6" y2="380.2" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="395.2" x2="256.3" y2="404.4" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="395.2" x2="329.6" y2="548.2" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="147.0" y1="557.6" x2="258.9" y2="569.8" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="165.6" x2="991.1" y2="177.8" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="255.2" x2="465.6" y2="294.8" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="406.4" x2="739.3" y2="378.1" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="1103.0" y1="580.0" x2="782.4" y2="589.7" stroke="#8a93a6" stroke-width="1.3"/>
+<line x1="488.0" y1="190.0" x2="762.0" y2="190.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="417.0" y1="223.0" x2="578.0" y2="336.2" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="395.7" y1="225.1" x2="639.3" y2="558.1" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="363.6" y1="378.1" x2="356.4" y2="337.9" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="472.3" y1="396.0" x2="522.7" y2="387.2" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="423.0" y1="446.2" x2="612.0" y2="561.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="410.5" y1="548.2" x2="584.5" y2="403.0" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="487.1" y1="586.4" x2="547.9" y2="588.8" stroke="#2e7d32" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-inc)"/>
+<line x1="769.0" y1="457.8" x2="481.0" y2="426.2" stroke="#b26a00" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-ext)"/>
+<line x1="762.6" y1="315.1" x2="467.4" y2="305.7" stroke="#b26a00" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#open-ext)"/>
+<ellipse cx="370" cy="190" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="370" y="176" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-01</text>
+<text x="370" y="192" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Registrar admisión</text>
+<text x="370" y="207" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">hospitalaria</text>
+<ellipse cx="880" cy="190" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="168" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-02</text>
+<text x="880" y="184" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Verificar paciente y</text>
+<text x="880" y="199" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">hospitalización</text>
+<text x="880" y="214" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">abierta</text>
+<ellipse cx="350" cy="302" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="350" y="296" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-03</text>
+<text x="350" y="312" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Buscar cama disponible</text>
+<ellipse cx="370" cy="414" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="370" y="400" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-04</text>
+<text x="370" y="416" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Asignar cama al</text>
+<text x="370" y="431" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">episodio</text>
+<ellipse cx="880" cy="470.0" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="456.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-05</text>
+<text x="880" y="472.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Rechazar asignación de</text>
+<text x="880" y="487.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">cama</text>
+<ellipse cx="625" cy="369.20000000000005" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="625" y="355.20000000000005" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-06</text>
+<text x="625" y="371.20000000000005" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Validar acceso y</text>
+<text x="625" y="386.20000000000005" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">permisos</text>
+<ellipse cx="665" cy="593.2" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="665" y="587.2" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-07</text>
+<text x="665" y="603.2" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Registrar auditoría</text>
+<ellipse cx="370" cy="582.0" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="370" y="568.0" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-08</text>
+<text x="370" y="584.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Consultar admisión y</text>
+<text x="370" y="599.0" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">cama asignada</text>
+<ellipse cx="880" cy="318.79999999999995" rx="118" ry="36" fill="#eef3fb" stroke="#3a5a8c" stroke-width="1.6"/>
+<text x="880" y="304.79999999999995" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#3a5a8c">UC-ADM-09</text>
+<text x="880" y="320.79999999999995" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">Dejar admisión en</text>
+<text x="880" y="335.79999999999995" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#1f2a44">espera de cama</text>
+<rect x="593.0" y="180.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="625.0" y="194.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="269.6" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="283.6" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="534.2" y="448.2" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="566.2" y="462.2" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="328.0" y="348.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="360.0" y="362.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="381.6" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="395.6" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="485.5" y="493.6" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="517.5" y="507.6" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="465.5" y="465.6" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="497.5" y="479.6" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="485.5" y="577.6" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="517.5" y="591.6" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#2e7d32">«include»</text>
+<rect x="593.0" y="432.0" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="625.0" y="446.0" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#b26a00">«extend»</text>
+<rect x="583.0" y="300.4" width="64" height="18" rx="4" fill="#ffffff" opacity="0.92"/>
+<text x="615.0" y="314.4" font-family="Arial, Helvetica, sans-serif" font-size="11.5" font-style="italic" text-anchor="middle" fill="#b26a00">«extend»</text>
+<circle cx="115" cy="199.2" r="11" fill="#ffffff" stroke="#1f2a44" stroke-width="1.6"/>
+<path d="M115,210.2 L115,239.2 M97,221.2 L133,221.2 M115,239.2 L101,261.2 M115,239.2 L129,261.2" fill="none" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="115" y="279.2" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Personal de</text>
+<text x="115" y="294.2" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">admisión</text>
+<circle cx="115" cy="367.20000000000005" r="11" fill="#ffffff" stroke="#1f2a44" stroke-width="1.6"/>
+<path d="M115,378.20000000000005 L115,407.20000000000005 M97,389.20000000000005 L133,389.20000000000005 M115,407.20000000000005 L101,429.20000000000005 M115,407.20000000000005 L129,429.20000000000005" fill="none" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="115" y="447.20000000000005" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Jefatura de</text>
+<text x="115" y="462.20000000000005" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">enfermería de sala</text>
+<circle cx="115" cy="529.5999999999999" r="11" fill="#ffffff" stroke="#1f2a44" stroke-width="1.6"/>
+<path d="M115,540.5999999999999 L115,569.5999999999999 M97,551.5999999999999 L133,551.5999999999999 M115,569.5999999999999 L101,591.5999999999999 M115,569.5999999999999 L129,591.5999999999999" fill="none" stroke="#1f2a44" stroke-width="1.6"/>
+<text x="115" y="609.5999999999999" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Médico tratante</text>
+<rect x="1069" y="133.6" width="132" height="66" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="151.6" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="169.6" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Pacientes</text>
+<text x="1135" y="184.6" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(ASII-03)</text>
+<rect x="1069" y="223.2" width="132" height="66" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="241.2" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="259.2" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Catálogo de camas</text>
+<text x="1135" y="274.2" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(ASII-06)</text>
+<rect x="1069" y="374.4" width="132" height="66" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="392.4" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="410.4" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">RBAC / JWT</text>
+<text x="1135" y="425.4" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(ASII-01/02)</text>
+<rect x="1069" y="548.0" width="132" height="81" rx="6" fill="#f4f5f8" stroke="#1f2a44" stroke-width="1.4"/>
+<text x="1135" y="566.0" font-family="Arial, Helvetica, sans-serif" font-size="11" text-anchor="middle" fill="#5b6478">«sistema»</text>
+<text x="1135" y="584.0" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">Bitácora de</text>
+<text x="1135" y="599.0" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">auditoría</text>
+<text x="1135" y="614.0" font-family="Arial, Helvetica, sans-serif" font-size="12.5" font-weight="700" text-anchor="middle" fill="#1f2a44">(HOSPITAL)</text>
+<text x="245" y="656" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">Línea continua: asociación actor–caso de uso.  <tspan fill="#2e7d32">«include»</tspan>: comportamiento obligatorio reutilizado.  <tspan fill="#b26a00">«extend»</tspan>: comportamiento condicional sobre el caso base.</text>
+<text x="245" y="676" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">UC-ADM-05 extiende a UC-ADM-04 si la cama no está disponible, la sala está inactiva, el episodio ya tiene cama o la exclusión GiST de bed_stays detecta otra asignación simultánea.</text>
+<text x="245" y="694" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">UC-ADM-09 extiende a UC-ADM-03 cuando no hay camas disponibles: el episodio inpatient queda abierto sin bed_stay hasta que se asigne una.</text>
+<text x="245" y="712" font-family="Arial, Helvetica, sans-serif" font-size="12" fill="#5b6478">La liberación de camas, los traslados y las altas pertenecen a ASII-08; el tablero de ocupación, a ASII-09.</text>
+</svg>

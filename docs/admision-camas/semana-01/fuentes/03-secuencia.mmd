@@ -1,0 +1,108 @@
+---
+title: "Secuencia — Admisión de paciente y asignación de una cama disponible"
+---
+sequenceDiagram
+  autonumber
+  actor U as Personal de admisión /<br/>Jefatura de enfermería
+  participant V as Vue · AdmissionWizard<br/>+ BedPicker
+  participant MW as Middlewares<br/>JWT · Tenant · RBAC
+  participant C as AdmissionController
+  participant S as AdmissionService
+  participant PD as PatientDirectory «interfaz»<br/>(local_patients)
+  participant AR as AdmissionRepository «interfaz»<br/>(care_episodes · care_assignments)
+  participant BR as BedRepository «interfaz»<br/>(wards · beds · bed_stays)
+  participant AU as AuditLogger<br/>(HOSPITAL · local_access_audits)
+
+  rect rgb(238, 243, 251)
+  Note over U,AU: A · Registrar admisión hospitalaria (UC-ADM-01, 02, 06, 07)
+  U->>V: Selecciona paciente, médico, especialidad, servicio, motivo e ingreso
+  V->>MW: POST /api/v1/admissions + Bearer JWT + X-Tenant-ID
+  alt JWT inválido, tenant ajeno o sin admisiones.registrar
+    MW-->>V: 401 / 403 (denegación registrada por RBAC)
+  else Acceso válido (UC-ADM-06)
+    MW->>C: store(request)
+    C->>C: Validar payload (StoreAdmissionRequest)
+    alt Datos inválidos o ingreso en el futuro
+      C-->>V: 422 errores por campo
+    else Payload válido
+      C->>S: admitir(pacienteId, médico, especialidad, motivo, ingreso, usuario)
+      S->>PD: obtenerActivo(pacienteId) (UC-ADM-02)
+      break Paciente inexistente o inactivo
+        PD-->>S: PatientNotFound / PatientInactive
+        C-->>V: 404 / 409 PATIENT_INACTIVE
+      end
+      S->>AR: hospitalizacionAbierta(pacienteId)
+      break Ya tiene un episodio inpatient abierto
+        AR-->>S: episodio vigente
+        C-->>V: 409 ADMISSION_ALREADY_OPEN + episodio vigente
+      end
+      S->>AR: BEGIN (conexión hospital)
+      S->>AR: INSERT care_episodes (type = inpatient, status = open, started_at)
+      S->>AR: INSERT care_assignments (médico responsable, source = episode)
+      S->>AU: registrar("admision.registrada", paciente, episodio, usuario)
+      AU->>AR: INSERT local_access_audits + outbox_events (misma transacción)
+      alt Trigger care_assignments_specialty_trigger (especialidad no activa)
+        S->>AR: ROLLBACK
+        C-->>V: 422 DOCTOR_SPECIALTY_INVALID
+      else Falla de auditoría
+        S->>AR: ROLLBACK
+        C-->>V: 500 (no hay admisión sin traza)
+      else Correcto
+        S->>AR: COMMIT
+        C-->>V: 201 { care_episode_id, status: open, bed: null }
+        V-->>U: Admisión registrada · abre el selector de cama
+      end
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over U,AU: B · Buscar y asignar cama (UC-ADM-03, 04, 05, 06, 07, 09)
+  U->>V: Filtra por sala y tipo de cama (UC-ADM-03)
+  V->>MW: GET /api/v1/beds/available?ward={ward}#38;type={type}
+  MW->>C: availableBeds(filtros) · JWT, tenant y camas.asignar válidos (UC-ADM-06)
+  C->>BR: listarDisponibles(sala, tipo)
+  BR-->>C: camas available en salas active sin bed_stay abierta
+  alt Lista vacía
+    C-->>V: 200 lista vacía
+    V-->>U: «En espera de cama» (UC-ADM-09)
+  else Hay camas
+    C-->>V: 200 lista de camas disponibles
+    U->>V: Selecciona una cama y confirma (UC-ADM-04)
+    V->>MW: POST /api/v1/admissions/{episode}/bed-assignment { bed_id, reason }
+    alt Sin camas.asignar
+      MW-->>V: 401 / 403
+    else Acceso válido (UC-ADM-06)
+      MW->>C: assignBed(episode, request)
+      C->>S: asignarCama(episodioId, camaId, motivo, usuario)
+      S->>AR: obtenerEpisodio(episodioId)
+      break No existe, no es inpatient o no está open
+        C-->>V: 404 / 409 EPISODE_NOT_OPEN
+      end
+      S->>BR: estanciaAbierta(episodioId)
+      break El episodio ya tiene cama
+        C-->>V: 409 EPISODE_ALREADY_HAS_BED (UC-ADM-05)
+      end
+      S->>BR: BEGIN · SELECT bed, ward FOR UPDATE
+      break Cama no available o sala inactive
+        S->>BR: ROLLBACK
+        C-->>V: 409 BED_NOT_AVAILABLE (UC-ADM-05)
+      end
+      S->>BR: INSERT bed_stays (care_episode_id, bed_id, assigned_by, started_at, reason)
+      S->>BR: UPDATE beds SET status = occupied
+      S->>AU: registrar("cama.asignada", episodio, cama, usuario)
+      AU->>BR: INSERT local_access_audits + outbox_events (misma transacción)
+      alt Exclusión bed_stays_bed_active_period_exclusion o índice único violado
+        S->>BR: ROLLBACK
+        C-->>V: 409 BED_ALREADY_ASSIGNED (UC-ADM-05)
+      else Falla de auditoría
+        S->>BR: ROLLBACK
+        C-->>V: 500
+      else Correcto
+        S->>BR: COMMIT
+        C-->>V: 201 { bed_stay_id, ward, bed, started_at }
+        V-->>U: Paciente hospitalizado en sala y cama
+      end
+    end
+  end
+  end
