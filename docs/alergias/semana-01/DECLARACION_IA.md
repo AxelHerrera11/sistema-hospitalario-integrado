@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** las reglas se basan en las restricciones reales de la migración `2026_08_11_000401_create_allergy_and_vital_sign_tables.php` (índice único de alergia activa equivalente, coherencia entre estado y fecha de resolución, prohibición de borrado). Las decisiones que el esquema no cubre (falla segura del banner, auditoría de lectura que no bloquea la consulta, relación de cuidado de enfermería) se marcan como propuestas y riesgos (R1–R5) para validarlas con el grupo.
 
-**Validación humana:** pendiente. Axel Eliú Herrera Sánchez debe revisar los tres diagramas, la narrativa y esta declaración antes de que el PR se integre a `develop`.
+**Validación humana:** realizada el 2026-10-13. Axel Eliú Herrera Sánchez revisó los tres diagramas, la narrativa y esta declaración, y la aprueba.
