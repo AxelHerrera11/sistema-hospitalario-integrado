@@ -24,9 +24,11 @@ final class InMemoryPermissions implements PermissionProvider {
     public function __construct(private array $mapa) {}
     public function permisosDe(string $rol): array { return $this->mapa[$rol] ?? []; }
 }
+final class FailingDenialRecorder implements DenialRecorder {
+    public function record(array $d): void { throw new RuntimeException('bitacora_caida'); }
+}
 final class ConsoleDenialRecorder implements DenialRecorder {
-    public function record(array $d): void { echo '    [denegación registrada] usuario=' . $d['usuario'] . ' permiso=' . $d['permiso']
-        . ' operacion=' . $d['operacion'] . ' hospital=' . $d['hospital'] . ' motivo=' . $d['motivo'] . ' trace_id=' . $d['trace_id'] . PHP_EOL; }
+    public function record(array $d): void { echo '    [denegación registrada] usuario=' . $d['usuario'] . ' permiso=' . $d['permiso'] . ' operacion=' . $d['operacion'] . ' hospital=' . $d['hospital'] . ' motivo=' . $d['motivo'] . ' trace_id=' . $d['trace_id'] . PHP_EOL; }
 }
 function mostrar(string $s, bool $ok): void { printf('    %-44s => %s%s', $s, $ok ? 'PERMITIDO' : 'DENEGADO', PHP_EOL); }
 final class Authorizer {
@@ -44,8 +46,14 @@ final class Authorizer {
         return true;
     }
     private function rechazar(array $ctx, DenialRecorder $denials, string $motivo): void {
-        $denials->record(['usuario' => $ctx['usuario'], 'permiso' => $ctx['required'], 'operacion' => $ctx['operacion'],
-            'hospital' => $ctx['hospital_id'], 'motivo' => $motivo, 'trace_id' => sprintf('trace-%04d', ++$this->traza)]);
+        $traceId = sprintf('trace-%04d', ++$this->traza); // el trace_id lo genera Authorizer
+        try {
+            $denials->record(['usuario' => $ctx['usuario'], 'permiso' => $ctx['required'], 'operacion' => $ctx['operacion'],
+                'hospital' => $ctx['hospital_id'], 'motivo' => $motivo, 'trace_id' => $traceId]);
+        } catch (\Throwable $e) {
+            // falla segura: si la bitácora falla, la operación sigue denegada
+            echo '    [bitácora no disponible] trace_id=' . $traceId . ' error=' . $e->getMessage() . PHP_EOL;
+        }
     }
 }
 $permisos = ['Medico' => ['prescripciones.crear'], 'TecnicoLab' => ['muestras.recibir']];
@@ -68,3 +76,5 @@ $az->addRule(new HospitalScopeRule());
 mostrar('TecnicoLab H1 -> muestras.recibir', $az->authorize($ctxX, $denials));
 mostrar('TecnicoLab H2 -> muestras.recibir', $az->authorize($ctxB, $denials));
 mostrar('Medico -> prescripciones.crear (sin regresión)', $az->authorize($ctxM, $denials));
+echo "4) DenialRecorder que falla (falla segura; la autorización sigue devolviendo false):\n";
+mostrar('TecnicoLab H1 -> muestras.recibir', $az->authorize($ctxX, new FailingDenialRecorder()));
