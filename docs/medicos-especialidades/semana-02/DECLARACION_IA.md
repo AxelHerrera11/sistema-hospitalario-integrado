@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** la definición de ISP se cita de la fuente del curso. Los códigos de error, las reglas de especialidad y las interfaces `DoctorScheduleProvider` y `AppointmentReader` vienen de la Semana 1 y de la migración `000100`. La demo se ejecutó con PHP 8.3 y su salida se copió sin cambios. El umbral de rendimiento es una propuesta que debe confirmarse con el grupo.
 
-**Validación humana:** pendiente de la revisión del estudiante.
+**Validación humana:** realizada el 2026-10-13. Josué Fernando Hicho García revisó los requerimientos, el diseño, la documentación y esta declaración, y la aprueba.
