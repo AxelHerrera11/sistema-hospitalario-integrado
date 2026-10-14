@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** la definición de SRP se cita de la fuente del curso. Los códigos de error y las reglas (un principal, sin duplicados, falla segura del catálogo) vienen de la Semana 1 y de la migración `000400`. La demo se ejecutó con PHP 8.3 y su salida se copió sin cambios. El límite de 4000 caracteres por sección y el umbral de rendimiento son propuestas que deben confirmarse con el grupo.
 
-**Validación humana:** pendiente de la revisión del estudiante.
+**Validación humana:** realizada el 2026-10-13. Josué Fernando Hicho García revisó los requerimientos, el diseño, la documentación y esta declaración, y la aprueba.
