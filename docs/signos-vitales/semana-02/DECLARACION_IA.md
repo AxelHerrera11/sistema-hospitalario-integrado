@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** la definición de LSP se cita de la fuente del curso. Los umbrales son los del perfil ilustrativo `adulto-2026.1` de la Semana 1, que sigue pendiente de validación clínica; la plausibilidad viene de los `CHECK` de la migración `000401`. La demo se ejecutó con PHP 8.3 y su salida se copió sin cambios. El umbral de rendimiento es una propuesta que debe confirmarse con el grupo.
 
-**Validación humana:** pendiente de la revisión del estudiante.
+**Validación humana:** realizada el 2026-10-13. Josué Fernando Hicho García revisó los requerimientos, el diseño, la documentación y esta declaración, y la aprueba.
