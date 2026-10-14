@@ -14,7 +14,7 @@ docs/rbac/semana-02/
 ├── 02-despues.svg         ← DESPUÉS: Authorizer dependiente de abstracciones
 ├── fuentes/               ← fuentes Mermaid (.mmd) de los diagramas
 └── ejemplo/
-    └── ocp-demo.php       ← ejemplo ejecutable del diseño DESPUÉS (70 líneas)
+    └── ocp-demo.php       ← ejemplo ejecutable del diseño DESPUÉS (80 líneas)
 ```
 
 ## 2. ANTES — diseño hipotético de referencia
@@ -33,7 +33,7 @@ Como el repositorio **no tiene verificación de roles/permisos** (no hay `can()`
 | `Authorizer` | Autoriza solo si **todas** las reglas registradas permiten; sin reglas, niega (denegación por defecto); la primera regla que niega fija el motivo. **No cambia al agregar una regla.** | `AuthorizationRule`, `PermissionProvider`, `DenialRecorder` |
 | `PermissionProvider` | Devuelve los permisos del rol. | interfaz |
 | `AuthorizationRule` | Decisión unitaria: `decide(contexto)` devuelve `null` (permite) o el motivo de la negación. `RoleGrantsPermission` — permite si algún rol del usuario otorga el permiso; `HospitalScopeRule` — solo restringe (nunca concede): niega si el hospital de la operación ≠ el de la asignación del rol. | interfaz |
-| `DenialRecorder` | Registra cada denegación con `trace_id` determinista y el motivo (`AuditLogger` la implementa — **externa**). | Gobernanza |
+| `DenialRecorder` | Registra cada denegación con el `trace_id` que genera `Authorizer` y el motivo (`AuditLogger` la implementa — **externa**). Si el registro falla, `Authorizer` captura el error y la autorización sigue devolviendo `false` (falla segura). | Gobernanza |
 | `InMemoryPermissions` | Implementación en memoria del catálogo rol → permisos (dato, no código). | `database/…role_code` (`…:30,41`) |
 
 Regla nueva = **clase nueva** que implementa `AuthorizationRule` y se registra; rol/permiso nuevo = **dato** entregado por `PermissionProvider`. Ver `02-despues.svg`.
@@ -43,7 +43,7 @@ Regla nueva = **clase nueva** que implementa `AuthorizationRule` y se registra; 
 Todos documentados en `requerimientos.md §5` (SD-RBAC-01…08). Los relevantes para los diagramas:
 
 - **SD-RBAC-03** — `spatie` con `teams=false` (`config/permission.php:31`) **no aísla por hospital**; el alcance por tenant se implementa como regla (`HospitalScopeRule`). *Pendiente de validación.*
-- **SD-RBAC-05/06** — las reglas reciben un contexto (`roles`, `required`, hospital/membresía) y `DenialRecorder` genera el `trace_id`.
+- **SD-RBAC-05/06** — las reglas reciben un contexto (`roles`, `required`, hospital/membresía) y `Authorizer` genera el `trace_id` al denegar; `DenialRecorder` solo lo registra.
 - **SD-RBAC-07** — la autorización siempre usa el hospital del `X-Tenant-ID`.
 - **SD-RBAC-08** — las reglas se combinan con **AND** (todas deben permitir); sin reglas, denegación por defecto; la primera regla que niega define el motivo. No hay fuente en el repo que defina esta combinación. *Pendiente de validación.*
 
@@ -53,7 +53,7 @@ Todos documentados en `requerimientos.md §5` (SD-RBAC-01…08). Los relevantes 
 php docs/rbac/semana-02/ejemplo/ocp-demo.php
 ```
 
-Salida exacta (`trace_id` determinista, secuencial por denegación):
+Salida exacta (`trace_id` generado por `Authorizer`, secuencial por denegación):
 
 ```text
 1) Sin reglas -> denegación por defecto:
@@ -72,9 +72,12 @@ Salida exacta (`trace_id` determinista, secuencial por denegación):
     TecnicoLab H1 -> muestras.recibir            => DENEGADO
     TecnicoLab H2 -> muestras.recibir            => PERMITIDO
     Medico -> prescripciones.crear (sin regresión) => PERMITIDO
+4) DenialRecorder que falla (falla segura; la autorización sigue devolviendo false):
+    [bitácora no disponible] trace_id=trace-0005 error=bitacora_caida
+    TecnicoLab H1 -> muestras.recibir            => DENEGADO
 ```
 
-**Lectura:** el `Authorizer` combina las reglas con **AND** (todas deben permitir) y sin reglas niega todo (denegación por defecto). En el escenario 2, `RoleGrantsPermission` sola deja pasar a `TecnicoLab` en `H1` (marcado `[hueco: falta restringir]`); en el escenario 3, agregar la clase `HospitalScopeRule` (sin tocar `Authorizer`) restringe ese acceso (`DENEGADO`, motivo `fuera_de_hospital`), mantiene `PERMITIDO` en `H2` y no provoca regresiones. Esa es la extensión OCP en ejecución.
+**Lectura:** el `Authorizer` combina las reglas con **AND** (todas deben permitir) y sin reglas niega todo (denegación por defecto). En el escenario 2, `RoleGrantsPermission` sola deja pasar a `TecnicoLab` en `H1` (marcado `[hueco: falta restringir]`); en el escenario 3, agregar la clase `HospitalScopeRule` (sin tocar `Authorizer`) restringe ese acceso (`DENEGADO`, motivo `fuera_de_hospital`), mantiene `PERMITIDO` en `H2` y no provoca regresiones. Esa es la extensión OCP en ejecución. En el escenario 4, `FailingDenialRecorder` lanza una excepción al registrar: `Authorizer` la captura y la autorización sigue devolviendo `false` (`DENEGADO`), como exigen RF-RBAC-05 y RNF-RBAC-02.
 
 ## 6. Alcance de próximas semanas
 

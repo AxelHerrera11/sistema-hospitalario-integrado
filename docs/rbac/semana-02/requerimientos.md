@@ -38,7 +38,7 @@
 | ID | Requisito | Verificación |
 |---|---|---|
 | RNF-RBAC-01 | La decisión de autorización usa **caché de permisos** (config Spatie), invalidado al asignar/revocar un rol. | `config/permission.php:31` (teams), Semana 1: `README.md:57` |
-| RNF-RBAC-02 | La auditoría **no condiciona la decisión** (falla segura; la denegación persiste aunque la bitácora falle). | Semana 1: `README.md:57` |
+| RNF-RBAC-02 | La auditoría **no condiciona la decisión** (falla segura; la denegación persiste aunque la bitácora falle). | `ocp-demo.php` escenario 4 (`FailingDenialRecorder`); Semana 1: `README.md:57` |
 | RNF-RBAC-03 | **Extensibilidad:** 1 rol nuevo = 1 fila de datos; 1 regla nueva = 1 clase nueva registrada (`RoleGrantsPermission`, `HospitalScopeRule`). `Authorizer` no cambia. | `ejemplo/ocp-demo.php` (escenario 3) |
 | RNF-RBAC-04 | Stack aceptable: framework y librerías ya presentes (Laravel + `spatie/laravel-permission`); el ejemplo usa PHP 8.2 vanilla. | `composer.json`, `config/permission.php:11-15` |
 
@@ -50,7 +50,7 @@
 | RF-RBAC-02 | Existe rol y permiso | se asigna permiso al rol | queda en `role_has_permissions` | Idem |
 | RF-RBAC-03 | Ruta con guard `permission:modulo.accion` | un rol sin ese permiso accede | 403 RBAC_DENIED + `trace_id` | Idem |
 | RF-RBAC-04 | Sin reglas registradas (o token/tenant/permiso ausente o inválido) | se llama una ruta protegida | 401/403 sin ejecutar el módulo (denegación por defecto) | `ocp-demo.php` escenario 1 (sin reglas) |
-| RF-RBAC-05 | Denegación con motivo (p. ej. `sin_reglas`, `fuera_de_hospital`) | se registra en bitácora | respuesta 403 con `trace_id`; el registro incluye usuario, permiso, operación, hospital, motivo y `trace_id` | `ocp-demo.php` escenario 1 y 3 |
+| RF-RBAC-05 | Denegación con motivo (p. ej. `sin_reglas`, `fuera_de_hospital`) | se registra en bitácora | respuesta 403 con `trace_id`; el registro incluye usuario, permiso, operación, hospital, motivo y `trace_id` | `ocp-demo.php` escenarios 1 y 3; bitácora que falla: escenario 4 |
 | RF-RBAC-07 | `Authorizer` con regla base | se agrega la regla nueva `HospitalScopeRule` | el resultado de `muestras.recibir` en H1 pasa de PERMITIDO a DENEGADO **sin modificar `Authorizer`** (combinación AND) | `ocp-demo.php` escenario 2 → 3 |
 | RF-RBAC-08 | Usuario autenticado con membresía vigente | consulta `GET /auth/me/permissions` | lista permisos efectivos del tenant | Prueba planificada |
 
@@ -63,7 +63,7 @@
 | SD-RBAC-03 | Spatie `teams=false` no aísla permisos por hospital: el alcance por tenant se implementa con la regla de hospital (`HospitalScopeRule`). | `config/permission.php:31` |
 | SD-RBAC-04 | `role_code` seguirá siendo identificador de rol (ya usado por membresías). No se agrega CHECK de catálogo en esta semana. | Migraciones `…:30,41` |
 | SD-RBAC-05 | El catálogo de permisos llega al motor vía la interfaz `PermissionProvider` (implementada por `InMemoryPermissions` en el ejemplo); toda regla implementa `AuthorizationRule` y recibe un contexto (`role`, `required`, hospital/membresía). | APIs futuras del módulo |
-| SD-RBAC-06 | El `trace_id` se genera en `DenialRecorder` (ejemplo: `trace-…`). | Formato con Gobernanza |
+| SD-RBAC-06 | El `trace_id` lo genera `Authorizer` al denegar (ejemplo: `trace-0001`, secuencial); `DenialRecorder` solo lo registra. | Formato con Gobernanza |
 | SD-RBAC-07 | Un usuario puede tener varias membresías/roles por hospital; la autorización siempre usa el hospital del `X-Tenant-ID`. | Semana 1 `README.md:17` |
 | SD-RBAC-08 | Las reglas de autorización se combinan con **AND** (todas deben permitir); sin reglas, denegación por defecto; la primera regla que niega define el motivo. No hay fuente en el repositorio que defina esta combinación. | Diseño DESPUÉS + ejemplo `ocp-demo.php` |
 
