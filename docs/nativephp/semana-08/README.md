@@ -36,6 +36,8 @@ Motivo: [                         ]
 [Guardar local] [Sincronizar]
 ```
 
+Anotación: el inicio muestra conexión, cola y errores; `Capturar resultado` inicia el flujo acotado del HIS.
+
 ### Estado vacío
 
 ```text
