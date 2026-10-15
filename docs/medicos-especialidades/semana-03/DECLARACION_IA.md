@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** los puertos reutilizan los seis de ISP de la Semana 2. El esquema es un subconjunto de la migración hospital `000100`. El horario por configuración y la tabla mínima `local_access_audits` son supuestos documentados en [dependencias.md](./dependencias.md). Las pruebas se ejecutaron con PHP 8.3.33 y su salida se copió sin cambios.
 
-**Validación humana:** pendiente. El estudiante debe revisar el código, ejecutar las pruebas y aprobar esta declaración antes de integrar.
+**Validación humana:** realizada el 2026-10-14. Josué Fernando Hicho García revisó el código, ejecutó las pruebas, revisó la documentación y esta declaración, y la aprueba.
