@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MicroHis\ValidacionResultados\Application;
+
+use MicroHis\ValidacionResultados\Domain\ReviewableLabResult;
+
+interface ReviewResultRepository
+{
+    public function getPending(string $tenantId, string $resultId): ReviewableLabResult;
+
+    public function save(ReviewableLabResult $result): void;
+}
