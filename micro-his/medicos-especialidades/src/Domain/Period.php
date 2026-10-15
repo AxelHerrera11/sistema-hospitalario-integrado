@@ -16,7 +16,8 @@ final readonly class Period
 
     public static function isDate(string $value): bool
     {
-        return \DateTimeImmutable::createFromFormat('!Y-m-d', $value)?->format('Y-m-d') === $value;
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        return $parsed !== false && $parsed->format('Y-m-d') === $value;
     }
 
     public function contains(self $other): bool
