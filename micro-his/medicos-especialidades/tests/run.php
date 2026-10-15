@@ -58,7 +58,8 @@ check('regla de dominio: otra principal en el mismo periodo -> 409', $status($ht
 check('regla de dominio: vigencia fuera del perfil -> 422', $status($http->associateSpecialty($admin, $id, ['specialty_code' => 'CARD', 'valid_from' => '2025-06-01'])) === '422 PERIOD_OUTSIDE_PROFILE');
 check('regla de dominio: especialidad inactiva -> 422', $status($http->registerDoctor($admin, ['specialty_code' => 'PED'] + $alta)) === '422 SPECIALTY_INACTIVE');
 check('regla de dominio: licencia repetida -> 409', $status($http->registerDoctor($admin, $alta)) === '409 LICENSE_ALREADY_REGISTERED');
-check('validación: fecha inválida -> 422', $status($http->availability(['specialty' => 'NEURO', 'date' => '2026-02-30'])) === '422 INVALID_DATE_RANGE');
+check('validación: fecha inválida -> 422', $status($http->availability(['specialty' => 'NEURO', 'date' => '2026-02-30'])) === '422 INVALID_DATE_RANGE'
+    && $status($http->availability(['specialty' => 'NEURO', 'date' => '19/10/2026'])) === '422 INVALID_DATE_RANGE');
 try {
     (new SpecialtyAssignmentPolicy())->assertCanAssociate(new Period('2026-01-01'), [new SpecialtyLink('x', true, new Period('2026-01-01'))], new SpecialtyLink('y', true, new Period('2026-05-01', '2026-06-01')));
     check('regla de dominio pura (sin BD): la política rechaza dos principales', false);
