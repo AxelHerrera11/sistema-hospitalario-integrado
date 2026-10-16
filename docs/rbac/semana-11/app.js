@@ -225,3 +225,96 @@ function renderAudit() {
         <thead><tr><th>Fecha (demo)</th><th>Evento</th><th>Actor</th><th>Hospital</th><th>Detalle</th><th>trace_id</th></tr></thead>
         <tbody>${rows}</tbody></table>`;
 }
+
+/* ---------- Navigation ---------- */
+const NAV = { roles: 'roles', confirmar: 'roles', 'roles-exito': 'roles', operacion: 'operacion', permitido: 'operacion', denegado: 'operacion' };
+
+function route() {
+    const fromQuery = new URLSearchParams(location.search).get('screen');
+    let screen = (location.hash || '').replace('#', '') || fromQuery || 'inicio';
+    if (!document.querySelector(`.screen[data-screen="${screen}"]`)) { screen = 'inicio'; }
+
+    if (screen === 'denegado' && !state.decision) { state.actor = 'recep1'; renderSession(); }
+    if (screen === 'permitido' && !state.decision) { state.actor = 'med1'; renderSession(); }
+
+    $$('.screen').forEach((s) => { s.hidden = s.dataset.screen !== screen; });
+    $$('[data-nav]').forEach((a) => {
+        const active = a.dataset.nav === (NAV[screen] || screen);
+        if (active) { a.setAttribute('aria-current', 'page'); } else { a.removeAttribute('aria-current'); }
+    });
+
+    if (screen === 'roles') { renderRoles(); }
+    if (screen === 'confirmar') { state.pending = state.pending || { target: state.target, newRole: state.newRole }; renderConfirmar(); }
+    if (screen === 'roles-exito') { renderRolesExito(); }
+    if (screen === 'operacion') { renderOperacion(); }
+    if (screen === 'permitido' || screen === 'denegado') { renderDecision(screen); }
+    if (screen === 'bitacora') { renderAudit(); }
+
+    $('main').focus({ preventScroll: true });
+}
+
+/* ---------- Actions ---------- */
+function confirmAssignment() {
+    const p = state.pending || { target: state.target, newRole: state.newRole };
+    const from = USERS[p.target].role;
+
+    if (!hasPerm(state.actor, 'rbac.roles.asignar')) {
+        const e = recordDenial(state.actor, 'rbac.roles.asignar', 'sin_permiso_de_rol');
+        state.decision = { allowed: false, actor: state.actor, resource: 'asignar-rol', reason: 'sin_permiso_de_rol', trace: e.trace, when: e.when };
+        announce('Asignación denegada. Falta el permiso rbac.roles.asignar.');
+        location.hash = '#denegado';
+        return;
+    }
+    if (ROLES[p.newRole].level > ROLES[USERS[state.actor].role].level) {
+        const e = recordDenial(state.actor, 'rbac.roles.asignar', 'rol_supera_privilegio');
+        state.decision = { allowed: false, actor: state.actor, resource: 'asignar-rol', reason: 'rol_supera_privilegio', trace: e.trace, when: e.when };
+        announce('Asignación denegada por privilegio insuficiente.');
+        location.hash = '#denegado';
+        return;
+    }
+    if (from === p.newRole) {
+        $('rolesMsg').textContent = 'El rol ya estaba asignado (409). No se cambió nada.';
+        $('rolesMsg').className = 'result result--err';
+        announce('El rol ya estaba asignado (409).');
+        location.hash = '#roles';
+        return;
+    }
+
+    USERS[p.target].role = p.newRole;
+    audit('rol_asignado', state.actor, `${USERS[p.target].name}: ${roleLabel(from)} → ${roleLabel(p.newRole)}`);
+    state.pending = p;
+    announce('Asignación exitosa (201).');
+    location.hash = '#roles-exito';
+}
+
+function authorize() {
+    const resource = state.resource;
+    const perm = RESOURCES[resource].perm;
+    if (!hasPerm(state.actor, 'rbac.autorizar')) {
+        const e = recordDenial(state.actor, 'rbac.autorizar', 'sin_permiso_de_rol');
+        state.decision = { allowed: false, actor: state.actor, resource, permission: 'rbac.autorizar', reason: 'sin_permiso_de_rol', trace: e.trace, when: e.when };
+        announce('Acceso denegado. No tiene autorización para esta operación.');
+        location.hash = '#denegado';
+        return;
+    }
+    if (hasPerm(state.actor, perm)) {
+        state.decision = { allowed: true, actor: state.actor, resource };
+        announce('Autorización permitida.');
+        location.hash = '#permitido';
+        return;
+    }
+    const e = recordDenial(state.actor, perm, 'sin_permiso_de_rol');
+    state.decision = { allowed: false, actor: state.actor, resource, reason: 'sin_permiso_de_rol', trace: e.trace, when: e.when };
+    announce('Acceso denegado. Falta el permiso requerido.');
+    location.hash = '#denegado';
+}
+
+async function copyTrace() {
+    const t = $('dTrace').textContent;
+    try {
+        await navigator.clipboard.writeText(t);
+        announce('trace_id copiado.');
+    } catch {
+        announce('Copia no disponible en este navegador; seleccione el texto manualmente.');
+    }
+}
