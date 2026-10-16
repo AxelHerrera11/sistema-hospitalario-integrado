@@ -1,206 +1,68 @@
-# ASII-03 · Pacientes: registro, edición, búsqueda y detalle — Semana 1
+# ASII-03 — Pacientes: registro, edición, búsqueda y detalle
 
-## Ficha de la asignación
+## Semana 1 — UML y narrativa de alcance
 
-- **Estudiante:** Cerón Molina, Madelin Jazmín (`MadelinCeron`)
-- **Módulo:** Pacientes: registro, edición, búsqueda y detalle
-- **Semana:** Semana 1 — Conceptos generales, orientación a objetos y UML
-- **Tarea individual:** Modelar el proceso «registro, búsqueda y actualización segura de un paciente».
-- **Casos de uso:** delimitar actores y objetivo.
-- **Actividad:** incluir decisiones, excepciones y resultado.
-- **Secuencia:** mostrar participantes, mensajes, validaciones y respuesta.
-- **Trazabilidad:** mantener correspondencia entre los tres diagramas.
-- **Entregable / evidencia:** UML de casos de uso y narrativa de alcance.
-- **Estructura:** Sistema Hospitalario Integrado 2026.
+**Estudiante:** Madelin Jazmín Cerón Molina  
+**GitHub:** `@MadelinCeron`  
+**Módulo:** ASII-03 — Pacientes  
+**Proceso:** registro, búsqueda y actualización segura de un paciente.
 
----
+## Objetivo
 
-## Contexto del módulo
+Modelar el proceso básico de gestión de pacientes del Sistema Hospitalario Integrado, identificando actores, validaciones, decisiones, excepciones y respuestas.
 
-El módulo ASII-03 administra la información básica de los pacientes del Sistema Hospitalario Integrado.
+## Alcance
 
-Para esta primera semana se modelan tres operaciones relacionadas:
+Esta semana contempla:
 
-1. Registrar un paciente.
-2. Buscar un paciente existente.
-3. Actualizar de forma segura la información de un paciente.
+- Registro de pacientes.
+- Validación de datos.
+- Búsqueda de pacientes.
+- Consulta de detalle.
+- Verificación de existencia.
+- Actualización segura.
+- Manejo de errores y búsquedas sin resultados.
 
-La implementación futura debe mantener consistencia con la estructura actual del proyecto.
+No se implementan todavía API, controladores, servicios ni interfaz de usuario.
 
-En la base HOSPITAL ya existe la entidad `local_patients`, que contempla información como:
+## Diagramas
 
-- Identificador local.
-- Referencia global del paciente.
-- Código.
-- Nombres.
-- Apellidos.
-- Fecha de nacimiento.
-- Sexo.
-- Información de contacto.
-- Estado del paciente.
-- Estado de vinculación con el índice global.
+### Casos de uso
 
-Los estados definidos actualmente para un paciente son:
+![Casos de uso](./01-casos-de-uso.svg)
 
-- `active`
-- `inactive`
-- `deceased`
+Representa las operaciones principales del usuario autorizado:
 
-Los valores de sexo contemplados actualmente son:
+- Registrar paciente.
+- Buscar paciente.
+- Consultar detalle.
+- Actualizar paciente.
+- Validar datos.
+- Verificar existencia.
 
-- `female`
-- `male`
-- `other`
-- `unknown`
+### Actividad
 
-Esta semana no implementa todavía endpoints ni interfaz. El objetivo es analizar y representar correctamente el proceso mediante UML.
+![Actividad](./02-actividad.svg)
 
----
+Representa las decisiones y excepciones de registro, búsqueda y actualización.
 
-## Objetivo del proceso
+### Secuencia
 
-Permitir que un usuario autorizado pueda registrar, buscar y actualizar pacientes manteniendo controles sobre la validez de la información y evitando modificaciones sobre registros inexistentes.
+![Secuencia](./03-secuencia.svg)
 
----
-
-## 1. Diagrama de casos de uso
-
-![Diagrama de casos de uso](./01-casos-de-uso.svg)
-
-[Abrir diagrama de casos de uso](./01-casos-de-uso.svg)
-
-### Actores
-
-- **Usuario autorizado:** realiza las operaciones relacionadas con los pacientes.
-- **Sistema Hospitalario Integrado:** valida, consulta y almacena la información.
-
-### Casos principales
-
-- **UC-PAC-01 · Registrar paciente**
-- **UC-PAC-02 · Buscar paciente**
-- **UC-PAC-03 · Consultar detalle de paciente**
-- **UC-PAC-04 · Actualizar paciente**
-- **UC-PAC-05 · Validar datos del paciente**
-- **UC-PAC-06 · Verificar existencia del paciente**
-
-### Relación entre casos
-
-El registro incluye la validación de los datos proporcionados.
-
-La búsqueda puede conducir a la consulta del detalle cuando existe una coincidencia.
-
-La actualización requiere primero verificar que el paciente exista y después validar la nueva información.
-
----
-
-## 2. Diagrama de actividad
-
-![Diagrama de actividad](./02-actividad.svg)
-
-[Abrir diagrama de actividad](./02-actividad.svg)
-
-### Descripción
-
-El diagrama representa las tres operaciones principales.
-
-#### Registro
-
-1. El usuario ingresa los datos.
-2. El sistema valida la información.
-3. Si existen errores, la operación se rechaza.
-4. Si la información es válida, se registra el paciente.
-5. El sistema confirma el resultado.
-
-#### Búsqueda
-
-1. El usuario proporciona un criterio.
-2. El sistema realiza la consulta.
-3. Si existen coincidencias, muestra los resultados.
-4. Si no existen, informa que no se encontraron pacientes.
-
-#### Actualización
-
-1. El usuario selecciona un paciente.
-2. El sistema verifica su existencia.
-3. Se reciben los nuevos datos.
-4. Los datos son validados.
-5. Si son correctos, se actualiza el paciente.
-6. Si existe un error, no se guardan cambios.
-
----
-
-## 3. Diagrama de secuencia
-
-![Diagrama de secuencia](./03-secuencia.svg)
-
-[Abrir diagrama de secuencia](./03-secuencia.svg)
-
-### Participantes
+Representa la comunicación entre:
 
 - Usuario autorizado.
-- Interfaz del sistema.
+- Interfaz.
 - Gestión de pacientes.
-- Base HOSPITAL.
+- Base de datos HOSPITAL.
 
-### Validaciones representadas
+## Evidencia
 
-- Datos requeridos.
-- Fecha de nacimiento válida.
-- Valores permitidos.
-- Existencia del paciente antes de actualizar.
-- Resultado de búsqueda.
+La narrativa de alcance y la trazabilidad entre los diagramas se encuentran en:
 
-### Respuestas
+`narrativa-alcance-trazabilidad.md`
 
-Los escenarios contemplan respuestas de:
+## Resultado
 
-- Registro exitoso.
-- Error de validación.
-- Paciente encontrado.
-- Paciente no encontrado.
-- Actualización exitosa.
-- Actualización rechazada.
-
----
-
-## 4. Narrativa y trazabilidad
-
-El detalle completo del alcance, excepciones y correspondencia entre casos de uso, actividad y secuencia está disponible en:
-
-[narrativa-alcance-trazabilidad.md](./narrativa-alcance-trazabilidad.md)
-
----
-
-## Fuentes editables
-
-- El diagrama de casos de uso se conserva en SVG.
-- Actividad:
-  [`fuentes/02-actividad.mmd`](./fuentes/02-actividad.mmd)
-- Secuencia:
-  [`fuentes/03-secuencia.mmd`](./fuentes/03-secuencia.mmd)
-
-Los archivos `.mmd` utilizan Mermaid y permiten regenerar los SVG.
-
----
-
-## Resultado de Semana 1
-
-Al finalizar la semana se cuenta con:
-
-- Alcance del proceso.
-- Actores identificados.
-- Casos de uso.
-- Decisiones y excepciones.
-- Diagrama de actividad.
-- Diagrama de secuencia.
-- Trazabilidad entre los tres diagramas.
-
-No se incluye todavía implementación funcional del módulo.
-
----
-
-## Declaración de uso de IA
-
-Se utilizó ChatGPT como apoyo para organizar la documentación y proponer una primera versión de los diagramas a partir del enunciado académico y de la estructura actual del repositorio.
-
-La estudiante revisó la información, validó su correspondencia con el módulo asignado y es responsable del contenido final entregado.
+La Semana 1 deja definido el comportamiento esperado del proceso antes de iniciar las etapas posteriores de diseño e implementación.
