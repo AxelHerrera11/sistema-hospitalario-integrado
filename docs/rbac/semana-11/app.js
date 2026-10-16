@@ -318,3 +318,29 @@ async function copyTrace() {
         announce('Copia no disponible en este navegador; seleccione el texto manualmente.');
     }
 }
+
+/* ---------- Wiring ---------- */
+window.addEventListener('hashchange', route);
+$('sessionUser').addEventListener('change', (e) => {
+    const current = (location.hash || '').slice(1);
+    state.actor = e.target.value;
+    state.decision = null;
+    renderSession();
+    if (['denegado', 'permitido', 'roles-exito'].includes(current)) {
+        state.pending = null;
+        location.hash = '#inicio';
+        return;
+    }
+    route();
+});
+$('targetUser').addEventListener('change', (e) => { state.target = e.target.value; renderRoles(); });
+$('newRole').addEventListener('change', (e) => { state.newRole = e.target.value; renderRoles(); });
+$('resource').addEventListener('change', (e) => { state.resource = e.target.value; renderOperacion(); });
+$('btnAssign').addEventListener('click', () => { state.pending = { target: state.target, newRole: state.newRole }; location.hash = '#confirmar'; });
+$('btnConfirm').addEventListener('click', confirmAssignment);
+$('btnAuthorize').addEventListener('click', authorize);
+$('btnCopy').addEventListener('click', copyTrace);
+
+renderSession();
+seedDemoAudit();
+route();
