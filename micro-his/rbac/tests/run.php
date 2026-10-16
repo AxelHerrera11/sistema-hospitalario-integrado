@@ -41,6 +41,9 @@ $r = $http->assignRole(['X-User-ID' => 'med1', 'X-Tenant-ID' => 'H1'], ['user_id
 check('regla de dominio: sin permiso rbac.asignar -> 403 RBAC_DENIED', $r['body']['code'] === 'RBAC_DENIED');
 check('regla de dominio: rol ya asignado -> 409', $http->assignRole($admin, ['user_id' => 'enf1', 'role_code' => 'Enfermeria'])['status'] === 409);
 check('validación: rol inexistente -> 422', $http->assignRole($admin, ['user_id' => 'enf1', 'role_code' => 'X'])['status'] === 422);
+$before = count($col($pdo, 'SELECT event FROM audit_log'));
+check('validación: entradas inválidas (array/objeto/espacios en user_id, headers no string) -> 422 sin TypeError', $http->assignRole($admin, ['user_id' => ['x'], 'role_code' => 'Enfermeria'])['status'] === 422 && $http->assignRole($admin, ['user_id' => new stdClass(), 'role_code' => 'Enfermeria'])['status'] === 422 && $http->assignRole($admin, ['user_id' => '   ', 'role_code' => 'Enfermeria'])['status'] === 422 && $http->assignRole(['X-User-ID' => ['a'], 'X-Tenant-ID' => 'H1'], ['user_id' => 'enf1', 'role_code' => 'Enfermeria'])['status'] === 422 && $http->assignRole(['X-User-ID' => 'admin1', 'X-Tenant-ID' => ['H1']], ['user_id' => 'enf1', 'role_code' => 'Enfermeria'])['status'] === 422);
+check('validación: ninguna entrada inválida escribió membresía ni auditoría', count($col($pdo, 'SELECT event FROM audit_log')) === $before);
 [$pdo, $http] = app();
 $pdo->exec('DROP TABLE audit_log');
 $r = $http->assignRole($admin, ['user_id' => 'enf1', 'role_code' => 'Enfermeria']);

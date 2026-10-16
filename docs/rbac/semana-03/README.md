@@ -26,7 +26,7 @@ flowchart LR
 
 | Capa | Clase | Responsabilidad | Depende de |
 |---|---|---|---|
-| Presentation | `RbacHttpHandler` | Lee encabezados y cuerpo, llama al caso de uso y traduce el resultado a `201`, `403`, `409`, `422` o `500`. Sin SQL ni reglas. | `AssignRole` |
+| Presentation | `RbacHttpHandler` | Valida que encabezados y campos sean cadenas no vacías (rechaza array, objeto o espacios con `422`), llama al caso de uso y traduce el resultado a `201`, `403`, `409`, `422` o `500`. Sin SQL ni reglas. | `AssignRole` |
 | Application | `AssignRole` | Valida el payload, autoriza `rbac.asignar`, rechaza el rol repetido y pide guardar la membresía. | `Authorizer`, `PdoRbacStore` |
 | Domain | `Authorizer`, `RoleGrantsPermission`, `AssignerPrivilegeRule`, `Membership`, `RbacViolation` | Decide con reglas combinadas en AND; al denegar genera el `trace_id` y lo registra; si la bitácora falla, sigue denegando. | `PermissionProvider`, `DenialRecorder` (interfaces) |
 | Persistence | `PdoRbacStore` | Lee permisos y roles; guarda membresía y auditoría en una sola transacción. | `PDO` |
@@ -39,7 +39,7 @@ Regla de dependencia: cada capa solo llama a la de abajo; Domain no conoce PDO. 
 php micro-his/rbac/tests/run.php
 ```
 
-Base de prueba: SQLite en memoria (`pdo_sqlite`). Salida esperada: 7 líneas `OK:` (camino feliz; tres reglas de dominio; validación `422`; error de persistencia con rollback; falla segura) y `Todas las pruebas pasaron.`
+Base de prueba: SQLite en memoria (`pdo_sqlite`). Salida esperada: 9 líneas `OK:` (camino feliz; tres reglas de dominio; validación de rol inexistente `422`; validación de entradas inválidas por tipo o espacios con `422` sin escribir auditoría; error de persistencia con rollback; falla segura) y `Todas las pruebas pasaron.`
 
 ## Supuestos y dependencias externas
 
