@@ -33,8 +33,8 @@
 
     <main id="main" tabindex="-1">
         <!-- Pantalla: Inicio -->
-        <section class="screen" data-screen="inicio" hidden>
-            <h1>Inicio</h1>
+        <section class="screen" data-screen="inicio" aria-labelledby="screen-title-inicio" hidden>
+            <h1 id="screen-title-inicio">Inicio</h1>
             <p>Elija un flujo. Cada pantalla indica el usuario y el permiso que se simulan.</p>
             <ul class="cards">
                 <li class="card">
@@ -56,8 +56,8 @@
         </section>
 
         <!-- Pantalla A: asignación de roles -->
-        <section class="screen" data-screen="roles" hidden>
-            <h1>Asignar rol</h1>
+        <section class="screen" data-screen="roles" aria-labelledby="screen-title-roles" hidden>
+            <h1 id="screen-title-roles">Asignar rol</h1>
             <p class="muted" data-actor></p>
 
             <div class="grid">
@@ -87,8 +87,8 @@
         </section>
 
         <!-- Confirmación -->
-        <section class="screen" data-screen="confirmar" hidden>
-            <h1>Confirmar asignación</h1>
+        <section class="screen" data-screen="confirmar" aria-labelledby="screen-title-confirmar" hidden>
+            <h1 id="screen-title-confirmar">Confirmar asignación</h1>
             <p>Revise el cambio antes de aplicarlo. Habrá trazabilidad de esta acción.</p>
             <dl class="summary">
                 <dt>Usuario</dt><dd id="cUser"></dd>
@@ -105,8 +105,8 @@
         </section>
 
         <!-- Resultado exitoso -->
-        <section class="screen" data-screen="roles-exito" hidden>
-            <h1>Resultado</h1>
+        <section class="screen" data-screen="roles-exito" aria-labelledby="screen-title-roles-exito" hidden>
+            <h1 id="screen-title-roles-exito">Resultado</h1>
             <p id="okBanner" class="state state--ok"><span aria-hidden="true">✔</span> Asignado (201)</p>
             <p id="okDetail"></p>
             <div class="actions">
@@ -117,8 +117,8 @@
         </section>
 
         <!-- Pantalla B: operación protegida -->
-        <section class="screen" data-screen="operacion" hidden>
-            <h1>Operación protegida</h1>
+        <section class="screen" data-screen="operacion" aria-labelledby="screen-title-operacion" hidden>
+            <h1 id="screen-title-operacion">Operación protegida</h1>
             <p class="muted" data-actor></p>
             <div class="panel">
                 <label for="resource">Recurso / ruta protegida</label>
@@ -135,8 +135,8 @@
         </section>
 
         <!-- Decisión: permitido -->
-        <section class="screen" data-screen="permitido" hidden>
-            <h1>Decisión de autorización</h1>
+        <section class="screen" data-screen="permitido" aria-labelledby="screen-title-permitido" hidden>
+            <h1 id="screen-title-permitido">Decisión de autorización</h1>
             <p class="state state--ok"><span aria-hidden="true">✔</span> Permitido</p>
             <dl class="summary">
                 <dt>Usuario</dt><dd id="pUser"></dd>
@@ -152,8 +152,8 @@
         </section>
 
         <!-- Pantalla C: denegación y trazabilidad -->
-        <section class="screen" data-screen="denegado" hidden>
-            <h1>Acceso denegado</h1>
+        <section class="screen" data-screen="denegado" aria-labelledby="screen-title-denegado" hidden>
+            <h1 id="screen-title-denegado">Acceso denegado</h1>
             <p class="state state--denied"><span aria-hidden="true">⛔</span> Denegado (403 <code>RBAC_DENIED</code>)</p>
 
             <h2>Mensaje al usuario</h2>
@@ -186,8 +186,8 @@
         </section>
 
         <!-- Bitácora simulada -->
-        <section class="screen" data-screen="bitacora" hidden>
-            <h1>Bitácora simulada (eventos de auditoría)</h1>
+        <section class="screen" data-screen="bitacora" aria-labelledby="screen-title-bitacora" hidden>
+            <h1 id="screen-title-bitacora">Bitácora simulada (eventos de auditoría)</h1>
             <p class="muted">Eventos de auditoría locales, distintos de los mensajes visuales mostrados al usuario. Fechas y datos ficticios.</p>
             <div id="auditWrap" class="audit"></div>
             <div class="actions">
