@@ -17,7 +17,7 @@ final class RegisterDoctor
 
     public function execute(string $actorId, string $userRef, string $license, string $specialtyCode, string $validFrom): string
     {
-        if ($userRef === '' || $license === '') {
+        if (trim($userRef) === '' || trim($license) === '') {
             throw new DoctorRuleViolation('PAYLOAD_INVALID', 422);
         }
         $primary = new SpecialtyLink($this->catalog->activeSpecialtyId($specialtyCode) ?? throw new DoctorRuleViolation('SPECIALTY_INACTIVE', 422), true, new Period($validFrom));

@@ -14,6 +14,7 @@ final class SlotPlanner
      */
     public function freeSlots(array $windows, array $busy, int $minutes = 30): array
     {
+        $minutes > 0 || throw new \InvalidArgumentException('SLOT_MINUTES_MUST_BE_POSITIVE');
         $free = [];
         foreach ($windows as [$start, $end]) {
             for ($t = strtotime($start); $t + $minutes * 60 <= strtotime($end); $t += $minutes * 60) {
