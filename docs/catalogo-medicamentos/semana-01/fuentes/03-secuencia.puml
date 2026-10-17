@@ -1,0 +1,137 @@
+@startuml
+title ASII-14 - Secuencia de alta, busqueda y vigencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontColor #172033
+skinparam ArrowColor #334155
+skinparam sequence {
+  ParticipantBackgroundColor #EAF4FF
+  ParticipantBorderColor #2563EB
+  LifeLineBorderColor #64748B
+  GroupBackgroundColor #FEF3C7
+  GroupBorderColor #D97706
+}
+actor "Gestor autorizado\ndel catalogo" as Gestor
+actor "Usuario autorizado\n(Gestor o clinico)" as Usuario
+boundary "Interfaz propuesta" as UI
+control "Control de acceso" as Acceso
+control "Servicio de catalogo\n(propuesto)" as Servicio
+database "Repositorio medication\n(H5 pendiente)" as Repo
+autonumber
+note over Gestor,Usuario #FEF3C7 : Alta y cambio: solo Gestor.\nBusqueda y consulta: Gestor o usuario clinico.
+group Alta - UC-MED-01/05/06
+  Gestor -> UI: ingresar datos y solicitar alta
+  UI -> Acceso: validar(gestor, hospital, alta)
+  Acceso --> UI: permitido o rechazo
+  alt #FCE7F3 acceso rechazado
+    UI --> Gestor: acceso rechazado
+  else #FFFFFF acceso permitido
+    UI -> Servicio: solicitarAlta(datos)
+    Servicio -> Servicio: validarDatos(datos)
+    alt #FCE7F3 datos invalidos
+      Servicio --> UI: alta rechazada: datos invalidos
+      UI --> Gestor: mostrar errores
+    else #FFFFFF datos validos
+      Servicio -> Repo: buscarPorCodigo(codigoNormalizado)
+      alt #FCE7F3 fallo de consulta
+        Repo --> Servicio: error de lectura
+        Servicio --> Gestor: fallo de consulta
+      else #FCE7F3 codigo duplicado
+        Repo --> Servicio: medicamento existente
+        Servicio --> Gestor: alta rechazada: duplicidad
+      else #FFFFFF codigo libre
+        Repo --> Servicio: sin coincidencia
+        Servicio -> Repo: insertar(datos, active)
+        alt #FCE7F3 fallo de persistencia
+          Repo --> Servicio: escritura no confirmada
+          Servicio --> Gestor: alta no realizada
+        else #FFFFFF persistencia confirmada
+          Repo --> Servicio: medicamento confirmado
+          Servicio --> Gestor: medicamento registrado
+        end
+      end
+    end
+  end
+end
+group Busqueda - UC-MED-02/05
+  Usuario -> UI: buscar(texto o codigo)
+  UI -> Acceso: validar(usuario, hospital, busqueda)
+  Acceso --> UI: permitido o rechazo
+  alt #FCE7F3 acceso rechazado
+    UI --> Usuario: acceso rechazado
+  else #FFFFFF acceso permitido
+    UI -> Servicio: buscar(criterio)
+    Servicio -> Servicio: validarCriterio(criterio)
+    alt #FCE7F3 criterio invalido
+      Servicio --> Usuario: rechazo con motivo
+    else #FFFFFF solicitud valida
+      Servicio -> Repo: buscar(criterio)
+      alt #FCE7F3 fallo de consulta
+        Repo --> Servicio: error de lectura
+        Servicio --> Usuario: fallo de consulta
+      else #EAF4FF sin resultados
+        Repo --> Servicio: lista vacia
+        Servicio --> Usuario: lista vacia
+      else #EAF4FF con resultados
+        Repo --> Servicio: medicamentos + active/inactive
+        Servicio --> Usuario: coincidencias y vigencia
+      end
+    end
+  end
+end
+group Consultar vigencia - UC-MED-03/05
+  Usuario -> UI: consultar vigencia(id)
+  UI -> Acceso: validar(usuario, hospital, consultar vigencia)
+  Acceso --> UI: permitido o rechazo
+  alt #FCE7F3 acceso rechazado
+    UI --> Usuario: acceso rechazado
+  else #FFFFFF acceso permitido
+    UI -> Servicio: consultarVigencia(id)
+    Servicio -> Repo: obtenerPorId(id)
+    alt #FCE7F3 fallo de consulta
+      Repo --> Servicio: error de lectura
+      Servicio --> Usuario: fallo de consulta
+    else #FCE7F3 medicamento inexistente
+      Repo --> Servicio: no encontrado
+      Servicio --> Usuario: medicamento no encontrado
+    else #EAF4FF medicamento encontrado
+      Repo --> Servicio: medicamento + active/inactive
+      Servicio --> Usuario: vigencia actual
+    end
+  end
+end
+group Cambiar vigencia - UC-MED-04/05
+  Gestor -> UI: cambiar vigencia(id, estado)
+  UI -> Acceso: validar(gestor, hospital, cambiar vigencia)
+  Acceso --> UI: permitido o rechazo
+  alt #FCE7F3 acceso rechazado
+    UI --> Gestor: acceso rechazado
+  else #FFFFFF acceso permitido
+    UI -> Servicio: cambiarVigencia(id, estado)
+    Servicio -> Repo: obtenerPorId(id)
+    alt #FCE7F3 fallo de consulta
+      Repo --> Servicio: error de lectura
+      Servicio --> Gestor: fallo de consulta
+    else #FCE7F3 medicamento inexistente
+      Repo --> Servicio: no encontrado
+      Servicio --> Gestor: medicamento no encontrado
+    else #FFFFFF medicamento encontrado
+      Repo --> Servicio: medicamento + active/inactive
+      Servicio -> Servicio: validarEstado(active/inactive)
+      alt #FCE7F3 estado invalido
+        Servicio --> Gestor: vigencia no actualizada
+      else #FFFFFF estado valido
+        Servicio -> Repo: actualizarEstado(id, estado)
+        alt #FCE7F3 fallo de persistencia
+          Repo --> Servicio: escritura no confirmada
+          Servicio --> Gestor: vigencia no actualizada
+        else #FFFFFF persistencia confirmada
+          Repo --> Servicio: medicamento actualizado
+          Servicio --> Gestor: vigencia actualizada
+        end
+      end
+    end
+  end
+end
+note over Servicio,Repo #FEF3C7 : Componentes y estado son propuestas de Semana 1.\nNo se modelan lotes ni fechas de vencimiento.
+@enduml
