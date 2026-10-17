@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>RBAC — Prototipo navegable (Semana 11, ASII-02)</title>
+    <meta name="description" content="Prototipo navegable local del flujo RBAC: asignación de rol, operación protegida y denegación trazable. Demostración, sin backend.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a class="skip" href="#main">Saltar al contenido principal</a>
+
+    <header class="topbar">
+        <p class="brand">RBAC · Micro-HIS · ASII-02</p>
+        <nav class="nav" aria-label="Navegación principal">
+            <a href="#inicio" data-nav="inicio">Inicio</a>
+            <a href="#roles" data-nav="roles">Asignar rol</a>
+            <a href="#operacion" data-nav="operacion">Operación protegida</a>
+            <a href="#bitacora" data-nav="bitacora">Bitácora</a>
+        </nav>
+    </header>
+
+    <p class="banner" role="note">
+        Prototipo local de demostración. No hay backend, autenticación real ni auditoría persistente.
+        Los <code>trace_id</code>, usuarios y fechas son ficticios.
+    </p>
+
+    <div class="session">
+        <label for="sessionUser">Sesión simulada (quién opera):</label>
+        <select id="sessionUser"></select>
+        <span id="sessionInfo" class="session__info"></span>
+    </div>
+
+    <main id="main" tabindex="-1">
+        <!-- Pantalla: Inicio -->
+        <section class="screen" data-screen="inicio" hidden>
+            <h1>Inicio</h1>
+            <p>Elija un flujo. Cada pantalla indica el usuario y el permiso que se simulan.</p>
+            <ul class="cards">
+                <li class="card">
+                    <h2>1. Asignar rol</h2>
+                    <p>Un <strong>admin_hospital</strong> asigna un rol a un usuario de su hospital.</p>
+                    <a class="btn btn--primary" href="#roles">Entrar a asignar rol</a>
+                </li>
+                <li class="card">
+                    <h2>2. Operación protegida</h2>
+                    <p>Una operación se autoriza o se deniega según la matriz de permisos.</p>
+                    <a class="btn btn--primary" href="#operacion">Probar operación</a>
+                </li>
+                <li class="card">
+                    <h2>3. Bitácora</h2>
+                    <p>Eventos de auditoría simulados de asignaciones y denegaciones.</p>
+                    <a class="btn" href="#bitacora">Ver bitácora</a>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Pantalla A: asignación de roles -->
+        <section class="screen" data-screen="roles" hidden>
+            <h1>Asignar rol</h1>
+            <p class="muted" data-actor></p>
+
+            <div class="grid">
+                <div class="panel">
+                    <h2>Selección de usuario</h2>
+                    <label for="targetUser">Usuario destino (solo del hospital de la sesión)</label>
+                    <select id="targetUser"></select>
+
+                    <p class="field-label">Rol actual y permisos</p>
+                    <p id="currentRole" class="tag"></p>
+                    <ul id="currentPerms" class="perms" aria-label="Permisos del rol actual"></ul>
+
+                    <label for="newRole">Rol nuevo a asignar</label>
+                    <select id="newRole"></select>
+
+                    <p class="field-label">Permisos asociados al rol nuevo</p>
+                    <ul id="newPerms" class="perms" aria-label="Permisos del rol nuevo"></ul>
+                </div>
+            </div>
+
+            <p id="reqHint" class="hint" role="status"></p>
+            <div class="actions">
+                <button id="btnAssign" class="btn btn--primary" type="button">Asignar…</button>
+                <a class="btn" href="#inicio">Cancelar</a>
+            </div>
+            <p id="rolesMsg" class="result" role="status"></p>
+        </section>
+
+        <!-- Confirmación -->
+        <section class="screen" data-screen="confirmar" hidden>
+            <h1>Confirmar asignación</h1>
+            <p>Revise el cambio antes de aplicarlo. Habrá trazabilidad de esta acción.</p>
+            <dl class="summary">
+                <dt>Usuario</dt><dd id="cUser"></dd>
+                <dt>Rol actual</dt><dd id="cFrom"></dd>
+                <dt>Rol nuevo</dt><dd id="cTo"></dd>
+                <dt>Hospital</dt><dd id="cHospital"></dd>
+                <dt>Operador</dt><dd id="cActor"></dd>
+                <dt>Permiso requerido</dt><dd><code>rbac.roles.asignar</code></dd>
+            </dl>
+            <div class="actions">
+                <button id="btnConfirm" class="btn btn--primary" type="button">Confirmar</button>
+                <a class="btn" href="#roles">Cancelar</a>
+            </div>
+        </section>
+
+        <!-- Resultado exitoso -->
+        <section class="screen" data-screen="roles-exito" hidden>
+            <h1>Resultado</h1>
+            <p id="okBanner" class="state state--ok"><span aria-hidden="true">✔</span> Asignado (201)</p>
+            <p id="okDetail"></p>
+            <div class="actions">
+                <a class="btn" href="#bitacora">Ver auditoría</a>
+                <a class="btn btn--primary" href="#roles">Asignar otro</a>
+                <a class="btn" href="#operacion">Ir a operación protegida</a>
+            </div>
+        </section>
+
+        <!-- Pantalla B: operación protegida -->
+        <section class="screen" data-screen="operacion" hidden>
+            <h1>Operación protegida</h1>
+            <p class="muted" data-actor></p>
+            <div class="panel">
+                <label for="resource">Recurso / ruta protegida</label>
+                <select id="resource"></select>
+                <dl class="summary">
+                    <dt>Ruta</dt><dd><code id="resPath"></code></dd>
+                    <dt>Permiso requerido</dt><dd><code id="resPerm"></code></dd>
+                </dl>
+                <div class="actions">
+                    <button id="btnAuthorize" class="btn btn--primary" type="button">Solicitar autorización</button>
+                </div>
+                <p id="opMsg" class="result" role="status"></p>
+            </div>
+        </section>
+
+        <!-- Decisión: permitido -->
+        <section class="screen" data-screen="permitido" hidden>
+            <h1>Decisión de autorización</h1>
+            <p class="state state--ok"><span aria-hidden="true">✔</span> Permitido</p>
+            <dl class="summary">
+                <dt>Usuario</dt><dd id="pUser"></dd>
+                <dt>Rol</dt><dd id="pRole"></dd>
+                <dt>Ruta</dt><dd><code id="pPath"></code></dd>
+                <dt>Permiso</dt><dd><code id="pPerm"></code></dd>
+            </dl>
+            <p class="note">La operación puede continuar. La decisión autoritativa siempre se revalida en el servidor.</p>
+            <div class="actions">
+                <a class="btn btn--primary" href="#operacion">Continuar / otra operación</a>
+                <a class="btn" href="#bitacora">Ver auditoría</a>
+            </div>
+        </section>
+
+        <!-- Pantalla C: denegación y trazabilidad -->
+        <section class="screen" data-screen="denegado" hidden>
+            <h1>Acceso denegado</h1>
+            <p class="state state--denied"><span aria-hidden="true">⛔</span> Denegado (403 <code>RBAC_DENIED</code>)</p>
+
+            <h2>Mensaje al usuario</h2>
+            <p class="note">No tiene autorización para realizar esta operación en este hospital. Si cree que es un error, contacte al administrador del sistema.</p>
+            <p class="trace">
+                <span>trace_id:</span>
+                <code id="dTrace"></code>
+                <button id="btnCopy" class="btn btn--small" type="button">Copiar</button>
+            </p>
+
+            <details id="technicalDetail" class="technical">
+                <summary>Detalle técnico/auditoría (demostrativo; soporte)</summary>
+                <p class="note">La interfaz productiva no expone este detalle al usuario final. Los datos aquí son simulados.</p>
+                <dl class="summary">
+                    <dt>Recurso solicitado</dt><dd><code id="dPath"></code></dd>
+                    <dt>Rol de la sesión</dt><dd id="dRole"></dd>
+                    <dt>Permiso requerido</dt><dd><code id="dPerm"></code></dd>
+                    <dt>Motivo</dt><dd><code id="dReason"></code></dd>
+                </dl>
+                <p class="audit-line" role="note">
+                    Evento de auditoría simulado (distinto del mensaje al usuario):
+                    <span id="dAudit"></span>
+                </p>
+            </details>
+            <div class="actions">
+                <a class="btn btn--primary" href="#operacion">Intentar operación autorizada</a>
+                <a id="auditLink" class="btn" href="#bitacora">Ver evento en bitácora</a>
+                <a class="btn" href="#inicio">Volver al inicio</a>
+            </div>
+        </section>
+
+        <!-- Bitácora simulada -->
+        <section class="screen" data-screen="bitacora" hidden>
+            <h1>Bitácora simulada (eventos de auditoría)</h1>
+            <p class="muted">Eventos de auditoría locales, distintos de los mensajes visuales mostrados al usuario. Fechas y datos ficticios.</p>
+            <div id="auditWrap" class="audit"></div>
+            <div class="actions">
+                <a class="btn" href="#inicio">Volver al inicio</a>
+                <a class="btn" href="#roles">Asignar rol</a>
+                <a class="btn" href="#operacion">Operación protegida</a>
+            </div>
+        </section>
+    </main>
+
+    <p id="live" class="sr-only" aria-live="polite"></p>
+
+    <footer class="foot">
+        <p>ASII-02 — RBAC · Semana 11 · María de los Ángeles López Fajardo (Mar-03). Issue #4. Prototipo de diseño, sin integración real.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
