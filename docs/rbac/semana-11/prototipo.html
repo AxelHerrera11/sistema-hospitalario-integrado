@@ -66,8 +66,11 @@
                     <label for="targetUser">Usuario destino (solo del hospital de la sesión)</label>
                     <select id="targetUser"></select>
 
-                    <p class="field-label">Rol actual y permisos</p>
-                    <p id="currentRole" class="tag"></p>
+                    <dl class="summary">
+                        <dt>Rol actual</dt>
+                        <dd id="currentRole" class="tag"></dd>
+                    </dl>
+                    <p class="field-label">Permisos del rol actual</p>
                     <ul id="currentPerms" class="perms" aria-label="Permisos del rol actual"></ul>
 
                     <label for="newRole">Rol nuevo a asignar</label>
