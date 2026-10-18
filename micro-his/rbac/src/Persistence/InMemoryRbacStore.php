@@ -20,7 +20,7 @@ final class InMemoryRbacStore implements PermissionProvider, DenialRecorder, Rol
     /** @var array<string, string[]> permisos por código de rol */
     private array $rolePermissions;
 
-    /** @var array<string, string[]> roles por usuario@hospital */
+    /** @var array<string, array<string, string[]>> roles por usuario y, dentro, por hospital */
     private array $memberships = [];
 
     /** @var array<int, array<string, mixed>> */
@@ -36,7 +36,7 @@ final class InMemoryRbacStore implements PermissionProvider, DenialRecorder, Rol
 
     public function grant(string $userId, string $hospitalId, string $roleCode): void
     {
-        $this->memberships[$this->key($userId, $hospitalId)][] = $roleCode;
+        $this->memberships[$userId][$hospitalId][] = $roleCode;
     }
 
     public function permissionsFor(string $roleCode): array
@@ -46,7 +46,7 @@ final class InMemoryRbacStore implements PermissionProvider, DenialRecorder, Rol
 
     public function rolesIn(string $userId, string $hospitalId): array
     {
-        return $this->memberships[$this->key($userId, $hospitalId)] ?? [];
+        return $this->memberships[$userId][$hospitalId] ?? [];
     }
 
     public function record(array $denial): void
@@ -58,10 +58,5 @@ final class InMemoryRbacStore implements PermissionProvider, DenialRecorder, Rol
     public function denials(): array
     {
         return $this->denials;
-    }
-
-    private function key(string $userId, string $hospitalId): string
-    {
-        return $userId . '@' . $hospitalId;
     }
 }
