@@ -63,4 +63,21 @@ $memStore->grant('med1', 'H2', 'Medico');
 check('paridad PDO/InMemory: permissionsFor coincide', sameSet($memStore->permissionsFor('AdminHospital'), $pdoStore->permissionsFor('AdminHospital')));
 check('paridad PDO/InMemory: rolesIn coincide por hospital', sameSet($memStore->rolesIn('med1', 'H1'), $pdoStore->rolesIn('med1', 'H1')) && sameSet($memStore->rolesIn('med1', 'H2'), $pdoStore->rolesIn('med1', 'H2')));
 
+// Regresión (colisión de claves): ('a@b','c') y ('a','b@c') no deben mezclarse por concatenar con '@'.
+$col = new InMemoryRbacStore();
+$col->grant('a@b', 'c', 'Medico');
+$col->grant('a', 'b@c', 'AdminHospital');
+check('colisión: los roles de (a@b,c) no aparecen en (a,b@c)', $col->rolesIn('a', 'b@c') === ['AdminHospital']);
+check('colisión: los roles de (a,b@c) no aparecen en (a@b,c)', $col->rolesIn('a@b', 'c') === ['Medico']);
+check('colisión: cada par conserva sus propios roles', $col->rolesIn('a@b', 'c') === ['Medico'] && $col->rolesIn('a', 'b@c') === ['AdminHospital']);
+check('colisión: usuario sin membresía -> lista vacía', $col->rolesIn('a@b', 'b@c') === [] && $col->rolesIn('nadie', 'c') === []);
+
+$pdoCol = new PDO('sqlite::memory:');
+$pdoCol->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+$pdoCol->exec("INSERT INTO memberships VALUES ('a@b', 'c', 'Medico'), ('a', 'b@c', 'AdminHospital');");
+$pdoColStore = new PdoRbacStore($pdoCol);
+check('colisión: paridad con PDO para (a@b,c)', $col->rolesIn('a@b', 'c') === $pdoColStore->rolesIn('a@b', 'c'));
+check('colisión: paridad con PDO para (a,b@c)', $col->rolesIn('a', 'b@c') === $pdoColStore->rolesIn('a', 'b@c'));
+check('colisión: paridad con PDO para usuario sin membresía', $col->rolesIn('nadie', 'c') === $pdoColStore->rolesIn('nadie', 'c'));
+
 echo 'Todas las pruebas del adaptador InMemory pasaron.' . PHP_EOL;
