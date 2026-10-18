@@ -18,13 +18,13 @@ El micro-HIS de la Semana 3 (`micro-his/rbac/`) ya está integrado en `develop` 
 
 ```mermaid
 flowchart TB
-  UC[Application<br>AssignRole] --> AZ[Domain<br>Authorizer + reglas, Membership]
-  UC --> RR{{Domain<br>RoleResolver}}
+  UC[Application<br>AssignRole] --> PDO[Persistence<br>PdoRbacStore]
+  UC --> AZ[Domain<br>Authorizer + reglas, Membership]
   AZ --> PP{{Domain<br>PermissionProvider, DenialRecorder}}
-  RR -.implementa.-> PDO[Persistence<br>PdoRbacStore]
-  RR -.implementa.-> MEM[Persistence<br>InMemoryRbacStore]
-  PP -.implementa.-> PDO
-  PP -.implementa.-> MEM
+  PDO -.implementa.-> PP
+  PDO -.implementa.-> RR{{Domain<br>RoleResolver}}
+  MEM[Persistence<br>InMemoryRbacStore] -.implementa.-> PP
+  MEM -.implementa.-> RR
   PDO --> DB[(memberships, audit_log)]
 ```
 
@@ -38,8 +38,8 @@ flowchart TB
   C[Controller<br>RoleAssignmentController] --> V[View<br>JsonView]
   C --> UC[Application<br>AssignRole]
   UC --> P{{Application<br>MembershipRepository}}
-  P -.implementa.-> PDO[Persistence<br>PdoMembershipRepository]
-  P -.implementa.-> MEM[Persistence<br>InMemoryMembershipRepository]
+  PDO[Persistence<br>PdoMembershipRepository] -.implementa.-> P
+  MEM[Persistence<br>InMemoryMembershipRepository] -.implementa.-> P
 ```
 
 - **MVC:** `RoleAssignmentController` + `JsonView` (no implementados).
