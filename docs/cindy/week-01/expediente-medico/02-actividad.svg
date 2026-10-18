@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1450" viewBox="0 0 1500 1450" role="img" aria-labelledby="title desc">
+  <title id="title">Actividad — Apertura y consulta autorizada del expediente</title>
+  <desc id="desc">Flujo de validación JWT, tenant, permisos RBAC, búsqueda clínica y ramificaciones 401, 403, 404 o expediente disponible.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#53657a"/>
+    </marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#172b4d}
+      .title{font-size:26px;font-weight:700}
+      .sub{font-size:15px;fill:#52647a}
+      .proc{fill:#eaf2ff;stroke:#3874bd;stroke-width:2}
+      .decision{fill:#fff4d6;stroke:#c58b16;stroke-width:2}
+      .error{fill:#fff0f0;stroke:#c44949;stroke-width:2}
+      .success{fill:#e8f7ef;stroke:#34946a;stroke-width:2}
+      .audit{fill:#f4edfa;stroke:#8c65a7;stroke-width:2}
+      .db{fill:#f1f5f9;stroke:#73869c;stroke-width:2}
+      .txt{font-size:15px;font-weight:600}
+      .small{font-size:13px}
+      .tiny{font-size:12px;font-weight:600;fill:#53657a}
+      .line{stroke:#53657a;stroke-width:2;fill:none;marker-end:url(#arrow)}
+      .tag-bg{fill:#ffffff;opacity:0.9}
+    </style>
+  </defs>
+
+  <rect width="1500" height="1450" fill="#fff"/>
+  <text x="45" y="48" class="title">Diagrama de actividades — Apertura y consulta autorizada</text>
+  <text x="45" y="74" class="sub">Validación secuencial · UC-04 autorización · UC-01 MPI · UC-02/06 apertura · UC-03 consulta · UC-05 auditoría</text>
+
+  <!-- Nodo Inicio -->
+  <circle cx="750" cy="115" r="14" fill="#172b4d"/>
+  <path d="M750 129 V150" class="line"/>
+
+  <!-- Petición -->
+  <rect x="510" y="150" width="480" height="60" rx="12" class="proc"/>
+  <text x="750" y="175" text-anchor="middle" class="txt">Petición de consulta o apertura del expediente</text>
+  <text x="750" y="195" text-anchor="middle" class="small">GET /api/v1/emr/patients/{id} · Vue / Axios</text>
+  <path d="M750 210 V230" class="line"/>
+
+  <!-- UC-04 Auth -->
+  <rect x="510" y="230" width="480" height="60" rx="12" class="proc"/>
+  <text x="750" y="255" text-anchor="middle" class="txt">UC-04: validar JWT y resolver X-Tenant-ID</text>
+  <text x="750" y="275" text-anchor="middle" class="small">Identidad y contexto tenant comprobados en CENTRAL</text>
+  <path d="M750 290 V310" class="line"/>
+
+  <!-- Decisión Autenticado -->
+  <polygon points="750,310 850,355 750,400 650,355" class="decision"/>
+  <text x="750" y="360" text-anchor="middle" class="txt">¿Autenticado?</text>
+
+  <!-- Rama Error 401 (Izquierda) -->
+  <path d="M650 355 H270 V390" class="line"/>
+  <rect x="300" y="340" width="150" height="18" class="tag-bg"/>
+  <text x="375" y="353" text-anchor="middle" class="tiny">No: JWT inválido/ausente</text>
+
+  <rect x="80" y="390" width="380" height="55" rx="12" class="audit"/>
+  <text x="270" y="413" text-anchor="middle" class="txt">UC-05: registrar intento fallido</text>
+  <text x="270" y="432" text-anchor="middle" class="small">DB CENTRAL · metadatos de solicitud</text>
+  <path d="M270 445 V465" class="line"/>
+
+  <rect x="130" y="465" width="280" height="50" rx="12" class="error"/>
+  <text x="270" y="495" text-anchor="middle" class="txt">401 Unauthenticated</text>
+
+  <!-- Continuación flujo central: Tenant -->
+  <path d="M750 400 V430" class="line"/>
+  <text x="765" y="418" class="tiny">Sí</text>
+
+  <rect x="510" y="430" width="480" height="60" rx="12" class="proc"/>
+  <text x="750" y="455" text-anchor="middle" class="txt">UC-04: validar tenant y acceso al módulo</text>
+  <text x="750" y="475" text-anchor="middle" class="small">Stancl Tenancy · X-Tenant-ID</text>
+  <path d="M750 490 V510" class="line"/>
+
+  <!-- Decisión Tenant -->
+  <polygon points="750,510 860,555 750,600 640,555" class="decision"/>
+  <text x="750" y="550" text-anchor="middle" class="txt">¿Tenant / módulo</text>
+  <text x="750" y="568" text-anchor="middle" class="txt">autorizado?</text>
+
+  <!-- Rama Error 403 Tenant (Izquierda) -->
+  <path d="M640 555 H270 V590" class="line"/>
+  <rect x="330" y="540" width="60" height="18" class="tag-bg"/>
+  <text x="360" y="553" text-anchor="middle" class="tiny">No</text>
+
+  <rect x="80" y="590" width="380" height="55" rx="12" class="audit"/>
+  <text x="270" y="613" text-anchor="middle" class="txt">UC-05: registrar denegación tenant</text>
+  <text x="270" y="632" text-anchor="middle" class="small">DB CENTRAL</text>
+  <path d="M270 645 V665" class="line"/>
+
+  <rect x="100" y="665" width="340" height="55" rx="12" class="error"/>
+  <text x="270" y="688" text-anchor="middle" class="txt">403 Forbidden</text>
+  <text x="270" y="707" text-anchor="middle" class="small">Tenant / Módulo no autorizado</text>
+
+  <!-- Continuación flujo central: RBAC -->
+  <path d="M750 600 V630" class="line"/>
+  <text x="765" y="618" class="tiny">Sí</text>
+
+  <rect x="510" y="630" width="480" height="60" rx="12" class="proc"/>
+  <text x="750" y="655" text-anchor="middle" class="txt">UC-04: verificar rol y permiso (Spatie)</text>
+  <text x="750" y="675" text-anchor="middle" class="small">Permiso de lectura o apertura según la acción</text>
+  <path d="M750 690 V710" class="line"/>
+
+  <!-- Decisión Permiso -->
+  <polygon points="750,710 850,755 750,800 650,755" class="decision"/>
+  <text x="750" y="760" text-anchor="middle" class="txt">¿Tiene permiso?</text>
+
+  <!-- Rama Error 403 RBAC (Izquierda) -->
+  <path d="M650 755 H270 V790" class="line"/>
+  <rect x="330" y="740" width="60" height="18" class="tag-bg"/>
+  <text x="360" y="753" text-anchor="middle" class="tiny">No</text>
+
+  <rect x="80" y="790" width="380" height="55" rx="12" class="audit"/>
+  <text x="270" y="813" text-anchor="middle" class="txt">UC-05: registrar denegación RBAC</text>
+  <text x="270" y="832" text-anchor="middle" class="small">DB CENTRAL</text>
+  <path d="M270 845 V865" class="line"/>
+
+  <rect x="130" y="865" width="280" height="50" rx="12" class="error"/>
+  <text x="270" y="895" text-anchor="middle" class="txt">403 Forbidden</text>
+
+  <!-- Continuación flujo central: Búsqueda -->
+  <path d="M750 800 V830" class="line"/>
+  <text x="765" y="818" class="tiny">Sí</text>
+
+  <rect x="510" y="830" width="480" height="55" rx="12" class="db"/>
+  <text x="750" y="853" text-anchor="middle" class="txt">UC-01: resolver paciente en MPI / DB CENTRAL</text>
+  <text x="750" y="871" text-anchor="middle" class="small">Identidad clínica del paciente</text>
+  <path d="M750 885 V905" class="line"/>
+
+  <rect x="510" y="905" width="480" height="55" rx="12" class="proc"/>
+  <text x="750" y="928" text-anchor="middle" class="txt">UC-03: buscar expediente en DB HOSPITAL</text>
+  <text x="750" y="946" text-anchor="middle" class="small">Consulta acotada al contexto tenant</text>
+  <path d="M750 960 V980" class="line"/>
+
+  <!-- Decisión ¿Existe? -->
+  <polygon points="750,980 850,1025 750,1070 650,1025" class="decision"/>
+  <text x="750" y="1030" text-anchor="middle" class="txt">¿Existe expediente?</text>
+
+ <!-- Rama Éxito (Derecha alineada en vertical) -->
+  <path d="M850 1025 H1180 V1050" class="line"/>
+  <rect x="920" y="1010" width="50" height="18" class="tag-bg"/>
+  <text x="945" y="1023" text-anchor="middle" class="tiny">Sí</text>
+
+  <!-- Block 1: Devolver expediente -->
+  <rect x="1000" y="1050" width="360" height="55" rx="12" class="success"/>
+  <text x="1180" y="1073" text-anchor="middle" class="txt">Devolver expediente longitudinal</text>
+  <text x="1180" y="1092" text-anchor="middle" class="small">200 OK · JSON autorizado</text>
+
+  <path d="M1180 1105 V1125" class="line"/>
+
+  <!-- Block 2: Registrar consulta exitosa (Justo debajo de Devolver expediente) -->
+  <rect x="1000" y="1125" width="360" height="55" rx="12" class="audit"/>
+  <text x="1180" y="1148" text-anchor="middle" class="txt">UC-05: registrar consulta exitosa</text>
+  <text x="1180" y="1167" text-anchor="middle" class="small">DB CENTRAL · luego desplegar en UI</text>
+
+  <!-- Rama No Existe (Abajo) -->
+  <path d="M750 1070 V1100" class="line"/>
+  <text x="765" y="1085" class="tiny">No</text>
+
+  <!-- Decisión ¿Apertura/Creación? -->
+  <polygon points="750,1100 860,1145 750,1190 640,1145" class="decision"/>
+  <text x="750" y="1140" text-anchor="middle" class="txt">¿Es apertura /</text>
+  <text x="750" y="1158" text-anchor="middle" class="txt">creación?</text>
+
+  <!-- 404 Not Found (Izquierda abajo) -->
+  <path d="M640 1145 H450 V1180" class="line"/>
+  <rect x="480" y="1130" width="100" height="18" class="tag-bg"/>
+  <text x="530" y="1143" text-anchor="middle" class="tiny">No (Consulta)</text>
+
+  <rect x="280" y="1180" width="340" height="60" rx="12" class="error"/>
+  <text x="450" y="1205" text-anchor="middle" class="txt">404 Not Found</text>
+  <text x="450" y="1225" text-anchor="middle" class="small">UC-05: registra resultado en CENTRAL</text>
+
+  <!-- Creación 201 (Derecha abajo) -->
+  <path d="M860 1145 H1050 V1180" class="line"/>
+  <rect x="880" y="1130" width="140" height="18" class="tag-bg"/>
+  <text x="950" y="1143" text-anchor="middle" class="tiny">Sí (Permiso Apertura)</text>
+
+  <rect x="860" y="1180" width="380" height="60" rx="12" class="success"/>
+  <text x="1050" y="1205" text-anchor="middle" class="txt">UC-02 / UC-06: crear en DB HOSPITAL</text>
+  <text x="1050" y="1225" text-anchor="middle" class="small">UC-05: auditar en CENTRAL · 201 Created</text>
+
+  <!-- Nota al pie -->
+  <text x="750" y="1320" text-anchor="middle" class="tiny" fill="#53657a">El permiso requerido se valida antes de consultar o crear; la auditoría conserva metadatos, no contenido clínico.</text>
+</svg>
