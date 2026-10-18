@@ -8,49 +8,64 @@
 - **Tarea individual:** Continúe el MISMO «Micro-HIS RBAC: roles, permisos y protección de rutas» y el flujo «asignación de rol, autorización de una operación y denegación trazable». Organice la entrada con MVC; defina una interfaz Repository en el límite apropiado y adaptadores PDO e InMemory. El controlador no tendrá SQL ni reglas de negocio. Además, analice y diagrame cómo un repositorio de datos compartido integraría este módulo.
 - **Entregable / evidencia:** Capas, responsabilidades y objetos reutilizables.
 
-## Punto de partida (Semana 3, implementado)
+## Punto de partida (Semana 3, integrada en `develop`)
 
-El micro-HIS de la Semana 3 (`micro-his/rbac/`) ya separa las cuatro capas, pero `AssignRole` (Application) depende de la clase concreta `PdoRbacStore` (Persistence) y la entrada es `RbacHttpHandler`, que no separa controlador y vista. Esta semana corrige esas dos dependencias con MVC y Repository.
+El micro-HIS de la Semana 3 (`micro-his/rbac/`) ya está integrado en `develop` y separa las cuatro capas. `AssignRole` (Application) todavía depende de la clase concreta `PdoRbacStore` (Persistence) y la entrada es `RbacHttpHandler`, que no separa controlador y vista. Esta semana define las interfaces en el límite del repositorio con adaptadores PDO e InMemory.
 
-## Diseño propuesto (no implementado todavía)
+## Estado de implementación
+
+**Implementado en esta entrega** (sí modifica `micro-his/rbac/`):
 
 ```mermaid
 flowchart TB
-  R[public/index.php<br>front controller y rutas] --> C[Controller<br>RoleAssignmentController]
-  C --> V[View<br>JsonView]
-  C --> UC[Model: Application<br>AssignRole]
-  UC --> AZ[Model: Domain<br>Authorizer + reglas, Membership]
-  UC --> P{{Puerto en Application<br>MembershipRepository}}
-  P -.implementa.-> PDO[Persistence<br>PdoMembershipRepository]
-  P -.implementa.-> MEM[Persistence<br>InMemoryMembershipRepository]
+  UC[Application<br>AssignRole] --> AZ[Domain<br>Authorizer + reglas, Membership]
+  UC --> RR{{Domain<br>RoleResolver}}
   AZ --> PP{{Domain<br>PermissionProvider, DenialRecorder}}
-  PP -.implementa.-> ST[Persistence<br>PdoRbacStore]
+  RR -.implementa.-> PDO[Persistence<br>PdoRbacStore]
+  RR -.implementa.-> MEM[Persistence<br>InMemoryRbacStore]
+  PP -.implementa.-> PDO
+  PP -.implementa.-> MEM
   PDO --> DB[(memberships, audit_log)]
-  ST --> DB
 ```
 
-- **Model:** Domain (`Authorizer`, reglas, `Membership`, `RbacViolation`) y Application (`AssignRole`).
-- **View:** `JsonView` solo escribe el estado HTTP y el JSON.
-- **Controller:** `RoleAssignmentController` lee la ruta y el cuerpo, llama a `AssignRole` y traduce el resultado. Sin SQL ni reglas de negocio.
-- **Repository:** `MembershipRepository` vive en Application, que es quien lo necesita; los adaptadores viven en Persistence. Así Application deja de conocer PDO.
+- `RoleResolver` (Domain): puerto de lectura de los roles de un usuario en un hospital.
+- `PdoRbacStore` e `InMemoryRbacStore` (Persistence): adaptadores intercambiables que implementan `RoleResolver`; `PdoRbacStore` conserva `PermissionProvider` y `DenialRecorder`.
+
+**Propuesto (no implementado todavía):**
+
+```mermaid
+flowchart TB
+  C[Controller<br>RoleAssignmentController] --> V[View<br>JsonView]
+  C --> UC[Application<br>AssignRole]
+  UC --> P{{Application<br>MembershipRepository}}
+  P -.implementa.-> PDO[Persistence<br>PdoMembershipRepository]
+  P -.implementa.-> MEM[Persistence<br>InMemoryMembershipRepository]
+```
+
+- **MVC:** `RoleAssignmentController` + `JsonView` (no implementados).
+- **Repository del agregado:** `MembershipRepository` (lectura y escritura con auditoría atómica); propuesto. Ver [contrato](./contrato-repository.md).
+- **Capas:** detalle en [responsabilidades](./responsabilidades.md).
 
 ## Archivos de esta entrega
 
 - [Responsabilidades por capa y objetos reutilizables](./responsabilidades.md)
 - [Contrato del Repository y traducción a HTTP](./contrato-repository.md)
 - [Repositorio de datos compartido](./repositorio-compartido.md)
+- Código implementado: `micro-his/rbac/src/Domain/RoleResolver.php`, `micro-his/rbac/src/Persistence/InMemoryRbacStore.php`, `micro-his/rbac/src/Persistence/PdoRbacStore.php` y `micro-his/rbac/tests/inmemory.php`.
 
 ## Cómo verificar
 
-Esta entrega es de diseño: no modifica `micro-his/rbac/`, para no chocar con el PR de la Semana 3. Las clases citadas como existentes se comprueban en la rama de la Semana 3:
+La Semana 3 ya está integrada en `develop`, así que el motor se comprueba en esta misma rama:
 
 ```bash
-git grep -n -E "final class (AssignRole|PdoRbacStore|RbacHttpHandler|Authorizer)" origin/feature/asii-02-semana-03-rbac-mar-03 -- micro-his/rbac
+php micro-his/rbac/tests/run.php
+php micro-his/rbac/tests/inmemory.php
 ```
 
-Resultado esperado: 4 coincidencias, una por clase. Los componentes de la sección "Diseño propuesto" que no aparecen en ese resultado son propuestos.
+- `run.php`: flujo de asignación, reglas de dominio y error de persistencia.
+- `inmemory.php`: contrato del adaptador en memoria, paridad con `PdoRbacStore` y no colisión de claves usuario/hospital.
 
 ## Supuestos
 
-- **SD-RBAC-10:** el diseño se implementará en el micro-HIS cuando la Semana 3 esté integrada en `develop`; hasta entonces es propuesto.
+- **SD-RBAC-10:** la Semana 3 ya está integrada en `develop`; `RoleResolver` y sus adaptadores están implementados. MVC y `MembershipRepository` siguen propuestos.
 - **SD-RBAC-11** y **SD-RBAC-12:** ver [repositorio compartido](./repositorio-compartido.md).
