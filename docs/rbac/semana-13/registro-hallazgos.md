@@ -11,8 +11,8 @@ comprobada al redactar (existencia de archivo o lectura de línea).
 |---|---|---|---|---|
 | H-01 | Bloqueo | Los modelos `App\Models\User` y `App\Models\Tenant` no existen (`app/Models/` ausente) pero se referencian en el código. | `app/Http/Controllers/Api/V1/AuthController.php:6,25,56,80`; `app/Http/Middleware/TenantMiddleware.php:5,23`; `config/auth.php:72` | Abierto |
 | H-02 | Bloqueo | No hay migración de las tablas de Spatie (`roles`, `permissions`, `model_has_roles`), que el código usa al asignar rol. | `config/permission.php:10-16`; sin migración correspondiente en `database/migrations/**` | Abierto |
-| H-03 | Bloqueo | No existe el middleware `permission:` ni su alias; `routes/api.php` no protege endpoints RBAC. | `bootstrap/app.php:16-20`; `routes/api.php:6-18` | Abierto |
-| H-04 | Bloqueo | Los endpoints RBAC propuestos no están implementados. | contrato: `docs/rbac/semana-01/README.md:21`; `routes/api.php` solo tiene `auth/*` | Abierto |
+| H-03 | Bloqueo | En `origin/develop` no existe el middleware `permission:` ni su alias, y `routes/api.php` no protege endpoints RBAC. Está implementado en el PR #136 de Semana 7 (`EnsurePermission`, `RbacServiceProvider` y el alias `permission`), **pendiente de integración**. | `origin/develop:bootstrap/app.php:16-20`; `origin/develop:routes/api.php:6-18`; PR #136: `app/Http/Middleware/EnsurePermission.php`, `app/Providers/RbacServiceProvider.php`, `bootstrap/app.php:20` | Abierto |
+| H-04 | Bloqueo | Los controladores y endpoints HTTP Laravel de RBAC siguen pendientes incluso considerando el PR #136: `routes/api.php` solo tiene `auth/*` y no hay controladores RBAC. El handler PHP vanilla de Semana 5 (PR #134) no constituye una ruta Laravel funcional y no lo resuelve. | contrato: `docs/rbac/semana-01/README.md:21`; `origin/develop:routes/api.php` solo tiene `auth/*`; PR #136: `routes/api.php` sin endpoints RBAC; PR #134: `micro-his/rbac/src/Presentation/RbacHttpHandler.php` (handler vanilla, no una ruta Laravel) | Abierto |
 | H-05 | Riesgo | `spatie` con `teams=false` no aísla por hospital; el aislamiento debe implementarse aparte. | `config/permission.php:31`; supuesto SD-RBAC-03 en `docs/rbac/semana-02/README.md:45` | Pendiente de validación con terceros |
 | H-06 | Riesgo | No hay seeder de roles/permisos ni niveles; el catálogo no existe. | `database/seeders/DatabaseSeeder.php:11` | Abierto |
 | H-07 | Riesgo | Los niveles de privilegio son un supuesto sin validar. | `micro-his/rbac/src/Domain/AssignerPrivilegeRule.php:11`; SD-RBAC-09 en `docs/rbac/semana-03/README.md:46` | Pendiente de validación con terceros |
@@ -34,9 +34,14 @@ comprobada al redactar (existencia de archivo o lectura de línea).
   fallan en tiempo de ejecución porque referencian un modelo ausente, y `assignRole`
   (`AuthController.php:32`) depende de tablas que no se migran. Consecuencia: las rutas `auth/*`
   no pueden proteger nada; el RBAC productivo no arranca sobre esta base.
-- **H-03/H-04 (alcance no entregado).** El módulo RBAC no tiene todavía su superficie HTTP:
-  ni `permission:`, ni rutas de asignación de rol. No es un defecto del prototipo; es trabajo
-  pendiente de las semanas de implementación.
+- **H-03 (implementado en el PR #136, pendiente de integración).** El middleware `permission:`
+  aliasado, `EnsurePermission` y `RbacServiceProvider` no están en `origin/develop`, pero sí en
+  el PR #136 de Semana 7. Hasta integrarlo, `routes/api.php` de `develop` no protege endpoints
+  RBAC.
+- **H-04 (pendiente incluso con el PR #136).** Los controladores y endpoints HTTP Laravel de
+  RBAC siguen sin implementarse: el PR #136 no añade endpoints RBAC (solo `auth/*`), y el handler
+  PHP vanilla de Semana 5 (PR #134, `micro-his/rbac/src/Presentation/RbacHttpHandler.php`) no es
+  una ruta Laravel funcional. No es un defecto del prototipo, sino alcance no entregado.
 - **H-13/H-14/H-15/H-16/H-17 (núcleo verificado).** El prototipo demuestra las reglas que el
   módulo debe cumplir: denegación por defecto, AND de reglas, trazabilidad, falla segura,
   transacción con rollback, aislamiento por hospital y saneamiento de entradas.

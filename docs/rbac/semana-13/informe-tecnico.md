@@ -58,19 +58,26 @@ comprobados**, **riesgos** y **bloqueos**. No se modificó código de producció
   Las rutas `auth/*` y el middleware `tenant` no pueden operar.
 - **Tablas Spatie no migradas (H-02).** `AuthController.php:32` (`assignRole`) fallaría: no hay
   migración de `roles`/`permissions`/`model_has_roles`.
-- **Superficie RBAC inexistente (H-03/H-04).** No hay middleware `permission:` aliasado
-  (`bootstrap/app.php:16-20`) ni rutas RBAC (`routes/api.php:6-18`). No es un defecto del
-  prototipo, sino alcance aún no implementado.
+- **H-03 — middleware implementado en el PR #136, pendiente de integración.** En `origin/develop`
+  no hay middleware `permission:` aliasado (`bootstrap/app.php:16-20`); el PR #136 de Semana 7
+  aporta `EnsurePermission`, `RbacServiceProvider` y el alias `permission`, aún sin merge.
+- **H-04 — endpoints Laravel aún pendientes (incluso con el PR #136).** `routes/api.php` solo
+  tiene `auth/*`; el PR #136 no añade endpoints RBAC. El handler PHP vanilla de Semana 5
+  (PR #134) no constituye una ruta Laravel funcional. No es un defecto del prototipo, sino
+  alcance no entregado.
 
 ## 4. Conclusión
 
 - **Qué se puede aprobar hoy:** el diseño y el prototipo del núcleo RBAC (autorización,
   trazabilidad, transacción, aislamiento en consulta y saneamiento de entradas), con H-13…H-18
   como evidencia.
-- **Qué no se puede revisar todavía:** el código Laravel del módulo RBAC, porque no existe
-  (H-01…H-04). La revisión formal de esa capa queda **programada** y no puede declararse
-  ejecutada.
-- **Condición para aprobar el PR del módulo:** resolver o compensar los bloqueos H-01…H-04,
-  validar los riesgos H-05/H-07 con usuarios/tenants, y completar seeder y auditoría (H-06/H-10/H-11).
+- **Qué no se puede revisar todavía:** el código Laravel del módulo RBAC en `origin/develop`,
+  porque no existe (H-01, H-02 y H-04). H-03 está implementado en el PR #136, pendiente de
+  integración; H-04 sigue pendiente incluso considerando ese PR. La revisión formal de esa capa
+  queda **programada** y no puede declararse ejecutada.
+- **Condición para aprobar el PR del módulo:** resolver o compensar los bloqueos H-01…H-04
+  (integrar el PR #136 cierra H-03; H-04 exige endpoints Laravel propios, que el PR #134 vanilla
+  no aporta), validar los riesgos H-05/H-07 con usuarios/tenants, y completar seeder y auditoría
+  (H-06/H-10/H-11).
 - **Alcance de esta entrega:** plan, checklist, responsables, hallazgos e informe. Sin `push`,
   sin PR, sin merge y sin modificar código de producción.
