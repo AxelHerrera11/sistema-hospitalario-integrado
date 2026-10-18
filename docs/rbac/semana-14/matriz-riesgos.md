@@ -1,6 +1,6 @@
 # Matriz de riesgos del módulo RBAC
 
-Cubre las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazabilidad y fallos de persistencia**. Los riesgos provienen de los requisitos (`docs/rbac/semana-02/requerimientos.md`), del catálogo de permisos (`docs/rbac/semana-05/permisos.md`) y del código del motor (`micro-his/rbac/`).
+Cubre las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazabilidad y fallos de persistencia**. Los riesgos provienen de los requisitos (`docs/rbac/semana-02/requerimientos.md`), del catálogo de permisos (`docs/rbac/semana-05/permisos.md`, PR #134, pendiente de merge) y del código del motor (`micro-his/rbac/`).
 
 ## Escalas
 
@@ -14,7 +14,7 @@ Cubre las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazab
 |---|---|---|---|---|---|---|---|
 | R-01 | Permisos | Escalación vertical: un actor asigna un rol de nivel superior al suyo. | Media | Crítico | Crítico | `AssignerPrivilegeRule::LEVELS` niega con motivo `rol_supera_privilegio` (`AssignerPrivilegeRule.php:11,19`); caso de prueba obligatorio en cada gate. | Mar-03 |
 | R-02 | Permisos | Rol como texto libre sin catálogo: valores inválidos o tipográficos. | Media | Alto | Alto | Validación de `role_code` contra el catálogo (`AssignRole.php:22`); seeder de roles pendiente. | Mar-03 |
-| R-03 | Permisos | Bypasseo de autorización: el frontend oculta pero el backend no valida. | Media | Crítico | Crítico | La autoridad es `EnsurePermission` (rama Semana 7); `permissions.js` solo mejora navegación. Verificar 403 server-side. | Mar-03 / revisor |
+| R-03 | Permisos | Bypasseo de autorización: el frontend oculta pero el backend no valida. | Media | Crítico | Crítico | La autoridad es `EnsurePermission` (rama Semana 7; PR #136, pendiente de merge); `permissions.js` (PR #136, pendiente de merge) solo mejora navegación. Verificar 403 server-side. | Mar-03 / revisor |
 | R-04 | Autenticación | Token de usuario revocado o membresía vencida sigue autorizando. | Media | Alto | Alto | `EnsurePermission` exige `auth('api')->user()`; vigencia `valid_from`/`valid_to` aún no evaluada en el micro-HIS. | Mar-03 |
 | R-05 | Tenant | Fuga entre hospitales: se decide con el hospital equivocado o se ignora `X-Tenant-ID`. | Media | Crítico | Crítico | `rolesIn()` filtra por `hospital_id`; caso multi-tenant obligatorio (Q-TEN-01). | Mar-03 |
 | R-06 | Trazabilidad | Denegación sin traza o `trace_id` no recuperable en la bitácora. | Baja | Alto | Alto | `Authorizer` genera `trace_id` y `DenialRecorder` lo persiste (`Authorizer.php:36-38`); Q-TRZ-01. | Mar-03 |

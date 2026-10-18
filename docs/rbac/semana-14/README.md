@@ -11,7 +11,7 @@ Este documento es **planificación**. No reporta cobertura, campañas, despliegu
 
 ## 2. Alcance
 
-**Dentro del alcance:** el motor RBAC (`micro-his/rbac/`), el middleware de autorización (`app/Http/Middleware/EnsurePermission.php`, rama Semana 7), los helpers de permisos del frontend (`resources/js/router/permissions.js`), el catálogo de permisos (`docs/rbac/semana-05/permisos.md`) y las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazabilidad y fallos de persistencia**.
+**Dentro del alcance:** el motor RBAC (`micro-his/rbac/`), el middleware de autorización (`app/Http/Middleware/EnsurePermission.php`, rama Semana 7; PR #136, pendiente de merge), los helpers de permisos del frontend (`resources/js/router/permissions.js`, PR #136, pendiente de merge), el catálogo de permisos (`docs/rbac/semana-05/permisos.md`, PR #134, pendiente de merge) y las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazabilidad y fallos de persistencia**.
 
 **Fuera del alcance:** autenticación JWT y gestión de usuarios/tenants (ASII-01), bitácora central real (Gobernanza), endpoints clínicos protegidos, infraestructura de producción, pruebas de carga/estrés y accesibilidad con lector de pantalla (solo se auditaron contrastes y teclado en Semana 11).
 
@@ -20,7 +20,7 @@ Este documento es **planificación**. No reporta cobertura, campañas, despliegu
 - ISO/IEC 25010 (características de calidad) e IEEE 730 (SQA) como marco conceptual.
 - Plan semanal: `README.md` (fila Semana 14) y `.github/ISSUE_TEMPLATE/module_task.md` (Semana 14: plan SQA).
 - Requisitos y criterios: `docs/rbac/semana-02/requerimientos.md` (`RF-RBAC-01..08`, `RNF-RBAC-01..04`).
-- Catálogo de permisos y matriz rol×permiso: `docs/rbac/semana-05/permisos.md`.
+- Catálogo de permisos y matriz rol×permiso: `docs/rbac/semana-05/permisos.md` (PR #134, pendiente de merge).
 - Prototipo y escenarios verificados: `docs/rbac/semana-11/escenarios.md`.
 - Plantilla de PR y *checklist* obligatorio: `.github/pull_request_template.md`.
 

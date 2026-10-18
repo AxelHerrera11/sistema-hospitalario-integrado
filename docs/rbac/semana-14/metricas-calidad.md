@@ -4,7 +4,7 @@ Las métricas son **objetivos** hasta que una ejecución las registre. La column
 
 ## Convenciones
 
-- **Permiso correcto:** coincidencia entre la decisión del motor y la matriz rol×permiso de `docs/rbac/semana-05/permisos.md`.
+- **Permiso correcto:** coincidencia entre la decisión del motor y la matriz rol×permiso de `docs/rbac/semana-05/permisos.md` (PR #134, pendiente de merge).
 - **Falso permitido:** autorizar una operación que la matriz deniega (riesgo crítico).
 - **Falso denegado:** denegar una operación que la matriz permite (defecto funcional).
 - Escala de medición: cada métrica se recalcula sobre la misma suite de pruebas de regresión (ver `estrategia-pruebas-regresion.md`).
@@ -14,7 +14,7 @@ Las métricas son **objetivos** hasta que una ejecución las registre. La column
 | ID | Dimensión | Métrica | Fórmula | Objetivo | Cómo se obtiene | Estado |
 |---|---|---|---|---|---|---|
 | Q-PERM-01 | Permisos | Cobertura de protección de rutas | rutas con `permission:modulo.accion` ÷ rutas protegidas × 100 | 100 % | `php artisan route:list --path=api` y revisión de `routes/api.php` | Objetivo |
-| Q-PERM-02 | Permisos | Acierto de la matriz rol×permiso | decisiones conformes ÷ casos de autorización × 100 | 100 % | Suite derivada de `docs/rbac/semana-05/permisos.md` sobre `Authorizer` | Parcial observado |
+| Q-PERM-02 | Permisos | Acierto de la matriz rol×permiso | decisiones conformes ÷ casos de autorización × 100 | 100 % | Suite derivada de `docs/rbac/semana-05/permisos.md` (PR #134, pendiente de merge) sobre `Authorizer` | Parcial observado |
 | Q-PERM-03 | Permisos | Falsos permitidos | autorizaciones indebidas ÷ casos denegados | 0 | Casos negativos de la matriz (p. ej. `enfermeria` sin `prescripciones.crear`) | Objetivo |
 | Q-AUTH-01 | Autenticación | Rechazo sin token | respuestas 401 ÷ solicitudes sin token × 100 | 100 % | `EnsurePermission` cuando `auth('api')->user() === null` | Objetivo |
 | Q-AUTH-02 | Autenticación | Rechazo de membresía no vigente | respuestas 403 ÷ solicitudes con membresía inactiva/vencida × 100 | 100 % | Pendiente: el micro-HIS aún no evalúa vigencia (`valid_from`/`valid_to`) | Objetivo |
