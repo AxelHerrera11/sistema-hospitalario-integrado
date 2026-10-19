@@ -65,3 +65,24 @@ flowchart TD
 │                                               [Cancelar] [Guardar]     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Estados de la pantalla
+
+| Estado | Qué ve el usuario |
+|---|---|
+| Carga | Banner neutro «Cargando alergias…»; **nunca** «Sin alergias» mientras carga |
+| `none` | Texto discreto «Sin alergias registradas», sin color de alarma |
+| `warning` | Banner ámbar con la lista |
+| `critical` | Banner rojo fijo arriba del expediente, con `role="alert"` |
+| `unavailable` o sin red | Banner gris «Alergias no disponibles…» con «Reintentar» |
+| Duplicado (409) | Aviso con enlace a la alergia existente |
+| Éxito (201) | El banner se actualiza en el momento |
+
+## Reglas de interacción
+
+- El banner crítico no se puede cerrar ni ocultar; queda fijo mientras se navega el expediente.
+- El estado de carga y el de error **nunca** se muestran como «Sin alergias» (falla segura del contrato).
+- La severidad se elige de una lista con textos clínicos («Amenaza la vida»), no con los códigos internos.
+- El botón «Registrar alergia» solo aparece con `alergias.registrar`.
+
+Los wireframes se evalúan en la Semana 9 (usabilidad y accesibilidad) y se adaptan a móvil en la Semana 10. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
