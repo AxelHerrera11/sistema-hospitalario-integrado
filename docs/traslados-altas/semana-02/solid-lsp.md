@@ -172,6 +172,7 @@ Las operaciones dependen de una abstracción de persistencia, no de PostgreSQL. 
 
 | Tipo | Elementos |
 |---|---|
-| **Existente en el repositorio** (no ejecutado en este PR) | Esquema y `SchedulingAndBedIntegrityTest`: `bed_stays_open_care_episode_unique`, `bed_stays_bed_active_period_exclusion`, `bed_stays_period_check`, `bed_stays_reason_check`, `care_episodes_status_period_check`, trigger de período e inmutabilidad de `bed_stays`. |
+| **Existente en las migraciones** (revisión estática) | `bed_stays_open_care_episode_unique`, `bed_stays_bed_active_period_exclusion`, `bed_stays_period_check`, `bed_stays_reason_check`, `care_episodes_status_period_check` y triggers de período e inmutabilidad de `bed_stays`. |
+| **Casos existentes en `SchedulingAndBedIntegrityTest`** (no ejecutados en este PR) | Adyacencia permitida y solape rechazado por cama; segunda estancia abierta rechazada para un episodio; estancia fuera del período rechazada al insertar; `beds.status` no sincronizado con la ocupación. No hay casos directos para `bed_stays_reason_check`, `bed_stays_period_check`, `care_episodes_status_period_check` ni para la inmutabilidad de una estancia finalizada. |
 | **Propuesto** | Contrato y clases de esta sección, `FOR UPDATE`, una sola `T` tras bloquear, orden cerrar origen antes de crear destino, "episodio `closed` sin estancia abierta" (la base no lo impide) y exigir `available` en el destino (R-TA-01). |
 | **Pendiente de integración** | Sincronización de `beds.status` con ASII-06, ASII-07 y ASII-09; roles concretos de autorización. |
