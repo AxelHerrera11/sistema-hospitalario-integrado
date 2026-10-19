@@ -31,3 +31,18 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): datos de la 
 | 8 | Diseño minimalista | Cumple | Solo las camas del tipo pedido |
 | 9 | Ayudar a reconocer y corregir errores | Cumple | El 409 refresca el tablero y explica qué pasó |
 | 10 | Ayuda y documentación | Parcial | Falta explicar la lista de espera, que aún es propuesta |
+
+## Checklist WCAG 2.1 AA
+
+| Criterio | Resultado | Nota |
+|---|---|---|
+| 1.4.1 Uso del color | Parcial | Libre y ocupada se distinguen por color y por ✓/✕; el 🔧 de mantenimiento necesita texto |
+| 1.4.3 Contraste mínimo | Pendiente de verificar | Los mosaicos de cama deben llegar a 4,5:1 |
+| 1.3.1 Información y relaciones | Parcial | El tablero debe ser una lista de opciones (`radiogroup`) y no mosaicos sueltos |
+| 2.1.1 Teclado | Parcial | Con flechas dentro del tablero y Tab para salir |
+| 2.4.3 Orden del foco | Cumple | Paciente → motivo → tipo → tablero → Admitir |
+| 3.3.1 Identificación de errores | Cumple | El error nombra el campo |
+| 3.3.4 Prevención de errores (datos importantes) | Cumple | Pantalla de confirmación con paciente, cama y motivo |
+| 4.1.3 Mensajes de estado | Parcial | «Paciente admitido en MED-101» debe anunciarse con `role="status"` |
+
+«Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
