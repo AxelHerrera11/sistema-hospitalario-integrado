@@ -12,9 +12,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lsp-traslado-alta.php';
 
-/** Adaptador en memoria del puerto: confirmar() reemplaza el estado completo o lo descarta. */
+/** Adaptador en memoria: simula desenlaces sobre el estado completo, no un COMMIT real. */
 final class AdaptadorHospitalEnMemoria implements PuertoHospital
 {
+    public string $desenlaceSimulado = 'confirmado';
+
     public function __construct(public array $estado, private DateTimeImmutable $t) {}
 
     public function leer(): array
@@ -29,8 +31,11 @@ final class AdaptadorHospitalEnMemoria implements PuertoHospital
 
     public function confirmar(array $estadoNuevo): string
     {
-        $this->estado = $estadoNuevo;
-        return 'confirmado';
+        // En el caso incierto, aplicar el cambio modela solo uno de los desenlaces posibles.
+        if ($this->desenlaceSimulado !== 'fallo') {
+            $this->estado = $estadoNuevo;
+        }
+        return $this->desenlaceSimulado;
     }
 }
 
@@ -120,6 +125,13 @@ function bateriaDeContrato(string $nombre, Closure $crear): void
     }
     $h = escenario('09:00');
     comprobarRechazo('T_INVALIDA', $h, $crear($h, 'S1'));
+    $h = escenario();
+    $h->desenlaceSimulado = 'fallo';
+    $antes = $h->estado;
+    comprobar('COMMIT rechazado (SIMULADO): FalloConfirmado, sin cambios', $crear($h, 'S1')->ejecutar() instanceof FalloConfirmado && $h->estado === $antes);
+    $h = escenario();
+    $h->desenlaceSimulado = 'incierto';
+    comprobar('conexión perdida (SIMULADA): ResultadoIncierto, nunca éxito', $crear($h, 'S1')->ejecutar() instanceof ResultadoIncierto);
 }
 
 bateriaDeContrato('TrasladoInterno', fn (AdaptadorHospitalEnMemoria $h, string $estancia) => traslado($h, $estancia));
@@ -155,6 +167,32 @@ foreach ($invalidas as $codigo => $construir) {
         comprobar("solicitud inválida: $codigo, sin operación", $e->getMessage() === $codigo);
     }
 }
+
+echo PHP_EOL . '== Cliente común con ambas operaciones ==' . PHP_EOL;
+
+final class AvisoOcupacionLiberada
+{
+    public function procesar(OperacionConLiberacionDeCama $operacion): string
+    {
+        $r = $operacion->ejecutar();
+        return match (true) {
+            $r instanceof ExitoConfirmado => "Cama {$r->liberacion->camaOrigenId} sin ocupación del episodio desde "
+                . $r->liberacion->t->format('H:i') . '; su disponibilidad la decide el catálogo de camas',
+            $r instanceof RechazoConfirmado, $r instanceof FalloConfirmado => "Sin cambios: {$r->codigo}",
+            $r instanceof ResultadoIncierto => 'Resultado incierto: consultar el estado antes de reintentar',
+        };
+    }
+}
+
+$aviso = new AvisoOcupacionLiberada();
+$conTraslado = $aviso->procesar(traslado(escenario(), 'S1'));
+$conAlta = $aviso->procesar(alta(escenario(), 'S1'));
+echo "      traslado → $conTraslado" . PHP_EOL . "      alta     → $conAlta" . PHP_EOL;
+comprobar('el aviso es idéntico con traslado y con alta', $conTraslado === $conAlta);
+comprobar('el cliente atiende un rechazo sin conocer la operación', $aviso->procesar(alta(escenario(), 'S5')) === 'Sin cambios: SIN_ESTANCIA_ABIERTA');
+$clase = new ReflectionClass(AvisoOcupacionLiberada::class);
+$fuente = implode('', array_slice(file(__FILE__), $clase->getStartLine() - 1, $clase->getEndLine() - $clase->getStartLine() + 1));
+comprobar('AvisoOcupacionLiberada no nombra operaciones ni resultados específicos', preg_match('/Traslado|Alta/', $fuente) === 0);
 
 echo PHP_EOL . ($fallos === 0 ? 'Todas las comprobaciones se cumplieron.' : "$fallos comprobación(es) fallaron.") . PHP_EOL;
 exit($fallos === 0 ? 0 : 1);
