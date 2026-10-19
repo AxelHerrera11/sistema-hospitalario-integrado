@@ -31,3 +31,18 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): bandeja de a
 | 8 | Diseño minimalista | Cumple | Una línea por alerta, con lo necesario para decidir |
 | 9 | Ayudar a reconocer y corregir errores | Cumple | El 422 indica que el valor no coincide y deja reintentar |
 | 10 | Ayuda y documentación | Parcial | Falta el procedimiento cuando no hay relación de cuidado (403) |
+
+## Checklist WCAG 2.1 AA
+
+| Criterio | Resultado | Nota |
+|---|---|---|
+| 1.4.1 Uso del color | Parcial | El punto 🔴 debe acompañarse del texto «crítica» |
+| 1.4.3 Contraste mínimo | Pendiente de verificar | Minutos restantes en rojo sobre blanco, mínimo 4,5:1 |
+| 1.3.1 Información y relaciones | Cumple | La bandeja es una lista; cada alerta es un elemento con su botón |
+| 2.1.1 Teclado | Cumple | El diálogo atrapa el foco y Esc lo cierra sin acusar |
+| 2.2.1 Tiempo ajustable | No aplica | El plazo es clínico; no expira la sesión del usuario |
+| 3.3.1 Identificación de errores | Cumple | El error se muestra junto al campo del valor |
+| 4.1.3 Mensajes de estado | Parcial | Una alerta nueva debe anunciarse con `role="alert"` una sola vez, no en cada refresco |
+| 1.4.13 Contenido en hover o foco | Cumple | No hay información que solo aparezca al pasar el cursor |
+
+«Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
