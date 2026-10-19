@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\Rbac;
 
+use App\Rbac\ConfiguredPermissions;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use MicroHis\Rbac\Domain\RoleResolver;
+use MicroHis\Rbac\Domain\{DenialRecorder, PermissionProvider, RoleResolver};
+use MicroHis\Rbac\Persistence\InMemoryRbacStore;
 
 /** Auth y tenant simulados SOLO en tests: nunca se registran en la aplicación. */
 class IntegrationTest extends RbacTestCase
@@ -45,5 +47,21 @@ class IntegrationTest extends RbacTestCase
         $this->withHeaders(['X-User-ID' => 'reader', 'X-User-Ref' => 'reader', 'X-Tenant-ID' => 'hospital-a'])
             ->getJson('/api/v1/permissions')->assertForbidden();
         $this->assertSame('outsider', $this->store->denials()[0]['user_id']);
+    }
+
+    public function test_config_matrix_is_enforced_by_the_permission_middleware(): void
+    {
+        $this->app->instance(PermissionProvider::class, new ConfiguredPermissions());
+        $this->store = new InMemoryRbacStore(config('rbac.roles'));
+        $this->app->instance(RoleResolver::class, $this->store);
+        $this->app->instance(DenialRecorder::class, $this->store);
+
+        $this->store->grant('platform', 'hospital-a', 'superadmin');
+        TestIdentity::$user = new GenericUser(['id' => 'platform']);
+        $this->getJson('/api/v1/permissions')->assertOk();
+
+        $this->store->grant('doctor', 'hospital-a', 'medico');
+        TestIdentity::$user = new GenericUser(['id' => 'doctor']);
+        $this->getJson('/api/v1/permissions')->assertForbidden()->assertJsonPath('code', 'RBAC_DENIED');
     }
 }

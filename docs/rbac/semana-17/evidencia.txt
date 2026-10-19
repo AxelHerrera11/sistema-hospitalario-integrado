@@ -2,21 +2,29 @@
 > php artisan test tests/Feature/Rbac --no-ansi
 
    PASS  Tests\Feature\Rbac\IntegrationTest
-  ✓ catalog is registered and protected                                                                          0.16s  
-  ✓ anonymous and other hospital cannot access                                                                   0.01s  
-  ✓ dependency failure never runs protected action                                                               0.01s  
-  ✓ spoofed identity headers are ignored                                                                         0.01s  
+  ✓ catalog is registered and protected                                                                          0.19s
+  ✓ anonymous and other hospital cannot access                                                                   0.01s
+  ✓ dependency failure never runs protected action                                                               0.01s
+  ✓ spoofed identity headers are ignored                                                                         0.01s
+  ✓ config matrix is enforced by the permission middleware                                                       0.01s
+
+   PASS  Tests\Feature\Rbac\RoleMatrixTest
+  ✓ catalog is unique literal and has no retired alias                                                           0.03s
+  ✓ superadmin permissions are explicit and cover the catalog                                                    0.01s
+  ✓ role matrix matches the agreed grants                                                                        0.01s
+  ✓ roles are literal case sensitive and not inherited                                                           0.01s
+  ✓ published permissions without agreement are not granted                                                      0.01s
 
    PASS  Tests\Feature\Rbac\SecurityTest
-  ✓ missing and mismatched tenant are rejected                                                                   0.03s  
-  ✓ missing server context fails closed                                                                          0.01s  
-  ✓ permission must be configured in middleware                                                                  0.01s  
-  ✓ audit failure has no sensitive exception details                                                             0.01s  
-  ✓ unknown roles and wildcards never grant access                                                               0.01s  
-  ✓ policy is loaded without implicit roles or dot expansion                                                     0.01s  
+  ✓ missing and mismatched tenant are rejected                                                                   0.02s
+  ✓ missing server context fails closed                                                                          0.01s
+  ✓ permission must be configured in middleware                                                                  0.01s
+  ✓ audit failure has no sensitive exception details                                                             0.01s
+  ✓ unknown roles and wildcards never grant access                                                               0.01s
+  ✓ policy is loaded without implicit roles or dot expansion                                                     0.01s
 
-  Tests:    10 passed (36 assertions)
-  Duration: 0.51s
+  Tests:    16 passed (170 assertions)
+  Duration: 0.59s
 
 exit=0
 > php micro-his/rbac/tests/run.php
@@ -92,17 +100,17 @@ Todas las pruebas de errores de autorizacion pasaron.
 exit=0
 > php artisan config:cache --no-ansi
 
-   INFO  Configuration cached successfully.  
+   INFO  Configuration cached successfully.
 
 exit=0
 > php artisan route:cache --no-ansi
 
-   INFO  Routes cached successfully.  
+   INFO  Routes cached successfully.
 
 exit=0
 > php artisan route:list --path=api/v1/permissions -v --no-ansi
 
-  GET|HEAD       api/v1/permissions ...................................................... generated::MYjTatqzCnZK7hOq
+  GET|HEAD       api/v1/permissions ...................................................... generated::6iMYIuYN322AgmKy
                  ⇂ api
                  ⇂ tenant
                  ⇂ Tymon\JWTAuth\Http\Middleware\Authenticate
@@ -113,11 +121,11 @@ exit=0
 exit=0
 > php artisan route:clear --no-ansi
 
-   INFO  Route cache cleared successfully.  
+   INFO  Route cache cleared successfully.
 
 exit=0
 > php artisan config:clear --no-ansi
 
-   INFO  Configuration cache cleared successfully.  
+   INFO  Configuration cache cleared successfully.
 
 exit=0

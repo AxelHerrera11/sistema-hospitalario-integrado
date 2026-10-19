@@ -55,7 +55,9 @@ class SecurityTest extends RbacTestCase
     public function test_policy_is_loaded_without_implicit_roles_or_dot_expansion(): void
     {
         $provider = new ConfiguredPermissions();
-        $this->assertSame([], $provider->permissionsFor('superadmin'));
+        $this->assertEqualsCanonicalizing(config('rbac.catalog'), $provider->permissionsFor('superadmin'));
+        $this->assertNotContains('*', $provider->permissionsFor('superadmin'));
+        $this->assertSame([], $provider->permissionsFor('SuperAdmin'));
         config(['rbac.roles' => ['Reader' => ['rbac.permisos.ver'], 'Reader.other' => ['alergias.ver']]]);
         $this->assertSame(['alergias.ver'], $provider->permissionsFor('Reader.other'));
         $this->app->instance(PermissionProvider::class, $provider);
