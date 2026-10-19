@@ -7,12 +7,13 @@
 - **Asignación:** aplicar LSP al flujo «traslado o alta del paciente con liberación consistente de cama»; RF/RNF, criterios de aceptación, diseño antes/después, responsabilidades, dependencias y evidencia verificable.
 - **Base:** [Semana 1](../semana-01/README.md) (`UC-TA-01`, `UC-TA-02`, reglas `R-TA-01` a `R-TA-07`).
 
-## Alcance de esta primera parte
+## Contenido
 
-Esta parte (PR-1) entrega el análisis y el diseño. **No completa por sí sola la Semana 2**: la evidencia ejecutable de sustitución (demo en memoria y su registro de resultados) se entrega en un segundo PR, después de integrar este.
+El análisis y el diseño se integraron primero; la demo en memoria y su evidencia verificable se incorporaron después en PR revisables.
 
 - [RF/RNF y criterios de aceptación](./rf-rnf-criterios.md)
 - [Aplicación de LSP: diseño antes y después](./solid-lsp.md)
+- [Evidencia verificable](./evidencia-verificable.md): comandos, salida real, límites y trazabilidad
 - [Declaración de uso de IA](./DECLARACION_IA.md)
 
 No incluye servicios productivos, API, UI ni migraciones.
@@ -37,6 +38,11 @@ No incluye servicios productivos, API, UI ni migraciones.
 - Formato UTF-8 con saltos de línea LF; columnas consistentes en todas las tablas.
 - Los enlaces relativos apuntan a archivos existentes.
 
+## Validaciones ejecutadas sobre la evidencia
+
+- Con PHP 8.2.12, los tres archivos de `evidencia/` pasaron `php -l` con código `0`.
+- La demo terminó con código `0` y 38 comprobaciones `PASS`; los comandos y la salida están en [evidencia verificable](./evidencia-verificable.md).
+
 ## Revisión estática de esquema y pruebas
 
 - Las migraciones HOSPITAL `000200` y `000300` definen `care_episodes_status_period_check`, `bed_stays_reason_check`, `bed_stays_period_check`, `bed_stays_bed_active_period_exclusion`, el índice `bed_stays_open_care_episode_unique` y los triggers de período e inmutabilidad de `bed_stays`.
@@ -48,5 +54,5 @@ No incluye servicios productivos, API, UI ni migraciones.
 
 - No se verificó cómo GitHub muestra los diagramas.
 - No se ejecutó `SchedulingAndBedIntegrityTest`: requiere PostgreSQL. Su cobertura se determinó leyendo el código; las restricciones, el índice y los triggers se confirmaron en las migraciones, no mediante ejecución en este PR.
-- El diseño después es una propuesta: no hay código que lo implemente ni pruebas de bloqueos, concurrencia o atomicidad.
+- El diseño después tiene una demo didáctica en memoria, no código productivo ni pruebas reales de bloqueos, concurrencia, atomicidad, transacciones o `COMMIT`.
 - La sincronización de `beds.status` y los roles de autorización siguen pendientes de coordinación con ASII-06, ASII-07 y ASII-09.
