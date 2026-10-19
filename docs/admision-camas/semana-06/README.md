@@ -43,3 +43,20 @@ flowchart LR
 | Frontera: gestión de camas (06 + 07 + 08), no Admisión sola | La transacción toca tablas de tres módulos | Evaluación de la frontera de la Semana 5 |
 
 **Riesgos que sigo defendiendo como abiertos:** `beds.status` necesita un solo escritor acordado con Madelin (ASII-06) y Yamilet (ASII-08), y la lista de espera (UC-ADM-09) todavía no está implementada.
+
+## Caso práctico arquitectónico
+
+**Pedido:** Infectología exige que un paciente con **sospecha de tuberculosis** solo pueda recibir una **cama de aislamiento**, y que si no hay ninguna quede en lista de espera en lugar de recibir una cama común.
+
+| Capa o pieza | ¿Cambia? | Qué cambia |
+|---|---|---|
+| Domain | Sí, una regla | Regla de elegibilidad: si la admisión trae `isolation_required`, la cama debe ser de tipo `isolation`. En el diseño OCP de la Semana 2 es una `BedEligibilityRule` nueva; el verificador no cambia |
+| Application | Sí, un camino | Si no hay cama elegible, `AdmitPatient` registra la admisión en espera (UC-ADM-09) en lugar de fallar |
+| Repository | Mínimo | Filtro por tipo en `availableBeds` (ya existe) y guardar la espera |
+| Base HOSPITAL | No en `beds` | `type = 'isolation'` ya es un valor posible; la espera se guarda en el episodio sin estancia abierta |
+| Contrato API | Sí, compatible | Campo opcional `isolation_required` y respuesta `202 waiting_for_bed` |
+| Consumidores | Tablero y Dashboard | El Dashboard de ocupación (Javier) muestra la espera; Traslados no cambia |
+
+**Conclusión:** la regla clínica entra como una regla de elegibilidad y un camino de espera. La garantía de una cama por paciente sigue en la base y no se toca.
+
+Guion de la exposición: [presentacion.md](./presentacion.md) · Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md)
