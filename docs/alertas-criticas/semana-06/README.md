@@ -43,3 +43,20 @@ flowchart LR
 | El emisor puede reintentar sin miedo | El servidor deduplica; si no responde, el mensaje queda en el inbox | `retry_later` en el cliente de la Semana 5 |
 
 **Riesgos que sigo defendiendo como abiertos:** `critical_alerts` no tiene migración, el formato del evento se acuerda con Gerson (ASII-19/20) y el despachador de notificaciones y escalamiento sigue como propuesta de *worker*.
+
+## Caso práctico arquitectónico
+
+**Pedido:** Signos vitales (ASII-13, Josué) quiere que una **saturación de oxígeno menor que 85 %** genere la misma alerta crítica, con el mismo acuse y escalamiento.
+
+| Capa o pieza | ¿Cambia? | Qué cambia |
+|---|---|---|
+| Domain | Mínimo | `CriticalAlert` ya decide con umbrales y un valor; la fuente pasa a ser un dato más (`source = lab | vital_sign`) |
+| Application | Sí, un consumidor | Un caso de uso `HandleVitalSignRecorded` igual al de resultados, con su propio proveedor de umbrales. Por SRP, el registrador, el acuse y la bandeja no cambian |
+| Repository | Mínimo | Guardar `vital_sign_id` en lugar de `lab_result_version_id` |
+| Base HOSPITAL | Sí | `critical_alerts` con `vital_sign_id` y un `CHECK` de una sola fuente (ya previsto en el Anexo A de la Semana 1) |
+| Contrato API | Sí, compatible | `POST /api/v1/internal/vital-sign-recorded`, idempotente por `vital_sign_id` |
+| Consumidores | No | La médica ve la alerta en la misma bandeja y la acusa igual |
+
+**Conclusión:** la segunda fuente entra como un consumidor nuevo. El acuse, la bandeja y la auditoría no cambian, que es lo que SRP prometía en la Semana 2.
+
+Guion de la exposición: [presentacion.md](./presentacion.md) · Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md)
