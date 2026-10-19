@@ -3,6 +3,7 @@
 namespace Tests\Feature\Rbac;
 
 use App\Rbac\ConfiguredPermissions;
+use App\Rbac\RequirePermission;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -47,6 +48,31 @@ class IntegrationTest extends RbacTestCase
         $this->withHeaders(['X-User-ID' => 'reader', 'X-User-Ref' => 'reader', 'X-Tenant-ID' => 'hospital-a'])
             ->getJson('/api/v1/permissions')->assertForbidden();
         $this->assertSame('outsider', $this->store->denials()[0]['user_id']);
+    }
+
+    public function test_pending_permission_is_denied_by_the_middleware(): void
+    {
+        $this->app->instance(PermissionProvider::class, new ConfiguredPermissions());
+        $this->store = new InMemoryRbacStore(config('rbac.roles'));
+        $this->app->instance(RoleResolver::class, $this->store);
+        $this->app->instance(DenialRecorder::class, $this->store);
+        $this->store->grant('doctor', 'hospital-a', 'medico');
+
+        $request = Request::create('/rbac/pending', 'GET');
+        $request->headers->set('X-Tenant-ID', 'hospital-a');
+        $request->setUserResolver(fn () => new GenericUser(['id' => 'doctor']));
+        $request->attributes->set('tenant', new class {
+            public function getKey(): ?string { return 'hospital-a'; }
+        });
+
+        $response = $this->app->make(RequirePermission::class)->handle(
+            $request,
+            fn () => response()->json(['ok' => true]),
+            'prescripciones.excepcion_alergia',
+        );
+
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertSame('RBAC_DENIED', $response->getData(true)['code']);
     }
 
     public function test_config_matrix_is_enforced_by_the_permission_middleware(): void

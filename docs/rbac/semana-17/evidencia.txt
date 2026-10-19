@@ -2,29 +2,32 @@
 > php artisan test tests/Feature/Rbac --no-ansi
 
    PASS  Tests\Feature\Rbac\IntegrationTest
-  ✓ catalog is registered and protected                                                                          0.16s
+  ✓ catalog is registered and protected                                                                          0.19s
   ✓ anonymous and other hospital cannot access                                                                   0.01s
   ✓ dependency failure never runs protected action                                                               0.01s
-  ✓ spoofed identity headers are ignored                                                                         0.01s
-  ✓ config matrix is enforced by the permission middleware                                                       0.02s
+  ✓ spoofed identity headers are ignored                                                                         0.02s
+  ✓ pending permission is denied by the middleware                                                               0.01s
+  ✓ config matrix is enforced by the permission middleware                                                       0.01s
 
    PASS  Tests\Feature\Rbac\RoleMatrixTest
-  ✓ catalog is unique literal and has no retired alias                                                           0.02s
-  ✓ superadmin permissions are explicit and cover the catalog                                                    0.01s
+  ✓ catalog is unique literal and keeps both assignment operations                                               0.03s
+  ✓ membership and role permission operations are distinct                                                       0.01s
+  ✓ superadmin permissions are explicit and exclude pending grants                                               0.01s
   ✓ role matrix matches the proposed grants                                                                      0.01s
   ✓ roles are literal case sensitive and not inherited                                                           0.01s
+  ✓ pending grants are documented outside active roles and are denied                                            0.02s
   ✓ published permissions without agreement are not granted                                                      0.01s
 
    PASS  Tests\Feature\Rbac\SecurityTest
-  ✓ missing and mismatched tenant are rejected                                                                   0.01s
+  ✓ missing and mismatched tenant are rejected                                                                   0.02s
   ✓ missing server context fails closed                                                                          0.01s
   ✓ permission must be configured in middleware                                                                  0.01s
   ✓ audit failure has no sensitive exception details                                                             0.01s
   ✓ unknown roles and wildcards never grant access                                                               0.01s
   ✓ policy is loaded without implicit roles or dot expansion                                                     0.01s
 
-  Tests:    16 passed (170 assertions)
-  Duration: 0.58s
+  Tests:    19 passed (202 assertions)
+  Duration: 0.64s
 
 exit=0
 > php micro-his/rbac/tests/run.php
