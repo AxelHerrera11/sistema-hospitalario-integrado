@@ -1,0 +1,18 @@
+export const navigationItems = [
+    { id: 'inicio', label: 'Inicio', route: '/', permission: null },
+    { id: 'pacientes', label: 'Pacientes', route: '/pacientes', permission: 'pacientes.ver' },
+    { id: 'citas', label: 'Citas', route: '/citas', permission: 'citas.ver' },
+    { id: 'admision', label: 'Admisión y camas', route: '/admision', permission: 'admision.ver' },
+    { id: 'expediente', label: 'Expediente', route: '/expediente', permission: 'expediente.ver' },
+    { id: 'signos-vitales', label: 'Signos vitales', route: '/signos-vitales', permission: 'signos_vitales.ver' },
+    { id: 'notas-soap', label: 'Notas SOAP', route: '/notas-soap', permission: 'notas_soap.ver' },
+    { id: 'alergias', label: 'Alergias', route: '/alergias', permission: 'alergias.ver' },
+    { id: 'medicamentos', label: 'Medicamentos', route: '/medicamentos', permission: 'medicamentos.ver' },
+    { id: 'prescripciones', label: 'Prescripciones', route: '/prescripciones', permission: 'prescripciones.ver' },
+    { id: 'laboratorio', label: 'Laboratorio', route: '/laboratorio', permission: 'laboratorio.ver' },
+    { id: 'reportes', label: 'Reportes', route: '/reportes', permission: 'reportes.ver' },
+    { id: 'ocupacion', label: 'Ocupación', route: '/ocupacion', permission: 'ocupacion.ver' },
+    { id: 'auditoria', label: 'Auditoría', route: '/auditoria', permission: 'auditoria.ver' },
+    { id: 'usuarios', label: 'Usuarios y roles', route: '/usuarios', permission: 'usuarios.ver' },
+    { id: 'documentacion', label: 'Documentación', route: '/docs', permission: 'documentacion.ver' },
+];
