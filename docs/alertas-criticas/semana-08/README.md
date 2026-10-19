@@ -30,3 +30,34 @@ flowchart TD
   resp -- 200 --> stop[Escalamiento detenido] --> close[Registrar la acción clínica y cerrar · propuesto]
   inbox -- vence sin acuse --> esc[La alerta sube a la jefatura y cambia a «escalada»]
 ```
+
+## Wireframes iniciales (baja fidelidad)
+
+### 1. Bandeja de alertas
+
+```text
+┌ Alertas críticas pendientes (2) ──────────────────── Dra. López (ficticia) ┐
+│ 🔴 GLU-v1 32 mg/dL (bajo el umbral crítico) · P-DEMO · vence en 12 min [Abrir]│
+│ 🔴 K 7,1 mmol/L (sobre el umbral crítico) · P-0002 · vence en 3 min   [Abrir]│
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Lectura de verificación
+
+```text
+┌ Confirmar lectura ───────────────────────────────────────────────────────┐
+│ Paciente: P-DEMO   Prueba: Glucosa (GLU-v1)                              │
+│ Escriba el valor que leyó*: [32___] mg/dL                                │
+│ ⚠ El valor no coincide con la alerta (READ_BACK_MISMATCH)                │
+│                                         [Cancelar] [Acusar recibo]      │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3. Alerta ya acusada por otra persona
+
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ℹ Esta alerta ya la acusó dr.ruiz a las 08:07 (ALERT_ALREADY_ACKNOWLEDGED).│
+│                                                       [Volver a bandeja] │
+└──────────────────────────────────────────────────────────────────────────┘
+```
