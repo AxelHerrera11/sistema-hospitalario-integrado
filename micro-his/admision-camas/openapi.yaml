@@ -14,7 +14,7 @@ paths:
   /api/v1/admissions:
     post:
       operationId: admitPatient
-      summary: Admitir y asignar cama (UC-ADM-01 y 03)
+      summary: Admitir y asignar cama (UC-ADM-01, 02, 04 y 05)
       description: No es idempotente. Si el cliente no recibe respuesta, debe verificar la cama antes de repetir.
       parameters:
         - $ref: '#/components/parameters/TenantId'
@@ -35,7 +35,7 @@ paths:
   /api/v1/beds/available:
     get:
       operationId: findAvailableBeds
-      summary: Camas disponibles (UC-ADM-02)
+      summary: Camas disponibles (UC-ADM-03)
       parameters:
         - $ref: '#/components/parameters/TenantId'
         - { name: type, in: query, schema: { type: string, example: adult } }
