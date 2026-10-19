@@ -30,3 +30,16 @@ flowchart LR
 | 3 | Micro-HIS por capas con idempotencia, acuse y pruebas | `micro-his/alertas-criticas/` (PR #202) |
 | 4 | MVC (la bandeja como View) + Repository PDO e InMemory | Reentrega de la Semana 4 (diseño del PR #60) |
 | 5 | API v1, cliente con publicación idempotente, OpenAPI y frontera | Reentrega de la Semana 5 (diseño del PR #64) |
+
+## Decisiones defendidas
+
+| Decisión | Por qué | Evidencia verificable |
+|---|---|---|
+| Una alerta por resultado (`UNIQUE` por `result_version_id`) | El evento llega «al menos una vez»; sin esto, un reintento duplicaría la alerta | `200 duplicate` en la prueba del evento repetido |
+| Lectura de verificación en el dominio | Acusar sin leer el valor no prueba que la persona entendió la alerta | `422 READ_BACK_MISMATCH` |
+| El primero que acusa gana (`UPDATE … WHERE status = 'open'`) | Dos médicos pueden acusar al mismo tiempo | `409 ALERT_ALREADY_ACKNOWLEDGED` |
+| SRP: detector, destinatario, persistencia, canal y plazos separados | TI, calidad, laboratorio y dirección médica piden cambios distintos | Demo de la Semana 2: cambiar canal o plazo no toca detector ni registrador |
+| Alerta y auditoría en una transacción | Una alerta sin evidencia no se puede auditar | Prueba de rollback con la auditoría caída |
+| El emisor puede reintentar sin miedo | El servidor deduplica; si no responde, el mensaje queda en el inbox | `retry_later` en el cliente de la Semana 5 |
+
+**Riesgos que sigo defendiendo como abiertos:** `critical_alerts` no tiene migración, el formato del evento se acuerda con Gerson (ASII-19/20) y el despachador de notificaciones y escalamiento sigue como propuesta de *worker*.
