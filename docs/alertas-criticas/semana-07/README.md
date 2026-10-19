@@ -12,17 +12,17 @@ Diseñar los componentes del flujo «detección, envío, acuse y escalamiento de
 
 ## Componentes y responsabilidades
 
-| Componente | Responsabilidad | Ya existe en `develop` |
+| Componente | Responsabilidad | Dónde está hoy |
 |---|---|---|
-| Middlewares `tenant` y `jwt.auth` | Resolver el hospital (`X-Tenant-ID`) y el usuario del JWT | Sí: `TenantMiddleware` y `JwtAuth` |
+| Middlewares `tenant` y `jwt.auth` | Resolver el hospital (`X-Tenant-ID`) y el usuario del JWT | En `develop`: `TenantMiddleware` y `JwtAuth` |
 | Middleware `permission:modulo.accion` | Proteger cada ruta con el permiso de RBAC | Parcial: `spatie/laravel-permission` y `config/permission.php` están; falta registrar el alias `permission` en `bootstrap/app.php` y el catálogo de permisos (María, ASII-02) |
 | `Api/V1/CriticalAlertController` + `AcknowledgeAlertRequest` | Controller delgado: valida tipos y obligatorios con el FormRequest y llama al caso de uso | No (propuesto) |
-| Application: HandleResultValidated · AcknowledgeAlert · GetInbox | Orquestan el caso de uso; se copian del micro-HIS sin cambios de lógica | En `micro-his/alertas-criticas/src/Application` |
-| Domain: CriticalAlert · DomainRuleViolation | Reglas puras, sin Laravel | En `micro-his/alertas-criticas/src/Domain` |
-| `AlertRepository` «interfaz» + `EloquentAlertRepository` | Puerto de persistencia; el adaptador usa el Query Builder sobre la conexión `hospital` | El puerto y los adaptadores PDO/InMemory existen en el micro-HIS |
+| Application: HandleResultValidated · AcknowledgeAlert · GetInbox | Orquestan el caso de uso; se copian del micro-HIS sin cambios de lógica | Micro-HIS, `micro-his/alertas-criticas/src/Application` (PR #202) |
+| Domain: CriticalAlert · DomainRuleViolation | Reglas puras, sin Laravel | Micro-HIS, `micro-his/alertas-criticas/src/Domain` (PR #202) |
+| `AlertRepository` «interfaz» + `EloquentAlertRepository` | Puerto de persistencia; el adaptador usa el Query Builder sobre la conexión `hospital` | Micro-HIS: el puerto (PR #202) y los adaptadores PDO/InMemory (Semana 4) |
 | `AuditLogger` | Evidencia en `local_access_audits` | Interfaz común de Cindy (plan de integración) |
-| Vue: `AlertInboxPage.vue`, `AlertItem.vue · ReadBackDialog.vue` | la bandeja de alertas pendientes y el diálogo de lectura de verificación | No (propuesto) |
-| `stores/criticalAlerts.js` y `api/criticalAlertsApi.js` | Estado de la pantalla y llamadas HTTP con el plugin `axios` existente | Plugin `resources/js/plugins/axios.js` |
+| Vue: `AlertInboxPage.vue`, `AlertItem.vue · ReadBackDialog.vue` | La bandeja de alertas pendientes y el diálogo de lectura de verificación | No (propuesto) |
+| `stores/criticalAlerts.js` y `api/criticalAlertsApi.js` | Estado de la pantalla y llamadas HTTP con el plugin `axios` existente | En `develop`: plugin `resources/js/plugins/axios.js` |
 
 El evento de ASII-20 no entra por un controller público: lo consume un *job* de cola (`QUEUE_CONNECTION=database`) que llama a `HandleResultValidated`; el endpoint interno queda para pruebas e integración.
 
@@ -36,7 +36,7 @@ El evento de ASII-20 no entra por un controller público: lo consume un *job* de
 
 ## Propuesta de refactorización (micro-HIS → HIS Laravel)
 
-| Hoy en el micro-HIS | Problema al integrar | Refactor propuesto |
+| En el micro-HIS (Semanas 3 a 5) | Problema al integrar | Refactor propuesto |
 |---|---|---|
 | `ApiKernel` valida `X-Tenant-ID` y `X-User-Ref` | Duplica lo que ya hacen `TenantMiddleware` y `JwtAuth`; `X-User-Ref` no es seguro fuera del gateway | Quitar esas validaciones: el usuario sale de `auth()->user()` y el tenant del middleware |
 | `CriticalAlertController::handle()` con un `match` de rutas | Laravel ya enruta; el `match` mezcla enrutamiento y presentación | Una acción por método en el controller y rutas en `routes/api.php` dentro del grupo `['tenant', 'jwt.auth']` |
