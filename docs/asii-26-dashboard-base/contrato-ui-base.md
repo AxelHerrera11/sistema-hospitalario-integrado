@@ -154,3 +154,23 @@ Formato de error del backend (alineado con el acuerdo de respuestas comunes):
 - [ ] María confirma los nombres de permisos de la tabla de §3.
 - [ ] Decisión de accesibilidad (WCAG) del sidebar colapsable: foco visible y `aria-expanded` — se implementa en T2.
 - Toda política visual sin fuente oficial queda como supuesto pendiente de validar con el docente.
+
+## 11. Plan de trabajo del módulo (plan de integración 17–23 oct)
+
+| Elemento | Valor |
+|---|---|
+| Issue del módulo | `Refs #209` (ASII-26) |
+| Worktree | `../shi-asii-26-dashboard-base` |
+| Contrato | Publicado en el grupo **dom 18/10** (este documento) |
+| PR en `develop` | **lun 19/10**, antes de las 20:00 |
+
+Secuencia de PRs (cada uno = una tarea de Odoo, ≤400 líneas cambiadas):
+
+| PR | Rama | Contenido | Tarea Odoo |
+|---|---|---|---|
+| 1 | `feature/asii-26-01-contrato-ui-lis671` | Este contrato + plan | `Semana 5: Dashboard base UI/UX e implementación transversal - Rosales, Lis` |
+| 2 | `feature/asii-26-02-layout-menu-lis671` | Layout, menú por rol, router/guards | `Semana 7: … - Rosales, Lis` |
+| 3 | `feature/asii-26-03-componentes-estados-lis671` | Componentes de estados y tarjetas | `Semana 9: … - Rosales, Lis` |
+| 4 | `feature/asii-26-04-home-interceptor-lis671` | Home con resumen e interceptor 401/403 | `Semana 16: … - Rosales, Lis` |
+
+Cada PR se crea desde `origin/develop` en este worktree, nunca se hace force push y no se mezclan módulos. El menú por rol usa `user.permissions` (§8) con adaptador temporal hasta que auth/RBAC respondan; ninguna ruta se muestra sin verificar el permiso.
