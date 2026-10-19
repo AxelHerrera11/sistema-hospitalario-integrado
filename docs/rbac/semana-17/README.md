@@ -5,7 +5,7 @@ María / Mar-03. Rama `feature/asii-02-semana-17-rbac-mar-03`, worktree `s17-rba
 ## Código funcional
 
 `RequirePermission` rechaza permisos vacíos/malformados y comodines, ausencia o discrepancia de tenant y contexto incompleto. Conserva 401/403/503 y añade 400 `TENANT_REQUIRED`, 403 `TENANT_MISMATCH`, 503 `RBAC_PERMISSION_NOT_CONFIGURED`. Éxitos y errores propios llevan `Cache-Control: no-store, private`. No modifica errores de middlewares anteriores.
-`ConfiguredPermissions` hace búsqueda literal de roles; no interpreta puntos como rutas de configuración. `superadmin` recibe los 21 permisos **enumerados**, no por su nombre ni con `*`. La matriz vigente está en [`../semana-05/permisos.md`](../semana-05/permisos.md). Los permisos se resuelven por petición; cambiar la política no deja una decisión cacheada por RBAC (un cambio a config cacheada requiere reconstruir config y reiniciar workers).
+`ConfiguredPermissions` hace búsqueda literal de roles; no interpreta puntos como rutas de configuración. `superadmin` recibe los 21 permisos **enumerados**, no por su nombre ni con `*`. La matriz propuesta configurada está en [`../semana-05/permisos.md`](../semana-05/permisos.md). Los permisos se resuelven por petición; cambiar la política no deja una decisión cacheada por RBAC (un cambio a config cacheada requiere reconstruir config y reiniciar workers).
 
 ## Matriz de amenazas y verificación
 
