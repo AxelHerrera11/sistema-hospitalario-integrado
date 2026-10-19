@@ -1,14 +1,23 @@
 ﻿Validación local 2026-10-19; PHP 8.2.12; auth/tenant simulados, sin staging.
-> php artisan test --filter=IntegrationTest --no-ansi
+> php artisan test tests/Feature/Rbac --no-ansi
 
    PASS  Tests\Feature\Rbac\IntegrationTest
-  ✓ catalog is registered and protected                                                                          0.17s  
-  ✓ anonymous and other hospital cannot access                                                                   0.01s  
-  ✓ dependency failure never runs protected action                                                               0.01s  
-  ✓ spoofed identity headers are ignored                                                                         0.01s  
+  ✓ catalog is registered and protected                                                                          4.14s
+  ✓ anonymous and other hospital cannot access                                                                   0.02s
+  ✓ dependency failure never runs protected action                                                               0.03s
+  ✓ spoofed identity headers are ignored                                                                         0.02s
 
-  Tests:    4 passed (13 assertions)
-  Duration: 0.54s
+   PASS  Tests\Feature\Rbac\RoleMatrixTest
+  ✓ catalog is unique literal and keeps both assignment operations                                               0.73s
+  ✓ membership and role permission operations are distinct                                                       0.02s
+  ✓ superadmin permissions are explicit and exclude pending grants                                               0.02s
+  ✓ role matrix matches the proposed grants                                                                      0.02s
+  ✓ roles are literal case sensitive and not inherited                                                           0.02s
+  ✓ pending grants are documented outside active roles and are denied                                            0.08s
+  ✓ published permissions without agreement are not granted                                                      0.02s
+
+  Tests:    11 passed (171 assertions)
+  Duration: 8.70s
 
 exit=0
 > php artisan route:list --path=api/v1/permissions -v --no-ansi
@@ -28,7 +37,7 @@ exit=0
 > vite build
 
 vite v7.3.2 building client environment for production...
-(node:36648) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:30056) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 transforming...
 ✓ 94 modules transformed.
@@ -39,5 +48,6 @@ public/build/assets/app-DhyvHq7w.css           1.61 kB │ gzip:  0.62 kB
 public/build/assets/app-Gxuxmfwm.css          34.84 kB │ gzip:  8.69 kB
 public/build/assets/CatalogPage-V-r8l8Oa.js    1.25 kB │ gzip:  0.74 kB
 public/build/assets/app-U9-G_tKy.js          138.34 kB │ gzip: 53.89 kB
-✓ built in 1.32s
+✓ built in 5.53s
+
 exit=0

@@ -9,12 +9,13 @@ Flujo: auth/tenant → `rbac:modulo.accion` → `Authorize` existente → RoleRe
 El provider registra el alias y las interfaces. Los tests sustituyen las dependencias por InMemory y auth/tenant por fixtures, exclusivamente en tests.
 
 `CentralRoles` consulta el esquema existente CENTRAL: usuario, hospital y membresía activos, con vigencia. No hay migraciones nuevas ni escrituras sobre tablas de Javier.
-`ConfiguredPermissions` lee `config/rbac.php`; `roles` vacío deniega todo hasta acordar asignaciones. Ejemplo de configuración **propuesta**, no política aprobada: `'Reader' => ['rbac.permisos.ver']`.
+`ConfiguredPermissions` lee `config/rbac.php`; la matriz rol × permiso propuesta ya está configurada con los cinco roles de Semana 5 y los 22 permisos conciliados. No hay comodines, herencia ni concesión automática a `superadmin`: cada permiso se enumera. Las concesiones activas viven en `roles`; las propuestas no aprobadas viven en `pending` y el middleware las deniega. La matriz y sus pendientes están en [`../semana-05/permisos.md`](../semana-05/permisos.md).
 `LogDenials` registra denegaciones estructuradas en el logger de Laravel; reemplazar el binding de `DenialRecorder` por AuditLogger cuando Cindy publique su interfaz. No equivale a auditoría clínica definitiva.
 
 ## Contrato para el equipo
 
-`GET /api/v1/permissions`, JWT y tenant validados, permiso `rbac.permisos.ver`; 200 `{permissions: string[]}`. La lista incluye los nueve permisos exactos de Axel y el catálogo previo de RBAC, prescripciones y muestras. Catálogo de integración provisional, no concede permisos automáticamente.
+`GET /api/v1/permissions`, JWT y tenant validados, permiso `rbac.permisos.ver`; 200 `{permissions: string[]}`. La lista tiene 22 permisos: 13 conciliados de Semana 5 y los 9 exactos de Axel. El catálogo es informativo; consultarlo no concede permisos.
+`rbac.asignar` (membresías, motor `AssignRole`) y `rbac.roles.asignar` (edición de permisos de un rol, endpoint propuesto) son operaciones distintas, no alias. El contrato HTTP usa el segundo; el motor conserva el primero.
 Middleware: 401 `AUTH_REQUIRED`, 403 `RBAC_DENIED`, 503 `RBAC_CONTEXT_UNAVAILABLE` o `RBAC_UNAVAILABLE`; cuerpo `{code, trace_id}`. Los errores anteriores de auth/tenant conservan su contrato propio.
 Uso por otros módulos: `->middleware(['tenant', 'jwt.auth', 'rbac:alergias.ver'])`. El servidor resuelve usuario mediante `getAuthIdentifier()` y hospital mediante el `getKey()` del atributo `tenant` validado. Confirmar estas dos correspondencias con Cindy antes del adaptador real.
 UI: `/rbac`; carga, vacío, error, 401/403/503 y reintento manual. Usa el cliente Axios existente. No contiene pacientes ni datos clínicos.
@@ -26,7 +27,7 @@ UI: `/rbac`; carga, vacío, error, 401/403/503 y reintento manual. Usa el client
 - Resolver caído devuelve 503 sin ejecutar el controlador ni exponer excepciones.
 - La ruta mantiene auth, tenant y RBAC; no existe autenticación de prueba en producción.
 
-Pendiente: auth real de Cindy y su contrato tenant/usuario, permisos por rol aprobados, validación PostgreSQL con Javier, auditoría definitiva y staging. El adaptador SQL está implementado; esta entrega no afirma conexión real ni despliegue. La asignación administrativa sigue en el micro-HIS previo; no se expone escritura CENTRAL sin acuerdo del esquema.
+Pendiente: auth real de Cindy y su contrato tenant/usuario, confirmación de que `role_code` usa exactamente `superadmin`/`admin_hospital`/`medico`/`enfermeria`/`recepcion`, aprobación de los pares en `pending` (incluida `prescripciones.excepcion_alergia`, que hoy se deniega a todos), acuerdo de los permisos publicados que aún no se otorgan, validación PostgreSQL con Javier, auditoría definitiva y staging. Los códigos PascalCase del micro-HIS son fixtures heredados, no el contrato de integración. El adaptador SQL está implementado; esta entrega no afirma conexión real ni despliegue. La asignación administrativa sigue en el micro-HIS previo; no se expone escritura CENTRAL sin acuerdo del esquema.
 Corrección compartida indispensable: `JwtAuth.php` importaba `JWTAuth` con el mismo nombre de clase (PHP ignora mayúsculas); se cambió solo el alias de la fachada para evitar el fatal de clase duplicada. No se implementó auth de Cindy.
 Las guías `docs/weekly-plan.md` y `docs/worktree-guide.md` enlazadas por README no existen en las referencias consultadas. Se siguen las reglas explícitas del README y del plan Word: feature desde develop, un módulo, sin force push, revisión por Yamilet y sin auto-merge.
 
