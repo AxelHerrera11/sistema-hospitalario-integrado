@@ -125,5 +125,36 @@ function bateriaDeContrato(string $nombre, Closure $crear): void
 bateriaDeContrato('TrasladoInterno', fn (AdaptadorHospitalEnMemoria $h, string $estancia) => traslado($h, $estancia));
 bateriaDeContrato('AltaHospitalaria', fn (AdaptadorHospitalEnMemoria $h, string $estancia) => alta($h, $estancia));
 
+echo PHP_EOL . '== Resultados específicos ==' . PHP_EOL;
+$h = escenario();
+$r = traslado($h, 'S1')->ejecutar();
+$lib = $r instanceof ExitoConfirmado ? $r->liberacion : null;
+$destino = $lib instanceof ResultadoTraslado ? $h->estado['estancias'][$lib->estanciaDestinoId] : null;
+comprobar('traslado: ResultadoTraslado y E1 sigue open', $destino !== null && $h->estado['episodios']['E1']['estado'] === 'open');
+comprobar('traslado: destino B en [T, ∞), mismo episodio y contiguo a S1', $destino !== null && $destino['cama'] === 'B'
+    && $destino['episodio'] === 'E1' && $destino['inicio'] == $h->estado['estancias']['S1']['fin'] && $destino['fin'] === null);
+foreach (['Z' => 'DESTINO_INEXISTENTE', 'A' => 'DESTINO_IGUAL_ORIGEN', 'C' => 'DESTINO_NO_AVAILABLE', 'D' => 'DESTINO_SOLAPADO'] as $cama => $codigo) {
+    $h = escenario();
+    comprobarRechazo($codigo, $h, traslado($h, 'S1', $cama), "traslado a $cama: ");
+}
+$h = escenario();
+$r = alta($h, 'S1')->ejecutar();
+comprobar('alta: ResultadoAlta y E1 closed en T', $r instanceof ExitoConfirmado && $r->liberacion instanceof ResultadoAlta
+    && $h->estado['episodios']['E1']['estado'] === 'closed' && $h->estado['episodios']['E1']['fin'] == hora('12:00'));
+comprobar('alta: ninguna estancia abierta y ninguna creada', abiertas($h, 'E1') === 0 && count($h->estado['estancias']) === 6);
+$invalidas = [
+    'ESTANCIA_ESPERADA_REQUERIDA' => fn () => new SolicitudAlta(''),
+    'DESTINO_REQUERIDO' => fn () => new SolicitudTraslado('S1', '', 'Cambio de unidad'),
+    'REASON_VACIO' => fn () => new SolicitudTraslado('S1', 'B', '   '),
+];
+foreach ($invalidas as $codigo => $construir) {
+    try {
+        $construir();
+        comprobar("solicitud inválida: $codigo", false);
+    } catch (SolicitudInvalida $e) {
+        comprobar("solicitud inválida: $codigo, sin operación", $e->getMessage() === $codigo);
+    }
+}
+
 echo PHP_EOL . ($fallos === 0 ? 'Todas las comprobaciones se cumplieron.' : "$fallos comprobación(es) fallaron.") . PHP_EOL;
 exit($fallos === 0 ? 0 : 1);
