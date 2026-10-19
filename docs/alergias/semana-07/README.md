@@ -12,17 +12,17 @@ Diseñar los componentes del flujo «registro de alergia y emisión de alerta al
 
 ## Componentes y responsabilidades
 
-| Componente | Responsabilidad | Ya existe en `develop` |
+| Componente | Responsabilidad | Dónde está hoy |
 |---|---|---|
-| Middlewares `tenant` y `jwt.auth` | Resolver el hospital (`X-Tenant-ID`) y el usuario del JWT | Sí: `TenantMiddleware` y `JwtAuth` |
+| Middlewares `tenant` y `jwt.auth` | Resolver el hospital (`X-Tenant-ID`) y el usuario del JWT | En `develop`: `TenantMiddleware` y `JwtAuth` |
 | Middleware `permission:modulo.accion` | Proteger cada ruta con el permiso de RBAC | Parcial: `spatie/laravel-permission` y `config/permission.php` están; falta registrar el alias `permission` en `bootstrap/app.php` y el catálogo de permisos (María, ASII-02) |
 | `Api/V1/AllergyController` + `StoreAllergyRequest` | Controller delgado: valida tipos y obligatorios con el FormRequest y llama al caso de uso | No (propuesto) |
-| Application: RegisterAllergy · GetAllergyAlert | Orquestan el caso de uso; se copian del micro-HIS sin cambios de lógica | En `micro-his/alergias/src/Application` |
-| Domain: Allergy · AllergyAlert | Reglas puras, sin Laravel | En `micro-his/alergias/src/Domain` |
-| `AllergyRepository` «interfaz» + `EloquentAllergyRepository` | Puerto de persistencia; el adaptador usa el Query Builder sobre la conexión `hospital` | El puerto y los adaptadores PDO/InMemory existen en el micro-HIS |
+| Application: RegisterAllergy · GetAllergyAlert | Orquestan el caso de uso; se copian del micro-HIS sin cambios de lógica | Micro-HIS, `micro-his/alergias/src/Application` (PR #200) |
+| Domain: Allergy · AllergyAlert | Reglas puras, sin Laravel | Micro-HIS, `micro-his/alergias/src/Domain` (PR #200) |
+| `AllergyRepository` «interfaz» + `EloquentAllergyRepository` | Puerto de persistencia; el adaptador usa el Query Builder sobre la conexión `hospital` | Micro-HIS: el puerto (PR #200) y los adaptadores PDO/InMemory (Semana 4) |
 | `AuditLogger` | Evidencia en `local_access_audits` | Interfaz común de Cindy (plan de integración) |
-| Vue: `PatientAllergiesPage.vue`, `AllergyBanner.vue · AllergyForm.vue` | el banner del expediente con `role="alert"` y el formulario de alta | No (propuesto) |
-| `stores/allergies.js` y `api/allergiesApi.js` | Estado de la pantalla y llamadas HTTP con el plugin `axios` existente | Plugin `resources/js/plugins/axios.js` |
+| Vue: `PatientAllergiesPage.vue`, `AllergyBanner.vue · AllergyForm.vue` | El banner del expediente con `role="alert"` y el formulario de alta | No (propuesto) |
+| `stores/allergies.js` y `api/allergiesApi.js` | Estado de la pantalla y llamadas HTTP con el plugin `axios` existente | En `develop`: plugin `resources/js/plugins/axios.js` |
 
 `AllergyBanner.vue` trata `unavailable` como un estado propio (gris, «Alergias no disponibles») y nunca lo muestra como «Sin alergias»; si la API no responde, el store pone `unavailable`.
 
@@ -35,7 +35,7 @@ Diseñar los componentes del flujo «registro de alergia y emisión de alerta al
 
 ## Propuesta de refactorización (micro-HIS → HIS Laravel)
 
-| Hoy en el micro-HIS | Problema al integrar | Refactor propuesto |
+| En el micro-HIS (Semanas 3 a 5) | Problema al integrar | Refactor propuesto |
 |---|---|---|
 | `ApiKernel` valida `X-Tenant-ID` y `X-User-Ref` | Duplica lo que ya hacen `TenantMiddleware` y `JwtAuth`; `X-User-Ref` no es seguro fuera del gateway | Quitar esas validaciones: el usuario sale de `auth()->user()` y el tenant del middleware |
 | `AllergyController::handle()` con un `match` de rutas | Laravel ya enruta; el `match` mezcla enrutamiento y presentación | Una acción por método en el controller y rutas en `routes/api.php` dentro del grupo `['tenant', 'jwt.auth']` |
