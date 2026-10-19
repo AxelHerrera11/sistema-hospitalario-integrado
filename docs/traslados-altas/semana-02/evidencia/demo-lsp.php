@@ -11,6 +11,7 @@ declare(strict_types=1);
  */
 
 require_once __DIR__ . '/lsp-traslado-alta.php';
+require_once __DIR__ . '/antes.php';
 
 /** Adaptador en memoria: simula desenlaces sobre el estado completo, no un COMMIT real. */
 final class AdaptadorHospitalEnMemoria implements PuertoHospital
@@ -193,6 +194,20 @@ comprobar('el cliente atiende un rechazo sin conocer la operación', $aviso->pro
 $clase = new ReflectionClass(AvisoOcupacionLiberada::class);
 $fuente = implode('', array_slice(file(__FILE__), $clase->getStartLine() - 1, $clase->getEndLine() - $clase->getStartLine() + 1));
 comprobar('AvisoOcupacionLiberada no nombra operaciones ni resultados específicos', preg_match('/Traslado|Alta/', $fuente) === 0);
+
+echo PHP_EOL . '== Antes (EJEMPLO DIDÁCTICO): TrasladoInterno extends AltaHospitalaria ==' . PHP_EOL;
+$cierre = new Antes\CierreDeEpisodio();
+$h = escenario();
+$informe = $cierre->finalizar(new Antes\AltaHospitalaria($h), 'E1', 'S1', hora('12:00'));
+$altaCumple = $informe === 'episodio E1 cerrado, sin cama'
+    && $h->estado['episodios']['E1']['estado'] === 'closed' && abiertas($h, 'E1') === 0;
+comprobar("con AltaHospitalaria el cliente informa «{$informe}» y se cumplen sus postcondiciones", $altaCumple);
+$h = escenario();
+$informe = $cierre->finalizar(new Antes\TrasladoInterno($h, 'B', 'Cambio de unidad'), 'E1', 'S1', hora('12:00'));
+$abiertas = array_values(array_filter($h->estado['estancias'], fn ($e) => $e['episodio'] === 'E1' && $e['fin'] === null));
+$contradiccion = $informe === 'episodio E1 cerrado, sin cama'
+    && $h->estado['episodios']['E1']['estado'] === 'open' && count($abiertas) === 1 && $abiertas[0]['cama'] === 'B';
+comprobar("incumplimiento esperado: el cliente informa «{$informe}», pero E1 sigue open en B", $contradiccion);
 
 echo PHP_EOL . ($fallos === 0 ? 'Todas las comprobaciones se cumplieron.' : "$fallos comprobación(es) fallaron.") . PHP_EOL;
 exit($fallos === 0 ? 0 : 1);
