@@ -12,7 +12,7 @@ use MicroHis\Alertas\Domain\DomainRuleViolation;
 final class HandleResultValidated
 {
     /** @param Closure(): \DateTimeImmutable $now @param Closure(): string $newId */
-    public function __construct(private readonly AlertStore $store, private readonly Closure $now, private readonly Closure $newId) {}
+    public function __construct(private readonly AlertRepository $store, private readonly Closure $now, private readonly Closure $newId) {}
 
     /** @param array<string, mixed> $event @return array{outcome: string, alert: ?CriticalAlert} */
     public function execute(array $event, string $actor): array

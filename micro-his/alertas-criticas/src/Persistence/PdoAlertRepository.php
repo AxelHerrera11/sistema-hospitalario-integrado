@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace MicroHis\Alertas\Persistence;
 
-use MicroHis\Alertas\Application\AlertStore;
+use MicroHis\Alertas\Application\AlertRepository;
 use MicroHis\Alertas\Application\PersistenceFailure;
 use MicroHis\Alertas\Domain\CriticalAlert;
 use PDO;
 use PDOException;
 
 /** Adaptador PDO de critical_alerts y local_access_audits; solo lee lab_tests y care_assignments. */
-final class PdoAlertStore implements AlertStore
+final class PdoAlertRepository implements AlertRepository
 {
     public function __construct(private readonly PDO $pdo)
     {
@@ -40,6 +40,12 @@ final class PdoAlertStore implements AlertStore
     {
         $row = $this->query('SELECT * FROM critical_alerts WHERE critical_alert_id = ?', [$alertId])->fetch(PDO::FETCH_ASSOC);
         return $row ? CriticalAlert::fromRow($row) : null;
+    }
+
+    public function pendingFor(string $user): array
+    {
+        $rows = $this->query("SELECT * FROM critical_alerts WHERE current_recipient = ? AND status = 'open' ORDER BY due_at", [$user])->fetchAll(PDO::FETCH_ASSOC);
+        return array_map([CriticalAlert::class, 'fromRow'], $rows);
     }
 
     public function save(CriticalAlert $a, string $event, string $actor): void
