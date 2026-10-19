@@ -46,3 +46,14 @@ El formulario muestra el error del campo que devuelve el servidor (`field` del `
 | Cliente PHP (`LabCatalogClient`) | Dentro del HIS, los consumidores están en el mismo proceso | Órdenes (ASII-16), Resultados (ASII-19) y Alertas (ASII-21) llaman al caso de uso o al endpoint; el cliente HTTP se usa solo si el módulo se separa |
 
 **Qué no cambia:** el dominio, los casos de uso, el contrato `/api/v1` y los códigos de error. Por eso el refactor es de bajo riesgo: las pruebas de dominio y de contrato de las Semanas 3 a 5 siguen valiendo.
+
+## Plan de la refactorización
+
+1. Copiar `Domain` y `Application` a `app/Modules/CatalogoLab/` y ajustar el namespace.
+2. Crear `EloquentLabTestRepository` y enlazarlo a `LabTestRepository` en un ServiceProvider del módulo.
+3. Crear el controller, el FormRequest y las rutas con `permission:` (cuando María publique el catálogo de permisos).
+4. Renderizar `DomainRuleViolation` y `PersistenceFailure` como `problem+json`.
+5. Crear la página Vue, el store y el cliente `api/`, con los estados de la Semana 8.
+6. Correr la prueba de contrato con `EloquentLabTestRepository` contra PostgreSQL.
+
+**Estado:** este PR es diseño; el código Laravel/Vue queda **propuesto** para la integración (plan de Josué, 20–21 de octubre). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
