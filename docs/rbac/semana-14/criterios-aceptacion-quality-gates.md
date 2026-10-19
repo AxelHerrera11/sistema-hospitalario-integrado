@@ -8,8 +8,8 @@ Cada criterio cubre una dimensión exigida y se verifica con la suite de `estrat
 
 | ID | Dado | Cuando | Entonces |
 |---|---|---|---|
-| CA-PERM-01 | `admin1` (`AdminHospital`) en H1 con `rbac.asignar` | asigna `Enfermeria` a `enf1` | 201; membresía y evento `rol_asignado` persistidos |
-| CA-PERM-02 | `med1` sin `rbac.asignar` | intenta asignar un rol | 403 `RBAC_DENIED` con `trace_id` |
+| CA-PERM-01 | `admin1` (`AdminHospital`) en H1 con `rbac.asignar` (token del motor; el catálogo formalizado lo llama `rbac.roles.asignar`) | asigna `Enfermeria` a `enf1` | 201; membresía y evento `rol_asignado` persistidos |
+| CA-PERM-02 | `med1` sin `rbac.asignar` (token del motor) | intenta asignar un rol | 403 `RBAC_DENIED` con `trace_id` |
 | CA-PERM-03 | `admin1` de nivel 80 | asigna `SuperAdmin` de nivel 100 | 403 con motivo `rol_supera_privilegio`; sin escalación |
 | CA-PERM-04 | Rol ya vigente para el usuario | se reasigna el mismo rol | 409 `rol_ya_asignado`; sin efecto en base |
 
@@ -47,12 +47,12 @@ Cada criterio cubre una dimensión exigida y se verifica con la suite de `estrat
 | Gate | Momento | Criterios bloqueantes | Evidencia | Responsable |
 |---|---|---|---|---|
 | G0 | Local, antes del commit | Suite base `run.php` en `OK` | Salida de consola | Mar-03 |
-| G1 | Al abrir el PR hacia `develop` | G0 + `php artisan route:list --path=api` + plantilla de PR completa | `.github/pull_request_template.md` | Mar-03 |
+| G1 | Al abrir el PR hacia `develop` | G0 + revisión de `routes/api.php` (hoy solo `auth/*`; sin rutas RBAC ni alias `permission`) + plantilla de PR completa | `.github/pull_request_template.md` | Mar-03 |
 | G2 | Antes del merge | Suite base + adiciones de regresión (`Q-TEN-01`, `Q-TRZ-02`, `Q-AUTH-02`, `Q-PRS-01`, `Q-PERM-02/03`) | Informe de regresión con 100 % `OK` | Mar-03 / revisor |
 | G3 | Integración (staging/on-premise) | G2 + sin fugas de tenant + 0 falsos permitidos | Ejecución sobre PostgreSQL federado | Mar-03 / revisor |
 | G4 | Antes de la entrega final | G3 + revisión de seguridad (permisos, tenant, datos sensibles) + defectos críticos cerrados y verificados | Checklist de seguridad y bitácora de defectos | Revisor `@rortizs` |
 
-Un gate no pasa si: falla cualquier criterio bloqueante, existe un defecto crítico/alto abierto en la dimensión evaluada, o falta la evidencia. No se aprueban gates «por avance» sin la salida registrada.
+Un gate no pasa si: falla cualquier criterio bloqueante, existe un defecto crítico/alto abierto en la dimensión evaluada, o falta la evidencia. No se aprueban gates «por avance» sin la salida registrada. G1 no puede ejecutar `route:list --path=api` con rutas RBAC porque aún no existen; se limita a comprobar que no se declaren rutas falsas ni un alias `permission` inexistente.
 
 ## 3. Responsables (RACI)
 

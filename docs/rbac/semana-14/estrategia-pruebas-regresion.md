@@ -8,7 +8,7 @@ Estrategia por niveles y dimensiones, con criterios de entrada/salida. No descri
 |---|---|---|---|
 | Unitario de dominio | `Authorizer`, `RoleGrantsPermission`, `AssignerPrivilegeRule`, `Membership` | `micro-his/rbac/tests/run.php` con SQLite en memoria | Salida `OK`/`FALLO` por comprobación |
 | Integración de persistencia | `PdoRbacStore` (permisos, membresías, auditoría, transacción) | SQLite en memoria; PostgreSQL desechable (`phpunit.xml`, puertos 55431/55433) | Filas resultantes y rollback verificado |
-| HTTP / middleware | `RbacHttpHandler` y `app/Http/Middleware/EnsurePermission` | Suite del micro-HIS; pruebas HTTP de Laravel | Código de estado y cuerpo JSON |
+| HTTP / middleware | `RbacHttpHandler` y `app/Http/Middleware/EnsurePermission` | Suite del micro-HIS; pruebas HTTP de Laravel (no existe suite HTTP RBAC todavía) | Código de estado y cuerpo JSON |
 | Frontend | `resources/js/router/permissions.js` (`can`, `canAny`; PR #136, pendiente de merge) | `resources/js/router/permissions.test.mjs` (Node) | `OK: pruebas de permisos del router pasaron.` |
 | Prototipo (E2E manual/headless) | Flujos A–E del prototipo | Chromium headless sobre `docs/rbac/semana-11/` | PASS/FAIL por escenario |
 
@@ -17,7 +17,7 @@ Estrategia por niveles y dimensiones, con criterios de entrada/salida. No descri
 ### Permisos
 - Camino feliz: actor con el permiso ejecuta la operación (201).
 - Denegación por falta de permiso: 403 `RBAC_DENIED` con motivo.
-- Matriz rol×permiso (`semana-05/permisos.md`, PR #134, pendiente de merge): un caso por rol y por permiso representativo.
+- Matriz rol×permiso (`semana-05/permisos.md`, PR #180, pendiente de merge): un caso por rol y por permiso representativo.
 - Anti-escalamiento: actor de nivel inferior no asigna rol superior (`rol_supera_privilegio`).
 - Rol duplicado (409), rol inexistente (422).
 
@@ -43,7 +43,7 @@ Estrategia por niveles y dimensiones, con criterios de entrada/salida. No descri
 
 ## 3. Datos y entornos
 
-- **Datos ficticios:** hospitales `H1`/`H2`; usuarios `admin1`, `med1`, `enf1`, `recep1`; roles del catálogo de Semana 5 (PR #134, pendiente de merge). Sin datos clínicos reales.
+- **Datos ficticios:** hospitales `H1`/`H2`; usuarios `admin1`, `med1`, `enf1`, `recep1`; roles del catálogo de Semana 5 (PR #180, pendiente de merge). Sin datos clínicos reales.
 - **Entorno base:** SQLite en memoria para el micro-HIS (sin infraestructura).
 - **Entorno de integración:** dos bases PostgreSQL desechables de `phpunit.xml` (`btree_gist` en HOSPITAL), según `README.md`.
 - **Entorno de interfaz:** navegador Chromium (prototipo) y Node para los helpers.
@@ -66,7 +66,7 @@ Adiciones exigidas antes del gate G2, trazadas a las métricas:
 
 ## 5. Automatización
 
-El comando base `php micro-his/rbac/tests/run.php` es reproducible sin dependencias. La ejecución en CI (workflows existentes en `.github/workflows/`) queda como **objetivo por configurar**; hasta entonces la evidencia es la salida local registrada en el PR.
+El comando base `php micro-his/rbac/tests/run.php` es reproducible sin dependencias. No existe workflow de pruebas en `.github/workflows/` (solo `branch-protection.yml` e `issue-opened.yml`); la ejecución en CI queda como **objetivo por configurar** y la evidencia es la salida local registrada en el PR.
 
 ## 6. Criterios de entrada y salida
 

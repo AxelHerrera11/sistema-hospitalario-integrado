@@ -1,7 +1,7 @@
 # Semana 14 — Plan de aseguramiento de calidad (SQA) del módulo RBAC
 
 **Asignación:** Semana 14 — Plan de aseguramiento de calidad. **Módulo:** ASII-02 — RBAC: roles, permisos y protección de rutas. **Estudiante:** López Fajardo, María de los Ángeles (`Mar-03`).
-**Rama:** `feature/asii-02-semana-14-rbac-mar-03`. **Base:** `origin/develop` (HEAD `255472f`). **Refs:** #4.
+**Rama:** `feature/asii-02-semana-14-rbac-mar-03`. **Base:** `origin/develop` (HEAD `255472f` al redactar; referencia actual `1d4bbe0`). **Refs:** #4.
 
 ## 1. Objetivo
 
@@ -11,7 +11,7 @@ Este documento es **planificación**. No reporta cobertura, campañas, despliegu
 
 ## 2. Alcance
 
-**Dentro del alcance:** el motor RBAC (`micro-his/rbac/`), el middleware de autorización (`app/Http/Middleware/EnsurePermission.php`, rama Semana 7; PR #136, pendiente de merge), los helpers de permisos del frontend (`resources/js/router/permissions.js`, PR #136, pendiente de merge), el catálogo de permisos (`docs/rbac/semana-05/permisos.md`, PR #134, pendiente de merge) y las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazabilidad y fallos de persistencia**.
+**Dentro del alcance:** el motor RBAC (`micro-his/rbac/`), el middleware de autorización (`app/Http/Middleware/EnsurePermission.php`, rama Semana 7; PR #136, pendiente de merge), los helpers de permisos del frontend (`resources/js/router/permissions.js`, PR #136, pendiente de merge), el catálogo de permisos (`docs/rbac/semana-05/permisos.md`, PR #180, pendiente de merge; código en PR #179) y las cinco dimensiones exigidas: **permisos, autenticación, tenant, trazabilidad y fallos de persistencia**.
 
 **Fuera del alcance:** autenticación JWT y gestión de usuarios/tenants (ASII-01), bitácora central real (Gobernanza), endpoints clínicos protegidos, infraestructura de producción, pruebas de carga/estrés y accesibilidad con lector de pantalla (solo se auditaron contrastes y teclado en Semana 11).
 
@@ -20,7 +20,7 @@ Este documento es **planificación**. No reporta cobertura, campañas, despliegu
 - ISO/IEC 25010 (características de calidad) e IEEE 730 (SQA) como marco conceptual.
 - Plan semanal: `README.md` (fila Semana 14) y `.github/ISSUE_TEMPLATE/module_task.md` (Semana 14: plan SQA).
 - Requisitos y criterios: `docs/rbac/semana-02/requerimientos.md` (`RF-RBAC-01..08`, `RNF-RBAC-01..04`).
-- Catálogo de permisos y matriz rol×permiso: `docs/rbac/semana-05/permisos.md` (PR #134, pendiente de merge).
+- Catálogo de permisos y matriz rol×permiso: `docs/rbac/semana-05/permisos.md` (PR #180, pendiente de merge).
 - Prototipo y escenarios verificados: `docs/rbac/semana-11/escenarios.md`.
 - Plantilla de PR y *checklist* obligatorio: `.github/pull_request_template.md`.
 
@@ -40,10 +40,10 @@ Este documento es **planificación**. No reporta cobertura, campañas, despliegu
 | Elemento | Estado | Fuente |
 |---|---|---|
 | Suite del micro-HIS `micro-his/rbac/tests/run.php` | **Observado:** 9/9 `OK` y `Todas las pruebas pasaron.` | Ejecución local en este worktree (`255472f`, 2026-10-18). Reproducible con `php micro-his/rbac/tests/run.php`. |
-| Prototipo navegable (20 comprobaciones funcionales) | **Observado en Semana 11**, no re-ejecutado en esta semana | `docs/rbac/semana-11/escenarios.md` |
+| Prototipo navegable (6 escenarios PASS documentados) | **Observado en Semana 11**, no re-ejecutado en esta semana | `docs/rbac/semana-11/escenarios.md` |
 | Cobertura de líneas/ramas del motor | **Objetivo, no medido** | Requiere Xdebug/PCOV; ver `metricas-calidad.md` |
 | Pruebas de integración con PostgreSQL federado | **Objetivo, no ejecutado** | Planificado en `estrategia-pruebas-regresion.md` |
-| *Quality gates* en CI | **Objetivo, no verificado** | `.github/workflows/` existente; alcance en el gate G1 |
+| *Quality gates* en CI | **Objetivo, no verificado** | Solo `branch-protection.yml` e `issue-opened.yml`; no hay workflow de pruebas; alcance en el gate G1 |
 
 ## 6. Responsabilidades (resumen)
 
