@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace MicroHis\Alergias\Persistence;
 
-use MicroHis\Alergias\Application\AllergyStore;
+use MicroHis\Alergias\Application\AllergyRepository;
 use MicroHis\Alergias\Application\PersistenceFailure;
 use MicroHis\Alergias\Domain\Allergy;
 use PDO;
 use PDOException;
 
 /** Adaptador PDO de allergies y local_access_audits; solo lee local_patients (dueño: ASII-03). */
-final class PdoAllergyStore implements AllergyStore
+final class PdoAllergyRepository implements AllergyRepository
 {
     public function __construct(private readonly PDO $pdo)
     {
