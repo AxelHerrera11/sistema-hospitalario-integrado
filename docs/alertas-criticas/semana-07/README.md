@@ -47,3 +47,14 @@ El evento de ASII-20 no entra por un controller público: lo consume un *job* de
 | Cliente PHP (`CriticalAlertsClient`) | Dentro del HIS, los consumidores están en el mismo proceso | Validación de resultados (ASII-20), que publica el evento, y el layout base (Lis), que muestra el contador llaman al caso de uso o al endpoint; el cliente HTTP se usa solo si el módulo se separa |
 
 **Qué no cambia:** el dominio, los casos de uso, el contrato `/api/v1` y los códigos de error. Por eso el refactor es de bajo riesgo: las pruebas de dominio y de contrato de las Semanas 3 a 5 siguen valiendo.
+
+## Plan de la refactorización
+
+1. Copiar `Domain` y `Application` a `app/Modules/Alertas/` y ajustar el namespace.
+2. Crear `EloquentAlertRepository` y enlazarlo a `AlertRepository` en un ServiceProvider del módulo.
+3. Crear el controller, el FormRequest y las rutas con `permission:` (cuando María publique el catálogo de permisos).
+4. Renderizar `DomainRuleViolation` y `PersistenceFailure` como `problem+json`.
+5. Crear la página Vue, el store y el cliente `api/`, con los estados de la Semana 8.
+6. Correr la prueba de contrato con `EloquentAlertRepository` contra PostgreSQL.
+
+**Estado:** este PR es diseño; el código Laravel/Vue queda **propuesto** para la integración (plan de Josué, 20–21 de octubre). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
