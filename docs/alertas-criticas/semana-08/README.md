@@ -61,3 +61,24 @@ flowchart TD
 │                                                       [Volver a bandeja] │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Estados de la pantalla
+
+| Estado | Qué ve el usuario |
+|---|---|
+| Carga | Bandeja con esqueleto; el contador conserva el último valor conocido |
+| Vacía | «No hay alertas pendientes» |
+| Lectura incorrecta (422) | Mensaje junto al campo del valor; el diálogo sigue abierto |
+| Sin relación de cuidado (403) | Mensaje y botón para avisar a la jefatura |
+| Ya acusada (409) | Quién y cuándo la acusó |
+| Alertas no disponibles (sin red) | «Alertas no disponibles: consultar al laboratorio por teléfono»; nunca una bandeja vacía |
+| Éxito (200) | La alerta sale de la bandeja y aparece «Registrar acción» |
+
+## Reglas de interacción
+
+- La alerta no se puede descartar ni ocultar sin acusarla; el contador solo baja con un acuse válido.
+- El valor de la lectura se escribe a mano: no se rellena solo, porque esa es la verificación.
+- Las alertas próximas a vencer van primero y muestran los minutos restantes.
+- Sin red, la bandeja muestra «no disponible»; una bandeja vacía solo se muestra si el servidor respondió que no hay pendientes.
+
+Los wireframes se evalúan en la Semana 9 (usabilidad y accesibilidad) y se adaptan a móvil en la Semana 10. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
