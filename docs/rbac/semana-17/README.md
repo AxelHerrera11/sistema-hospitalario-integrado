@@ -1,8 +1,8 @@
 # Semana 17 — Seguridad y preparación de despliegue RBAC
 
-María / Mar-03. Rama `feature/asii-02-semana-17-rbac-mar-03`, worktree `s17-rbac`, recreada sobre la entrega documental de semana 16 (`c804c89`). **Depende de S16a, S16b y S16c**: revisar esos diffs primero; antes de un PR a develop actualizar su base tras el merge de S16. Sin force push ni auto-merge.
+María / Mar-03. Rama `feature/asii-02-semana-17-rbac-mar-03`, worktree `s17-rbac`, recreada sobre la entrega documental de semana 16 (`f41be9b`). **Depende de S16a, S16b y S16c**: revisar esos diffs primero; antes de un PR a develop actualizar su base tras el merge de S16. Sin force push ni auto-merge.
 
-S16 se divide en tres entregas para respetar el límite de 400 líneas, porque la matriz corregida superaba 478 en un solo diff: **S16a** `ce4fda1` (integración funcional, 352 líneas), **S16b** `650780f` (matriz activa/pendiente y pruebas, 267 líneas sobre S16a) y **S16c** `c804c89` (catálogo y contrato, 211 líneas sobre S16b). Cada una conserva su propia evidencia.
+S16 se divide en tres entregas para respetar el límite de 400 líneas, porque la matriz corregida superaba 478 en un solo diff: **S16a** `ce4fda1` (integración funcional, 352 líneas), **S16b** `650780f` (matriz activa/pendiente y pruebas, 267 líneas sobre S16a) y **S16c** `f41be9b` (catálogo y contrato, 213 líneas sobre S16b). Cada una conserva su propia evidencia.
 
 ## Código funcional
 
@@ -37,6 +37,6 @@ S16 se divide en tres entregas para respetar el límite de 400 líneas, porque l
 
 ## Bitácora y estado real
 
-2026-10-19: implementación local y validación aislada; resultados exactos en `evidencia.txt`. La matriz de 22 permisos × 5 roles está publicada; 21 están activos para `superadmin` y los pares `pending` se deniegan. Auth y tenant simulados **solo en tests**, sin E2E JWT ni conexión PostgreSQL. Las suites vanilla ya usaban SQLite de prueba; no se incorporó SQLite a Laravel ni otra migración. S16 se dividió en S16a `ce4fda1`, S16b `650780f` y S16c `c804c89` para respetar el límite de 400 líneas por entrega.
+2026-10-19: implementación local y validación aislada; resultados exactos en `evidencia.txt`. La matriz de 22 permisos × 5 roles está publicada; 21 están activos para `superadmin` y los pares `pending` se deniegan. Auth y tenant simulados **solo en tests**, sin E2E JWT ni conexión PostgreSQL. Las suites vanilla ya usaban SQLite de prueba; no se incorporó SQLite a Laravel ni otra migración. S16 se dividió en S16a `ce4fda1`, S16b `650780f` y S16c `f41be9b` para respetar el límite de 400 líneas por entrega.
 No se afirma staging, despliegue final, QA del sistema completo, aprobación de permisos ni revisión de Yamilet. PR/issue y evidencia visual pendientes; no se publicaron cambios ni se mergearon PR de terceros. Las dos guías enlazadas desde README no estaban disponibles; se consultaron README, plantillas, plan Word y aportes de Axel.
 IA: Codex generó código, pruebas y documentación; quedan revisión humana, confirmación de contratos y defensa individual.
