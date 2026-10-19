@@ -1,20 +1,20 @@
 # Semana 15 — Pruebas unitarias, caja blanca y caja negra del módulo RBAC
 
 Rama: `feature/asii-02-semana-15-rbac-mar-03` (worktree `s15-rbac`).
-Base: `origin/develop` (`255472f`). PHP 8.2.12 + `pdo_sqlite`; Node 26 (solo evidencia aislada).
+Base: `origin/develop` (`255472f` al redactar; referencia actual `1d4bbe0`). PHP 8.2.12 + `pdo_sqlite`; Node 26 (solo evidencia aislada).
 
 ## 1. Auditoría de pruebas existentes
 
 | Prueba | Rama que la contiene | ¿En develop? | Dependencias no integradas |
 | --- | --- | --- | --- |
 | `micro-his/rbac/tests/run.php` | develop (S3, `237df12`/`0007faa`) | **Sí** | — (solo pila de develop) |
-| `micro-his/rbac/tests/inmemory.php` | `feature/asii-02-semana-04-rbac-mar-03` (PR #70) | No | `InMemoryRbacStore`, `RoleResolver` |
-| `micro-his/rbac/tests/authorization.php` | `feature/asii-02-semana-05-rbac-mar-03` (PR #134) | No | `Application\Authorize`, `RbacHttpHandler::authorize()`, `InMemoryRbacStore`, `RoleResolver` |
+| `micro-his/rbac/tests/inmemory.php` | `feature/asii-02-semana-04-rbac-mar-03` (PR #70, mergeado) | **Sí** (posterior a la base) | `InMemoryRbacStore`, `RoleResolver` |
+| `micro-his/rbac/tests/authorization.php` | `feature/asii-02-semana-05-rbac-mar-03` (PR #179) | No | `Application\Authorize`, `RbacHttpHandler::authorize()`, `InMemoryRbacStore`, `RoleResolver` |
 | `resources/js/router/permissions.test.mjs` | `feature/asii-02-semana-07-rbac-mar-03` (PR #136) | No | `resources/js/router/permissions.js` |
 
-`run.php` es la única prueba de RBAC presente en `develop`; las otras tres viven en ramas no integradas. Por eso las pruebas nuevas (S15) se escriben **solo contra el código de `develop`**: `Authorizer`, `AssignerPrivilegeRule`, `RoleGrantsPermission`, `AssignRole`, `PdoRbacStore`, `RbacHttpHandler`.
+`run.php` e `inmemory.php` ya están en `develop`; `authorization.php` y `permissions.test.mjs` siguen en ramas no integradas. Por eso las pruebas nuevas (S15) se escriben **solo contra el código de `develop`**: `Authorizer`, `AssignerPrivilegeRule`, `RoleGrantsPermission`, `AssignRole`, `PdoRbacStore`, `RbacHttpHandler`.
 
-## 2. Entorno aislado para S4/S5/S7 (dependencias temporales)
+## 2. Entorno aislado para S5/S7 (S4 ya integrado; dependencias temporales)
 
 Fuera del repositorio, en `%TEMP%\opencode\s15-isolated`, se combinaron por archivo las ramas no integradas **sin modificar sus ramas ni incorporarlas al commit**:
 
@@ -106,7 +106,7 @@ OK: denegado: sin permiso no se crea membresía
 [aislamiento y escalamiento] 15 pruebas, 0 fallos.                    [exit=0]
 ```
 
-Entorno aislado S4/S5/S7 (dependencias temporales; resumen, mismo código sin integrar):
+Entorno aislado S5/S7 (S4 ya integrado; dependencias temporales; resumen, mismo código sin integrar):
 
 ```
 $ php %TEMP%\opencode\s15-isolated\s4s5\micro-his\rbac\tests\inmemory.php
@@ -120,6 +120,6 @@ OK: pruebas de permisos del router pasaron.                                [exit
 ## 5. Limitaciones y fallos pendientes
 
 - **Sin pruebas end-to-end de Laravel**: no hay `vendor/` (falta `composer install`) ni base de datos configurada; no se afirma E2E ni `php artisan test`.
-- S4/S5/S7 siguen **sin integrar**; su evidencia proviene del entorno aislado temporal, no de `develop`.
+- S5/S7 siguen **sin integrar**; S4 ya está integrado (merge #70). La evidencia de S5/S7 proviene del entorno aislado temporal.
 - El `Authorize` (contrato `allowed/reason/trace_id`) y `RbacHttpHandler::authorize()` de S5 no existen en `develop`; su caja negra queda pendiente hasta integrar S5.
 - `AssignerPrivilegeRule::LEVELS` es un supuesto (SD-RBAC-09) pendiente de validación de negocio.
