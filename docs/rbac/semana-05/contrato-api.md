@@ -33,6 +33,14 @@ Request:
 
 `solicitante` y `hospital` viajan en el contexto autenticado (no en el cuerpo).
 
+### Semántica de `user_id`
+
+| Caso | Comportamiento |
+|---|---|
+| **Ausente** | Se evalúa al **solicitante** autenticado (`X-User-ID`). |
+| **Presente y válido** (string no vacío, recortado) | Se evalúa al usuario indicado, dentro del hospital del solicitante. |
+| **Presente e inválido** (`[]`, `null`, `""`, `false` o no string) | `422` `payload_invalido` con `trace_id`; **no** se invoca el caso de uso de autorización ni se sustituye por el solicitante. |
+
 Response `200` — permitido:
 
 ```json
@@ -83,7 +91,7 @@ RBAC es dueño de roles, permisos y denegaciones. **No** es dueño de usuarios: 
 | `401` | Sin autenticación |
 | `403` | Solicitante autenticado sin permiso para invocar el endpoint (`operacion_no_autorizada`) |
 | `404` | Recurso inexistente |
-| `422` | Payload inválido |
+| `422` | Payload inválido (incluye `user_id` presente pero inválido) |
 | `503` | Dependencia caída (resolución de roles/permisos o registro de denegaciones) o endpoint sin permiso configurado (`endpoint_no_configurado`); decisión *fail-safe* |
 
 ## Versionado
