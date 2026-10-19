@@ -6,10 +6,10 @@ Los roles de módulo provienen de `README.md:34-65`.
 
 | Rol | Responsable | Responsabilidad en la revisión |
 |---|---|---|
-| Autor del módulo | RBAC (`README.md:37`); autora de esta rama (`Mar-03`) | Mantiene checklist, hallazgos e informe; corrige lo que se le apruebe. |
+| Autor del módulo | `Luis890D` (designado en `README.md:37`); autora de esta rama: `Mar-03` | Mantiene checklist, hallazgos e informe; corrige lo que se le apruebe. |
 | Revisor par | Otro integrante del equipo HIS | Revisa código, pruebas y trazabilidad; firma la aprobación del checklist. |
 | Responsable de usuarios/tenants | `AquinoB2090` (`README.md:36`) | Valida identidad, `central_users`, membresías y resolución de `X-Tenant-ID`. |
-| Responsable de gobernanza/auditoría | `bquirao` (`README.md:57`) | Valida interfaz del `DenialRecorder` y la consulta de bitácora append-only. |
+| Responsable de gobernanza/auditoría | `bquiroao` (`README.md:57`) | Valida interfaz del `DenialRecorder` y la consulta de bitácora append-only. |
 | Docente / integrador | Rol de integración (`README.md:99`) | Resuelve discrepancias entre módulos y aprueba criterios de salida. |
 
 Si un responsable no está disponible, firma el revisor par y se registra el reemplazo en la

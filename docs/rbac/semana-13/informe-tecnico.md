@@ -1,6 +1,6 @@
 # Informe técnico de la revisión — RBAC (Semana 13)
 
-Rama `feature/asii-02-semana-13-rbac-mar-03` (base `develop`). Distingue **hechos
+Rama `feature/asii-02-semana-13-rbac-mar-03` (base `develop`; snapshot `255472f`, referencia actual `1d4bbe0`). Distingue **hechos
 comprobados**, **riesgos** y **bloqueos**. No se modificó código de producción.
 
 ## 1. Hechos comprobados
@@ -63,7 +63,7 @@ comprobados**, **riesgos** y **bloqueos**. No se modificó código de producció
   aporta `EnsurePermission`, `RbacServiceProvider` y el alias `permission`, aún sin merge.
 - **H-04 — endpoints Laravel aún pendientes (incluso con el PR #136).** `routes/api.php` solo
   tiene `auth/*`; el PR #136 no añade endpoints RBAC. El handler PHP vanilla de Semana 5
-  (PR #134) no constituye una ruta Laravel funcional. No es un defecto del prototipo, sino
+  (PR #179) no constituye una ruta Laravel funcional. No es un defecto del prototipo, sino
   alcance no entregado.
 
 ## 4. Conclusión
@@ -76,7 +76,7 @@ comprobados**, **riesgos** y **bloqueos**. No se modificó código de producció
   integración; H-04 sigue pendiente incluso considerando ese PR. La revisión formal de esa capa
   queda **programada** y no puede declararse ejecutada.
 - **Condición para aprobar el PR del módulo:** resolver o compensar los bloqueos H-01…H-04
-  (integrar el PR #136 cierra H-03; H-04 exige endpoints Laravel propios, que el PR #134 vanilla
+  (integrar el PR #136 cierra H-03; H-04 exige endpoints Laravel propios, que el PR #179 vanilla
   no aporta), validar los riesgos H-05/H-07 con usuarios/tenants, y completar seeder y auditoría
   (H-06/H-10/H-11).
 - **Alcance de esta entrega:** plan, checklist, responsables, hallazgos e informe. Sin `push`,

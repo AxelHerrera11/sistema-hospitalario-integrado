@@ -4,7 +4,7 @@
 
 - **Autora:** María de los Ángeles López Fajardo (`Mar-03`), mlopezf16@miumg.edu.gt.
 - **Módulo:** ASII-02 — RBAC: roles, permisos y protección de rutas (`README.md:37`).
-- **Rama:** `feature/asii-02-semana-13-rbac-mar-03`, base `origin/develop`.
+- **Rama:** `feature/asii-02-semana-13-rbac-mar-03`, base `origin/develop` (snapshot `255472f`; referencia actual `1d4bbe0`).
 - **Semana del plan:** 13 — «Plan de revisión técnica formal. Checklist de revisión, responsables y evidencia» (`README.md:185`).
 
 ## 1. Objetivo
