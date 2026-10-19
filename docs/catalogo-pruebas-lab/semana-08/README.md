@@ -69,3 +69,23 @@ flowchart TD
 │ Las órdenes ya emitidas conservan esta versión.            [Volver]    │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+## Estados de la pantalla
+
+| Estado | Qué ve el usuario |
+|---|---|
+| Carga | Esqueleto de la tabla y el buscador deshabilitado |
+| Vacío | «Sin pruebas vigentes para “texto” en esta fecha» y botón «Limpiar filtro» |
+| Error de validación (422) | El mensaje junto al campo indicado en `field`; lo escrito no se borra |
+| Vigencia solapada (409) | Aviso con la versión vigente y el enlace a su detalle |
+| Catálogo no disponible (5xx o sin red) | «Catálogo no disponible: no se puede ordenar sin confirmar la versión» y reintentar |
+| Éxito (201) | Confirmación con código, versión y fecha de vigencia |
+
+## Reglas de interacción
+
+- El botón «Nueva versión» solo aparece con `laboratorio.catalogo.administrar`; sin él, la ruta responde 403 aunque se escriba a mano.
+- «Guardar» se habilita cuando están los campos obligatorios; las reglas de rangos las confirma el servidor y se muestran en el campo.
+- La fecha de vigencia no ofrece días pasados (no hay altas retroactivas).
+- Una versión vigente no se edita: el detalle no tiene botón «Editar», solo «Nueva versión».
+
+Los wireframes se evalúan en la Semana 9 (usabilidad y accesibilidad) y se adaptan a móvil en la Semana 10. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
