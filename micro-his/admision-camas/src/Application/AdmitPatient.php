@@ -12,7 +12,7 @@ use MicroHis\Admision\Domain\DomainRuleViolation;
 final class AdmitPatient
 {
     /** @param Closure(): string $now @param Closure(): string $newId */
-    public function __construct(private readonly AdmissionStore $store, private readonly Closure $now, private readonly Closure $newId) {}
+    public function __construct(private readonly AdmissionRepository $store, private readonly Closure $now, private readonly Closure $newId) {}
 
     /** @param array<string, mixed> $data */
     public function execute(array $data, string $actor): Admission

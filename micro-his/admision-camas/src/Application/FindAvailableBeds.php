@@ -7,7 +7,7 @@ namespace MicroHis\Admision\Application;
 /** UC-ADM-03 Buscar camas disponibles, opcionalmente por tipo. */
 final class FindAvailableBeds
 {
-    public function __construct(private readonly AdmissionStore $store) {}
+    public function __construct(private readonly AdmissionRepository $store) {}
 
     /** @return list<array<string, mixed>> */
     public function execute(string $type = ''): array
