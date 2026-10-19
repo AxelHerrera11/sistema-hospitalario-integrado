@@ -46,3 +46,21 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): datos de la 
 | 4.1.3 Mensajes de estado | Parcial | «Paciente admitido en MED-101» debe anunciarse con `role="status"` |
 
 «Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
+
+## Hallazgos priorizados
+
+| # | Severidad | Hallazgo | Impacto | Mejora propuesta |
+|---|---|---|---|---|
+| H1 | Alta | El mensaje «sin respuesta» puede leerse como error y llevar a repetir el alta | Admisión duplicada o paciente en dos camas | Texto explícito «No sabemos si se guardó» y botón «Verificar cama» antes de permitir repetir |
+| H2 | Media | El tablero no es un `radiogroup` | Con lector de pantalla no se sabe cuál está seleccionada | Usar `role="radiogroup"` con `aria-checked` |
+| H3 | Media | El ícono 🔧 de mantenimiento no tiene texto | No se entiende por qué no se puede elegir | Texto «en mantenimiento» visible y accesible |
+| H4 | Media | No hay atajo para la cama sugerida | Más clics en horas de alta demanda | Preseleccionar la primera libre del tipo, cambiable |
+| H5 | Baja | La lista de espera no se explica | Duda cuando no hay camas | Mensaje con el procedimiento manual hasta implementarla |
+
+## Plan de mejoras
+
+1. **Antes del prototipo (Semana 11):** H1 y H2, porque pueden inducir una decisión clínica errónea.
+2. **En el prototipo:** H3 y H4, y la medición de contraste de los criterios pendientes.
+3. **Después:** H5.
+
+Las mejoras se incorporan en la adaptación móvil (Semana 10) y en el prototipo navegable (Semana 11). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
