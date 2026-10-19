@@ -42,3 +42,20 @@ flowchart LR
 | Contrato `/api/v1` y cliente con falla segura | Los consumidores no dependen del código ni de la base del módulo | `openapi.yaml` validado; `CatalogUnavailable` en lugar de ordenar a ciegas (Semana 5) |
 
 **Riesgos que sigo defendiendo como abiertos:** `lab_tests` aún no tiene migración (se coordina con Javier) y la columna de escala de resultados (`result_scale`) es una propuesta.
+
+## Caso práctico arquitectónico
+
+**Pedido:** el laboratorio necesita la **proteinuria en tira reactiva**, con escala ordinal `negativo, 1+, 2+, 3+, 4+` y valor crítico desde `4+`. Hoy el micro-HIS solo acepta `numeric`, `qualitative` y `text`.
+
+| Capa o pieza | ¿Cambia? | Qué cambia |
+|---|---|---|
+| Domain | Sí, una regla | Admitir `ordinal` con escala sin repetidos y umbral dentro de la escala. En el diseño OCP de la Semana 2 es una clase nueva (`OrdinalResultSpec`); el micro-HIS condensado aplica las reglas en un `match`, así que hoy es un brazo más |
+| Application (`RegisterLabTest`, `FindActiveLabTests`) | No | Siguen pidiendo «validar y guardar» y «vigentes a una fecha» |
+| Repository (PDO e InMemory) | Mínimo | Guardar y leer la escala (`result_scale`) |
+| Base HOSPITAL | Sí | Ampliar el `CHECK` de `result_type` y agregar `result_scale jsonb`: migración acordada con Javier |
+| Contrato API | Sí, compatible | Nuevo valor en el `enum` de `result_type` y el campo opcional `result_scale`; los clientes actuales no se rompen |
+| Consumidores (Órdenes, Resultados, Alertas) | No | Siguen usando el `lab_test_id`; Resultados (Gerson) acepta un valor de la escala y Alertas compara contra `critical_from` |
+
+**Conclusión:** el cambio queda contenido en el dominio, la persistencia y una versión compatible del contrato, sin tocar a los consumidores. Ese es el beneficio de separar reglas, puerto y contrato.
+
+Guion de la exposición: [presentacion.md](./presentacion.md) · Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md)
