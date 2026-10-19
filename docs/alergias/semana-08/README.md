@@ -32,3 +32,36 @@ flowchart TD
   r2 -- 409 --> dup[«Ya hay una alergia activa equivalente»: ver la existente]
   r2 -- 201 --> ok[Banner actualizado sin recargar la página]
 ```
+
+## Wireframes iniciales (baja fidelidad)
+
+### 1. Expediente con banner crítico
+
+```text
+┌ Expediente · Paciente P-DEMO · 45 años ────────────────────────────────┐
+│ ████ ALERGIA GRAVE: verificar antes de prescribir ████████████████████ │
+│ ████ Penicilina · amenaza la vida · anafilaxia            [Ver todas] █ │
+│ Resumen │ Notas │ Órdenes │ Alergias (1)                                 │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Banner cuando el servicio no responde
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│ ▒▒ Alergias no disponibles: verificar con el paciente antes de        │
+│ ▒▒ prescribir.                                         [Reintentar]  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3. Formulario «Registrar alergia»
+
+```text
+┌ Registrar alergia ─────────────────────────────────────────────────────┐
+│ Alérgeno* [Penicilina______________] (código opcional [RXN-7980])       │
+│ Tipo* (•) Alergia ( ) Intolerancia ( ) Desconocido                     │
+│ Severidad* [Amenaza la vida ▼]  Reacción [Anafilaxia_______]            │
+│ ⚠ Ya hay una alergia activa equivalente (ALLERGY_ALREADY_ACTIVE)  [Ver] │
+│                                               [Cancelar] [Guardar]     │
+└────────────────────────────────────────────────────────────────────────┘
+```
