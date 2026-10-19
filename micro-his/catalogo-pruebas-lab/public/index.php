@@ -10,6 +10,7 @@ use MicroHis\CatalogoLab\Presentation\LabTestListView;
 
 // Front controller. Ejecutar: php -S 127.0.0.1:8083 -t micro-his/catalogo-pruebas-lab/public
 require __DIR__ . '/../bootstrap.php';
+date_default_timezone_set(getenv('MICROHIS_TIMEZONE') ?: 'America/Guatemala'); // «hoy» y los plazos son del hospital, no UTC
 
 $pdo = new PDO(getenv('MICROHIS_DSN') ?: 'sqlite:' . sys_get_temp_dir() . '/microhis-catalogo.sqlite', getenv('MICROHIS_DB_USER') ?: null, getenv('MICROHIS_DB_PASSWORD') ?: null);
 if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' && !$pdo->query("SELECT 1 FROM sqlite_master WHERE name = 'lab_tests'")->fetchColumn()) {
