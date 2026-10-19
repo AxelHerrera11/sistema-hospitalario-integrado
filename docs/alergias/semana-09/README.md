@@ -31,3 +31,18 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): expediente c
 | 8 | Diseño minimalista | Parcial | Con cinco o más alergias el banner crece y empuja el expediente |
 | 9 | Ayudar a reconocer y corregir errores | Cumple | El 409 enlaza la alergia existente |
 | 10 | Ayuda y documentación | Parcial | Falta explicar qué hacer con «no disponible» |
+
+## Checklist WCAG 2.1 AA
+
+| Criterio | Resultado | Nota |
+|---|---|---|
+| 1.4.1 Uso del color | Cumple | Cada nivel tiene texto propio, no solo color |
+| 1.4.3 Contraste mínimo | Pendiente de verificar | El texto blanco sobre rojo y el gris del «no disponible» deben llegar a 4,5:1 |
+| 1.3.1 Información y relaciones | Cumple | Tipo y severidad como grupos de radio y lista con `legend` |
+| 2.1.1 Teclado | Cumple | El banner no atrapa el foco; «Ver todas» y «Reintentar» son botones |
+| 2.2.1 Tiempo ajustable | Cumple | El banner no desaparece solo |
+| 3.3.1 Identificación de errores | Cumple | El error nombra el campo |
+| 4.1.2 Nombre, función y valor | Parcial | El banner debe exponer el nivel en texto accesible, no solo en la clase CSS |
+| 4.1.3 Mensajes de estado | Parcial | El banner crítico usa `role="alert"`; al actualizarse tras un alta, no debe repetirse en cada navegación |
+
+«Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
