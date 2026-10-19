@@ -38,7 +38,7 @@ Todas las rutas van bajo el grupo `tenant` + `jwt.auth` (patrón de `routes/api.
 | `PUT /citas/{appointment_id}` | `citas.crear` | Reprogramación (cambiar horario, doctor, especialidad o motivo) solo en estados `scheduled`/`confirmed` |
 | `POST /citas/{appointment_id}/confirmar` | `citas.confirmar` | `scheduled` → `confirmed` |
 | `POST /citas/{appointment_id}/completar` | `citas.confirmar` | `confirmed` → `completed` (requiere `ends_at <= now()`) |
-| `POST /citas/{appointment_id}/cancelar` | `citas.cancelar` | `scheduled`/`confirmed` → `cancelled`, con `reason` obligatorio |
+| `POST /citas/{appointment_id}/cancelar` | `citas.cancelar` | `scheduled`/`confirmed` → `cancelled`; sin cuerpo |
 | `DELETE /citas/{appointment_id}` | — | **405** `appointments_delete_protection` (lo decide la base, no el controlador) |
 
 ### 2.1 Filtros de `GET /citas`
@@ -64,7 +64,7 @@ Todas las rutas van bajo el grupo `tenant` + `jwt.auth` (patrón de `routes/api.
 }
 ```
 
-`POST .../cancelar` acepta además `reason` (obligatorio, texto de cancelación).
+La cancelación no acepta cuerpo: `appointments` no tiene columna para el motivo de cancelación y `reason` conserva el motivo original de la cita. Si se requiere registrar el motivo del cancelamiento, debe proponerse una migración aparte, fuera del alcance de este módulo (que no crea tablas).
 
 ## 3. Respuestas de éxito
 
