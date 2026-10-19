@@ -46,3 +46,21 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): lista de pru
 | 4.1.3 Mensajes de estado | Falla | La confirmación «GLU v2 registrada» no se anuncia: requiere `role="status"` |
 
 «Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
+
+## Hallazgos priorizados
+
+| # | Severidad | Hallazgo | Impacto | Mejora propuesta |
+|---|---|---|---|---|
+| H1 | Alta | Los rangos no muestran su orden esperado (crítico bajo < referencia baja ≤ referencia alta < crítico alto) | Una jefatura puede invertirlos y solo enterarse al guardar | Ordenar los campos en la recta numérica y validar al salir de cada campo |
+| H2 | Media | No hay «Nueva versión a partir de la vigente» | Reescribir todo invita a errores de copia | Botón «Duplicar como nueva versión» en el detalle |
+| H3 | Media | El 409 no ofrece una salida | La usuaria no sabe cómo cerrar la vigencia anterior | Enlace directo a «Cerrar vigencia» (UC-LAB-07) |
+| H4 | Media | El foco no va al campo con error | Con teclado o lector de pantalla no se encuentra el error | Mover el foco al campo de `field` y unirlo con `aria-describedby` |
+| H5 | Baja | La confirmación no se anuncia | El lector de pantalla no dice que se guardó | Región `role="status"` |
+
+## Plan de mejoras
+
+1. **Antes del prototipo (Semana 11):** H1 y H2, porque pueden inducir una decisión clínica errónea.
+2. **En el prototipo:** H3 y H4, y la medición de contraste de los criterios pendientes.
+3. **Después:** H5.
+
+Las mejoras se incorporan en la adaptación móvil (Semana 10) y en el prototipo navegable (Semana 11). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
