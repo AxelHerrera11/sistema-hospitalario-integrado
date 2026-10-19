@@ -102,5 +102,28 @@ function alta(AdaptadorHospitalEnMemoria $h, string $estancia): AltaHospitalaria
     return new AltaHospitalaria(new SolicitudAlta($estancia), $h);
 }
 
+/** La MISMA batería para cualquier OperacionConLiberacionDeCama. */
+function bateriaDeContrato(string $nombre, Closure $crear): void
+{
+    echo PHP_EOL . "== Contrato común: $nombre ==" . PHP_EOL;
+    $h = escenario();
+    $r = $crear($h, 'S1')->ejecutar();
+    $lib = $r instanceof ExitoConfirmado ? $r->liberacion : null;
+    comprobar('ExitoConfirmado contiene una LiberacionDeCama', $lib instanceof LiberacionDeCama);
+    comprobar('S1 termina en T; la liberación informa cama A, estancia S1 y T', $h->estado['estancias']['S1']['fin'] == hora('12:00')
+        && $lib?->camaOrigenId === 'A' && $lib->estanciaCerradaId === 'S1' && $lib->t == hora('12:00'));
+    comprobar('como máximo una estancia abierta en E1', abiertas($h, 'E1') <= 1);
+    comprobar('beds.status intacto: A sigue occupied (liberar ≠ available)', $h->estado['camas'] === escenario()->estado['camas']);
+    foreach (['S3' => 'EPISODIO_NO_INPATIENT', 'S4' => 'EPISODIO_NO_ABIERTO', 'S5' => 'SIN_ESTANCIA_ABIERTA', 'S0' => 'ESTANCIA_DESACTUALIZADA'] as $estancia => $codigo) {
+        $h = escenario();
+        comprobarRechazo($codigo, $h, $crear($h, $estancia));
+    }
+    $h = escenario('09:00');
+    comprobarRechazo('T_INVALIDA', $h, $crear($h, 'S1'));
+}
+
+bateriaDeContrato('TrasladoInterno', fn (AdaptadorHospitalEnMemoria $h, string $estancia) => traslado($h, $estancia));
+bateriaDeContrato('AltaHospitalaria', fn (AdaptadorHospitalEnMemoria $h, string $estancia) => alta($h, $estancia));
+
 echo PHP_EOL . ($fallos === 0 ? 'Todas las comprobaciones se cumplieron.' : "$fallos comprobación(es) fallaron.") . PHP_EOL;
 exit($fallos === 0 ? 0 : 1);
