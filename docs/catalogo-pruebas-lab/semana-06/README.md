@@ -29,3 +29,16 @@ flowchart LR
 | 3 | Micro-HIS por capas con PDO y pruebas | `micro-his/catalogo-pruebas-lab/` (PR #199) |
 | 4 | MVC + Repository con adaptadores PDO e InMemory y prueba de contrato | Reentrega de la Semana 4 (diseño del PR #59) |
 | 5 | API v1, cliente con falla segura, OpenAPI y frontera de microservicio | Reentrega de la Semana 5 (diseño del PR #63) |
+
+## Decisiones defendidas
+
+| Decisión | Por qué | Evidencia verificable |
+|---|---|---|
+| Las reglas viven en `LabTest::register` (dominio) | Ningún adaptador ni controlador puede saltárselas; la versión nace válida o no nace | La prueba «ningún alta rechazada se guardó» de `tests/run.php` |
+| Tipos de resultado abiertos a extensión (OCP) | Un tipo nuevo (ordinal, título) no debe tocar el validador | Demo `semana-02/evidencia/demo-ocp.php`: 12 aserciones |
+| Versiones inmutables y vigencias sin solapes | Una orden emitida conserva su definición; dos versiones vigentes serían ambiguas | `409 LAB_TEST_VALIDITY_OVERLAP`, `UNIQUE (code, version_no)` y exclusión GiST propuesta |
+| Alta y auditoría en una transacción | No puede quedar una versión sin evidencia | La prueba de rollback con la auditoría caída |
+| Repository como puerto | La aplicación no conoce SQL; las pruebas corren sin base | La misma batería con PDO e InMemory (Semana 4) |
+| Contrato `/api/v1` y cliente con falla segura | Los consumidores no dependen del código ni de la base del módulo | `openapi.yaml` validado; `CatalogUnavailable` en lugar de ordenar a ciegas (Semana 5) |
+
+**Riesgos que sigo defendiendo como abiertos:** `lab_tests` aún no tiene migración (se coordina con Javier) y la columna de escala de resultados (`result_scale`) es una propuesta.
