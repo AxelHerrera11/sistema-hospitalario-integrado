@@ -7,7 +7,7 @@ namespace MicroHis\CatalogoLab\Application;
 use MicroHis\CatalogoLab\Domain\LabTest;
 
 /** Puerto de persistencia que necesita la aplicación; lo implementa Persistence. */
-interface LabTestStore
+interface LabTestRepository
 {
     public function latestVersionNo(string $code): int;
     public function hasActiveOverlap(string $code, string $validFrom): bool;
