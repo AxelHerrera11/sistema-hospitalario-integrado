@@ -1,0 +1,111 @@
+openapi: 3.1.0
+info:
+  title: Micro-HIS Admisión hospitalaria y asignación de cama — API v1
+  version: 1.0.0
+  description: Admisión con cama y búsqueda de camas (ASII-07). Errores en application/problem+json (RFC 9457) con code y request_id.
+  license:
+    name: Uso académico
+    identifier: CC-BY-4.0
+servers:
+  - url: http://127.0.0.1:8081
+security:
+  - userRef: []
+paths:
+  /api/v1/admissions:
+    post:
+      operationId: admitPatient
+      summary: Admitir y asignar cama (UC-ADM-01 y 03)
+      description: No es idempotente. Si el cliente no recibe respuesta, debe verificar la cama antes de repetir.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AdmissionInput' } } }
+      responses:
+        '201':
+          description: Episodio inpatient abierto, estancia abierta y cama ocupada
+          content: { application/json: { schema: { type: object, required: [admission], properties: { admission: { type: object } } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '500': { $ref: '#/components/responses/Problem' }
+  /api/v1/beds/available:
+    get:
+      operationId: findAvailableBeds
+      summary: Camas disponibles (UC-ADM-02)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - { name: type, in: query, schema: { type: string, example: adult } }
+        - { name: format, in: query, description: html = tablero (View de la Semana 4), schema: { type: string, enum: [html] } }
+      responses:
+        '200':
+          description: Camas con status = available
+          content:
+            application/json: { schema: { type: object, required: [beds], properties: { beds: { type: array, items: { $ref: '#/components/schemas/Bed' } } } } }
+            text/html: { schema: { type: string } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /health:
+    get:
+      operationId: liveness
+      summary: El proceso responde (solo GET; otro método da 404)
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /health/ready:
+    get:
+      operationId: readiness
+      summary: La base responde
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Health' }
+components:
+  securitySchemes:
+    userRef:
+      type: apiKey
+      in: header
+      name: X-User-Ref
+      description: Identidad que inyecta el gateway del HIS tras validar el JWT (propuesto para el HIS integrado).
+  parameters:
+    TenantId: { name: X-Tenant-ID, in: header, required: true, schema: { type: string, example: HOSP-DEMO } }
+  responses:
+    Problem:
+      description: Error (RFC 9457)
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required: [title, status, code, request_id]
+            properties:
+              type: { type: string }
+              title: { type: string }
+              status: { type: integer }
+              code: { type: string, examples: [TENANT_REQUIRED, BED_NOT_AVAILABLE, PATIENT_ALREADY_ADMITTED, BED_TYPE_MISMATCH] }
+              field: { type: string }
+              request_id: { type: string }
+    Health:
+      description: Estado del servicio
+      content: { application/json: { schema: { type: object, required: [status, service], properties: { status: { type: string, enum: [ok, unavailable] }, service: { type: string } } } } }
+  schemas:
+    AdmissionInput:
+      type: object
+      required: [patient_id, bed_id, reason]
+      properties:
+        patient_id: { type: string }
+        bed_id: { type: string }
+        bed_type: { type: string, description: 'Tipo exigido; si no coincide, 422 BED_TYPE_MISMATCH' }
+        reason: { type: string, minLength: 1 }
+    Bed:
+      type: object
+      required: [bed_id, code, type]
+      properties:
+        bed_id: { type: string }
+        code: { type: string }
+        type: { type: string }
