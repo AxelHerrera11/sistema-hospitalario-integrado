@@ -113,6 +113,37 @@ check('handler: entrada invalida -> 422 con trace_id', $r['status'] === 422 && $
 $r = $handler->authorize(['X-User-ID' => 'admin1'], ['user_id' => 'med1', 'action' => 'prescripciones.crear']);
 check('handler: sin hospital -> 422 payload_invalido', $r['status'] === 422 && $r['body']['code'] === 'payload_invalido' && isTrace($r['body']['trace_id']));
 
+// Regresion: user_id presente pero invalido NO se sustituye por el solicitante.
+$spy = new class implements RoleResolver, PermissionProvider, DenialRecorder {
+    public int $calls = 0;
+    public function rolesIn(string $u, string $h): array { $this->calls++; return []; }
+    public function permissionsFor(string $r): array { $this->calls++; return []; }
+    public function record(array $d): void { $this->calls++; }
+};
+$spyHandler = new RbacHttpHandler(dummyAssignRole(), new Authorize($spy, $spy, $spy, new RoleGrantsPermission()), 'rbac.autorizar');
+$r = $spyHandler->authorize(['X-User-ID' => 'admin1', 'X-Tenant-ID' => 'H1'], ['user_id' => [], 'action' => 'prescripciones.crear']);
+check('handler: user_id=[] -> 422 con trace_id y sin invocar autorizacion', $r['status'] === 422 && $r['body']['code'] === 'payload_invalido' && isTrace($r['body']['trace_id']) && $spy->calls === 0);
+
+// user_id ausente -> fallback al solicitante (boss1 con permiso de endpoint y de accion).
+$both = new InMemoryRbacStore(['Jefe' => ['rbac.autorizar', 'prescripciones.crear']]);
+$both->grant('boss1', 'H1', 'Jefe');
+$bothHandler = new RbacHttpHandler(dummyAssignRole(), new Authorize($both, $both, $both, new RoleGrantsPermission()), 'rbac.autorizar');
+$r = $bothHandler->authorize(['X-User-ID' => 'boss1', 'X-Tenant-ID' => 'H1'], ['action' => 'prescripciones.crear']);
+check('handler: user_id ausente -> fallback al solicitante', $r['status'] === 200 && $r['body']['allowed'] === true);
+
+// user_id valido distinto del solicitante -> se evalua el del body, no el solicitante.
+$r = $bothHandler->authorize(['X-User-ID' => 'boss1', 'X-Tenant-ID' => 'H1'], ['user_id' => 'nadie', 'action' => 'prescripciones.crear']);
+check('handler: user_id valido -> evalua el del body, no el solicitante', $r['status'] === 200 && $r['body']['allowed'] === false && $r['body']['reason'] === 'permiso_faltante');
+
+// Otros invalidos (null, vacio, false, 0, array, objeto) -> 422, sin invocar autorizacion.
+$invalidos = [null, '', '   ', false, 0, ['med1'], new stdClass()];
+$todos422 = true;
+foreach ($invalidos as $v) {
+    $r = $spyHandler->authorize(['X-User-ID' => 'admin1', 'X-Tenant-ID' => 'H1'], ['user_id' => $v, 'action' => 'prescripciones.crear']);
+    $todos422 = $todos422 && $r['status'] === 422 && isTrace($r['body']['trace_id']);
+}
+check('handler: user_id null/vacio/false/0/array/objeto -> 422 con trace_id', $todos422 && $spy->calls === 0);
+
 // 12. Solicitante sin permiso de endpoint -> 403 (distinto de la denegacion evaluada).
 $rec = new InMemoryRbacStore(['Recepcionista' => ['muestras.ver']]);
 $rec->grant('rec1', 'H1', 'Recepcionista');

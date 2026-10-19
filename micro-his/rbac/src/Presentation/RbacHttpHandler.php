@@ -49,7 +49,9 @@ final class RbacHttpHandler
      * de tenancy, NUNCA de cabeceras enviadas por el cliente—:
      *  - solicitante autenticado (cabecera X-User-ID),
      *  - hospital validado (cabecera X-Tenant-ID),
-     *  - usuario evaluado (body user_id; por defecto, el solicitante).
+     *  - usuario evaluado (body user_id; por defecto el solicitante; si esta
+     *    presente pero es invalido —[], null, "", false— se responde 422, sin
+     *    sustituirlo por el solicitante).
      *
      * `$endpointPermission` es obligatorio: si es null el handler falla cerrado
      * (503 "endpoint_no_configurado"). Códigos: 401 sin autenticar; 403 solicitante
@@ -65,9 +67,15 @@ final class RbacHttpHandler
         $caller = self::str($headers['X-User-ID']);
         $tenant = self::str($headers['X-Tenant-ID'] ?? null);
         $action = self::str($body['action'] ?? null);
-        $userId = self::str($body['user_id'] ?? null) ?? $caller;
         if ($caller === null || $tenant === null || $action === null) {
             return self::error(422, 'payload_invalido');
+        }
+        $userId = $caller;
+        if (array_key_exists('user_id', $body)) {
+            $userId = self::str($body['user_id']);
+            if ($userId === null) {
+                return self::error(422, 'payload_invalido');
+            }
         }
         if ($this->authorizeUseCase === null) {
             return self::dependency('servicio_no_disponible');
