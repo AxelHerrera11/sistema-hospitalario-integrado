@@ -9,14 +9,14 @@ use MicroHis\Admision\Application\FindAvailableBeds;
 use MicroHis\Admision\Application\PersistenceFailure;
 use MicroHis\Admision\Domain\DomainRuleViolation;
 
-/** Traduce HTTP a casos de uso y errores a códigos de estado. No contiene reglas de negocio. */
-final class AdmissionHttpHandler
+/** Controller (MVC): traduce HTTP a casos de uso, elige JSON o la View HTML y mapea errores. Sin reglas de negocio. */
+final class AdmissionController
 {
     private const STATUS = ['PATIENT_NOT_FOUND' => 404, 'BED_NOT_FOUND' => 404, 'PATIENT_ALREADY_ADMITTED' => 409, 'BED_NOT_AVAILABLE' => 409];
 
-    public function __construct(private readonly AdmitPatient $admit, private readonly FindAvailableBeds $beds) {}
+    public function __construct(private readonly AdmitPatient $admit, private readonly FindAvailableBeds $beds, private readonly AvailableBedsView $view) {}
 
-    /** @param array<string, mixed> $input @return array{0: int, 1: array<string, mixed>} */
+    /** @param array<string, mixed> $input @return array{0: int, 1: array<string, mixed>|string} */
     public function handle(string $method, string $path, array $input, ?string $user): array
     {
         if ($user === null) {
@@ -25,7 +25,7 @@ final class AdmissionHttpHandler
         try {
             return match ("{$method} {$path}") {
                 'POST /admissions' => [201, ['admission' => get_object_vars($this->admit->execute($input, $user))]],
-                'GET /beds/available' => [200, ['beds' => $this->beds->execute((string) ($input['type'] ?? ''))]],
+                'GET /beds/available' => $this->available((string) ($input['type'] ?? ''), ($input['format'] ?? '') === 'html'),
                 default => [404, ['error' => 'NOT_FOUND']],
             };
         } catch (DomainRuleViolation $v) {
@@ -33,5 +33,12 @@ final class AdmissionHttpHandler
         } catch (PersistenceFailure) {
             return [500, ['error' => 'PERSISTENCE_FAILURE']];
         }
+    }
+
+    /** @return array{0: int, 1: array<string, mixed>|string} */
+    private function available(string $type, bool $html): array
+    {
+        $beds = $this->beds->execute($type);
+        return [200, $html ? $this->view->render($beds, $type) : ['beds' => $beds]];
     }
 }
