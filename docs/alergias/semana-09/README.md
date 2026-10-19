@@ -46,3 +46,21 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): expediente c
 | 4.1.3 Mensajes de estado | Parcial | El banner crítico usa `role="alert"`; al actualizarse tras un alta, no debe repetirse en cada navegación |
 
 «Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
+
+## Hallazgos priorizados
+
+| # | Severidad | Hallazgo | Impacto | Mejora propuesta |
+|---|---|---|---|---|
+| H1 | Alta | El banner «no disponible» puede confundirse con «sin datos» si el gris es muy suave | El médico podría ignorarlo y prescribir | Gris oscuro con ícono y el texto «verificar con el paciente» siempre visible |
+| H2 | Alta | El alérgeno en texto libre permite «Penisilina» o «PNC» | Prescripciones no reconocería la alergia | Buscador del catálogo de medicamentos (ASII-14) y texto libre solo como respaldo |
+| H3 | Media | El banner crece con muchas alergias | Empuja el contenido y cansa | Mostrar las 2 más graves y «Ver todas (n)» |
+| H4 | Media | `role="alert"` se repite al navegar entre pestañas | El lector de pantalla lo anuncia una y otra vez | Anunciar solo al abrir el expediente o al cambiar el nivel |
+| H5 | Baja | Falta ayuda sobre qué hacer con «no disponible» | Duda del personal nuevo | Enlace «¿Qué hago?» con el procedimiento |
+
+## Plan de mejoras
+
+1. **Antes del prototipo (Semana 11):** H1 y H2, porque pueden inducir una decisión clínica errónea.
+2. **En el prototipo:** H3 y H4, y la medición de contraste de los criterios pendientes.
+3. **Después:** H5.
+
+Las mejoras se incorporan en la adaptación móvil (Semana 10) y en el prototipo navegable (Semana 11). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
