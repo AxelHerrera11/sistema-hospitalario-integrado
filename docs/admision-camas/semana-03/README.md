@@ -2,7 +2,7 @@
 
 **Estudiante:** Herrera Sánchez, Axel Eliú (`AxelHerrera11`) · **Módulo:** ASII-07 · **Código:** [`micro-his/admision-camas`](../../../micro-his/admision-camas/)
 
-Flujo implementado: **admitir a un paciente y asignarle una cama disponible** (UC-ADM-01 a 03), en PHP 8.2+ vanilla con PDO y sentencias preparadas, sobre las columnas reales de `beds`, `care_episodes` y `bed_stays` (migraciones HOSPITAL 000200 y 000300).
+Flujo implementado: **admitir a un paciente y asignarle una cama disponible** (UC-ADM-01 a 05), en PHP 8.2+ vanilla con PDO y sentencias preparadas, sobre las columnas reales de `beds`, `care_episodes` y `bed_stays` (migraciones HOSPITAL 000200 y 000300).
 
 ## Vista de componentes (C4, nivel 3)
 

@@ -8,7 +8,7 @@ use Closure;
 use MicroHis\Admision\Domain\Admission;
 use MicroHis\Admision\Domain\DomainRuleViolation;
 
-/** UC-ADM-01 Admitir paciente y asignar cama: sin dos pacientes por cama ni dos camas por episodio, con auditoría. */
+/** UC-ADM-01 a 05 Admitir paciente y asignar cama: sin dos pacientes por cama ni dos camas por episodio, con auditoría. */
 final class AdmitPatient
 {
     /** @param Closure(): string $now @param Closure(): string $newId */

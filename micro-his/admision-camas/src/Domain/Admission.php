@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MicroHis\Admision\Domain;
 
-/** Hospitalización: episodio inpatient abierto + estancia en una cama (UC-ADM-01 y 03). Nace válida o no nace. */
+/** Hospitalización: episodio inpatient abierto + estancia en una cama (UC-ADM-01, 02, 04 y 05). Nace válida o no nace. */
 final readonly class Admission
 {
     private function __construct(
