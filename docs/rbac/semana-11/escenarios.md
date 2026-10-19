@@ -57,3 +57,13 @@ Los flujos son simulaciones locales (`file://`), sin backend. Usuarios/hospitale
 **Verificación esperada:** flujo accesible mediante enlaces/controles nativos, foco visible, saltar al contenido; anchos 320–1440 sin scroll horizontal global; bitácora en tarjetas hasta 768.
 
 **Observado:** PASS con Chrome DevTools Protocol: Tab recorrió `targetUser` → `newRole` → `btnAssign` → `Cancelar`. No se ejecutó lector de pantalla. Responsive probado con CDP en 320, 390, 430, 431, 768, 769 y 1440 px: `scrollWidth == innerWidth` en todos; bitácora cambia a tarjetas hasta 768 px. Contrastes medidos: texto general 17.06:1, estado denegado 9.16:1, permitido 8.65:1, banner 8.75:1, navegación activa 8.41:1.
+
+## F. Aislamiento entre hospitales (simulado)
+
+**Precondiciones:** dos hospitales simulados `H1` y `H2`; cada usuario de `USERS` pertenece a un hospital y `state.hospital` sigue a la sesión simulada.
+
+**Pasos:** en `#roles` con sesión `admin1` (H1), revisar que `targetUser` solo lista usuarios de H1; cambiar la sesión a `admin2` y confirmar que `targetUser` solo lista usuarios de H2; intentar asignar de H1 a un usuario de H2; en `#bitacora`, comprobar que cada hospital muestra solo sus eventos.
+
+**Esperado:** el selector de destino se filtra por el hospital de la sesión; una asignación de H1 a un usuario de H2 se rechaza con motivo `usuario_de_otro_hospital` sin modificar el rol; la bitácora solo muestra eventos del hospital de la sesión, conservando `trace_id`; permisos y anti-escalamiento no cambian. No es seguridad real de producción: son datos simulados.
+
+**Observado:** PASS con 7 comprobaciones ejecutables (`pruebas-aislamiento.mjs`, Node + `vm`) que ejercitan las funciones reales de `app.js`: visibilidad H1/H2, filtrado del selector, asignación válida, rechazo H1→H2, rol intacto, auditoría aislada y conservación de permisos/anti-escalamiento (7/7, 0 fallos). Las pruebas se ejecutan sobre el prototipo integrado de #149; el archivo de pruebas vive en #151 y no duplica `app.js`.

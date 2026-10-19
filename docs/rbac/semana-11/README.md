@@ -19,6 +19,7 @@ Abrir `prototipo.html` directamente con Chrome, Edge o navegador moderno; funcio
 3. **Denegación:** sesión `recep1` → `Operación protegida` → `Etiquetar muestra` → `Solicitar autorización`. Resultado simulado: 403 `RBAC_DENIED`, mensaje genérico y `trace_id`. Como `recep1` no tiene `rbac.denegaciones.ver`, la interfaz también oculta el detalle técnico y el enlace a bitácora. Solo la vista de soporte autorizada lo muestra en esta simulación.
 4. Para asignación no permitida, sesión `med1` → `Asignar rol`: el control se deshabilita y muestra el requisito faltante. `admin1` no puede asignar `superadmin` por la regla anti-escalamiento; se presenta una denegación trazable.
 5. **Permisos de rol:** sesión `med1` → `Operación protegida` → `Actualizar permisos de un rol`. El recurso usa `rbac.permisos.asignar`, distinto del permiso de membresía `rbac.roles.asignar`; `med1` recibe una denegación simulada.
+6. **Aislamiento entre hospitales:** cambie la sesión a `admin2` (H2) en `#roles` y compruebe que `targetUser` solo lista usuarios de H2; intentar asignar un usuario de otro hospital se rechaza. En `#bitacora`, cada hospital muestra solo sus eventos. Comprobaciones ejecutables: `pruebas-aislamiento.mjs` (7/7).
 
 ## Navegación
 
@@ -27,7 +28,7 @@ Abrir `prototipo.html` directamente con Chrome, Edge o navegador moderno; funcio
 | Inicio | `#inicio` | Entrada a flujos |
 | Asignar rol | `#roles` → `#confirmar` → `#roles-exito` | Selección, permisos del rol, confirmación y 201 simulado |
 | Operación protegida | `#operacion` → `#permitido` / `#denegado` | Decisión simulada por la matriz |
-| Bitácora | `#bitacora` | Eventos de auditoría demostrativos, separados de mensajes UI |
+| Bitácora | `#bitacora` | Eventos de auditoría demostrativos del hospital de la sesión, separados de mensajes UI |
 
 Ver `mapa-navegacion.mmd` y `escenarios.md`.
 
@@ -71,4 +72,4 @@ HTML semántico, enlaces y controles nativos operables por teclado, etiquetas as
 
 ## Resultados comprobados y límites
 
-Los resultados reales de las pruebas y capturas están registrados en `escenarios.md` y `evidencias/README.md`. El prototipo no valida tenant contra datos reales, no autentica, no persiste membresías ni registros y no sustituye la autorización server-side. No se probó con lector de pantalla ni contra un endpoint Laravel.
+Los resultados reales de las pruebas y capturas están registrados en `escenarios.md` y `evidencias/README.md`. El prototipo simula dos hospitales (H1/H2) con filtrado de usuarios, rechazo de asignaciones cruzadas y bitácora aislada, verificado con `pruebas-aislamiento.mjs` (7/7); no valida tenant contra datos reales, no autentica, no persiste membresías ni registros y no sustituye la autorización server-side. No se probó con lector de pantalla ni contra un endpoint Laravel. Las comprobaciones de aislamiento se ejecutan sobre el prototipo integrado de #149 (no se duplica `app.js` en #151).
