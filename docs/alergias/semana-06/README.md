@@ -43,3 +43,20 @@ flowchart LR
 | Repository como puerto y contrato `/api/v1` | Prescripciones depende del contrato, no de la base | Misma batería con PDO e InMemory; `openapi.yaml` validado |
 
 **Riesgos que sigo defendiendo como abiertos:** el código de alérgeno debe acordarse con el catálogo de medicamentos (Yamilet), y Prescripciones (María) debe tratar `unavailable` como bloqueo o confirmación manual.
+
+## Caso práctico arquitectónico
+
+**Pedido:** Farmacia pide que una **alergia a penicilina** alerte también al prescribir **cefalosporinas** (reactividad cruzada), aunque la alergia sea leve.
+
+| Capa o pieza | ¿Cambia? | Qué cambia |
+|---|---|---|
+| Domain | Sí, una regla nueva | Una regla de reactividad cruzada eleva el nivel a `critical` cuando el medicamento consultado pertenece a un grupo relacionado. En el diseño OCP de la Semana 2 es una clase `AllergyAlertRule` más, sin tocar el evaluador |
+| Application | Sí, una entrada | `GetAllergyAlert` recibe opcionalmente el medicamento que se quiere prescribir (`medication_code`) |
+| Repository | No | Sigue entregando las alergias activas del paciente |
+| Base HOSPITAL | No en el módulo | La relación penicilina–cefalosporinas viene del catálogo de medicamentos (ASII-14), no de `allergies` |
+| Contrato API | Sí, compatible | Parámetro opcional `?medication_code=`; sin él, la respuesta es la de siempre |
+| Consumidores | Solo Prescripciones | Envía el medicamento; el Expediente no cambia |
+
+**Conclusión:** la regla clínica nueva entra por el dominio y por un parámetro opcional del contrato. La falla segura no se toca: si el catálogo de medicamentos no responde, la alerta sigue siendo `unavailable` y no `none`.
+
+Guion de la exposición: [presentacion.md](./presentacion.md) · Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md)
