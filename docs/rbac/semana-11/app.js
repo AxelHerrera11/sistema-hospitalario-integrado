@@ -44,6 +44,8 @@ const USERS = {
     enf1: { name: 'Enf. Demo', role: 'enfermeria', hospital: 'H1' },
     recep1: { name: 'Recepcionista Demo', role: 'recepcion', hospital: 'H1' },
     nuevo1: { name: 'Usuario nuevo (sin rol)', role: null, hospital: 'H1' },
+    admin2: { name: 'Admin de hospital H2', role: 'admin_hospital', hospital: 'H2' },
+    nuevo2: { name: 'Usuario nuevo H2 (sin rol)', role: null, hospital: 'H2' },
 };
 
 const RESOURCES = {
@@ -56,6 +58,7 @@ const RESOURCES = {
 
 const state = {
     actor: 'admin1',
+    hospital: 'H1',
     target: 'nuevo1',
     newRole: 'enfermeria',
     resource: 'etiquetar-muestra',
@@ -70,6 +73,7 @@ const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
 function roleLabel(key) { return key ? ROLES[key].label : 'Sin rol'; }
 function permsOf(roleKey) { return roleKey ? ROLE_PERMS[roleKey] : []; }
+function usersOf(hospital) { return Object.keys(USERS).filter((key) => USERS[key].hospital === hospital); }
 function hasPerm(userKey, perm) { return permsOf(USERS[userKey].role).includes(perm); }
 /* Semana 3 genera trace- + 12 dígitos hexadecimales con random_bytes(6). */
 function trace() {
@@ -110,6 +114,7 @@ function permsHtml(roleKey) {
 function renderSession() {
     fillSelect($('sessionUser'), Object.keys(USERS).map((k) => [k, USERS[k].name]), state.actor);
     const u = USERS[state.actor];
+    state.hospital = u.hospital;
     $('sessionInfo').textContent = `Rol: ${roleLabel(u.role)} · Hospital: ${u.hospital}`;
     $$('[data-actor]').forEach((el) => { el.textContent = `Opera: ${u.name} — Rol: ${roleLabel(u.role)} — Hospital: ${u.hospital} (sesión simulada)`; });
 }
@@ -117,7 +122,9 @@ function renderSession() {
 function renderRoles() {
     state.pending = null;
     state.decision = null;
-    fillSelect($('targetUser'), Object.keys(USERS).map((k) => [k, USERS[k].name]), state.target);
+    const targets = usersOf(state.hospital);
+    if (!targets.includes(state.target)) { state.target = targets[0]; }
+    fillSelect($('targetUser'), targets.map((k) => [k, USERS[k].name]), state.target);
     fillSelect($('newRole'), Object.keys(ROLES).map((k) => [k, ROLES[k].label]), state.newRole);
     const t = USERS[state.target];
     $('currentRole').textContent = roleLabel(t.role);
@@ -198,21 +205,23 @@ function recordDenial(actorKey, perm, reason) {
 
 function seedDemoAudit() {
     state.audit.push({ when: '2026-10-15 21:58', event: 'rol_asignado', actor: USERS.admin1.name, hospital: 'H1', detail: 'Enf. Demo: Sin rol → Enfermeria', trace: '—' });
+    state.audit.push({ when: '2026-10-15 21:59', event: 'rol_asignado', actor: USERS.admin2.name, hospital: 'H2', detail: 'Usuario nuevo H2: Sin rol → Recepcionista', trace: '—' });
     const d = defaultDecision();
     state.audit.push({ when: '2026-10-15 22:00', event: 'acceso_denegado', actor: USERS[d.actor].name, hospital: USERS[d.actor].hospital, detail: `${RESOURCES[d.resource].perm}:${d.reason}`, trace: d.trace });
 }
 
 function renderAudit() {
     const wrap = $('auditWrap');
+    const events = state.audit.filter((e) => e.hospital === state.hospital);
     if (!hasPerm(state.actor, 'rbac.denegaciones.ver')) {
         wrap.innerHTML = '<p class="muted" role="status">No tiene autorización para consultar esta bitácora.</p>';
         return;
     }
-    if (state.audit.length === 0) {
+    if (events.length === 0) {
         wrap.innerHTML = '<p class="muted">Aún no hay eventos en esta sesión. Ejecute una asignación o una operación protegida.</p>';
         return;
     }
-    const rows = state.audit.map((e) => `
+    const rows = events.map((e) => `
         <tr>
             <td data-label="Fecha (demo)">${e.when}</td>
             <td data-label="Evento">${e.event}</td>
@@ -257,6 +266,16 @@ function route() {
 function confirmAssignment() {
     const p = state.pending || { target: state.target, newRole: state.newRole };
     const from = USERS[p.target].role;
+
+    const crossHospital = USERS[state.actor].hospital !== state.hospital
+        || USERS[p.target].hospital !== state.hospital;
+    if (crossHospital) {
+        const e = recordDenial(state.actor, 'rbac.roles.asignar', 'usuario_de_otro_hospital');
+        state.decision = { allowed: false, actor: state.actor, resource: 'asignar-rol', reason: 'usuario_de_otro_hospital', trace: e.trace, when: e.when };
+        announce('Asignación denegada: el usuario no pertenece al hospital de la sesión.');
+        location.hash = '#denegado';
+        return;
+    }
 
     if (!hasPerm(state.actor, 'rbac.roles.asignar')) {
         const e = recordDenial(state.actor, 'rbac.roles.asignar', 'sin_permiso_de_rol');
