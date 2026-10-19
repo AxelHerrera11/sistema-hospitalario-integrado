@@ -33,3 +33,34 @@ flowchart TD
   resp -- sin respuesta --> verify[«No sabemos si se guardó: verifique la cama antes de repetir»]
   resp -- 201 --> ok[«Paciente admitido en MED-101»]
 ```
+
+## Wireframes iniciales (baja fidelidad)
+
+### 1. Datos de la admisión
+
+```text
+┌ Admisión hospitalaria ─────────────────────────────── Hospital: HOSP-DEMO ┐
+│ Paciente* [P-DEMO · Juan Pérez (ficticio) ▼]                             │
+│ Motivo*   [Neumonía, requiere oxígeno_______________________]           │
+│ Tipo de cama* (•) Adulto ( ) Pediátrica ( ) Aislamiento                  │
+│                                          [Buscar camas disponibles]     │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Tablero de camas disponibles
+
+```text
+┌ Camas disponibles · Adulto (2) ──────────────────────────────────────────┐
+│ [MED-101 ✓ libre]  [MED-102 ✓ libre]  [MED-103 ✕ ocupada]  [MED-104 🔧]  │
+│ Seleccionada: MED-101                          [Volver] [Admitir]        │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3. Error recuperable: la cama se ocupó
+
+```text
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ⚠ Otra admisión tomó MED-101 hace un momento (BED_NOT_AVAILABLE).        │
+│   Elija otra cama del tablero actualizado.                [Ver tablero] │
+└──────────────────────────────────────────────────────────────────────────┘
+```
