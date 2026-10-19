@@ -46,3 +46,21 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): bandeja de a
 | 1.4.13 Contenido en hover o foco | Cumple | No hay información que solo aparezca al pasar el cursor |
 
 «Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
+
+## Hallazgos priorizados
+
+| # | Severidad | Hallazgo | Impacto | Mejora propuesta |
+|---|---|---|---|---|
+| H1 | Alta | Sin red, una bandeja vacía podría leerse como «no hay alertas» | Un valor crítico quedaría sin atender | Estado «Alertas no disponibles: consultar al laboratorio por teléfono», distinto del vacío |
+| H2 | Alta | El aviso sonoro es la única señal fuera de la pantalla | En una sala ruidosa pasa desapercibido | Notificación del navegador y escalamiento por plazo (ya diseñado) |
+| H3 | Media | El 403 no dice qué hacer | Enfermería no sabe cómo avisar | Botón «Avisar a la jefatura» con el contacto de guardia |
+| H4 | Media | `role="alert"` se repetiría en cada refresco de la bandeja | Ruido constante para el lector de pantalla | Anunciar solo alertas nuevas |
+| H5 | Baja | El 🔴 sin texto | Depende del color | Etiqueta «crítica» visible |
+
+## Plan de mejoras
+
+1. **Antes del prototipo (Semana 11):** H1 y H2, porque pueden inducir una decisión clínica errónea.
+2. **En el prototipo:** H3 y H4, y la medición de contraste de los criterios pendientes.
+3. **Después:** H5.
+
+Las mejoras se incorporan en la adaptación móvil (Semana 10) y en el prototipo navegable (Semana 11). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
