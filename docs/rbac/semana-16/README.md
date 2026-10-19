@@ -1,5 +1,7 @@
 # Semana 16 — Integración funcional de RBAC
 
+**Entregas para respetar el límite de 400 líneas:** S16a `ce4fda1` (integración funcional), S16b `650780f` (matriz activa/pendiente y pruebas) y S16c `c804c89` (catálogo, contrato y esta documentación). S16c depende de S16b, que depende de S16a.
+
 María / Mar-03. Worktree `s16-rbac`, rama `feature/asii-02-semana-16-rbac-mar-03`, creada desde `origin/develop` (`4af4d8f`) y actualizada por fast-forward a `757bcae` tras completar fetch.
 
 ## Alcance y diseño
