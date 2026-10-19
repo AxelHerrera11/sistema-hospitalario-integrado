@@ -31,3 +31,18 @@ Se evalúan las pantallas de la [Semana 8](../semana-08/README.md): lista de pru
 | 8 | Diseño minimalista | Cumple | La tabla muestra solo lo que Órdenes necesita para decidir |
 | 9 | Ayudar a reconocer y corregir errores | Parcial | El 409 dice que hay una versión vigente, pero no ofrece cerrarla |
 | 10 | Ayuda y documentación | Falla | No hay ayuda contextual sobre qué es un valor crítico |
+
+## Checklist WCAG 2.1 AA
+
+| Criterio | Resultado | Nota |
+|---|---|---|
+| 1.3.1 Información y relaciones | Parcial | Los rangos se presentan como cuatro campos sueltos; deben agruparse en un `fieldset` con `legend` |
+| 1.4.3 Contraste mínimo | Pendiente de verificar | Los avisos ⚠ deben llegar a 4,5:1 sobre el fondo |
+| 1.4.1 Uso del color | Cumple | Los errores tienen texto, no solo color |
+| 2.1.1 Teclado | Cumple | Todos los controles son nativos y alcanzables con Tab |
+| 2.4.3 Orden del foco | Parcial | Tras un error 422, el foco debe ir al campo indicado en `field` |
+| 3.3.1 Identificación de errores | Cumple | El error nombra el campo y la regla |
+| 3.3.2 Etiquetas o instrucciones | Parcial | Falta indicar la unidad junto a cada rango |
+| 4.1.3 Mensajes de estado | Falla | La confirmación «GLU v2 registrada» no se anuncia: requiere `role="status"` |
+
+«Pendiente de verificar» significa que el contraste se mide sobre el prototipo de la Semana 11, porque los wireframes no tienen colores finales.
