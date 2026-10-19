@@ -32,3 +32,17 @@ El formulario muestra el error del campo que devuelve el servidor (`field` del `
 |---|---|---|
 | GET | `/api/v1/lab-tests` | `laboratorio.catalogo.ver` |
 | POST | `/api/v1/lab-tests` | `laboratorio.catalogo.administrar` |
+
+## Propuesta de refactorización (micro-HIS → HIS Laravel)
+
+| Hoy en el micro-HIS | Problema al integrar | Refactor propuesto |
+|---|---|---|
+| `ApiKernel` valida `X-Tenant-ID` y `X-User-Ref` | Duplica lo que ya hacen `TenantMiddleware` y `JwtAuth`; `X-User-Ref` no es seguro fuera del gateway | Quitar esas validaciones: el usuario sale de `auth()->user()` y el tenant del middleware |
+| `LabTestController::handle()` con un `match` de rutas | Laravel ya enruta; el `match` mezcla enrutamiento y presentación | Una acción por método en el controller y rutas en `routes/api.php` dentro del grupo `['tenant', 'jwt.auth']` |
+| Validación de tipos en el caso de uso | Laravel tiene FormRequest con mensajes por campo | `StoreLabTestRequest` valida tipos y obligatorios; el dominio conserva las reglas de negocio |
+| `PersistenceFailure` y `DomainRuleViolation` mapeados a mano | Cada controller repetiría el mapeo | Renderizar ambas excepciones en `bootstrap/app.php` como `problem+json` con el mismo `code` |
+| `PdoLabTestRepository` con PDO directo | Otra conexión aparte de la del HIS | `EloquentLabTestRepository` con `DB::connection('hospital')` y transacción de Laravel, enlazado en un ServiceProvider; el InMemory queda para las pruebas |
+| View HTML (`LabTestListView`) | La UI del HIS es Vue | Se reemplaza por los componentes Vue; la View queda solo en el micro-HIS |
+| Cliente PHP (`LabCatalogClient`) | Dentro del HIS, los consumidores están en el mismo proceso | Órdenes (ASII-16), Resultados (ASII-19) y Alertas (ASII-21) llaman al caso de uso o al endpoint; el cliente HTTP se usa solo si el módulo se separa |
+
+**Qué no cambia:** el dominio, los casos de uso, el contrato `/api/v1` y los códigos de error. Por eso el refactor es de bajo riesgo: las pruebas de dominio y de contrato de las Semanas 3 a 5 siguen valiendo.
