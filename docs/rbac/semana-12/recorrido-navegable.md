@@ -22,7 +22,7 @@ Demostrar: (1) asignación autorizada, (2) autorización permitida, (3) denegaci
 ## Paso 2: Autorización de operación permitida
 - **Pantalla:** `#operacion`
 - **Sesión:** `med1` (medico). Tiene `rbac.autorizar` + `prescripciones.crear`.
-- **Acción:** Seleccionar recurso `Crear prescripción` (`POST /api/v1/prescripciones`, perm `prescripciones.crear`).
+- **Acción:** Seleccionar recurso `Crear prescripción` (`POST /api/v1/prescripciones`, ruta ilustrativa del prototipo, perm `prescripciones.crear`).
 - **Pulsar:** `Solicitar autorización`.
 - **Resultado esperado:** `#permitido`. Muestra "Permitido", usuario/rol/ruta/permiso.
 - **Evidencia:** captura `#permitido`.
@@ -30,7 +30,7 @@ Demostrar: (1) asignación autorizada, (2) autorización permitida, (3) denegaci
 ## Paso 3: Denegación de operación no autorizada (trazable)
 - **Pantalla:** `#operacion`
 - **Sesión:** Cambiar a `recep1` (recepcion). Carece `muestras.etiquetar` y carece `rbac.denegaciones.ver`.
-- **Acción:** Seleccionar recurso `Etiquetar muestra` (`POST /api/v1/muestras/{id}/etiquetas`, perm `muestras.etiquetar`).
+- **Acción:** Seleccionar recurso `Etiquetar muestra` (`POST /api/v1/muestras/{id}/etiquetas`, ruta ilustrativa del prototipo, perm `muestras.etiquetar`).
 - **Pulsar:** `Solicitar autorización`.
 - **Resultado esperado:** `#denegado`. **Mensaje genérico** "No tiene autorización para realizar esta acción." (no revela `muestras.etiquetar`). `dPath`, `dRole`, `dPerm = muestras.etiquetar`, `dReason = sin_permiso_de_rol`, `dTrace = trace-[0-9a-f]{12}`. **`technicalDetail` oculto**, **`auditLink` oculto** (porque `recep1` carece `rbac.denegaciones.ver`).
 - **Verificar restricción bitácora:** Navegar a `#bitacora`. Debe mostrar "No tiene autorización para consultar esta bitácora." (protegido).
@@ -44,8 +44,8 @@ Demostrar: (1) asignación autorizada, (2) autorización permitida, (3) denegaci
 
 ## Paso 5: Errores, prevención y protección
 - **A) Sin permiso para asignar (UI):** Sesión `med1` → `#roles`. Intentar asignar: `btnAssign` **deshabilitado** + `reqHint` indica "falta el permiso rbac.roles.asignar..." (validación real).
-- **B) Anti-escalamiento:** Sesión `admin1` (nivel 80) intenta asignar `superadmin` (nivel 100). Tras confirmar, debe resultar `#denegado` con `dReason = rol_supera_privilegio`, `trace-` 12 hex. Motivo generado por `AssignerPrivilegeRule`.
+- **B) Anti-escalamiento:** Sesión `admin1` (nivel 80) intenta asignar `superadmin` (nivel 100). Tras confirmar, debe resultar `#denegado` con `dReason = rol_supera_privilegio`, `trace-` 12 hex. Motivo simulado en el prototipo por `app.js` (la regla real `AssignerPrivilegeRule` vive en el micro-HIS y no se invoca desde el prototipo).
 - **C) Duplicado:** `nuevo1` ya tiene `enfermeria` (tras paso 1). En `#roles`, seleccionar `nuevo1` + `enfermeria` → `reqHint` indica rol ya vigente; botón deshabilitado (evita navegar a confirmar). Si se fuerza flujo, lógica impide cambio (409 conceptual).
 - **D) Separación de permisos:** En `#operacion` con `med1`, seleccionar `Actualizar permisos de un rol` (usa `rbac.permisos.asignar`). Autorizar → `#denegado` con `dPerm = rbac.permisos.asignar` (distinto de `rbac.roles.asignar`). Verificado en S11.
 
-**Notas:** Todo lo anterior existe y fue verificado (20/20 PASS). Simulaciones explícitas: sin HTTP/backend, memoria. Protección: ocultamiento técnico/bitácora según `rbac.denegaciones.ver` (real). Errores prevenidos en UI.
+**Notas:** Todo lo anterior existe y fue verificado (6 escenarios PASS documentados en S11). Simulaciones explícitas: sin HTTP/backend, memoria. Protección: ocultamiento técnico/bitácora según `rbac.denegaciones.ver` (real). Errores prevenidos en UI.

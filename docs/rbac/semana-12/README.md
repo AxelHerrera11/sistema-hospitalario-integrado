@@ -7,7 +7,7 @@ Defender las decisiones de componentes, UX, accesibilidad y movilidad de RBAC (r
 **Asignación:** Semana 12
 **Estudiante:** LÓPEZ FAJARDO, MARÍA DE LOS ANGELES (Mar-03)
 **Rama:** `feature/asii-02-semana-12-rbac-mar-03`
-**Base PR:** `develop` (HEAD `4aafa77`)
+**Base PR:** `develop` (HEAD `4aafa77` al abrir el PR; referencia actual `1d4bbe0`)
 **Refs:** #4
 
 ## Alcance
@@ -28,12 +28,12 @@ Este documento describe el trabajo de la Semana 12, basado en la auditoría de l
 
 El prototipo navegable de **Semana 11** (`docs/rbac/semana-11/`) es la fuente de demostración utilizada:
 
-- `docs/rbac/semana-11/prototipo.html` (209 líneas)
+- `docs/rbac/semana-11/prototipo.html` (212 líneas)
 - `docs/rbac/semana-11/app.js` (346 líneas)
 - `docs/rbac/semana-11/styles.css` (225 líneas)
 - `docs/rbac/semana-11/escenarios.md`, `mapa-navegacion.mmd`, `README.md`, `evidencias/`
 
-**Validación del prototipo (Semana 11):** 20 comprobaciones funcionales instrumentadas **PASS**, sin errores. Mejoras de accesibilidad aplicadas y verificadas.
+**Validación del prototipo (Semana 11):** 6 escenarios **PASS** documentados en `docs/rbac/semana-11/escenarios.md` (A asignación, B denegación, C autorización permitida, C1 permisos de rol, D anti-escalamiento, E responsive/teclado); no se re-ejecutaron en Semana 12.
 
 ## Distinción entre implementado, simulación y producción
 
@@ -44,10 +44,10 @@ El prototipo navegable de **Semana 11** (`docs/rbac/semana-11/`) es la fuente de
 ## Fuentes consultadas (solo lectura)
 
 - Semana 3: `micro-his/rbac/src/Application/AssignRole.php:25`, `AssignerPrivilegeRule.php` (niveles, `rol_supera_privilegio`), `tests/run.php:19,41`
-- Semana 5: `docs/rbac/semana-05/permisos.md:10,47`, `contrato-api.md:19`
+- Semana 5: `docs/rbac/semana-05/permisos.md:10,47`, `contrato-api.md:19` (PR #180, pendiente de merge)
 - Semana 10: `docs/rbac/semana-10/breakpoints.md:16`, diseño móvil
 - Semana 11: todos los archivos (prototipo + docs + evidencias)
 
 ## Limitaciones
 
-Este entregable es **solo documentación y análisis**. No se modifica código, no se implementa el cambio solicitado y no se asume integración de los PRs de Semana 11 en `develop`. Las evidencias citadas existen en las ramas/worktrees de Semana 11; su ubicación se documenta en `evidencias/README.md`.
+Este entregable es **solo documentación y análisis**. No se modifica código ni se implementa el cambio solicitado. Al redactar no se asumía la integración de los PRs de Semana 11 en `develop`; a la fecha de referencia, `styles.css` ya está en `develop` (#148) y HTML/lógica/docs siguen pendientes (#149–#151). Las evidencias citadas existen en las ramas/worktrees de Semana 11; su ubicación se documenta en `evidencias/README.md`.

@@ -19,7 +19,7 @@ Las evidencias para demostrar el recorrido navegable **ya existen** en la Semana
 
 ## Cómo usar las evidencias
 
-Para el recorrido de Semana 12, tomar las capturas anteriores y referenciarlas por ruta relativa: `../semana-11/evidencias/<archivo>.png`. No se añaden nuevas capturas ficticias. Las validaciones funcionales (20/20 PASS) ya constan en `docs/rbac/semana-11/escenarios.md`.
+Para el recorrido de Semana 12, tomar las capturas anteriores y referenciarlas por ruta relativa: `../semana-11/evidencias/<archivo>.png`. No se añaden nuevas capturas ficticias. Las validaciones funcionales (6 escenarios PASS) constan en `docs/rbac/semana-11/escenarios.md`; no se re-ejecutaron en Semana 12.
 
 ## Limitaciones
 

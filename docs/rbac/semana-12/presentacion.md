@@ -9,8 +9,8 @@
 - **Alcance:** Documentación/defensa (no implementación del cambio solicitado).
 
 ## Diapositiva 2 — Decisiones de componentes
-- **Separación de permisos:** `rbac.roles.asignar` protege **membresías** `POST /api/v1/rbac/users/{id}/roles` (S1, S8–S10). `rbac.permisos.asignar` protege **permisos de rol** `POST /api/v1/roles/{role}/permissions` (S11).
-- **Jerarquía y anti-escalamiento:** Niveles `AssignerPrivilegeRule` (7 roles, S3). Motivo `rol_supera_privilegio` si nuevo rol supera nivel del actor.
+- **Separación de permisos:** `rbac.roles.asignar` protege **membresías** `POST /api/v1/rbac/users/{id}/roles` (S1, S8–S10). `rbac.permisos.asignar` protege **permisos de rol** `POST /api/v1/roles/{role}/permissions` (S11). Son rutas propuestas/ilustrativas del prototipo; no están implementadas como endpoints Laravel.
+- **Jerarquía y anti-escalamiento:** Niveles `AssignerPrivilegeRule` (7 roles, S3). Motivo `rol_supera_privilegio` si nuevo rol supera nivel del actor; en el prototipo lo simula `app.js`, no la regla real.
 - **Trazabilidad:** `trace-` + 12 hex (`random_bytes(6)`), S3. Razones `sin_permiso_de_rol` / `rol_supera_privilegio`. Evento `acceso_denegado` con `permiso:razón`.
 - **Principio mínimo privilegio:** Mensaje 403 **genérico** (S1); detalle técnico/bitácora solo para actores con `rbac.denegaciones.ver`.
 
@@ -37,7 +37,7 @@
 - **Principio:** Autorización **server-side** obligatoria en producción; prototipo es demo.
 
 ## Diapositiva 6 — Demostración del flujo (basado en prototipo real)
-Casos validados (S11, 20/20 PASS):
+Casos validados (S11, 6 escenarios PASS documentados):
 1. **Asignación autorizada** (admin1 → nuevo1 enfermeria): habilitado → confirmar → 201 simulado + `rol_asignado`.
 2. **Autorización permitida** (med1 → prescripciones.crear): `#permitido`.
 3. **Denegación trazable** (recep1 → etiquetar muestra): 403 genérico, `trace-` 12 hex, detalle oculto a recep1; visible a admin1. Motivo `sin_permiso_de_rol`.
