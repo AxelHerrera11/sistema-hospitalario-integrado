@@ -19,12 +19,11 @@ flowchart LR
     al[Allergy · AllergyAlert<br/>none · warning · critical · unavailable]
   end
   subgraph I[Persistence]
-    pdo[PdoAllergyStore<br/>transacción: allergies + local_access_audits]
+    pdo[PdoAllergyStore<br/>transacción: allergies + local_access_audits] --> db[(allergies · local_access_audits<br/>local_patients solo lectura)]
   end
   h --> r & g
   r & g --> al
   pdo -. implementa .-> port
-  pdo --> db[(allergies · local_access_audits<br/>local_patients solo lectura)]
 ```
 
 | Capa | Responsabilidad |
