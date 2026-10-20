@@ -6,4 +6,4 @@
 
 **Revisado y ajustado:** se rehízo según el enunciado de la tarea (solo teléfono y con el alta incluida). Usa los roles de la Semana 8, los hallazgos de la Semana 9 y el comportamiento del cliente de la Semana 5.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar y aprobar esta entrega.
+**Validación humana:** realizada el 2026-10-19. Josué Fernando Hicho García revisó esta entrega y la aprueba.
