@@ -62,8 +62,8 @@ Cada métrica indica quién responde por ella, a partir de qué valor se actúa,
 
 | ID | Métrica | Umbral | Fuente | Responsable | Acción si se incumple | Hoy |
 |---|---|---|---|---|---|---|
-| M11 | Peticiones con `X-Tenant-ID` ajeno rechazadas con 401/403 (RNF-MED-01) | 100 % | Prueba de kernel con tenant ajeno | Autor + María | Mayor: se bloquea el release del módulo hasta documentar y probar el aislamiento | No hay prueba (H-01) |
-| M12 | Rutas de `/api/v1` sin permiso declarado que se despachan | 0 | Prueba que recorre las rutas del `Router` contra `ApiKernel::PERMISSIONS` | Autor | Mayor: la ruta nace denegada (403) y se declara su permiso | 2 rutas devuelven `NULL` (H-04, P5) |
+| M11 | Peticiones con `X-Tenant-ID` ajeno rechazadas con 401/403 (RNF-MED-01) | 100 % | Prueba de kernel con tenant ajeno | Autor + María | Mayor: se bloquea el release del módulo hasta documentar y probar el aislamiento | No hay prueba en el módulo (H-01); la plataforma lo valida con `tenant` y `rbac:` (confirmado por María el 2026-10-20), falta montar el módulo |
+| M12 | Rutas de `/api/v1` sin permiso declarado que se despachan | 0 | Prueba que recorre las rutas del `Router` contra `ApiKernel::PERMISSIONS` | Autor | Mayor: la ruta nace denegada (403) y se declara su permiso | 2 rutas devuelven `NULL` (H-04, P5); en la plataforma cada ruta declara su `rbac:medicos.*` |
 | M13 | Respuestas, también las de error, con `trace_id` y `X-Trace-Id` | 100 % | `tests/api.php` y bitácora | Autor | Se corrige el camino sin cabecera | 100 % (C07 ✔) |
 | M14 | Respuestas de disponibilidad con datos del paciente | 0 | Revisión del contrato frente a `AppointmentReader` | Autor + Lis | Crítico: se retira el campo y se avisa a Citas | 0 (solo horas, RNF-MED-03) |
 | M15 | Denegaciones (403) y fallos de RBAC (503) registrados con actor y permiso faltante | 100 % | Bitácora del kernel | María | Se agrega el registro; sin él no se puede auditar el rechazo | Sin medir |
@@ -82,9 +82,9 @@ Un control **preventivo** evita el defecto; uno **detectivo** lo encuentra a tie
 
 | ID | Tipo | Control | Umbral | Fuente | Responsable | Acción cuando falla | Estado |
 |---|---|---|---|---|---|---|---|
-| K01 | Preventivo | Ruta nueva nace denegada: sin permiso declarado responde 403 | 0 rutas abiertas por omisión | Prueba de rutas contra `PERMISSIONS` | Autor | Se declara el permiso o se quita la ruta | ✖ H-04 |
+| K01 | Preventivo | Ruta nueva nace denegada: sin permiso declarado responde 403 | 0 rutas abiertas por omisión | Prueba de rutas contra `PERMISSIONS` | Autor | Se declara el permiso o se quita la ruta | ⚠ H-04: lo cubre `rbac:` por ruta al montar el módulo |
 | K02 | Preventivo | Falla cerrada: RBAC caído responde 503, sin actor 401, sin permiso 403 | 100 % de casos | `tests/api.php` | Autor + María | Se corrige antes de cualquier release | ✔ |
-| K03 | Preventivo | El tenant lo fija la conexión del hospital y el kernel rechaza `X-Tenant-ID` ajeno | 100 % de rechazos | Prueba de tenant ajeno | Autor + María | Se documenta la decisión con ASII-09 y se prueba | ✖ H-01 |
+| K03 | Preventivo | El tenant lo fija la conexión del hospital y el kernel rechaza `X-Tenant-ID` ajeno | 100 % de rechazos | Prueba de tenant ajeno | Autor + María | Se documenta la decisión con ASII-09 y se prueba | ⚠ H-01: lo valida `tenant`/`rbac`; el módulo debe usar la conexión `HOSPITAL` del contexto |
 | K04 | Preventivo | Perfil, especialidad principal y auditoría en una sola transacción | 0 altas parciales | Prueba de auditoría caída | Autor | Mayor: se revierte y se revisa `transaction()` | ✔ |
 | K05 | Preventivo | La base decide la unicidad: índice único parcial por usuario, `EXCLUDE` de vigencias | 0 duplicados | Migración 000100 | Javier | Se avisa a ASII-09 con el caso | ⚠ la unicidad por usuario solo existe en la base real (H-03, H-06) |
 | K06 | Preventivo | Disponibilidad como horario menos intervalos `[inicio, fin)` de citas activas | 0 choques | Prueba de cita de 60 min | Autor + Lis | Se corrige `SlotPlanner` y `AppointmentReader` | ✖ H-02 |
@@ -150,3 +150,8 @@ Probabilidad e impacto: Baja, Media, Alta. Nivel: 🔴 Crítico, 🟠 Alto, 🟡
 - La duración en la bitácora (M10) y el registro de denegaciones (M15) deben comprobarse con María antes de comprometer el umbral.
 - Los responsables son propuestos; el autor avisa a Lis, Javier y María antes de que figuren como confirmados.
 - El plan no corrige ningún defecto: esos cambios se hacen en PR aparte, uno por hallazgo, con la prueba que antes fallaba.
+
+### Actualización del 2026-10-20: dependencias confirmadas
+- **RBAC (María, ASII-02):** los permisos `medicos.registrar`, `medicos.asociar_especialidad` y `medicos.ver_disponibilidad` ya están en `config/rbac.php` de `develop`. Cada ruta usa `tenant`, `jwt.auth` y `rbac:<permiso>`; RBAC valida el permiso y la membresía vigente, y el módulo no duplica esa matriz. Los códigos de error cambian a los de RBAC (`AUTH_REQUIRED`, `RBAC_DENIED`, `RBAC_UNAVAILABLE`, `TENANT_REQUIRED`, `TENANT_MISMATCH`) y el contrato debe actualizarse.
+- **`doctor_schedules` (Javier, issue #24):** ASII-04 respondió `A-1: (b)` (la migración la mantiene el módulo de verificación de BD) y `A-3: (b)` (trigger de integridad en la misma migración), con el número `000900`. La integración del PR #413 depende del grupo antes del 2026-10-22 12:00. Con la tabla, R06 y K12 pasan a medirse.
+- **Pendiente:** montar el módulo en Laravel con la conexión `HOSPITAL` (K03, M11, M12) es trabajo de integración posterior; hasta entonces M11 y M12 siguen sin prueba propia.
