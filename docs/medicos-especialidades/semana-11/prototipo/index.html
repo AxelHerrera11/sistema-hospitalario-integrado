@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo · Médicos, especialidades y disponibilidad (ASII-04)</title>
+<style>
+  :root { --tinta: #1f2a44; --suave: #5b6478; --fondo: #f6f7fb; --borde: #c9cedb; --azul: #1d4ed8; --ok: #166534; --error: #b42318; --aviso: #fef3c7; --foco: #f59e0b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--tinta); background: var(--fondo); }
+  header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 10px 16px; background: var(--tinta); color: #fff; }
+  header h1 { font-size: 18px; margin: 0; flex: 1 1 auto; }
+  header label { font-size: 14px; }
+  .sim { width: 100%; padding: 6px 16px; background: var(--aviso); font-size: 14px; }
+  nav { display: flex; gap: 4px; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--borde); }
+  nav a { padding: 12px 16px; min-height: 44px; color: var(--tinta); text-decoration: none; border-bottom: 3px solid transparent; }
+  nav a[aria-current="page"] { border-color: var(--azul); font-weight: 600; }
+  main { max-width: 960px; margin: 0 auto; padding: 16px 16px 96px; }
+  h2 { font-size: 20px; margin: 8px 0 12px; }
+  .tarjeta { background: #fff; border: 1px solid var(--borde); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+  .fila { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  label.campo { display: grid; gap: 4px; font-weight: 600; flex: 1 1 200px; }
+  .ayuda { font-weight: 400; font-size: 14px; color: var(--suave); }
+  input, select, button { font: inherit; min-height: 44px; }
+  input, select { padding: 8px; border: 1px solid var(--suave); border-radius: 6px; background: #fff; }
+  button { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--azul); background: #fff; color: var(--azul); cursor: pointer; }
+  button.principal { background: var(--azul); color: #fff; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  :focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+  .franjas { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; padding: 0; border: 0; }
+  .franjas label { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; min-height: 44px; border: 1px solid var(--azul); border-radius: 6px; cursor: pointer; }
+  .franjas input { position: absolute; opacity: 0; }
+  .franjas input:checked + span { font-weight: 700; }
+  .franjas label:has(input:checked) { background: var(--azul); color: #fff; }
+  .franjas label:has(input:focus-visible) { outline: 3px solid var(--foco); outline-offset: 2px; }
+  .mensaje { border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; border-left: 6px solid; background: #fff; }
+  .mensaje.ok { border-color: var(--ok); } .mensaje.error { border-color: var(--error); } .mensaje.info { border-color: var(--azul); }
+  .traza { font-size: 13px; color: var(--suave); }
+  .cargando { opacity: .4; pointer-events: none; }
+  .accion { position: sticky; bottom: 0; padding: 12px 0; background: var(--fondo); }
+  .accion button { width: 100%; }
+  dl.resumen { display: grid; grid-template-columns: auto 1fr auto; gap: 8px 12px; align-items: center; }
+  dl.resumen dt { font-weight: 600; } dl.resumen dd { margin: 0; }
+  .oculto { display: none; }
+  select, input { max-width: 100%; min-width: 0; }
+  .franjas label { position: relative; }
+  @media (max-width: 767px) {
+    header label { display: grid; width: 100%; gap: 2px; }
+    label.campo { flex-basis: 100%; }
+    nav { position: fixed; bottom: 0; left: 0; right: 0; justify-content: space-around; border-top: 1px solid var(--borde); z-index: 2; }
+    nav a { flex: 1; text-align: center; border-bottom: 0; border-top: 3px solid transparent; }
+    nav a[aria-current="page"] { border-color: var(--azul); }
+    .accion { bottom: 52px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>HIS · Médicos y especialidades</h1>
+  <label>Rol <select id="rol" aria-label="Rol del usuario"><option value="admin">Administrador del hospital</option><option value="recepcion">Recepcionista</option><option value="medico">Médico (Dra. Ana López)</option></select></label>
+  <label>Respuesta simulada <select id="sim" aria-label="Respuesta simulada del servidor"><option value="ok">Correcta</option><option value="tomada">Franja tomada (error crítico)</option><option value="licencia">Licencia repetida (409)</option><option value="sin-respuesta">Sin respuesta</option><option value="sin-conexion">Sin conexión</option></select></label>
+</header>
+<div class="sim" role="note">Prototipo sin servidor: los datos son ficticios y la respuesta del servidor se elige arriba, con los códigos del contrato <code>/api/v1</code>.</div>
+<nav aria-label="Secciones"><a href="#disponibilidad">Disponibilidad</a><a href="#medicos">Médicos</a></nav>
+<main id="vista" tabindex="-1"></main>
+<div id="estado" role="status" class="oculto"></div>
+<script>
+const ESPECIALIDADES = { NEURO: 'Neurología', CARD: 'Cardiología', PED: 'Pediatría' };
+const MEDICOS = [
+  { id: 'doc-ana', nombre: 'Dra. Ana López', licencia: 'COL-9', esp: [['NEURO', true, '2026-01-01']], horario: ['08:00–09:30'], libres: ['08:00', '09:00'] },
+  { id: 'doc-beto', nombre: 'Dr. Beto Ruiz', licencia: 'COL-8', esp: [['NEURO', true, '2026-01-01']], horario: null, libres: [] },
+  { id: 'doc-carla', nombre: 'Dra. Carla Méndez', licencia: 'COL-5', esp: [['CARD', true, '2026-03-01']], horario: ['10:00–11:30'], libres: ['10:00', '10:30', '11:00'] },
+];
+const $ = (s) => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const espera = params.has('demo') ? 0 : 600;
+const alta = { usuario: '', licencia: '', esp: 'CARD', desde: '2026-01-01' };
+let paso = 1, mensaje = null, conservar = false, elegido = null, consulta = { esp: 'NEURO', fecha: '2026-10-19' };
+const traza = () => Math.random().toString(16).slice(2, 10);
+const rol = () => $('#rol').value, sim = () => $('#sim').value;
+const avisar = (texto) => { const e = $('#estado'); e.textContent = texto; };
+const caja = (tipo, titulo, texto, extra = '') => `<div class="mensaje ${tipo}" role="${tipo === 'error' ? 'alert' : 'status'}"><strong>${titulo}</strong><br>${texto}${extra}</div>`;
+const servidor = (accion) => new Promise((ok) => { $('#vista').classList.add('cargando'); setTimeout(() => { $('#vista').classList.remove('cargando'); ok(accion()); }, espera); });
+
+function disponibilidad() {
+  const propios = rol() === 'medico';
+  const lista = MEDICOS.filter((m) => propios ? m.id === 'doc-ana' : m.esp.some(([c]) => c === consulta.esp));
+  const sinConexion = sim() === 'sin-conexion';
+  return `<h2>${propios ? 'Mi disponibilidad' : 'Disponibilidad'}</h2>${mensaje ?? ''}
+  ${sinConexion ? caja('info', 'Sin conexión', 'Se muestra la última consulta, de las 08:12. Las franjas no se pueden elegir hasta que vuelva la conexión.') : ''}
+  <form class="tarjeta fila" onsubmit="event.preventDefault(); consultar()">
+    ${propios ? '' : `<label class="campo">Especialidad <select id="esp">${Object.entries(ESPECIALIDADES).map(([c, n]) => `<option value="${c}" ${c === consulta.esp ? 'selected' : ''}>${n}</option>`).join('')}</select></label>`}
+    <label class="campo">Fecha <span class="ayuda">AAAA-MM-DD; hoy por defecto</span><input id="fecha" type="date" value="${consulta.fecha}"></label>
+    <button type="submit">Consultar</button>
+  </form>
+  ${lista.length === 0 ? caja('info', 'No hay médicos vigentes para esta especialidad', 'Pruebe otra fecha o especialidad.') : lista.map((m) => `<div class="tarjeta"><strong>${m.nombre}</strong>
+    ${m.horario === null ? '<p>Sin horario configurado · pida a administración que lo cargue.</p>'
+      : m.libres.length === 0 ? '<p>Sin franjas libres este día.</p>'
+      : `<fieldset class="franjas" role="radiogroup" aria-label="Franjas de ${m.nombre}">${m.libres.map((h) => `<label><input type="radio" name="franja" value="${m.id}|${h}" ${sinConexion ? 'disabled' : ''}><span>${h}</span></label>`).join('')}</fieldset>`}</div>`).join('')}
+  ${propios ? '' : `<div class="accion"><button class="principal" onclick="elegir()" ${sinConexion ? 'disabled' : ''}>Elegir franja (se confirma en Citas)</button></div>`}`;
+}
+
+function consultar() {
+  consulta = { esp: $('#esp')?.value ?? consulta.esp, fecha: $('#fecha').value };
+  mensaje = null; servidor(() => pintar('disponibilidad'));
+}
+
+function elegir() {
+  const marcada = document.querySelector('input[name="franja"]:checked');
+  if (!marcada) { mensaje = caja('error', 'Elija una franja', 'Toque una hora libre de la lista.'); return pintar('disponibilidad'); }
+  const [id, hora] = marcada.value.split('|'), medico = MEDICOS.find((m) => m.id === id);
+  servidor(() => {
+    if (sim() === 'tomada') {
+      medico.libres = medico.libres.filter((h) => h !== hora);
+      mensaje = caja('error', `${hora} ya no está libre`, `Otra cita tomó esa hora con ${medico.nombre} mientras usted elegía. La lista se actualizó: elija otra hora.`, `<p class="traza">Conflicto de agenda · trace_id ${traza()}</p>`);
+    } else if (sim() === 'sin-respuesta') {
+      mensaje = caja('error', 'No se pudo consultar', 'Se intentó dos veces sin respuesta. <button onclick="consultar()">Reintentar</button>');
+    } else {
+      mensaje = caja('ok', `${hora} con ${medico.nombre} lista para Citas`, 'Elegir no reserva: Citas confirma la hora al crear la cita.', '<p><button class="principal">Continuar en Citas</button></p>');
+    }
+    pintar('disponibilidad'); avisar(mensaje.replace(/<[^>]+>/g, ' '));
+  });
+}
+
+function medicos() {
+  return `<h2>Médicos</h2>${mensaje ?? ''}${rol() === 'admin' ? '<p><button class="principal" onclick="location.hash=\'alta\'">+ Registrar médico</button></p>' : ''}
+  ${MEDICOS.map((m) => `<div class="tarjeta"><strong>${m.nombre}</strong>${rol() === 'admin' ? ` · ${m.licencia}` : ''}<br>
+    ${m.esp.map(([c, p, d]) => `${ESPECIALIDADES[c]} (${p ? 'principal' : 'secundaria'}, desde ${d})`).join(' · ')}<br>
+    <span class="ayuda">Horario: ${m.horario ? m.horario.join(', ') + ' de lunes a viernes' : 'sin horario configurado'}</span>
+    ${rol() === 'admin' ? `<p><button onclick="elegido='${m.id}'; location.hash='asociar'">Asociar especialidad</button></p>` : ''}</div>`).join('')}`;
+}
+
+function asociarVista() {
+  const m = MEDICOS.find((x) => x.id === elegido);
+  if (rol() !== 'admin' || !m) return caja('error', 'No tiene permiso para esta acción', 'Asociar especialidades requiere medicos.asociar_especialidad.');
+  const principal = m.esp.find(([, p]) => p);
+  return `<h2>Asociar especialidad · ${m.nombre}</h2>${mensaje ?? ''}<form class="tarjeta" onsubmit="event.preventDefault(); asociar()">
+    <div class="fila"><label class="campo">Especialidad* <select id="nueva">${Object.entries(ESPECIALIDADES).filter(([c]) => !m.esp.some(([e]) => e === c)).map(([c, n]) => `<option value="${c}">${n}</option>`).join('')}</select></label>
+    <label class="campo">Vigente desde* <span class="ayuda">Dentro de la vigencia del perfil</span><input id="desdeEsp" type="date" value="2026-11-01"></label></div>
+    <p><label><input id="esPrincipal" type="checkbox"> Principal</label> <span class="ayuda">Ya tiene principal: ${principal ? ESPECIALIDADES[principal[0]] : 'ninguna'}. Solo puede haber una por periodo.</span></p></form>
+    <div class="accion"><button class="principal" id="asociarBtn" onclick="asociar()">Asociar especialidad</button></div>`;
+}
+
+function asociar() {
+  const m = MEDICOS.find((x) => x.id === elegido), codigo = $('#nueva').value, esPrincipal = $('#esPrincipal').checked, desde = $('#desdeEsp').value;
+  if (!params.has('demo') && !confirm(`¿Agregar ${ESPECIALIDADES[codigo]} como ${esPrincipal ? 'principal' : 'secundaria'} desde ${desde}?`)) return;
+  $('#asociarBtn').disabled = true;
+  servidor(() => {
+    if (esPrincipal && m.esp.some(([, p]) => p)) { mensaje = caja('error', 'Ya tiene una principal en ese periodo', 'PRIMARY_SPECIALTY_CONFLICT: desmarque «Principal» para agregarla como secundaria.'); return pintar('asociar'); }
+    m.esp.push([codigo, esPrincipal, desde]); conservar = true;
+    mensaje = caja('ok', 'Especialidad asociada', `${m.nombre} atiende también ${ESPECIALIDADES[codigo]} desde ${desde}.`); location.hash = 'medicos';
+  });
+}
+
+const PASOS = [
+  ['usuario', 'Usuario', 'text', 'Elija el usuario ya sincronizado del médico.'],
+  ['licencia', 'Número de colegiado', 'text', 'El del colegio profesional, sin espacios. No puede repetirse.'],
+  ['esp', 'Especialidad principal', 'select', 'Solo puede haber una principal en el mismo periodo.'],
+  ['desde', 'Vigente desde', 'date', 'Desde cuándo atiende con esta especialidad.'],
+];
+
+function altaVista() {
+  if (rol() !== 'admin') return caja('error', 'No tiene permiso para esta acción', 'Registrar médicos requiere medicos.registrar.');
+  if (paso > PASOS.length) {
+    return `<h2>Confirmar alta</h2>${mensaje ?? ''}<div class="tarjeta"><dl class="resumen">${PASOS.map(([k, t], i) => `<dt>${t}</dt><dd>${k === 'esp' ? ESPECIALIDADES[alta[k]] : alta[k]}</dd><dd><button onclick="paso=${i + 1}; mensaje=null; pintar('alta')">Corregir</button></dd>`).join('')}</dl></div>
+    <div class="accion"><button class="principal" id="registrar" onclick="registrar()">Registrar médico</button></div>`;
+  }
+  const [k, t, tipo, ayuda] = PASOS[paso - 1];
+  const control = tipo === 'select' ? `<select id="campo">${Object.entries(ESPECIALIDADES).map(([c, n]) => `<option value="${c}" ${c === alta.esp ? 'selected' : ''}>${n}</option>`).join('')}</select>` : `<input id="campo" type="${tipo}" value="${alta[k]}" required>`;
+  return `<h2>Registrar médico · paso ${paso} de ${PASOS.length}</h2>${mensaje ?? ''}<form class="tarjeta" onsubmit="event.preventDefault(); siguiente('${k}')">
+    <label class="campo">${t}* <span class="ayuda">${ayuda}</span>${control}</label></form>
+    <div class="accion fila"><button onclick="paso=Math.max(1,paso-1); pintar('alta')" ${paso === 1 ? 'disabled' : ''}>Atrás</button><button class="principal" onclick="siguiente('${k}')">Siguiente</button></div>`;
+}
+
+function siguiente(k) {
+  const v = $('#campo').value.trim();
+  if (v === '') { mensaje = caja('error', 'Falta este dato', 'Complete el campo para continuar.'); return pintar('alta'); }
+  alta[k] = v; paso++; mensaje = null; pintar('alta');
+}
+
+function registrar() {
+  $('#registrar').disabled = true;
+  servidor(() => {
+    if (sim() === 'licencia') mensaje = caja('error', 'Ese número de colegiado ya está registrado', 'LICENSE_ALREADY_REGISTERED.', ' <a href="#medicos">Abrir el médico existente</a>');
+    else if (sim() === 'sin-respuesta') mensaje = caja('error', 'No sabemos si se guardó', 'Busque la licencia antes de repetir el alta: repetirla podría duplicar el intento.', ' <a href="#medicos">Buscar licencia</a>');
+    else { MEDICOS.push({ id: 'doc-nuevo', nombre: alta.usuario, licencia: alta.licencia, esp: [[alta.esp, true, alta.desde]], horario: null, libres: [] }); paso = 1; mensaje = caja('ok', 'Médico registrado', `${alta.usuario} quedó con ${ESPECIALIDADES[alta.esp]} como principal. Pida a administración su horario.`); conservar = true; return (location.hash = 'medicos'); }
+    pintar('alta');
+  });
+}
+
+function pintar(ruta) {
+  const vistas = { disponibilidad, medicos, alta: altaVista, asociar: asociarVista };
+  const actual = vistas[ruta] ? ruta : (rol() === 'admin' ? 'medicos' : 'disponibilidad');
+  $('#vista').innerHTML = vistas[actual]();
+  document.querySelectorAll('nav a').forEach((a) => a.toggleAttribute('aria-current', a.hash === '#' + actual || (['alta', 'asociar'].includes(actual) && a.hash === '#medicos')));
+  document.querySelectorAll('nav a[aria-current]').forEach((a) => a.setAttribute('aria-current', 'page'));
+  if (mensaje) avisar(mensaje.replace(/<[^>]+>/g, ' '));
+}
+
+window.addEventListener('hashchange', () => { if (!conservar) mensaje = null; conservar = false; pintar(location.hash.slice(1)); });
+$('#rol').addEventListener('change', () => { mensaje = null; pintar(location.hash.slice(1)); });
+$('#sim').addEventListener('change', () => { mensaje = null; pintar(location.hash.slice(1)); });
+['rol', 'sim'].forEach((p) => params.has(p) && ($('#' + p).value = params.get(p)));
+pintar(location.hash.slice(1));
+if (params.get('demo') === 'elegir') { document.querySelector('input[name="franja"]').checked = true; elegir(); }
+if (params.get('demo') === 'asociar') { elegido = 'doc-ana'; pintar('asociar'); $('#esPrincipal').checked = params.has('principal'); asociar(); }
+if (params.get('demo') === 'alta') { Object.assign(alta, { usuario: 'Dr. Luis Paz', licencia: 'COL-12', esp: 'CARD', desde: '2026-11-01' }); paso = 5; pintar('alta'); if (sim() !== 'ok' || params.has('registrar')) registrar(); }
+</script>
+</body>
+</html>
