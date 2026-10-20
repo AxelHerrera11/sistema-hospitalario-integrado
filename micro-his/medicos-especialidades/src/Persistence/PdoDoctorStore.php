@@ -58,7 +58,8 @@ final class PdoDoctorStore implements DoctorRepository, AppointmentReader
     {
         return $this->rows("SELECT p.doctor_profile_id FROM doctor_profiles p JOIN doctor_specialties s ON s.doctor_profile_id = p.doctor_profile_id
             WHERE s.specialty_id = ? AND p.status = 'active' AND s.status = 'active' AND s.valid_from <= ? AND (s.valid_to IS NULL OR s.valid_to > ?)
-            ORDER BY p.doctor_profile_id", [$specialtyId, $date, $date], PDO::FETCH_COLUMN);
+            AND p.valid_from <= ? AND (p.valid_to IS NULL OR p.valid_to > ?)
+            ORDER BY p.doctor_profile_id", [$specialtyId, $date, $date, $date, $date], PDO::FETCH_COLUMN);
     }
 
     public function busySlots(string $doctorId, string $date): array

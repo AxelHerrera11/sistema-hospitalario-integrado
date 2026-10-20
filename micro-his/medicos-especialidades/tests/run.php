@@ -50,6 +50,9 @@ $body = $http->availability(['specialty' => 'NEURO', 'date' => '2026-10-19'])['b
 $porMedico = array_column($body['doctors'], null, 'doctor_id');
 check('camino feliz: disponibilidad del lunes -> Ana libre 08:00 y 09:00 (08:30 confirmada)', $porMedico['doc-ana']['slots'] === ['08:00', '09:00']);
 check('RF-MED-07: médico sin horario aparece con SCHEDULE_NOT_CONFIGURED', $porMedico['doc-beto']['status'] === 'SCHEDULE_NOT_CONFIGURED');
+$pdo->exec("INSERT INTO doctor_profiles VALUES ('doc-caro', 'u-c', 'COL-7', 'active', '2026-01-01', '2026-10-01')");
+$pdo->exec("INSERT INTO doctor_specialties VALUES ('doc-caro', 'sp-neuro', 1, '2026-01-01', NULL, 'active')");
+check('vigencia del perfil: médico con perfil vencido no aparece en la disponibilidad', !isset(array_column($http->availability(['specialty' => 'NEURO', 'date' => '2026-10-19'])['body']['doctors'], null, 'doctor_id')['doc-caro']));
 check('RF-MED-06: especialidad sin médicos -> 200 NO_DOCTORS_FOR_SPECIALTY', $http->availability(['specialty' => 'CARD', 'date' => '2025-12-01'])['body']['code'] === 'NO_DOCTORS_FOR_SPECIALTY');
 
 $status = static fn (array $r): string => $r['status'] . ' ' . ($r['body']['code'] ?? '');
@@ -60,6 +63,15 @@ check('regla de dominio: especialidad inactiva -> 422', $status($http->registerD
 check('regla de dominio: licencia repetida -> 409', $status($http->registerDoctor($admin, $alta)) === '409 LICENSE_ALREADY_REGISTERED');
 check('validación: fecha inválida -> 422', $status($http->availability(['specialty' => 'NEURO', 'date' => '2026-02-30'])) === '422 INVALID_DATE_RANGE'
     && $status($http->availability(['specialty' => 'NEURO', 'date' => '19/10/2026'])) === '422 INVALID_DATE_RANGE');
+$links = static fn (): array => $col($pdo, 'SELECT COUNT(*) FROM doctor_specialties');
+$antes = $links();
+check('validación de tipos: is_primary "false" (cadena) -> 422 sin guardar', $status($http->associateSpecialty($admin, $id, ['specialty_code' => 'CARD', 'is_primary' => 'false', 'valid_from' => '2026-11-01'])) === '422 PAYLOAD_INVALID' && $links() === $antes);
+check('validación de tipos: valid_to numérico o specialty_code arreglo -> 422 sin guardar', $status($http->associateSpecialty($admin, $id, ['specialty_code' => 'CARD', 'valid_from' => '2026-11-01', 'valid_to' => 20261201])) === '422 PAYLOAD_INVALID'
+    && $status($http->associateSpecialty($admin, $id, ['specialty_code' => ['CARD'], 'valid_from' => '2026-11-01'])) === '422 PAYLOAD_INVALID' && $links() === $antes);
+check('validación de tipos: encabezado o campo de alta no string -> 422 sin guardar', $status($http->registerDoctor(['X-User-ID' => 7], ['license_number' => 'COL-2'] + $alta)) === '422 PAYLOAD_INVALID'
+    && $status($http->registerDoctor($admin, ['license_number' => 2] + $alta)) === '422 PAYLOAD_INVALID' && $col($pdo, "SELECT COUNT(*) FROM doctor_profiles WHERE license_number IN ('COL-2', '2')") === [0]);
+check('validación de tipos: consulta de disponibilidad con fecha no string -> 422', $status($http->availability(['specialty' => 'NEURO', 'date' => ['2026-10-19']])) === '422 PAYLOAD_INVALID');
+check('is_primary booleano: false se guarda como secundaria (0)', $http->associateSpecialty($admin, 'doc-beto', ['specialty_code' => 'CARD', 'is_primary' => false, 'valid_from' => '2026-11-01'])['body']['is_primary'] === false && $col($pdo, "SELECT is_primary FROM doctor_specialties WHERE doctor_profile_id = 'doc-beto' AND specialty_id = 'sp-card'") === [0]);
 try {
     (new SpecialtyAssignmentPolicy())->assertCanAssociate(new Period('2026-01-01'), [new SpecialtyLink('x', true, new Period('2026-01-01'))], new SpecialtyLink('y', true, new Period('2026-05-01', '2026-06-01')));
     check('regla de dominio pura (sin BD): la política rechaza dos principales', false);
