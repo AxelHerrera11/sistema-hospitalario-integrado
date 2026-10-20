@@ -2,6 +2,8 @@
 
 **Estudiante:** Hicho García, Josué Fernando (`Jhos-hgnu`) · **Módulo:** ASII-04 · **Entrega:** diagrama de componentes y propuesta de refactorización.
 
+**Tarea individual:** Diseñe los componentes backend y frontend propios de Médicos, especialidades y disponibilidad para «registro de médico, asociación de especialidad y consulta de disponibilidad». Refactorice conceptualmente el punto con mayor acoplamiento entre médicos, especialidades, horarios, disponibilidad y conflictos de agenda, separando UI, aplicación, dominio y persistencia sin ampliar el módulo.
+
 ## Objetivo
 
 Diseñar los componentes del flujo «registro de médico, asociación de especialidad y consulta de disponibilidad» dentro del HIS real (Laravel 12 y Vue 3, ya presentes en `develop`), separando UI, aplicación, dominio y persistencia. El diseño reutiliza el dominio y los casos de uso del micro-HIS de las Semanas 3 a 5 sin reescribirlos.
@@ -38,7 +40,25 @@ El botón «Registrar» se deshabilita mientras el POST está en curso y, si la 
 | POST | `/api/v1/doctors/{doctor}/specialties` | `medicos.asociar_especialidad` |
 | GET | `/api/v1/availability` | `medicos.ver_disponibilidad` |
 
-## Propuesta de refactorización (micro-HIS → HIS Laravel)
+## Punto de mayor acoplamiento: la consulta de disponibilidad
+
+Es el único punto donde se cruzan las cinco áreas: **médicos** (`doctorsWith`), **especialidades** (`activeSpecialtyId`), **horarios** (`scheduleFor`), **disponibilidad** (`SlotPlanner`) y **conflictos de agenda** (`busySlots`, las citas activas). Hoy el acoplamiento se ve en dos lugares del micro-HIS:
+
+1. **`QueryAvailability` decide el estado de cada médico.** Recibe cinco colaboradores y, dentro de su bucle, elige entre `SCHEDULE_NOT_CONFIGURED` y `OK`: una regla de negocio vive en la capa de aplicación.
+2. **`PdoDoctorStore` implementa `DoctorRepository` y `AppointmentReader` a la vez.** La misma clase escribe médicos y lee la agenda de Citas (`appointments`, con `substr(starts_at, …)`), así que un cambio en el esquema de Citas obliga a tocar el repositorio de médicos.
+
+### Refactorización conceptual por capa
+
+| Capa | Antes | Después |
+|---|---|---|
+| UI | — (el micro-HIS solo devuelve JSON) | `AvailabilityPage.vue` pinta `status` y `slots` tal como llegan; no cruza horario con citas ni calcula conflictos |
+| Aplicación | `QueryAvailability` orquesta **y** decide el estado de cada médico | Solo orquesta: especialidad → médicos vigentes → por médico pide horario y horas ocupadas → entrega todo al dominio |
+| Dominio | `SlotPlanner` solo resta las horas ocupadas | Objeto de valor `DoctorDayAvailability` que decide el estado (`OK` o `SCHEDULE_NOT_CONFIGURED`) y las franjas usando `SlotPlanner`; se prueba sin base |
+| Persistencia | `PdoDoctorStore` implementa `DoctorRepository` y `AppointmentReader` | `PdoDoctorStore` (o `EloquentDoctorRepository`) solo implementa `DoctorRepository`; `DbAppointmentReader` aparte lee `appointments`, cuyo dueño es Citas |
+
+**Sin ampliar el módulo:** no hay endpoints, tablas, estados ni reglas nuevos. El contrato `/api/v1` y sus respuestas son los mismos, y la suite de la Semana 4 (20 casos por adaptador) debe pasar sin cambios. Lo único que cambia es dónde vive cada responsabilidad: un cambio en la agenda de Citas toca solo `DbAppointmentReader`, y una regla nueva de estado toca solo el dominio.
+
+## Ajustes para integrar en el HIS Laravel
 
 | En el micro-HIS (Semanas 3 a 5) | Problema al integrar | Refactor propuesto |
 |---|---|---|
@@ -54,7 +74,7 @@ El botón «Registrar» se deshabilita mientras el POST está en curso y, si la 
 
 ## Plan de la refactorización
 
-1. Copiar `Domain` y `Application` a `app/Modules/Medicos/` y ajustar el namespace.
+1. Copiar `Domain` y `Application` a `app/Modules/Medicos/`, ajustar el namespace y aplicar la refactorización de la consulta de disponibilidad.
 2. Crear `EloquentDoctorRepository` y `DbAppointmentReader` y enlazarlos a sus puertos en un ServiceProvider del módulo.
 3. Crear el controller, los FormRequest y las rutas con `permission:` cuando María publique el alias y el catálogo.
 4. Renderizar `DoctorRuleViolation` en `bootstrap/app.php` con el `code` del contrato.
