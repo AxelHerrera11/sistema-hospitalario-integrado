@@ -89,6 +89,8 @@ class CentralSyncIntegrityTest extends TestCase
             '--path' => database_path('migrations/central/'.$migration.'.php'),
             '--realpath' => true, '--step' => count($repository->getRan()), '--force' => true,
         ]));
+        // The command restores the default connection; inspect CENTRAL explicitly.
+        $repository->setSource('central');
         $this->assertSame($otherMigrations, $repository->getRan());
         $this->assertFalse($this->tableExists('sync_nodes'));
         $this->assertTrue($this->tableExists('patient_consents'));
