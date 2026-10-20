@@ -9,7 +9,7 @@ Diseñar el flujo UX de «asignación de rol, autorización de una operación y 
 ## Flujo por rol
 
 1. El **admin_hospital** abre «Asignar rol», busca al usuario dentro de su hospital (tenant) y elige el rol.
-2. El sistema valida el permiso `rbac.roles.asignar`, los tipos y los campos no vacíos antes de habilitar guardar.
+2. El sistema valida el permiso `rbac.asignar`, los tipos y los campos no vacíos antes de habilitar guardar.
 3. Si el asignador no supera el privilegio del rol, se produce una **denegación trazable** (`403` + `trace_id`).
 4. El sistema confirma la asignación y enlaza la bitácora; cualquier rol puede **solicitar autorización** de una operación y ver su resultado.
 
@@ -28,7 +28,7 @@ Diseñar el flujo UX de «asignación de rol, autorización de una operación y 
 ```text
 [Asignar rol]  Hospital: [H1 v]
 Usuario: [buscar...        ]  Rol: [Enfermeria v]
-Permiso requerido: rbac.roles.asignar
+Permiso requerido: rbac.asignar
 [Validar] [Asignar]
 ```
 
