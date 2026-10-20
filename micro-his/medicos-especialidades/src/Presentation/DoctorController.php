@@ -34,15 +34,14 @@ final class DoctorController
     public function associateSpecialty(Request $request, string $doctorId): array
     {
         return $this->respond(201, function () use ($request, $doctorId): array {
-            $to = $request->text('valid_to');
-            $link = $this->associate->execute($request->actor(), $doctorId, $request->text('specialty_code'), ($request->body['is_primary'] ?? false) === true, $request->text('valid_from'), $to === '' ? null : $to);
+            $link = $this->associate->execute($request->actor(), $doctorId, $request->text('specialty_code'), $request->flag('is_primary'), $request->text('valid_from'), $request->optionalText('valid_to'));
             return ['doctor_profile_id' => $doctorId, 'specialty_id' => $link->specialtyId, 'is_primary' => $link->isPrimary];
         });
     }
 
     public function availability(Request $request): array
     {
-        return $this->respond(200, fn () => $this->availability->execute((string) ($request->query['specialty'] ?? ''), (string) ($request->query['date'] ?? '')));
+        return $this->respond(200, fn () => $this->availability->execute($request->queryText('specialty'), $request->queryText('date')));
     }
 
     /** Traduce resultado o excepción a estado + JSON; cada error termina la petición aquí. */
