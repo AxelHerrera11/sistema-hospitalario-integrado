@@ -7,5 +7,6 @@ declare(strict_types=1);
 require __DIR__ . '/harness.php';
 
 require __DIR__ . '/domain.php';
+require __DIR__ . '/application.php';
 
 finish();
