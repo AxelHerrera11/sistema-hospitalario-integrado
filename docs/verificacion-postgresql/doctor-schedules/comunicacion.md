@@ -1,6 +1,6 @@
 # Comunicación de la tabla `doctor_schedules` (entidad 28)
 
-Registro de a quién selehcomunicó la solicitud y con qué acuerdos, conforme al plan
+Registro de a quién se comunicó la solicitud y con qué acuerdos, conforme al plan
 de integración: "nadie espera a nadie, el contrato se publica antes que el código y
 todo bloqueo se avisa el mismo día".
 
