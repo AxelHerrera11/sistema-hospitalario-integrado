@@ -8,3 +8,4 @@
 | 4 | Repository PDO/InMemory, MVC y repositorio compartido | `semana-04/` | run 47, pdo 18, repository 19, http 17 | #572 (A); ramas `…semana-04-mvc…` (B) y `…semana-04-capas-docs…` (C) | Pendiente | Aprobación requerida en develop (@rortizs) |
 | 5 | Contrato API, cliente-servidor, microservicio y plan | `semana-05/` | `redocly lint` válido; PlantUML reproducible | Ramas `…semana-05-contrato-api…`, `…semana-05-cliente-servidor…` y `…semana-05-plan-integracion…` | Pendiente | Aprobación de 4A; acuerdos con RBAC y H5 |
 | 6 | Defensa: presentación, trazabilidad, matriz y cambio práctico | `semana-06/` | Marp PDF (8 diapositivas) revisado visualmente; PlantUML | Rama `…semana-06-presentacion…` | Pendiente | Defensa oral real; cambio real del docente |
+| 7 | Componentes, contratos y refactor | `semana-07/` | Fan-in medido; PlantUML | Rama `…semana-07-componentes…` | Pendiente | UI y controlador Laravel (Semanas 11 y 16) |
