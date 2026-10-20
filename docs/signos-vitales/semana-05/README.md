@@ -41,8 +41,8 @@ El máximo de InMemory es la primera petición (carga de clases), no una cola.
 | PR | Contenido | Estado |
 |---|---|---|
 | 1 de 3 (este) | Contrato, OpenAPI, frontera, `tests/bench.php` | Documentación y medición |
-| 2 de 3 | `ApiKernel`, permisos, `trace_id`, `GET /vital-signs/{id}` y pruebas | Por desarrollar |
-| 3 de 3 | `VitalSignApiClient` y transportes | Por desarrollar |
+| 2 de 3 | `ApiKernel`, permisos, `trace_id`, `GET /vital-signs/{id}` y `tests/api.php` | Servidor API (rama `...api-servidor...`) |
+| 3 de 3 | `VitalSignApiClient` y transportes | Cliente (rama `...api-cliente...`) |
 
 ## Pendientes de integración
 
