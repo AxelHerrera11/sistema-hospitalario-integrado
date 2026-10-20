@@ -24,6 +24,7 @@ final class RefreshUserSession
         private readonly RefreshTokenRepository $refreshTokens,
         private readonly JwtAccessTokenIssuer $jwt,
         private readonly AuditLogRepositoryInterface $audit,
+        private readonly AuthenticateUser $authenticate,
     ) {}
 
     public function execute(string $opaqueToken, Hospital $hospital): array
@@ -146,11 +147,7 @@ final class RefreshUserSession
                 'token_type' => $token['token_type'],
                 'expires_in' => $token['expires_in'],
                 'refresh_token' => $nextRefreshToken,
-                'user' => [
-                    'user_id' => (string) $user->getKey(),
-                    'email' => $user->email,
-                    'display_name' => $user->display_name,
-                ],
+                'user' => $this->authenticate->userPayload($user),
                 'hospital' => [
                     'hospital_id' => $hospitalId,
                     'name' => $hospital->name,
