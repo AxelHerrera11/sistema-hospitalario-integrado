@@ -28,3 +28,16 @@ La disponibilidad de médicos no tiene datos persistidos; Citas y Admisión no p
 ofrecer un horario real al paciente. La tabla queda en el PR con su migración
 reversible y sus pruebas, lista para integrarse en cuanto el grupo apruebe la
 entidad 28 y el número de archivo.
+
+## Regla de especialidad: opciones verificadas
+
+El esquema admite un horario en una especialidad que el médico no tiene en
+`doctor_specialties`. Con ASII-04 hay que escoger una de estas tres reglas:
+
+| Opción | Garantía | Estado |
+|---|---|---|
+| A. Regla de aplicación | Ninguna en la base de datos; la API valida al escribir | Estado actual de este PR |
+| B. Trigger de integridad | Rechaza el INSERT o UPDATE si no hay `doctor_specialties` activa para ese médico y esa especialidad en la vigencia del horario | Verificada: se puede implementar dentro de la migración |
+| C. FK compuesta `(doctor_profile_id, specialty_id)` | Sería la más fuerte | **No implementable**: `doctor_specialties` no tiene `UNIQUE (doctor_profile_id, specialty_id)` porque el modelo es por vigencias; PostgreSQL responde `ERROR: there is no unique constraint matching given keys for referenced table "doctor_specialties"` (SQLSTATE 42830) |
+
+Este PR mantiene la opción A y deja B y C documentadas hasta que ASII-04 decida.
