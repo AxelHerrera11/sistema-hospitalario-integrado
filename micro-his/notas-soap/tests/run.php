@@ -12,6 +12,7 @@ use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
+use MicroHis\NotasSoap\Domain\Uuid;
 use MicroHis\NotasSoap\Persistence\InMemoryAuditTrail;
 use MicroHis\NotasSoap\Persistence\InMemoryCareAssignmentReader;
 use MicroHis\NotasSoap\Persistence\InMemoryClinicalNoteRepository;
@@ -63,7 +64,8 @@ $soap = ['subjective' => 'Tos de 3 días', 'objective' => 'T 38.4 °C', 'assessm
 [$pdo, $http] = app();
 $r = $http->registerNote($lopez, 'ep1', $soap);
 $nota = $r['body']['clinical_note_id'] ?? '';
-check('camino feliz: nota SOAP 201 en borrador con auditoría', $r['status'] === 201 && $col($pdo, 'SELECT note_type FROM clinical_notes') === ['soap'] && $col($pdo, 'SELECT event FROM local_access_audits') === ['nota_soap_registrada']);
+check('camino feliz: nota SOAP 201 en borrador con auditoría', $r['status'] === 201 && $col($pdo, 'SELECT note_type FROM clinical_notes') === ['soap'] && $col($pdo, 'SELECT action FROM local_access_audits') === ['nota_soap.registrada']
+    && preg_match(Uuid::PATTERN, $nota) === 1 && $col($pdo, "SELECT resource_id FROM local_access_audits WHERE json_extract(metadata, '$.version_no') = 1") === [$nota]);
 $r = $http->associateDiagnosis($lopez, $nota, ['code' => 'J18.9', 'type' => 'primary']);
 check('camino feliz: diagnóstico principal J18.9 201 con descripción del catálogo', $r['status'] === 201 && $col($pdo, 'SELECT description FROM diagnoses') === ['Neumonía, no especificada']);
 
@@ -98,11 +100,26 @@ check('auditoría por interfaz: PDO con bitácora caída -> 500 y rollback de la
 [$notes, $audit, $http] = memoryApp();
 $nota = $http->registerNote($lopez, 'ep1', $soap)['body']['clinical_note_id'];
 $r = $http->associateDiagnosis($lopez, $nota, ['code' => 'J18.9', 'type' => 'primary']);
-check('InMemory: nota y diagnóstico 201 con auditoría', $r['status'] === 201 && array_column($audit->events, 'event') === ['nota_soap_registrada', 'diagnostico_asociado']);
+check('InMemory: nota y diagnóstico 201 con auditoría', $r['status'] === 201 && array_column($audit->events, 'action') === ['nota_soap.registrada', 'diagnostico.asociado']);
 check('InMemory: código inactivo -> 422 y no tratante -> 403', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'A00', 'type' => 'secondary'])) === '422 DIAGNOSIS_CODE_INVALID'
     && $status($http->registerNote(['X-User-ID' => 'dr.perez'], 'ep1', $soap)) === '403 NOT_TREATING_PHYSICIAN');
 $notes->markSigned($nota);
 check('InMemory: nota firmada -> 409', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
 [$notes, $audit, $http] = memoryApp(auditDown: true);
-check('InMemory: auditoría caída -> 500 y la nota no queda guardada', $status($http->registerNote($lopez, 'ep1', $soap)) === '500 SOAP_PERSISTENCE_ERROR' && $notes->find('nota-1') === null);
+check('InMemory: auditoría caída -> 500 y la nota no queda guardada', $status($http->registerNote($lopez, 'ep1', $soap)) === '500 SOAP_PERSISTENCE_ERROR' && $notes->notes === []);
+[$pdo, $http] = app();
+$nota = $http->registerNote($lopez, 'ep1', $soap)['body']['clinical_note_id'];
+$rechaza = static function (string $sql) use ($pdo): bool {
+    try {
+        $pdo->exec($sql);
+        return false;
+    } catch (PDOException) {
+        return true;
+    }
+};
+check('integridad del doble: diagnóstico con otro autor o fecha no ISO, y borrado de la nota -> rechazados', $rechaza("INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES ('d1', '$nota', 'ep1', 'dr.perez', 'I10', 'x', 'secondary', '2026-10-20')")
+    && $rechaza("INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES ('d2', '$nota', 'ep1', 'dra.lopez', 'I10', 'x', 'secondary', '20/10/2026')")
+    && $rechaza("DELETE FROM clinical_notes"));
+$pdo->exec("UPDATE clinical_notes SET status = 'signed'");
+check('integridad del doble: nota firmada inmutable y auditoría solo de inserción', $rechaza("UPDATE clinical_notes SET content = 'otro'") && $rechaza('DELETE FROM local_access_audits'));
 echo 'Todas las pruebas pasaron.' . PHP_EOL;
