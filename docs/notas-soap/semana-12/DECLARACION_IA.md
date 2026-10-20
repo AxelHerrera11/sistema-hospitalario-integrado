@@ -12,6 +12,6 @@
 - En Chrome se ejecutó el flujo de corrección (sin motivo y con motivo); no se probó con lector de pantalla ni con axe.
 - En esta entrega no se modificó código del micro-HIS ni del HIS.
 
-**Validación humana:** pendiente del visto bueno de Josué Fernando Hicho García.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el recorrido navegable, la matriz decisión → RF/RNF → evidencia, la respuesta al cambio solicitado y la presentación, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
