@@ -121,7 +121,7 @@ class RoleMatrixTest extends TestCase
 
     public function test_superadmin_permissions_are_explicit_and_exclude_pending_grants(): void
     {
-        $expected = array_values(array_diff(config('rbac.catalog'), ['prescripciones.excepcion_alergia', 'notas_soap.transferir_autoria']));
+        $expected = array_values(array_diff(config('rbac.catalog'), ['prescripciones.excepcion_alergia', 'notas_soap.transferir_autoria', 'medicamentos.registrar', 'medicamentos.cambiar_vigencia']));
         $this->assertEqualsCanonicalizing($expected, config('rbac.roles')['superadmin']);
         $this->assertNotContains('*', config('rbac.roles')['superadmin']);
         $this->assertNotContains('rbac.*', config('rbac.roles')['superadmin']);
