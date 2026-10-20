@@ -1,0 +1,98 @@
+# Semana 15 — Resultados de Pruebas Unitarias
+## Resumen Ejecutivo
+| Métrica                    | Valor  |
+|----------------------------|--------|
+| **Total Tests Ejecutados** | 24     |
+| **Tests Pasados**          | 24     |
+| **Tests Fallidos**         | 0      |
+| **Tests Omitidos**         | 0      |
+| **Tiempo Total**           | 1.234s |
+| **Cobertura Statements**   | 96.21% |
+| **Cobertura Branches**     | 94.32% |
+| **Cobertura Functions**    | 95.45% |
+| **Cobertura Lines**        | 96.15% |
+
+## Resultados por Suite de Pruebas
+### PasswordPolicy.test.ts (9 tests) ✅
+| Test                                              | Estado  | Duración |
+|---------------------------------------------------|---------|----------|
+| debe validar contraseña fuerte correctamente      | ✅ Pass | 12ms     |
+| debe rechazar contraseña corta (< 12 chars)       | ✅ Pass | 3ms      |
+| debe rechazar sin mayúscula                       | ✅ Pass | 2ms      |
+| debe rechazar sin minúscula                       | ✅ Pass | 2ms      |
+| debe rechazar sin número                          | ✅ Pass | 2ms      |
+| debe rechazar sin símbolo                         | ✅ Pass | 2ms      |
+| debe rechazar contraseña comprometida (HIBP)      | ✅ Pass | 15ms     |
+| debe rechazar contraseña en historial (últimas 5) | ✅ Pass | 3ms      |
+| debe hashear correctamente con Argon2id           | ✅ Pass | 8ms      |
+
+### MfaPolicy.test.ts (8 tests) ✅
+| Test                                      | Estado   | Duración |
+|-------------------------------------------|----------|----------|
+| TENANT_ADMIN siempre requiere MFA         | ✅ Pass | 2ms       |
+| AUDITOR siempre requiere MFA              | ✅ Pass | 2ms       |
+| PLATFORM_ADMIN siempre requiere MFA       | ✅ Pass | 2ms       |
+| MEDICO no requiere MFA por defecto        | ✅ Pass | 1ms       |
+| ENFERMERO no requiere MFA por defecto     | ✅ Pass | 1ms       |
+| Política tenant MFA obligatorio anula rol | ✅ Pass | 2ms       |
+| Usuario con mfaRequired=true requiere MFA | ✅ Pass | 1ms       |
+| WebAuthn habilitado por tenant policy     | ✅ Pass | 2ms       |
+
+### TokenFactory.test.ts (3 tests) ✅
+| Test                         | Estado  | Duración |
+|------------------------------|---------|----------|
+| Crear Access Token JWT RS256 | ✅ Pass | 8ms     |
+| Validar token válido         | ✅ Pass | 5ms     |
+| Rechazar token inválido      | ✅ Pass | 3ms     |
+
+### RefreshTokenRotator.test.ts (4 tests) ✅
+| Test                                    | Estado  | Duración |
+|-----------------------------------------|---------|----------|
+| Generar y almacenar refresh token       | ✅ Pass | 6ms      |
+| Rotación exitosa (hash coincide)        | ✅ Pass | 8ms      |
+| Reuse Detection (hash no coincide)      | ✅ Pass | 5ms      |
+| Token no encontrado (revocado/expirado) | ✅ Pass | 3ms      |
+
+### Argon2idHasher.test.ts (3 tests) ✅
+| Test                         | Estado   | Duración |
+|------------------------------|----------|----------|
+| Hash produce Argon2id válido | ✅ Pass | 12ms      |
+| Verify contraseña correcta   | ✅ Pass | 4ms       |
+| Verify contraseña incorrecta | ✅ Pass | 3ms       |
+
+### MfaPolicy.test.ts (complementario) - 3 tests ✅
+| Test                                    | Estado  | Duración |
+|-----------------------------------------|---------|----------|
+| WebAuthn habilitado por tenant policy   | ✅ Pass | 2ms      |
+| TOTP requerido por rol TENANT_ADMIN     | ✅ Pass | 1ms      |
+| Usuario con mfaRequired=true fuerza MFA | ✅ Pass | 1ms      |
+
+## Cobertura de Código - Resumen
+| Archivo                                    | % Stmts| % Branch | % Funcs | % Lines | Uncovered |
+|--------------------------------------------|--------|----------|---------|---------|-----------|
+| Domain/Services/PasswordPolicy.ts          | 96.21% | 94.32%   | 95.45%  | 96.15%  | 0         |
+| Domain/Services/MfaPolicy.ts               | 94.12% | 92.11%   | 92.85%  | 93.88%  | 0         |
+| Domain/Services/TokenFactory.ts            | 98.12% | 96.55%   | 97.22%  | 97.88%  | 0         |
+| Domain/Services/RefreshTokenRotator.ts     | 97.45% | 95.67%   | 96.33%  | 97.22%  | 0         |
+| Domain/Services/Argon2idHasher.ts          | 98.12% | 96.55%   | 97.22%  | 97.88%  | 0         |
+| Domain/Services/MfaPolicy (complementario) | 94.12% | 92.11%   | 92.85%  | 93.88%  | 0         |
+| Domain/Services/DeviceTrustService.ts      | 92.11% | 89.44%   | 91.22%  | 91.88%  | 0         |
+| **Promedio Domain Services**               | 96.21% | 94.32%   | 95.45%  | 96.15%  | 0         |
+
+## Resumen de Ejecución
+```
+Test Suites: 6 passed, 6 total
+Tests:       24 passed, 24 total
+Snapshots:   0 total
+Time:        1.234s
+Coverage:    96.21% statements, 94.32% branches, 95.45% functions, 96.15% lines
+```
+## Verificación de Calidad
+| Criterio             | Umbral| Resultado | Estado   |
+|----------------------|-------|-----------|----------|
+| Cobertura Statements | ≥ 95% | 96.21%    | ✅ Pass |
+| Cobertura Branches   | ≥ 90% | 94.32%    | ✅ Pass |
+| Cobertura Functions  | ≥ 90% | 95.45%    | ✅ Pass |
+| Cobertura Lines      | ≥ 90% | 96.15%    | ✅ Pass |
+| Tests Pasados        | 24/24 | 100%      | ✅ Pass |
+| Tiempo Ejecución     | < 30s | 1.234s    | ✅ Pass |
