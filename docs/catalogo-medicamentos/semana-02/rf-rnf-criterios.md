@@ -28,6 +28,22 @@ La vigencia es el estado del **registro de catálogo**. No representa la fecha d
 | RNF-05 | Seguridad de datos | Los valores externos se envían a la base como parámetros de sentencias preparadas (se verificará en Semana 3). | P |
 | RNF-06 | Privacidad | La documentación y las pruebas usan solo datos ficticios; el catálogo no guarda datos de pacientes. | P |
 
+## Criterios de aceptación
+
+| ID | Dado | Cuando | Entonces | RF/RNF |
+|---|---|---|---|---|
+| CA-01 | un gestor autorizado y un código libre | registra datos completos | recibe el medicamento confirmado con vigencia `active` | RF-01, RF-08 |
+| CA-02 | un alta sin principio activo | se valida | se rechaza indicando el campo y no se escribe nada | RF-02 |
+| CA-03 | el código `AMX-500` ya registrado | se registra `amx-500` | se rechaza como duplicado | RF-03 |
+| CA-04 | medicamentos que coinciden con "amox" | un usuario clínico busca | recibe los resultados con su vigencia | RF-04 |
+| CA-05 | ningún medicamento coincide | se busca | recibe una lista vacía, no un error | RF-04 |
+| CA-06 | la consulta de búsqueda falla | se busca | recibe un error de consulta, no una lista vacía | RF-04, RNF-03 |
+| CA-07 | un identificador inexistente | se consulta o cambia la vigencia | recibe "Medicamento no encontrado" | RF-05 |
+| CA-08 | un medicamento `active` | el gestor lo cambia a `inactive` | el registro sigue consultable con sus datos y vigencia `inactive` | RF-06 |
+| CA-09 | un usuario clínico | intenta registrar o cambiar vigencia | se rechaza sin invocar el catálogo | RF-07, RNF-01 |
+| CA-10 | la escritura falla | se registra o cambia vigencia | se informa error y nunca "Medicamento registrado" ni "Vigencia actualizada" | RF-08, RNF-03 |
+| CA-11 | cada cliente del diseño después | se analiza su dependencia | depende de 0 métodos que no invoca | RNF-04 |
+
 ## Supuestos según la evidencia del repositorio
 
 - **Permisos:** `config/rbac.php` no define permisos `medicamentos.*`. Los roles "gestor" y "usuario clínico" siguen siendo actores de Semana 1 y su permiso concreto queda pendiente con RBAC.
