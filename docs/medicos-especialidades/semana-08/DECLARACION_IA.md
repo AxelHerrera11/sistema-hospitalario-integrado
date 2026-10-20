@@ -6,4 +6,4 @@
 
 **Revisado y ajustado:** los roles y permisos los confirmó el estudiante; los mensajes usan los códigos del contrato de la Semana 5. El filtro «Mi disponibilidad» queda como propuesta.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar y aprobar esta entrega.
+**Validación humana:** realizada el 2026-10-19. Josué Fernando Hicho García revisó esta entrega y la aprueba.
