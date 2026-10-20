@@ -23,11 +23,18 @@ final class VitalSignHttpHandler
                 throw new VitalSignViolation('VITAL_SIGNS_INVALID', 422);
             }
             $vitals = new VitalSigns(array_map('floatval', $values));
-            return ['status' => 201, 'body' => $this->record->execute($headers['X-User-ID'] ?? '', $episodeId, $vitals, (string) ($body['measured_at'] ?? ''))];
+            return ['status' => 201, 'body' => $this->record->execute(self::text($headers, 'X-User-ID'), $episodeId, $vitals, self::text($body, 'measured_at'))];
         } catch (VitalSignViolation $e) {
             return ['status' => $e->status, 'body' => ['code' => $e->getMessage()]];
         } catch (\RuntimeException) {
             return ['status' => 500, 'body' => ['code' => 'VITAL_SIGN_PERSISTENCE_ERROR']];
         }
+    }
+
+    /** Campo de texto opcional: ausente equivale a cadena vacía; cualquier otro tipo es 422 antes de llegar al caso de uso. */
+    private static function text(array $source, string $key): string
+    {
+        $value = $source[$key] ?? '';
+        return is_string($value) ? $value : throw new VitalSignViolation('PAYLOAD_INVALID', 422);
     }
 }
