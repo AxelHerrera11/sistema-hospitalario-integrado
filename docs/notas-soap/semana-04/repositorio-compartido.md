@@ -39,12 +39,12 @@ flowchart LR
 
 | Micro-HIS (`schema.sql`) | HOSPITAL (migración `000400`) | Diferencia que absorbe el adaptador |
 |---|---|---|
-| ids `TEXT` (`nota-…`) | `uuid` con `gen_random_uuid()` | El adaptador PostgreSQL deja que la base genere el id y lo obtiene con `RETURNING`. |
+| ids UUID v4 en `TEXT` | `uuid` con `gen_random_uuid()` | Mismo formato (R-01 de la revisión de BD); el adaptador PostgreSQL puede enviar el id o dejar que la base lo genere y leerlo con `RETURNING`. |
 | `clinical_notes` sin `medical_record_id` | `medical_record_id uuid NOT NULL` | El adaptador deriva el expediente del paciente del episodio. |
 | `care_assignments (care_episode_id, user_ref_id, status)` | Se relaciona por `doctor_profile_id`, con vigencia | `PgCareAssignmentReader` hace el join con `doctor_profiles` y filtra `valid_to IS NULL`. |
-| Reglas en `TreatingPhysicianGuard` y `DiagnosisPolicy` | Además triggers de autor, episodio y nota firmada | Doble defensa: el adaptador traduce `RAISE EXCEPTION` (SQLSTATE `P0001`) a `403` o `409`. |
+| Reglas en `TreatingPhysicianGuard` y `DiagnosisPolicy`; el doble SQLite replica nota firmada inmutable, coherencia nota-diagnóstico, sin borrados y fechas ISO | Además triggers de asignación del autor y FK a `medical_records` y `care_episodes` | Doble defensa: el adaptador traduce `RAISE EXCEPTION` (SQLSTATE `P0001`) a `403` o `409`; esas reglas se prueban contra PostgreSQL 16 (R-04, R-05). |
 | `icd10_codes (code, description, active)` | **No existe** en las migraciones de `develop` | Ver SD-SOAP-10. |
-| `local_access_audits (event, actor_id, detail)` | **No existe** en las migraciones hospital | Ver SD-SOAP-11. |
+| `local_access_audits` con las columnas del Anexo A de la Semana 1 | **No existe** en las migraciones hospital (entidad `local_access_audit`, slice H8) | Provisional; ver SD-SOAP-11. |
 
 ## Propiedad, consistencia y riesgos
 
@@ -56,5 +56,6 @@ flowchart LR
 | Borrado | Triggers `*_retention` impiden borrar: un error se corrige con una versión nueva o `entered_in_error`. |
 
 - **SD-SOAP-10:** el catálogo CIE-10 no tiene tabla. Se pide a Javier (base de datos) `icd10_codes` o se acuerda un servicio externo; mientras tanto se usa detrás de `Icd10Catalog`.
-- **SD-SOAP-11:** la tabla de auditoría local no existe. Se pide a Javier junto con Médicos (ASII-04), que necesita la misma; el módulo ya la usa solo por `AuditTrail`.
+- **SD-SOAP-11:** la tabla de auditoría local no existe. El doble sigue el Anexo A de la Semana 1 y es provisional hasta la migración del slice H8 (R-02); se pide a Javier junto con Médicos (ASII-04). El módulo la usa solo por `AuditTrail`.
+- **SD-SOAP-13:** `clinical_notes_record_version_unique (medical_record_id, version_no)` no se replica: impediría una segunda nota original por expediente (riesgo R1 de la Semana 1). Se escala a Javier.
 - **SD-SOAP-12:** la traducción de `P0001` a `403`/`409` es propuesta; el prototipo usa SQLite y no la ejercita.

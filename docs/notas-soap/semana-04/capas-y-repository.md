@@ -24,8 +24,8 @@ El controlador no decide reglas: `SoapRuleViolation` ya trae el estado sugerido 
 | Método | Garantía que debe cumplir cada adaptador |
 |---|---|
 | `find(noteId)` | Nota con su episodio, autor, estado y solo los diagnósticos `active`; `null` si no existe. |
-| `add(episodeId, authorId, sections)` | Nota SOAP en `draft`, versión 1, + evento `nota_soap_registrada`, todo o nada. Devuelve el id. |
-| `addDiagnosis(note, diagnosis, description)` | Diagnóstico con el mismo episodio y autor de la nota + evento `diagnostico_asociado`, todo o nada. |
+| `add(episodeId, authorId, sections)` | Nota SOAP en `draft`, versión 1, + evento `nota_soap.registrada`, todo o nada. Devuelve el id (UUID v4). |
+| `addDiagnosis(note, diagnosis, description)` | Diagnóstico con el mismo episodio y autor de la nota + evento `diagnostico.asociado`, todo o nada. |
 
 Si la auditoría falla, el adaptador deshace la escritura y lanza `RuntimeException`, que el controlador traduce a `500 SOAP_PERSISTENCE_ERROR`. `PdoClinicalNoteStore` lo logra con la transacción PDO (y `PdoAuditTrail` comparte la conexión); `InMemoryClinicalNoteRepository` restaura el estado anterior.
 
@@ -33,7 +33,7 @@ Si la auditoría falla, el adaptador deshace la escritura y lanza `RuntimeExcept
 
 | Método | Garantía |
 |---|---|
-| `record(event, actorId, detail)` | Guarda el evento o lanza `RuntimeException`; nunca finge éxito. `detail` lleva solo identificadores y código. |
+| `record(actorId, action, resourceType, resourceId, episodeId, metadata)` | Guarda el evento con las columnas del Anexo A de la Semana 1 (`action` en `modulo.accion`, `metadata` JSON) o lanza `RuntimeException`; nunca finge éxito. `metadata` lleva solo identificadores y códigos. |
 
 **Por qué en Application:** los casos de uso y el repositorio definen lo que necesitan, así que el límite está en Application y Persistence depende de él. Separar la auditoría del store permite cambiar la tabla de auditoría (pendiente de Gobernanza) sin tocar notas ni diagnósticos. `CareAssignmentReader` e `Icd10Catalog` quedan como puertos aparte porque sus datos son de otros módulos.
 

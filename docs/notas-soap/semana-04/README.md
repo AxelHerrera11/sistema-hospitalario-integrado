@@ -49,7 +49,7 @@ php -S 127.0.0.1:8011 -t micro-his/notas-soap/public
 `run.php` ejecuta la misma suite contra los dos adaptadores (prefijos `[pdo]` y `[memoria]`). Resultado con PHP 8.3.33 (código de salida 0), resumido a las líneas de un adaptador porque el otro repite los mismos 15 casos:
 
 ```text
-OK: [pdo] camino feliz: POST /care-episodes/ep1/soap-notes -> 201 JSON en borrador con auditoría
+OK: [pdo] camino feliz: POST /care-episodes/ep1/soap-notes -> 201 JSON en borrador, id UUID y auditoría
 OK: [pdo] camino feliz: diagnóstico principal J18.9 -> 201 con descripción del catálogo
 OK: [pdo] regla de dominio: sección vacía -> 422
 OK: [pdo] regla de dominio: asignación terminada -> 403
@@ -73,7 +73,7 @@ Todas las pruebas pasaron.
 Prueba manual del front controller con los adaptadores InMemory (sin `NOTAS_SOAP_DSN`):
 
 ```text
-POST /care-episodes/ep1/soap-notes (X-User-ID: dra.lopez) -> 201 {"clinical_note_id":"nota-1","status":"draft"}
+POST /care-episodes/ep1/soap-notes (X-User-ID: dra.lopez) -> 201 {"clinical_note_id":"<UUID v4>","status":"draft"}
 POST con cuerpo '{mal'                                     -> 422 {"code":"PAYLOAD_INVALID"}
 GET /x                                                      -> 404 {"code":"ROUTE_NOT_FOUND"}
 ```
