@@ -1,0 +1,204 @@
+@startuml
+' ============================================================
+' DIAGRAMA DE CASOS DE USO - Gestión Usuarios, Tenants y Auth
+' Proceso: Alta de usuario por tenant, autenticación segura y revocación de sesión
+' ============================================================
+
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecaseBackgroundColor #E3F2FD
+skinparam usecaseBorderColor #1565C0
+skinparam actorBackgroundColor #FFF3E0
+skinparam actorBorderColor #E65100
+
+package "Sistema Hospitalario Integrado - Módulo Identidad y Acceso" {
+
+    ' ===== ACTORES =====
+    actor "Administrador\nde Tenant" as AdminTenant
+    actor "Super Administrador\n(Platform Admin)" as PlatformAdmin
+    actor "Usuario Final\n(Clínico / Admin)" as Usuario
+    actor "Sistema de\nAutenticación (AuthZ)" as AuthZ <<system>>
+    actor "Servicio\nde Tenants" as TenantSvc <<system>>
+    actor "Redis / Token Store" as Redis <<system>>
+    actor "Servicio\nde Auditoría" as Auditoria <<system>>
+    actor "Proveedor SSO\n(SAML/OIDC)" as SSOProvider <<system>>
+
+    ' ===== CASOS DE USO PRINCIPALES =====
+    usecase "UC-01: Crear usuario\npor tenant" as UC01
+    usecase "UC-02: Autenticar usuario\n(Login + MFA)" as UC02
+    usecase "UC-03: Revocar sesión\n(logout / force-revoke)" as UC03
+    usecase "UC-04: Gestionar roles\ny permisos RBAC" as UC04
+    usecase "UC-05: Renovar tokens\n(Refresh + Rotation)" as UC05
+    usecase "UC-06: Cambiar contraseña\n/ Recuperar acceso" as UC06
+    usecase "UC-07: Autenticación SSO\n(JIT Provisioning)" as UC07
+
+    ' ===== CASOS DE USO INCLUIDOS / EXTENDIDOS =====
+    usecase "UC-08: Validar tenant\nactivo y cupo" as UC08
+    usecase "UC-09: Evaluar políticas\nMFA adaptativo" as UC09
+    usecase "UC-10: Generar JWT\nRS256 + JWKS" as UC10
+    usecase "UC-11: Refresh Token\nRotation + Reuse Detection" as UC11
+    usecase "UC-12: Blocklist Access\nToken (Redis)" as UC12
+    usecase "UC-13: Account Lockout\nProgressivo" as UC13
+    usecase "UC-14: Device\nFingerprinting" as UC14
+    usecase "UC-15: Auditar evento\nde seguridad" as UC15
+    usecase "UC-16: Single Session\nPolicy Enforcement" as UC16
+    usecase "UC-17: Password Policy\n+ Breach Check" as UC17
+    usecase "UC-18: Session Idle\nTimeout Monitoring" as UC18
+
+    ' ===== RELACIONES ACTOR - CASO DE USO =====
+    AdminTenant --> UC01
+    AdminTenant --> UC04
+    AdminTenant --> UC03
+
+    PlatformAdmin --> UC01
+    PlatformAdmin --> UC04
+    PlatformAdmin --> UC03
+
+    Usuario --> UC02
+    Usuario --> UC05
+    Usuario --> UC06
+    Usuario --> UC03
+
+    AuthZ --> UC02
+    AuthZ --> UC05
+    AuthZ --> UC03
+    AuthZ --> UC10
+    AuthZ --> UC11
+    AuthZ --> UC12
+    AuthZ --> UC13
+    AuthZ --> UC18
+
+    TenantSvc --> UC01
+    TenantSvc --> UC08
+
+    Redis --> UC11
+    Redis --> UC12
+
+    Auditoria --> UC15
+
+    SSOProvider --> UC07
+
+    ' ===== RELACIONES ENTRE CASOS DE USO =====
+    UC01 .> UC08 : <<include>>
+    UC01 .> UC17 : <<include>>
+    UC01 .> UC15 : <<include>>
+
+    UC02 .> UC09 : <<include>>
+    UC02 .> UC10 : <<include>>
+    UC02 .> UC11 : <<include>>
+    UC02 .> UC14 : <<include>>
+    UC02 .> UC13 : <<extend>>\n(fallos login/MFA)
+    UC02 .> UC16 : <<extend>>\n(single session)
+    UC02 .> UC15 : <<include>>
+
+    UC03 .> UC12 : <<include>>
+    UC03 .> UC11 : <<include>>\n(invalidar refresh)
+    UC03 .> UC15 : <<include>>
+
+    UC04 .> UC15 : <<include>>
+
+    UC05 .> UC11 : <<include>>
+    UC05 .> UC10 : <<include>>
+    UC05 .> UC15 : <<include>>
+
+    UC06 .> UC17 : <<include>>
+    UC06 .> UC15 : <<include>>
+
+    UC07 .> UC01 : <<extend>>\n(JIT: crear si no existe)
+    UC07 .> UC08 : <<include>>
+    UC07 .> UC09 : <<include>>
+    UC07 .> UC10 : <<include>>
+    UC07 .> UC15 : <<include>>
+
+    UC08 .> UC15 : <<include>>
+
+    ' ===== PAQUETES DE AGRUPACIÓN =====
+    package "Gestión de Usuarios y Tenants" {
+        UC01
+        UC04
+        UC08
+    }
+
+    package "Autenticación y Sesiones (Core)" {
+        UC02
+        UC03
+        UC05
+        UC09
+        UC10
+        UC11
+        UC12
+        UC16
+        UC18
+    }
+
+    package "Seguridad y Políticas" {
+        UC13
+        UC14
+        UC17
+    }
+
+    package "Auditoría y Cumplimiento" {
+        UC15
+    }
+
+    package "Integración Externa" {
+        UC07
+        UC06
+    }
+
+    ' ===== LÍMITES DEL SISTEMA =====
+    boundary "Frontera del Sistema de Identidad" {
+    }
+
+    ' ===== NOTAS EXPLICATIVAS =====
+    note right of UC02
+        Flujo Login + MFA:
+        1. Validar credenciales
+        2. Verificar tenant activo
+        3. Evaluar MFA requerido
+        4. Desafío TOTP/WebAuthn
+        5. Generar Access (15min) + Refresh (7d)
+        6. Guardar refresh hash en Redis
+        7. Registrar auditoría
+    end note
+
+    note right of UC11
+        Refresh Rotation:
+        - Cada uso invalida anterior
+        - Genera nuevo par (access+refresh)
+        - Reuse Detection: si mismo refresh
+        usado 2 veces → REVOKE ALL + ALERTA
+    end note
+
+    note right of UC12
+        Blocklist Access Token:
+        - JTI (JWT ID) en Redis SET
+        - TTL = exp restante del token
+        - Validación en cada request (middleware)
+        - Limpieza automática por expiración
+    end note
+
+    note right of UC13
+        Lockout Progressivo:
+        - 5 fallos → 15 min
+        - 10 fallos → 1 hora
+        - 20 fallos → 24h + alerta admin
+        - Contador separado: login vs MFA
+    end note
+
+    note right of UC16
+        Single Session:
+        - Configurable por tenant
+        - Nuevo login revoca anterior
+        - Device fingerprint para diferenciar
+    end note
+
+    note right of UC07
+        JIT Provisioning (SSO):
+        - SAML/OIDC claim mapping → roles
+        - Auto-crear usuario si no existe
+        - Asignar tenant por claim/email domain
+        - MFA según política de rol
+    end note
+}
+@enduml

@@ -1,0 +1,22 @@
+classDiagram
+  direction LR
+  class OccupancySummaryQuery {
+    <<interface>>
+    +consult(filters) OccupancySummary
+  }
+  class BedOccupancySnapshotReader {
+    <<interface>>
+    +readAt(cutoff, wardId) BedSnapshot[]
+  }
+  class WardCatalogReader {
+    <<interface>>
+    +listAuthorized() WardOption[]
+  }
+  class DashboardController
+  class OccupancyAggregator
+  class WardFilterController
+  DashboardController --> OccupancySummaryQuery : solo consulta
+  OccupancyAggregator ..|> OccupancySummaryQuery
+  OccupancyAggregator --> BedOccupancySnapshotReader : fotografía en T
+  WardFilterController --> WardCatalogReader : solo salas
+  note for DashboardController "No conoce asignación,<br/>traslado, alta ni estado operativo"
