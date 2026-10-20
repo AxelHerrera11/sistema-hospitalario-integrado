@@ -5,7 +5,7 @@
 - **Estudiante:** Fajardo López, Javier Alexander (`Javifa2324`)
 - **Módulo:** Verificación de Base de Datos PostgreSQL
 - **Semana:** Semana 9 — Calidad de los datos de prueba (seeders)
-- **Entregable / evidencia:** Checklist de calidad de datos con resultados y seeders corregidos o propuestos.
+- **Entregable / evidencia:** Checklist de calidad de datos con resultados ([checklist-calidad-datos.md](./checklist-calidad-datos.md)) y seeder propuesto ([seeder-propuesto.sql](./seeder-propuesto.sql)).
 - **Estructura:** Sistema Hospitalario Integrado 2026 | Semanas 1–15.
 
 ## 1. Alcance
@@ -45,31 +45,7 @@ posterior al cierre del episodio.
 del instante de ejecución. Este hallazgo es el argumento central de la semana: un
 seeder no determinista produce pruebasflakes en los demás módulos.
 
-## 3. Checklist de calidad de datos con resultados medidos
-
-Consultas ejecutadas sobre la base HOSPITAL de prueba con el seeder aplicado.
-
-| # | Criterio | Consulta | Resultado | Veredicto |
-|---:|---|---|---|---|
-| 1 | Toda cama pertenece a una sala existente | Camas sin sala válida | 0 | Cumple |
-| 2 | No hay códigos de cama duplicados en una sala | Grupos con código repetido | 0 | Cumple |
-| 3 | Toda estancia cae dentro del periodo de su episodio | Estancias fuera de periodo | 0 | Cumple |
-| 4 | No hay episodios con dos estancias abiertas | Episodios con más de una estancia abierta | 0 | Cumple |
-| 5 | Los episodios cubren los tres estados | `open` 1, `closed` 1, `cancelled` 1 | 3 estados | Cumple |
-| 6 | Las camas cubren estados operativo y de servicio | `available` 2, `maintenance` 1 | 2 estados | Cumple |
-| 7 | La ocupación es calculable en un corte | Corte 2026-10-19 12:00 UTC: `U1-01` ocupada, `U1-02` en mantenimiento, `UC1-01` libre | 1 de 3 | Cumple |
-| 8 | Ningún dato de contacto fuera del dominio de prueba | Contactos distintos de `@example.test` | 0 | Cumple |
-| 9 | Todo episodio abierto tiene al menos una estancia | Episodios `open` sin estancia | 0 | Cumple |
-| 10 | Los identificadores son deterministas | UUID fijos en el script | 100 % fijos | Cumple |
-
-### 3.1 Observación sobre el criterio 9
-
-La primera medición de "episodios sin estancia" devolvió 1: el episodio `cancelled`,
-que por definición no tiene estancia porque nunca se admitió. El criterio se corrigió
-a "todo episodio **abierto** tiene al menos una estancia" y el resultado es 0. Un
-criterio mal redactado produce ruido; el checklist se documenta con la corrección.
-
-## 4. Reglas de calidad que debe seguir el seeder común
+## 3. Reglas de calidad que debe seguir el seeder común
 
 1. **Determinista:** marcas de tiempo y UUID fijos; el resultado no depende del
    momento de ejecución.
@@ -83,8 +59,10 @@ criterio mal redactado produce ruido; el checklist se documenta con la correcci�
    reglas y barata de mantener; los volúmenes grandes se generan por prueba.
 6. **Reversible:** el seeder puede aplicarse sobre una base limpia y volver a correr
    sin duplicar (`ON CONFLICT DO NOTHING`).
+7. **Verificable:** cada criterio del checklist tiene una consulta que lo mide; los
+   resultados están en [checklist-calidad-datos.md](./checklist-calidad-datos.md).
 
-## 5. Validación ejecutada
+## 4. Validación ejecutada
 
 ```bash
 # comando: podman exec -i bd-hospital psql -U postgres -d his_hospital_test < docs/verificacion-postgresql/semana-09/seeder-propuesto.sql
@@ -100,7 +78,7 @@ criterio mal redactado produce ruido; el checklist se documenta con la correcci�
 # resultado: U1-01 ocupada (true), U1-02 en mantenimiento (false), UC1-01 libre (false)
 ```
 
-## 6. Riesgos y pendientes
+## 5. Riesgos y pendientes
 
 - El seeder común del equipo sigue sin definirse (acuerdo pendiente entre el módulo
   de auth y el de pacientes): esta propuesta es la contribución del módulo de BD.
