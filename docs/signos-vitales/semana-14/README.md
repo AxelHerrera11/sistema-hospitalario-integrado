@@ -63,7 +63,7 @@ Línea base medida el 2026-10-20 con PHP 8.3.33:
 | Verificaciones automáticas | 56: `run.php` 25, `repository.php` 9, `api.php` 14, `client.php` 8; todas pasan |
 | RF con prueba | 7 de 7 |
 | Revisión formal | Preparada; 8 puntos de atención, 2 corregidos (P-2 y P-3) |
-| Cobertura del perfil de umbrales | **4 de 7 signos con umbral definido** tienen regla en el código (faltan temperatura, sistólica y diastólica) |
+| Cobertura del perfil de umbrales | **4 de 7 signos con umbral definido** tenían regla el 2026-10-20 (faltaban temperatura, sistólica y diastólica); ya son 7 de 7 tras el [PR de umbrales](../semana-15/umbrales/README.md) |
 | Auditoría local | Tabla mínima de prueba; `local_access_audits` aún sin migración |
 
 ## Archivos
