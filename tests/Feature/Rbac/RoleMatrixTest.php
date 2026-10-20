@@ -4,16 +4,19 @@ namespace Tests\Feature\Rbac;
 
 use App\Rbac\ConfiguredPermissions;
 use MicroHis\Rbac\Application\Authorize;
-use MicroHis\Rbac\Domain\{DenialRecorder, RoleGrantsPermission, RoleResolver};
+use MicroHis\Rbac\Domain\DenialRecorder;
+use MicroHis\Rbac\Domain\RoleGrantsPermission;
+use MicroHis\Rbac\Domain\RoleResolver;
 use Tests\TestCase;
 
-/** Verifica la matriz publicada en docs/rbac/semana-05/permisos.md. */
+/** Verifica la matriz activa declarada en config/rbac.php. */
 class RoleMatrixTest extends TestCase
 {
     private const MATRIX = [
         'superadmin' => [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
+            'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
@@ -22,6 +25,7 @@ class RoleMatrixTest extends TestCase
         ],
         'admin_hospital' => [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
+            'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
             'rbac.autorizar', 'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
@@ -56,7 +60,7 @@ class RoleMatrixTest extends TestCase
         $this->assertContains('rbac.roles.asignar', config('rbac.roles')['admin_hospital']);
 
         config(['rbac.roles' => ['solo_membresias' => ['rbac.asignar']]]);
-        $provider = new ConfiguredPermissions();
+        $provider = new ConfiguredPermissions;
         $this->assertSame(['rbac.asignar'], $provider->permissionsFor('solo_membresias'));
         $this->assertNotContains('rbac.roles.asignar', $provider->permissionsFor('solo_membresias'));
     }
@@ -72,7 +76,7 @@ class RoleMatrixTest extends TestCase
 
     public function test_role_matrix_matches_the_proposed_grants(): void
     {
-        $provider = new ConfiguredPermissions();
+        $provider = new ConfiguredPermissions;
         foreach (self::MATRIX as $role => $permissions) {
             $this->assertEqualsCanonicalizing($permissions, $provider->permissionsFor($role), $role);
             $this->assertSame([], array_values(array_diff($permissions, config('rbac.catalog'))), $role.' fuera del catálogo');
@@ -81,7 +85,7 @@ class RoleMatrixTest extends TestCase
 
     public function test_roles_are_literal_case_sensitive_and_not_inherited(): void
     {
-        $provider = new ConfiguredPermissions();
+        $provider = new ConfiguredPermissions;
         foreach (['Medico', 'MEDICO', 'AdminHospital', 'Enfermeria', 'TecnicoLab', 'Bioquimico', 'medico.extra', 'medico ', '*', ''] as $role) {
             $this->assertSame([], $provider->permissionsFor($role), $role);
         }
@@ -92,7 +96,7 @@ class RoleMatrixTest extends TestCase
 
     public function test_pending_grants_are_documented_outside_active_roles_and_are_denied(): void
     {
-        $provider = new ConfiguredPermissions();
+        $provider = new ConfiguredPermissions;
         $catalog = config('rbac.catalog');
         $this->assertSame([], array_values(array_diff(array_keys(config('rbac.pending')), $catalog)));
 
@@ -114,7 +118,7 @@ class RoleMatrixTest extends TestCase
 
     public function test_published_permissions_without_agreement_are_not_granted(): void
     {
-        $provider = new ConfiguredPermissions();
+        $provider = new ConfiguredPermissions;
         $publishedOnly = [
             'alergias.resolver', 'muestras.rechazar', 'admisiones.registrar', 'admisiones.ver',
             'camas.asignar', 'notas_soap.crear', 'notas_soap.ver', 'diagnosticos.asociar',
@@ -132,16 +136,22 @@ class RoleMatrixTest extends TestCase
     private function authorizeFor(array $roles): Authorize
     {
         return new Authorize(
-            new class($roles) implements RoleResolver {
+            new class($roles) implements RoleResolver
+            {
                 /** @param string[] $roles */
                 public function __construct(private readonly array $roles) {}
-                public function rolesIn(string $userId, string $hospitalId): array { return $this->roles; }
+
+                public function rolesIn(string $userId, string $hospitalId): array
+                {
+                    return $this->roles;
+                }
             },
-            new ConfiguredPermissions(),
-            new class implements DenialRecorder {
+            new ConfiguredPermissions,
+            new class implements DenialRecorder
+            {
                 public function record(array $denial): void {}
             },
-            new RoleGrantsPermission(),
+            new RoleGrantsPermission,
         );
     }
 }

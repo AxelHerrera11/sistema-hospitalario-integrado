@@ -2,8 +2,8 @@
 
 return [
     /*
-     * Matriz propuesta (pendiente de confirmación del equipo) para la integración
-     * de la Semana 16. Cada permiso se enumera literalmente: no hay comodines,
+     * Matriz administrativa aprobada para esta integración. Cada permiso se
+     * enumera literalmente: no hay comodines,
      * herencia implícita ni concesión automática por el nombre del rol. Las claves
      * deben coincidir exactamente con hospital_memberships.role_code (distingue
      * mayúsculas).
@@ -12,6 +12,7 @@ return [
         'superadmin' => [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
+            'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
@@ -20,6 +21,7 @@ return [
         ],
         'admin_hospital' => [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
+            'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
             'rbac.autorizar',
@@ -51,6 +53,7 @@ return [
     'catalog' => [
         'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
         'rbac.permisos.ver', 'rbac.denegaciones.ver',
+        'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
         'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
         'prescripciones.excepcion_alergia', 'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
         'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
