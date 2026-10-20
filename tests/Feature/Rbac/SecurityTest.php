@@ -26,7 +26,7 @@ class SecurityTest extends RbacTestCase
     public function test_permission_must_be_configured_in_middleware(): void
     {
         $middleware = $this->app->make(RequirePermission::class);
-        foreach (['', '*', 'rbac.*', 'rbac,admin', 'rbac.ver '] as $permission) {
+        foreach (['', '*', 'rbac.*', 'rbac,admin', 'rbac.ver ', 'lab-results.*', 'lab-results/read'] as $permission) {
             $response = $middleware->handle(Request::create('/'), fn () => $this->fail('Controller executed'), $permission);
             $this->assertSame(503, $response->getStatusCode());
         }
