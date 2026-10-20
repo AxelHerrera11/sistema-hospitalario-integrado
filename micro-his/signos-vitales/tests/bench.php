@@ -34,7 +34,7 @@ foreach ($adapters as $name => $router) {
     $times = [];
     for ($i = 0; $i < $n; $i++) {
         $start = hrtime(true);
-        $response = $router->dispatch(new Request('POST', '/episodes/ep1/vital-signs', $headers, $body));
+        $response = $router->dispatch(new Request('POST', '/care-episodes/ep1/vital-signs', $headers, $body));
         $times[] = (hrtime(true) - $start) / 1e6;
         $response['status'] === 201 || exit("FALLO: estado {$response['status']}" . PHP_EOL);
     }
