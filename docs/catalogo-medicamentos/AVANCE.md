@@ -14,3 +14,4 @@
 | 10 | Movilidad: 4 pantallas, breakpoints y 2 escenarios | `semana-10/` | Salt renderizado y revisado | Rama `…semana-10-movilidad…` | Pendiente | Verificación a 320 px en el prototipo (Semana 11) |
 | 11 | Prototipo navegable desktop y móvil, mapa y capturas | `semana-11/` | `verificar-prototipo.mjs` 24/24 (exit 0) | Rama `…semana-11-prototipo…` | Pendiente | Datos simulados; sin backend |
 | 12 | Defensa con el prototipo, matriz y cambio simulado | `semana-12/` | Marp PDF (6 diapositivas) revisado | Rama `…semana-12-evaluacion…` | Pendiente | Defensa oral real |
+| 13 | Plan de revisión, checklist de 14 ítems y autoverificación | `semana-13/` | Suites en verde; sondas: 5 hallazgos (AV3 mayor) | Rama `…semana-13-revision-tecnica…` | Pendiente | Confirmar roles y realizar la revisión |
