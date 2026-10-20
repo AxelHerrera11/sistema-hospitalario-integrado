@@ -24,6 +24,8 @@ outbox e inbox) y las tablas de laboratorio.
 
 - SVG: [01-arquitectura-federada.svg](./01-arquitectura-federada.svg)
 - Fuente editable: [`fuentes/01-arquitectura-federada.mmd`](./fuentes/01-arquitectura-federada.mmd)
+- Asignación entidad → base → responsable: [asignacion-entidades.md](./asignacion-entidades.md)
+- Asignación entidad → base → responsable: [asignacion-entidades.md](./asignacion-entidades.md)
 
 ## 3. Qué vive en cada base
 
