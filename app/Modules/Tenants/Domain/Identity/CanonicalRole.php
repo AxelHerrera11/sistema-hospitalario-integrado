@@ -12,6 +12,8 @@ final class CanonicalRole
         'medico',
         'enfermeria',
         'recepcion',
+        'tecnico_laboratorio',
+        'bioquimico',
     ];
 
     private const LEGACY_EXPLICIT = [

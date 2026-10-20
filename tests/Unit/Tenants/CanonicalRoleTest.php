@@ -9,6 +9,18 @@ use PHPUnit\Framework\TestCase;
 
 final class CanonicalRoleTest extends TestCase
 {
+    public function test_laboratory_roles_are_explicit_and_not_legacy_aliases(): void
+    {
+        $this->assertSame(['bioquimico', 'tecnico_laboratorio'], CanonicalRole::canonicalize([
+            'tecnico_laboratorio', 'bioquimico', 'TecnicoLab', 'Bioquimico', 'tecnico_laboratorio',
+        ]));
+        $this->assertTrue(CanonicalRole::isCanonical('tecnico_laboratorio'));
+        $this->assertTrue(CanonicalRole::isCanonical('bioquimico'));
+        $this->assertNull(CanonicalRole::mapLegacyExplicitly('TecnicoLab'));
+        $this->assertNull(CanonicalRole::mapLegacyExplicitly('Bioquimico'));
+        $this->assertNotSame(CanonicalRole::version(['bioquimico']), CanonicalRole::version(['tecnico_laboratorio']));
+    }
+
     public function test_only_exact_canonical_codes_survive_and_are_sorted(): void
     {
         $this->assertSame(
