@@ -38,6 +38,7 @@ flowchart LR
 - [Contrato API v1](./contrato-api.md): endpoints, permisos, ejemplos, códigos de error, propiedad de datos y consistencia.
 - [OpenAPI 3.0](./openapi.yaml): el mismo contrato, validado con `swagger-cli validate`.
 - [Frontera de microservicio](./frontera-microservicio.md): criterios medibles, decisión y migración razonada.
+- [Declaración de uso de IA](./DECLARACION_IA.md)
 
 ## Cómo verificar
 
