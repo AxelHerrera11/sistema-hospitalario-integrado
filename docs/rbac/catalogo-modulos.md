@@ -21,8 +21,8 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
 | `medicamentos.ver` | Sí | Sí | Sí | Sí | — | — | — | — |
-| `medicamentos.registrar` | — | — | — | — | — | — | — | — |
-| `medicamentos.cambiar_vigencia` | — | — | — | — | — | — | — | — |
+| `medicamentos.registrar` | — | Sí | — | — | — | — | — | — |
+| `medicamentos.cambiar_vigencia` | — | Sí | — | — | — | — | — | — |
 | `laboratorio.ver` | Sí | Sí | Sí | — | — | Sí | Sí | — |
 | `auditoria.ver` | Sí | — | — | — | — | — | — | — |
 | `signos_vitales.corregir` | Sí | — | Sí | — | — | — | — | — |
@@ -94,7 +94,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Ocupación, `docs/ocupacion-hospitalaria/contrato-api.md` | ocupacion.ver; administración, recepción y enfermería, sin mutar camas |
 | Órdenes, `docs/ordenes-laboratorio/contrato-api.md` | laboratorio.ordenes.crear/ver/cancelar; médico muta, laboratorio consulta |
 | Catálogo de pruebas, `docs/catalogo-pruebas-lab` | conserva laboratorio.catalogo.ver y administración pendiente según pending |
-| Catálogo de medicamentos, #586–#604 | medicamentos.ver activo; medicamentos.registrar y medicamentos.cambiar_vigencia catalogados y pendientes para admin_hospital; ningún rol activo los recibe |
+| Catálogo de medicamentos, #586–#604 | medicamentos.ver activo; medicamentos.registrar y medicamentos.cambiar_vigencia activos exclusivamente para admin_hospital; los otros siete roles siguen denegados |
 | Muestras, `docs/recepcion-muestras/semana-01` | muestras.recibir/ver/etiquetar/rechazar; técnico opera, bioquímico consulta |
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
@@ -187,3 +187,18 @@ traslados/altas y analytics) requieren contrato antes de habilitar concesiones.
 Los permisos de navegación no se convierten en permisos genéricos de escritura.
 La autenticación/tenant de Cindy y el acuerdo CENTRAL (#502/#507) siguen pendientes
 de integración; catálogo y alias no sustituyen esas dependencias.
+
+## Activación de escritura de medicamentos (20 de octubre de 2026)
+
+Decisión RBAC solicitada por Mar-03 sobre la propuesta ASII-14 (#586, #622):
+`medicamentos.registrar` y `medicamentos.cambiar_vigencia` se conceden exclusivamente
+al rol `admin_hospital` del hospital validado. Se retiran de `pending`.
+Los otros siete roles, incluido `superadmin`, siguen sin estas concesiones;
+no hay herencia administrativa implícita. La lectura conserva la matriz existente.
+
+El módulo ASII-14 debe proteger cada escritura con tenant, JWT y el permiso literal
+correspondiente. Registrar no autoriza cambiar vigencia, ni viceversa.
+La autorización no sustituye validación de duplicados, reglas de vigencia,
+auditoría ni selección de la conexión hospitalaria. Las pruebas de este cambio
+verifican matriz y middleware RBAC; no acreditan endpoints de medicamentos.
+La política entra en vigor al integrar este cambio; #622 por sí solo no la activa.
