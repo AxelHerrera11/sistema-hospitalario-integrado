@@ -1,0 +1,301 @@
+/* ============================================================
+   MEDIA QUERIES (Mobile-First)
+   ============================================================ */
+
+/* XS: 320px - 374px (iPhone SE, Android small) */
+@media (max-width: 374px) {
+  :root {
+    --font-size-base: 0.9375rem; /* 15px */
+    --space-md: 12px;
+    --space-lg: 20px;
+    --btn-height: 44px;
+    --touch-target-min: 44px;
+  }
+
+  .auth-container,
+  .admin-container,
+  .patient-container {
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    width: 100%;
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  .modal-content {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  .user-card,
+  .audit-card {
+    padding: 12px;
+  }
+
+  .data-table {
+    display: none;
+  }
+
+  .card-list {
+    display: block;
+  }
+}
+
+/* SM: 375px - 429px (iPhone 12/13/14/15 standard) */
+@media (min-width: 375px) and (max-width: 429px) {
+  :root {
+    --font-size-base: 1rem; /* 16px */
+    --space-md: 16px;
+    --space-lg: 24px;
+    --btn-height: 48px;
+  }
+
+  .auth-container,
+  .admin-container,
+  .patient-container {
+    padding: 16px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    min-width: 200px;
+    width: auto;
+  }
+}
+
+/* MD: 430px - 767px (iPhone Plus/Max, Android large, Tablet portrait) */
+@media (min-width: 430px) and (max-width: 767px) {
+  :root {
+    --space-lg: 32px;
+    --space-xl: 40px;
+  }
+
+  .auth-container {
+    max-width: 440px;
+    padding: 24px;
+  }
+
+  .admin-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: var(--z-modal);
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(280px);
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: calc(var(--z-modal) - 1);
+  }
+
+  .sidebar-overlay.visible {
+    display: block;
+  }
+}
+
+/* LG: 768px - 1023px (Tablet landscape, small laptop) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --space-xl: 48px;
+  }
+
+  .auth-container {
+    max-width: 480px;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .admin-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    border-right: 1px solid var(--color-border-light);
+    background: var(--color-bg-primary);
+  }
+
+  .main-content {
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .data-table {
+    display: table;
+  }
+
+  .card-list {
+    display: none;
+  }
+
+  .bottom-nav {
+    display: none;
+  }
+}
+
+/* XL: 1024px - 1439px (Desktop standard) */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  :root {
+    --space-xxl: 64px;
+  }
+
+  .auth-container {
+    max-width: 520px;
+    padding: 40px;
+  }
+
+  .admin-layout {
+    grid-template-columns: 280px 1fr;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .patient-dashboard {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* XXL: 1440px+ (Desktop wide, 4K) */
+@media (min-width: 1440px) {
+  :root {
+    --space-xxxl: 80px;
+  }
+
+  .auth-container {
+    max-width: 560px;
+  }
+
+  .admin-layout {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ============================================================
+   CONTAINER QUERIES (Modern - when supported)
+   ============================================================ */
+
+/* Auth Form Container */
+.auth-form {
+  container-type: inline-size;
+  container-name: auth-form;
+}
+
+@container auth-form (min-width: 400px) {
+  .auth-form {
+    padding: 32px;
+    max-width: 440px;
+    margin: 0 auto;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .btn-primary {
+    width: auto;
+    min-width: 200px;
+  }
+}
+
+/* Admin Sidebar Container */
+.admin-sidebar {
+  container-type: inline-size;
+  container-name: admin-sidebar;
+}
+
+@container admin-sidebar (min-width: 260px) {
+  .sidebar-nav {
+    padding: 16px;
+  }
+
+  .nav-item {
+    padding: 12px 16px;
+  }
+}
+
+/* Audit Table Container */
+.audit-table-container {
+  container-type: inline-size;
+  container-name: audit-table;
+}
+
+@container audit-table (max-width: 767px) {
+  .data-table {
+    display: none;
+  }
+
+  .card-list {
+    display: block;
+  }
+}
+
+@container audit-table (min-width: 768px) {
+  .data-table {
+    display: table;
+  }
+
+  .card-list {
+    display: none;
+  }
+}
+
+/* Patient Dashboard Container */
+.patient-dashboard {
+  container-type: inline-size;
+  container-name: patient-dashboard;
+}
+
+@container patient-dashboard (min-width: 768px) {
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@container patient-dashboard (min-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@container patient-dashboard (min-width: 1440px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
