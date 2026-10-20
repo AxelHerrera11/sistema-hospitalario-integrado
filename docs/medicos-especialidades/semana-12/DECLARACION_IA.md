@@ -1,6 +1,6 @@
 # Declaración de uso de inteligencia artificial
 
-**Herramienta:** Claude Code (Anthropic), modelo Claude Opus 5.5.
+**Herramienta:** OpenCode con el modelo `minimax-m3.1-flash` (MiniMax M3.1).
 
 **Uso:** apoyo para redactar la defensa de la segunda evaluación parcial (matrices de roles, estados, errores y riesgos), el guion de exposición y los dos guiones de evidencia reproducible: medición del contraste WCAG sobre la paleta del prototipo y verificación de los caminos de rol, estado, error, accesibilidad y reflow en Chrome sin interfaz.
 
