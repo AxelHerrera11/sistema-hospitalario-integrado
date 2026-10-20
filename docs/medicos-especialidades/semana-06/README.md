@@ -2,11 +2,25 @@
 
 **Estudiante:** Hicho García, Josué Fernando (`Jhos-hgnu`) · **Módulo:** ASII-04 · **Entrega:** defensa teórica y caso práctico arquitectónico.
 
+**Tarea individual:** Defienda la arquitectura propuesta para «registro de médico, asociación de especialidad y consulta de disponibilidad» en Médicos, especialidades y disponibilidad: conecte actores, UML, RF/RNF, principio SOLID, capas, Repository y contrato API. Responda un cambio práctico considerando médicos, especialidades, horarios, disponibilidad y conflictos de agenda.
+
 > La evaluación presencial ya se realizó; este documento deja por escrito la defensa del módulo con la evidencia de las Semanas 1 a 5.
 
 ## Tesis arquitectónica
 
 En el flujo «registro de médico, asociación de especialidad y consulta de disponibilidad», **la disponibilidad que se ofrece es verdadera**: un médico aparece solo si su perfil y su especialidad están vigentes en la fecha, y una franja se ofrece solo si está dentro de su horario y no tiene una cita activa. El dominio (`Period`, `SpecialtyAssignmentPolicy`) rechaza antes lo que ya sabe que es inválido, y la base lo garantiza aunque dos altas lleguen a la vez: las exclusiones GiST de `doctor_specialties` impiden la misma especialidad solapada y dos principales en el mismo periodo.
+
+## Hilo de la arquitectura
+
+| Eslabón | En Médicos | Evidencia |
+|---|---|---|
+| Actores | Administrador del hospital (registra y asocia) y recepcionista (consulta); secundarios: Identidad CENTRAL, RBAC, auditoría, horario y Citas | Semana 1 |
+| UML | Casos de uso UC-MED-01 a 08, diagrama de actividad y de secuencia sobre la migración `000100` | Semana 1 |
+| RF/RNF | RF-MED-01 a 07 (alta, licencia única, especialidad activa, vigencia, una principal, franjas, sin horario visible) y RNF-MED-01 a 05 (permisos, atomicidad, privacidad, rendimiento, ISP) | Semana 2 |
+| SOLID | ISP: `DoctorDirectory` de 8 métodos dividida en 6 puertos; la consulta no ve métodos de escritura | Semana 2 (demo) y prueba ISP |
+| Capas | Presentation → Application → Domain, y Persistence implementando los puertos | Semana 3 |
+| Repository | `DoctorRepository` con `PdoDoctorStore` e `InMemoryDoctorRepository`; la misma suite pasa con los dos | Semana 4 |
+| Contrato API | `/api/v1` con 3 endpoints, permisos `medicos.*`, códigos de error estables y `trace_id` | Semana 5 |
 
 ## Trazabilidad de punta a punta
 
@@ -62,7 +76,9 @@ flowchart LR
 | Persistence | Sí | Tabla `doctor_absences` (médico, vigencia, motivo, estado) con exclusión GiST por médico; requiere acuerdo con Javier, como `doctor_schedules` |
 | Contrato API | Sí, compatible | `POST /api/v1/doctors/{id}/absences` y el valor nuevo `DOCTOR_ON_LEAVE` en `status`; los clientes actuales siguen funcionando |
 | Consumidores | Citas | Muestra al médico como ausente y reprograma sus citas antes de que se registre la ausencia |
+| Especialidades | No | La ausencia es del médico, no de una especialidad: `doctor_specialties` y sus exclusiones no cambian |
+| Horarios | No | El horario semanal no se edita; la ausencia se resta sobre él al calcular las franjas |
 
-**Conclusión:** la ausencia entra como un puerto y un caso de uso nuevos. Las reglas de vigencia y de principal única, la transacción y el contrato existente no cambian.
+**Conclusión:** en las cinco áreas, el cambio toca a los **médicos** (nueva ausencia), la **disponibilidad** (`DOCTOR_ON_LEAVE`) y los **conflictos de agenda** (`409` con citas activas); **especialidades** y **horarios** no cambian. La ausencia entra como un puerto y un caso de uso nuevos. Las reglas de vigencia y de principal única, la transacción y el contrato existente no cambian.
 
 Guion de la exposición: [presentacion.md](./presentacion.md) · Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md)
