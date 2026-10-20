@@ -13,7 +13,7 @@ final readonly class Result { public function __construct(public int $status, pu
 final class Note
 {
     public array $diagnoses = []; // list<array{code: string, type: string}>
-    public function __construct(public string $id, public string $episode, public string $author, public string $status = 'draft') {}
+    public function __construct(public string $id, public string $episode, public string $author, public array $soap = [], public string $status = 'draft') {}
 }
 
 // ANTES: cinco razones para cambiar (acceso, formato, catálogo, reglas y persistencia).
@@ -21,20 +21,16 @@ final class SoapNoteServiceAntes
 {
     private const CIE10 = ['J18.9', 'I10', 'E11.9']; // catálogo fijo dentro del servicio
     public array $notes = [];
-
     public function __construct(private array $assignments) {}
-
     public function registrar(string $user, string $episode, array $soap): Result
     {
         if (!in_array($user, $this->assignments[$episode] ?? [], true)) { return new Result(403, 'NOT_TREATING_PHYSICIAN'); }
-        $ok = array_filter(['S', 'O', 'A', 'P'], fn ($k) => is_string($soap[$k] ?? null) && mb_strlen($soap[$k]) <= 4000);
+        $ok = array_filter(['S', 'O', 'A', 'P'], fn ($k) => is_string($soap[$k] ?? null) && trim($soap[$k]) !== '' && mb_strlen($soap[$k]) <= 4000);
         if (count($ok) !== 4) { return new Result(422, 'SOAP_SECTION_INVALID'); }
         $id = 'n' . (count($this->notes) + 1);
-        $this->notes[$id] = new Note($id, $episode, $user);
-
+        $this->notes[$id] = new Note($id, $episode, $user, $soap);
         return new Result(201, $id);
     }
-
     public function asociarDiagnostico(string $user, string $noteId, string $code, string $type): Result
     {
         $note = $this->notes[$noteId] ?? null;
@@ -42,12 +38,12 @@ final class SoapNoteServiceAntes
         if ($note->status !== 'draft') { return new Result(409, 'NOTE_SIGNED'); }
         if ($note->author !== $user || !in_array($user, $this->assignments[$note->episode] ?? [], true)) { return new Result(403, 'NOT_TREATING_PHYSICIAN'); }
         if (!in_array($code, self::CIE10, true)) { return new Result(422, 'DIAGNOSIS_CODE_INVALID'); }
+        if (!in_array($type, ['primary', 'secondary', 'differential'], true)) { return new Result(422, 'DIAGNOSIS_TYPE_INVALID'); }
         foreach ($note->diagnoses as $d) {
             if ($d['code'] === $code) { return new Result(409, 'DIAGNOSIS_DUPLICATED'); }
             if ($type === 'primary' && $d['type'] === 'primary') { return new Result(409, 'PRIMARY_DIAGNOSIS_EXISTS'); }
         }
         $note->diagnoses[] = ['code' => $code, 'type' => $type];
-
         return new Result(201);
     }
 }
@@ -71,14 +67,15 @@ final class SoapSectionsValidator // formato de las cuatro secciones
 {
     public function isValid(array $soap): bool
     {
-        return count(array_filter(['S', 'O', 'A', 'P'], fn ($k) => is_string($soap[$k] ?? null) && mb_strlen($soap[$k]) <= 4000)) === 4;
+        return count(array_filter(['S', 'O', 'A', 'P'], fn ($k) => is_string($soap[$k] ?? null) && trim($soap[$k]) !== '' && mb_strlen($soap[$k]) <= 4000)) === 4;
     }
 }
 
-final class DiagnosisPolicy // reglas clínicas: sin duplicados y un solo principal
+final class DiagnosisPolicy // reglas clínicas: tipo válido, sin duplicados y un solo principal
 {
     public function rejection(Note $note, string $code, string $type): ?Result
     {
+        if (!in_array($type, ['primary', 'secondary', 'differential'], true)) { return new Result(422, 'DIAGNOSIS_TYPE_INVALID'); }
         foreach ($note->diagnoses as $d) {
             if ($d['code'] === $code) { return new Result(409, 'DIAGNOSIS_DUPLICATED'); }
             if ($type === 'primary' && $d['type'] === 'primary') { return new Result(409, 'PRIMARY_DIAGNOSIS_EXISTS'); }
@@ -94,7 +91,7 @@ final class SoapNoteRegistrar // orquesta UC-SOAP-01
     {
         if (!$this->guard->allows($user, $episode)) { return new Result(403, 'NOT_TREATING_PHYSICIAN'); }
         if (!$this->validator->isValid($soap)) { return new Result(422, 'SOAP_SECTION_INVALID'); }
-        $this->notes->save($note = new Note($this->notes->nextId(), $episode, $user));
+        $this->notes->save($note = new Note($this->notes->nextId(), $episode, $user, $soap));
         return new Result(201, $note->id);
     }
 }
@@ -140,31 +137,32 @@ function build(Icd10Catalog $catalog): array
     [$guard, $notes] = [new TreatingPhysicianGuard(new ArrayAssignments(['ep1' => ['dra.lopez']])), new InMemoryNotes()];
     return [new SoapNoteRegistrar($guard, new SoapSectionsValidator(), $notes), new DiagnosisAssociator($guard, $catalog, new DiagnosisPolicy(), $notes), $notes];
 }
-
 $soap = ['S' => 'Tos 3 días', 'O' => 'T 38.4 °C', 'A' => 'Neumonía', 'P' => 'Amoxicilina'];
 $antes = new SoapNoteServiceAntes(['ep1' => ['dra.lopez']]);
 [$reg, $dx, $notas] = build(new ListCatalog());
 $casos = [ // [etiqueta, método, argumentos, estado esperado]
     ['registrar nota válida → 201', 'r', ['dra.lopez', 'ep1', $soap], 201],
     ['faltan las secciones O, A y P → 422', 'r', ['dra.lopez', 'ep1', ['S' => 'x']], 422],
+    ['sección P vacía o solo con espacios → 422', 'r', ['dra.lopez', 'ep1', ['P' => '   '] + $soap], 422],
     ['médico no tratante → 403', 'r', ['dr.perez', 'ep1', $soap], 403],
     ['diagnóstico principal J18.9 → 201', 'd', ['dra.lopez', 'n1', 'J18.9', 'primary'], 201],
+    ['tipo fuera de primary, secondary o differential → 422', 'd', ['dra.lopez', 'n1', 'I10', 'tertiary'], 422],
     ['código inexistente → 422', 'd', ['dra.lopez', 'n1', 'ZZZ', 'secondary'], 422],
     ['mismo código otra vez → 409', 'd', ['dra.lopez', 'n1', 'J18.9', 'secondary'], 409],
     ['segundo principal → 409', 'd', ['dra.lopez', 'n1', 'I10', 'primary'], 409],
     ['otro médico en una nota ajena → 403', 'd', ['dr.perez', 'n1', 'I10', 'secondary'], 403],
 ];
-
 echo "== Diseño después reproduce el comportamiento del diseño antes ==\n";
 foreach ($casos as [$label, $m, $args, $esperado]) {
     $a = $m === 'r' ? $antes->registrar(...$args) : $antes->asociarDiagnostico(...$args);
     $b = $m === 'r' ? $reg->register(...$args) : $dx->associate(...$args);
     check($label, $a->status === $esperado && $b->status === $esperado && $a->code === $b->code);
 }
+check('la nota recuperada conserva S, O, A y P en ambos', $antes->notes['n1']->soap === $soap && $notas->find('n1')->soap === $soap);
+check('el tipo inválido no guardó cambios: solo J18.9 asociado', array_column($antes->notes['n1']->diagnoses, 'code') === ['J18.9'] && array_column($notas->find('n1')->diagnoses, 'code') === ['J18.9']);
 $antes->notes['n1']->status = $notas->find('n1')->status = 'signed';
 check('nota firmada no acepta diagnósticos → 409 en ambos', $antes->asociarDiagnostico('dra.lopez', 'n1', 'I10', 'secondary')->status === 409
     && $dx->associate('dra.lopez', 'n1', 'I10', 'secondary')->status === 409);
-
 echo "\n== SRP: cada cambio toca una sola clase ==\n";
 [$reg2, $dx2] = build(new DownCatalog());
 $reg2->register('dra.lopez', 'ep1', $soap);
@@ -176,6 +174,5 @@ check('DiagnosisPolicy no tiene dependencias', $deps(DiagnosisPolicy::class) ===
 $nota = new Note('x', 'ep1', 'dra.lopez');
 $nota->diagnoses[] = ['code' => 'I10', 'type' => 'primary'];
 check('DiagnosisPolicy se prueba sola: rechaza un segundo principal', (new DiagnosisPolicy())->rejection($nota, 'E11.9', 'primary')?->code === 'PRIMARY_DIAGNOSIS_EXISTS');
-
 echo "\n" . ($failures === 0 ? 'OK: todas las aserciones pasaron' : "ERROR: {$failures} aserciones fallaron") . "\n";
 exit($failures === 0 ? 0 : 1);

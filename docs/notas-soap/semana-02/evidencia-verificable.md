@@ -6,7 +6,7 @@
 |---|---|
 | RF-SOAP-01, RF-SOAP-02 | `SoapNoteRegistrar` + `SoapSectionsValidator` + `ClinicalNoteRepository` |
 | RF-SOAP-03 | `TreatingPhysicianGuard` + `CareAssignmentReader` (y el trigger de autor de la migración `000400`) |
-| RF-SOAP-04, RF-SOAP-06 | `DiagnosisAssociator` + `Icd10Catalog` (`503` ante `CatalogUnavailable`) |
+| RF-SOAP-04, RF-SOAP-06 | `DiagnosisAssociator` + `Icd10Catalog` (`503` ante `CatalogUnavailable`) + `DiagnosisPolicy` (tipo de diagnóstico) |
 | RF-SOAP-05 | `DiagnosisPolicy` |
 | RF-SOAP-07 | `DiagnosisAssociator` (estado `draft`) y la inmutabilidad de `clinical_notes` firmadas |
 | RNF-SOAP-01 | Middlewares JWT, tenant y RBAC |
@@ -24,12 +24,16 @@ php docs/notas-soap/semana-02/evidencia/demo-srp.php
 == Diseño después reproduce el comportamiento del diseño antes ==
 PASS  registrar nota válida → 201
 PASS  faltan las secciones O, A y P → 422
+PASS  sección P vacía o solo con espacios → 422
 PASS  médico no tratante → 403
 PASS  diagnóstico principal J18.9 → 201
+PASS  tipo fuera de primary, secondary o differential → 422
 PASS  código inexistente → 422
 PASS  mismo código otra vez → 409
 PASS  segundo principal → 409
 PASS  otro médico en una nota ajena → 403
+PASS  la nota recuperada conserva S, O, A y P en ambos
+PASS  el tipo inválido no guardó cambios: solo J18.9 asociado
 PASS  nota firmada no acepta diagnósticos → 409 en ambos
 
 == SRP: cada cambio toca una sola clase ==

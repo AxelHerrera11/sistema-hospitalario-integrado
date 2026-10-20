@@ -59,8 +59,8 @@ classDiagram
 | `SoapNoteRegistrar` | Orquestar UC-SOAP-01: autorizar, validar y guardar el borrador. | Cambia el flujo de registro |
 | `DiagnosisAssociator` | Orquestar UC-SOAP-02: nota en borrador, autor, catálogo, reglas y guardado; `503` si el catálogo falla. | Cambia el flujo de asociación |
 | `TreatingPhysicianGuard` | Decidir si el usuario es el autor y médico tratante del episodio. | Cambia la regla de acceso |
-| `SoapSectionsValidator` | Validar el formato de S, O, A y P. | Cambia el formato de la nota |
-| `DiagnosisPolicy` | Reglas clínicas: sin código repetido y un solo principal. | Cambia una regla clínica |
+| `SoapSectionsValidator` | Validar el formato de S, O, A y P (presentes, no vacías ni solo espacios, hasta 4000 caracteres). | Cambia el formato de la nota |
+| `DiagnosisPolicy` | Reglas clínicas: tipo `primary`, `secondary` o `differential`, sin código repetido y un solo principal. | Cambia una regla clínica |
 | `Icd10Catalog` «interfaz» | Decir si un código CIE-10 está vigente. | Cambia el origen del catálogo |
 | `ClinicalNoteRepository` «interfaz» | Leer y guardar `clinical_notes` y `diagnoses` (HOSPITAL). | Cambia la persistencia |
 | `CareAssignmentReader` «interfaz» | Leer `care_assignments` activos (módulo Expediente). | Cambia el origen de las asignaciones |
@@ -75,4 +75,4 @@ classDiagram
 
 ## Beneficio verificable
 
-La [demo ejecutable](./evidencia/demo-srp.php) comprueba que el diseño después responde igual que el antes en nueve casos, que la falla segura del catálogo solo requiere otra implementación de `Icd10Catalog` y que `DiagnosisPolicy` se prueba sola. La salida está en [evidencia-verificable.md](./evidencia-verificable.md).
+La [demo ejecutable](./evidencia/demo-srp.php) comprueba que el diseño después responde igual que el antes en trece casos (incluida la recuperación de S, O, A y P y el rechazo de secciones vacías y de tipos inválidos sin guardar cambios), que la falla segura del catálogo solo requiere otra implementación de `Icd10Catalog` y que `DiagnosisPolicy` se prueba sola. La salida está en [evidencia-verificable.md](./evidencia-verificable.md).
