@@ -1,5 +1,7 @@
 # Semana 16 — Integración funcional de RBAC
 
+**Entregas para respetar el límite de 400 líneas:** S16a `ce4fda1` (integración funcional), S16b `650780f` (matriz activa/pendiente y pruebas) y S16c `c804c89` (catálogo, contrato y esta documentación). S16c depende de S16b, que depende de S16a.
+
 María / Mar-03. Worktree `s16-rbac`, rama `feature/asii-02-semana-16-rbac-mar-03`, creada desde `origin/develop` (`4af4d8f`) y actualizada por fast-forward a `757bcae` tras completar fetch.
 
 ## Alcance y diseño
@@ -9,12 +11,12 @@ Flujo: auth/tenant → `rbac:modulo.accion` → `Authorize` existente → RoleRe
 El provider registra el alias y las interfaces. Los tests sustituyen las dependencias por InMemory y auth/tenant por fixtures, exclusivamente en tests.
 
 `CentralRoles` consulta el esquema existente CENTRAL: usuario, hospital y membresía activos, con vigencia. No hay migraciones nuevas ni escrituras sobre tablas de Javier.
-`ConfiguredPermissions` lee `config/rbac.php`; la matriz rol × permiso propuesta ya está configurada con los cinco roles de Semana 5 y los 22 permisos conciliados. No hay comodines, herencia ni concesión automática a `superadmin`: cada permiso se enumera. Las concesiones activas viven en `roles`; las propuestas no aprobadas viven en `pending` y el middleware las deniega. La matriz y sus pendientes están en [`../semana-05/permisos.md`](../semana-05/permisos.md).
-`LogDenials` registra denegaciones estructuradas en el logger de Laravel; reemplazar el binding de `DenialRecorder` por AuditLogger cuando Cindy publique su interfaz. No equivale a auditoría clínica definitiva.
+`ConfiguredPermissions` lee `config/rbac.php`; la matriz rol × permiso propuesta ya está configurada con los cinco roles de Semana 5 y los 26 permisos del catálogo (22 conciliados y 4 administrativos para Cindy). No hay comodines, herencia ni concesión automática a `superadmin`: cada permiso se enumera. Las concesiones activas viven en `roles`; las propuestas no aprobadas viven en `pending` y el middleware las deniega. La matriz y sus pendientes están en [`../semana-05/permisos.md`](../semana-05/permisos.md).
+`LogDenials` registra denegaciones estructuradas en el logger de Laravel; el adaptador propio `AuditDenials` consume `AuditLogRepositoryInterface::logRaw()` cuando se integre el provider de Cindy. No equivale a auditoría clínica definitiva.
 
 ## Contrato para el equipo
 
-`GET /api/v1/permissions`, JWT y tenant validados, permiso `rbac.permisos.ver`; 200 `{permissions: string[]}`. La lista tiene 22 permisos: 13 conciliados de Semana 5 y los 9 exactos de Axel. El catálogo es informativo; consultarlo no concede permisos.
+`GET /api/v1/permissions`, JWT y tenant validados, permiso `rbac.permisos.ver`; 200 `{permissions: string[]}`. La lista tiene 26 permisos: 13 conciliados de Semana 5, los 9 exactos de Axel y 4 administrativos para Cindy. El catálogo es informativo; consultarlo no concede permisos.
 `rbac.asignar` (membresías, motor `AssignRole`) y `rbac.roles.asignar` (edición de permisos de un rol, endpoint propuesto) son operaciones distintas, no alias. El contrato HTTP usa el segundo; el motor conserva el primero.
 Middleware: 401 `AUTH_REQUIRED`, 403 `RBAC_DENIED`, 503 `RBAC_CONTEXT_UNAVAILABLE` o `RBAC_UNAVAILABLE`; cuerpo `{code, trace_id}`. Los errores anteriores de auth/tenant conservan su contrato propio.
 Uso por otros módulos: `->middleware(['tenant', 'jwt.auth', 'rbac:alergias.ver'])`. El servidor resuelve usuario mediante `getAuthIdentifier()` y hospital mediante el `getKey()` del atributo `tenant` validado. Confirmar estas dos correspondencias con Cindy antes del adaptador real.
@@ -32,3 +34,5 @@ Corrección compartida indispensable: `JwtAuth.php` importaba `JWTAuth` con el m
 Las guías `docs/weekly-plan.md` y `docs/worktree-guide.md` enlazadas por README no existen en las referencias consultadas. Se siguen las reglas explícitas del README y del plan Word: feature desde develop, un módulo, sin force push, revisión por Yamilet y sin auto-merge.
 
 Validación y salida real: ver `evidencia.txt`. Uso de IA: Codex para implementación, pruebas y documentación; requiere revisión y defensa humana.
+
+Actualización 2026-10-20: las ramas S16a/S16b/S16c incorporan adaptador, permisos y contrato actualizado sin código de Cindy. Ver [cierre de integración](../cierre-integracion-2026-10-20.md); los SHA de arriba son referencias históricas anteriores a esta actualización.

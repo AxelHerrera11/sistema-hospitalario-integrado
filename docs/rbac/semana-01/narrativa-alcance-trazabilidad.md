@@ -8,7 +8,7 @@ Controlar **quién puede hacer qué, en qué hospital y hasta cuándo**. El mód
 
 **Incluido**
 
-- Catálogo de roles del HIS (por ejemplo `SuperAdmin`, `AdminHospital`, `Medico`, `Enfermeria`, `TecnicoLab`, `Bioquimico`) y de permisos con la convención `modulo.accion` (`prescripciones.crear`, `muestras.recibir`, `rbac.asignar`...).
+- Catálogo de roles del HIS (por ejemplo `SuperAdmin`, `AdminHospital`, `Medico`, `Enfermeria`, `TecnicoLab`, `Bioquimico`) y de permisos con la convención `modulo.accion` (`prescripciones.crear`, `muestras.recibir`, `rbac.roles.asignar`...).
 - Asignación y revocación de un rol a un usuario dentro de un hospital, con vigencia (`valid_from` / `valid_to`) sobre `hospital_memberships`.
 - Regla anti-escalamiento: un administrador solo asigna roles en su propio hospital y nunca un rol con más privilegios que el suyo. Solo el super administrador gestiona roles de administración.
 - Middleware `permission:` para proteger rutas API y guard de Vue Router basado en `meta.permission`.
