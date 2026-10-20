@@ -7,6 +7,7 @@ escribir el módulo de órdenes.
 - **Módulo dueño:** `ASII-16 — Órdenes de laboratorio`
 - **Origen:** plan transversal de integración recibido el 18 de octubre de 2026
 - **Contrato API:** [contrato-api.md](./contrato-api.md)
+- **Pendientes de coordinación:** [PENDIENTES-INTEGRACION.md](./PENDIENTES-INTEGRACION.md)
 
 ## Estado
 
