@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** los hallazgos salen de leer los wireframes y las reglas de la Semana 8, no de una pantalla implementada. Las razones de contraste se calcularon con la fórmula de luminancia relativa de WCAG 2.x y su salida se copió sin cambios (PHP 8.3.33); los colores son los de la paleta Tailwind, no una decisión del módulo. El comportamiento de `parseFloat("5,5")` es el de JavaScript. Los criterios de aceptación y los umbrales de las advertencias de unidad (glucosa < 20 en mg/dL o > 40 en mmol/L) son propuestas sin validar con usuarios clínicos. No se evaluó con usuarios reales ni con un lector de pantalla. No se modificó código.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar los hallazgos, el backlog y esta declaración antes de aprobarla.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó los hallazgos, el backlog y esta declaración, y la aprueba.
