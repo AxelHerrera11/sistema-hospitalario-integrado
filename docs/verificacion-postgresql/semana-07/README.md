@@ -23,8 +23,8 @@ propuesta de migración correctiva.
 - [Informe de auditoría por migración](./informe-auditoria-migraciones.md): método,
   resumen por migración, siete hallazgos con severidad y reglas para migraciones nuevas.
 - [Migración correctiva propuesta](./migracion-correctiva-propuesta.sql): límites de
-  longitud para texto libre, con su reversión y las pruebas que debe cubrir. **No se
-  aplica** en este PR porque el número de archivo debe acordarse con el grupo.
+  longitud para texto libre, con su reversión. **No se aplica** en este PR porque el
+  número de archivo debe acordarse con el grupo.
 - [Registro de coordinación de `doctor_schedules`](./registro-coordinacion-doctor-schedules.md):
   validación de la definición literal contra el esquema real, contrato publicado y
   acuerdos con responsable y estado.
