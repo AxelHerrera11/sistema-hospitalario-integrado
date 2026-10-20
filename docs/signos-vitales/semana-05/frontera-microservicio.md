@@ -40,7 +40,7 @@ sequenceDiagram
     K-->>C: 403 FORBIDDEN + trace_id
   else con permiso
     K->>U: execute(mediciones, measured_at)
-    U->>D: BEGIN · INSERT vital_signs · INSERT auditoría(correlation_id = trace_id) · outbox · COMMIT
+    U->>D: BEGIN · INSERT vital_signs · INSERT auditoría · outbox (propuesto) · COMMIT
     U-->>K: resultado o VitalSignViolation
     K-->>C: 201 / 4xx + trace_id + X-Trace-Id
   end
@@ -92,7 +92,7 @@ La medición sale de `php micro-his/signos-vitales/tests/bench.php` (PHP 8.3.33,
 | Comunicación | HTTP/JSON síncrono con `/api/v1` para registrar y consultar; evento asíncrono solo para alertas (outbox, propuesto). |
 | Seguridad | `401` sin actor; `403 FORBIDDEN` sin permiso RBAC; `403 NOT_TREATING_PHYSICIAN` sin asignación activa, sin revelar si el episodio existe; falla cerrada si RBAC cae (`503`). Los eventos y los errores no llevan valores clínicos. |
 | Resiliencia | Timeout de 2 s en el transporte HTTP; un solo reintento y solo en `GET`. `POST` no se reintenta para no duplicar mediciones (propuesta: `Idempotency-Key` para poder hacerlo). Persistencia caída: `500` sin guardar ni notificar. |
-| Observabilidad | `trace_id` UUID v4 en cuerpo y `X-Trace-Id`, guardado como `correlation_id` en la auditoría; bitácora de acceso por petición (actor, método, ruta, estado) sin cuerpo clínico. |
+| Observabilidad | `trace_id` UUID v4 en cuerpo y `X-Trace-Id`; bitácora de acceso por petición (`trace_id`, actor, método, ruta, estado) sin cuerpo clínico. Cuando exista la auditoría H8, el mismo `trace_id` se guardará como `correlation_id` (diseño; hoy la auditoría del prototipo no lo guarda). |
 | Consistencia | Fuerte dentro del hospital (una transacción: medición + auditoría + outbox). Eventual hacia Alertas críticas: puede haber retraso o repetición, nunca pérdida; el consumidor es idempotente por `event_id`. Sin transacciones entre bases. |
 
 ## Decisiones pendientes
