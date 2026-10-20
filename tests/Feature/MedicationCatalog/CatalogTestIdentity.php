@@ -7,18 +7,22 @@ namespace Tests\Feature\MedicationCatalog;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
+use MicroHis\Rbac\Domain\DenialRecorder;
 use MicroHis\Rbac\Domain\RoleResolver;
 
 /**
- * Identidad de prueba: sustituye tenant y jwt.auth (cuyos modelos User/Tenant no existen en develop) y la consulta de
- * membresías a la base CENTRAL. Lo demás es real: RequirePermission, Authorize y config/rbac.php.
+ * Identidad de prueba: sustituye tenant y jwt.auth, la consulta de membresías a la base CENTRAL y el registro de
+ * denegaciones (AuditDenials escribe en la auditoría CENTRAL), que guarda en memoria para poder comprobarlo.
+ * Lo demás es real: RequirePermission, Authorize y config/rbac.php.
  */
-final class CatalogTestIdentity implements RoleResolver
+final class CatalogTestIdentity implements RoleResolver, DenialRecorder
 {
     public static ?GenericUser $user = null;
     public static ?string $hospital = null;
     /** @var list<string> */
     public static array $roles = [];
+    /** @var list<array<string, mixed>> */
+    public static array $denials = [];
 
     public function handle(Request $request, Closure $next)
     {
@@ -36,6 +40,11 @@ final class CatalogTestIdentity implements RoleResolver
     public function rolesIn(string $userId, string $hospitalId): array
     {
         return self::$user !== null && $userId === self::$user->getAuthIdentifier() && $hospitalId === self::$hospital ? self::$roles : [];
+    }
+
+    public function record(array $denial): void
+    {
+        self::$denials[] = $denial;
     }
 
     public static function as(?string $role, string $hospital = 'hospital-a'): void
