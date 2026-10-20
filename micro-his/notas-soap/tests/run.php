@@ -6,6 +6,7 @@ use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
+use MicroHis\NotasSoap\Domain\Uuid;
 use MicroHis\NotasSoap\Persistence\InMemoryAuditTrail;
 use MicroHis\NotasSoap\Persistence\InMemoryCareAssignmentReader;
 use MicroHis\NotasSoap\Persistence\InMemoryClinicalNoteRepository;
