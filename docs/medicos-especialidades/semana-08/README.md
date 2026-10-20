@@ -74,4 +74,26 @@ flowchart TD
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
+## Estados de la pantalla
+
+| Estado | Qué ve el usuario |
+|---|---|
+| Carga | Lista en gris y botones deshabilitados mientras llega la respuesta |
+| Vacío | «No hay médicos vigentes para esta especialidad» (`NO_DOCTORS_FOR_SPECIALTY`, es un `200`, no un error) |
+| Médico sin horario | Aparece con «Sin horario configurado» y sin franjas (`SCHEDULE_NOT_CONFIGURED`); no se oculta |
+| Conflicto (409) | Mensaje con el motivo y la acción sugerida: ver el médico existente o marcar como secundaria |
+| Validación (422) | Error junto al campo: licencia, especialidad inactiva, vigencia o fecha |
+| Sin permiso (403) | «No tiene permiso para esta acción»; el botón no se muestra si el rol no tiene el permiso |
+| Servicio no disponible (503 o sin respuesta) | «No se pudo consultar; intente de nuevo». En el alta: «busque la licencia antes de repetir» |
+| Éxito (201 / 200) | Confirmación con enlace a la ficha del médico, o la lista de franjas |
+
+## Reglas de interacción
+
+- «Registrar médico» y «Asociar especialidad» se deshabilitan mientras la petición está en curso: el alta no es idempotente y un doble clic podría intentar duplicarla.
+- La lista de especialidades solo ofrece las activas; una especialidad inactiva no aparece como opción.
+- «Principal» viene desmarcado; si el médico ya tiene una principal en el periodo, se avisa antes de enviar.
+- Las franjas ocupadas no se muestran como opción. Elegir una franja no la reserva: la reserva la confirma Citas.
+- Cada mensaje de error muestra el `trace_id` en pequeño, para que soporte lo encuentre en la bitácora.
+- **Médico (propuesto):** «Mi disponibilidad» filtra por su propio `doctor_profile_id`; el contrato v1 consulta por especialidad, así que se propone el parámetro opcional `doctor` en `GET /api/v1/availability`.
+
+Los wireframes se evalúan en la Semana 9 (usabilidad y accesibilidad) y se adaptan a móvil en la Semana 10. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
