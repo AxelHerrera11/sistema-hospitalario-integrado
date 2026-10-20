@@ -33,7 +33,7 @@ Los clientes (UI y otros módulos) no conocen la base: llaman por HTTPS/JSON al 
 ## Archivos de la semana
 
 - [`contrato-api.md`](./contrato-api.md): contrato REST `/api/v1` con endpoints, códigos y ejemplos.
-- [`permisos.md`](./permisos.md): catálogo vigente de 22 permisos y matriz de 5 roles (conciliado en Semana 16; incluye concesiones pendientes separadas).
+- [`permisos.md`](./permisos.md): catálogo de 12 permisos y matriz de 5 roles.
 - [`frontera-microservicio.md`](./frontera-microservicio.md): evaluación y decisión de frontera.
 - [`DECLARACION_IA.md`](./DECLARACION_IA.md): declaración de uso de IA y validación humana.
 

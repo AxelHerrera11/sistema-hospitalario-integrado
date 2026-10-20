@@ -22,7 +22,7 @@ sequenceDiagram
   else JWT válido
     MW->>DB: membresía activa y permisos del administrador
     DB-->>MW: rol AdminHospital → permisos
-    alt sin rbac.asignar
+    alt sin rbac.roles.asignar
       MW->>AUD: registrarDenegacion(admin, tenant, ruta, permiso)
       AUD-->>MW: trace_id
       MW-->>UI: 403 RBAC_DENIED + trace_id
