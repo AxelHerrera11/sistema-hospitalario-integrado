@@ -21,11 +21,15 @@ para que otra entrega no vuelva a añadir el mismo archivo con contenido distint
 
 ## Integración y validación
 
-Integrar mediante **Squash and merge**, empezando por #495; así las ramas con
-historia compartida no introducen las retiradas de archivos como borrados de otra
-entrega. No fusionar estas historias antiguas mediante merge normal. Si se exige
-merge normal, actualizar cada rama con develop y revisar el árbol completo antes
-de su merge. No activar auto-merge.
+Actualización de revisión: #495 ya está integrado. La antigua separación dejaba
+historia compartida con retiradas de archivos; se reprodujeron los conflictos y
+se reconciliaron #483, #488, #490 y #493 con develop `9183393`, conservando completo
+su backend. Cada diff contiene únicamente sus archivos propios. No se reescribió
+historia ni se usó force push. La corrección no depende de elegir squash.
+
+Antes de fusionar, comprobar `git merge-tree` contra el develop vigente y que no
+haya borrados de app/Rbac ni config/rbac.php. Si develop cambia, actualizar y volver
+a revisar. La modalidad de merge la decide el equipo; no activar auto-merge.
 
 #490, #483 y las pruebas de #493 necesitan el backend de #495 para ejecutarse.
 #488 es documental. La prueba `CindyContextTest` requiere además el módulo de
