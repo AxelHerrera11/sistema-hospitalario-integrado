@@ -5,7 +5,7 @@
 - **Estudiante:** Fajardo López, Javier Alexander (`Javifa2324`)
 - **Módulo:** Verificación de Base de Datos PostgreSQL
 - **Semana:** Semana 5 — Mapeo de endpoints a tablas y operaciones transaccionales
-- **Entregable / evidencia:** Matriz endpoint → tablas → tipo de operación, con transacciones señaladas ([matriz-endpoint-tablas.md](./matriz-endpoint-tablas.md)).
+- **Entregable / evidencia:** Matriz endpoint → tablas → tipo de operación, con transacciones señaladas ([matriz-endpoint-tablas.md](./matriz-endpoint-tablas.md)) y las unidades transaccionales en [transacciones.md](./transacciones.md)).
 - **Estructura:** Sistema Hospitalario Integrado 2026 | Semanas 1–15.
 
 ## 1. Alcance
