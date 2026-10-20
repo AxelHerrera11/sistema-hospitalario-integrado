@@ -53,4 +53,6 @@ Las capturas se tomaron con Chrome controlado por Puppeteer, con el viewport rea
 
 **Pendiente de medir:** el contraste (WCAG 1.4.3) y el zoom al 200 % (1.4.4) que la Semana 9 dejó para el prototipo se miden en la Semana 12 con una herramienta de contraste sobre estas pantallas.
 
+**Medido en la Semana 12:** los 16 pares de color de la pantalla cumplen 1.4.3 y 1.4.11. La medición encontró que el indicador de foco (`#f59e0b`, 2,01:1 sobre el fondo de la página) no cumplía el mínimo de 3:1 de 1.4.11, así que se cambió a `#b45309` (4,69:1). El zoom al 200 % y los caminos de rol, estado y error quedaron verificados en la [Semana 12](../semana-12/README.md).
+
 Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
