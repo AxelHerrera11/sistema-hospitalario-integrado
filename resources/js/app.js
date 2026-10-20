@@ -10,3 +10,7 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.mount('#app');
+
+window.addEventListener('auth:session-expired', () => {
+    router.push({ name: 'login' });
+});
