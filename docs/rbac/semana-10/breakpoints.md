@@ -13,7 +13,7 @@
 
 - A 320 px: se oculta la columna de fecha en la bitácora; el `trace_id` se acorta visualmente pero se copia completo.
 - Los filtros pasan a un acordeón colapsado por defecto en ≤ 430 px.
-- El permiso requerido (`rbac.asignar`) se muestra como texto de ayuda bajo el campo, no en una columna aparte.
+- El permiso requerido (`rbac.roles.asignar`) se muestra como texto de ayuda bajo el campo, no en una columna aparte.
 - El estado de la decisión (Permitido/Denegado) nunca se corta: tiene prioridad sobre cualquier otro dato.
 
 ## Base técnica (propuesta)
