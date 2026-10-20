@@ -26,3 +26,6 @@ $clients = array_merge(array_map(static fn (string $useCase): string => __DIR__ 
     ['RegisterMedication', 'ConsultMedications', 'ChangeMedicationValidity']), glob(__DIR__ . '/../src/Presentation/*Controller.php'));
 check('ningún caso de uso ni controlador depende del Repository completo (se conserva el ISP)', count(array_filter($clients, 'is_file')) === 6
     && !preg_match('/\bMedicationRepository\b/', implode("\n", array_map('file_get_contents', $clients))));
+$router = (string) file_get_contents(__DIR__ . '/../src/Presentation/Router.php');
+check('el Router (MVC) no tiene SQL ni reglas de negocio: no usa Domain ni Persistence', !$uses($router, 'Domain') && !$uses($router, 'Persistence')
+    && !preg_match('/\b(SELECT|INSERT|UPDATE|DELETE)\b|PDO/', $router));
