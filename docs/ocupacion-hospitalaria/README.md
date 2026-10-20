@@ -8,6 +8,7 @@ indexa el contrato vigente; las entregas semanales permanecen en
 - **Módulo:** `ASII-09 — Dashboard de ocupación hospitalaria`
 - **Issue:** [#36](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/issues/36)
 - **Contrato API:** [contrato-api.md](./contrato-api.md)
+- **Pendientes de coordinación:** [PENDIENTES-INTEGRACION.md](./PENDIENTES-INTEGRACION.md)
 
 ## Estado
 
