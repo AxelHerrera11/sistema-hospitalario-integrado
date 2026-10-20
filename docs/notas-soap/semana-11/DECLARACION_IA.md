@@ -11,6 +11,6 @@
 - Los datos son de ejemplo, viven en memoria y no hay llamadas al servidor; la firma y la corrección siguen marcadas como propuestas.
 - En esta entrega no se modificó código del micro-HIS ni del HIS.
 
-**Validación humana:** pendiente del visto bueno de Josué Fernando Hicho García.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el prototipo navegable, el mapa de navegación, las capturas del camino feliz y del error crítico, y la consistencia de roles, estados y accesibilidad, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
