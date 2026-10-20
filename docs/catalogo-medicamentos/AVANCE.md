@@ -18,3 +18,4 @@
 | 14 | Plan SQA: 7 métricas, riesgos, controles y calendario | `semana-14/` | `metricas.php`: M1 101, M2 0, M3 2 (no cumple) | Rama `…semana-14-sqa…` | Pendiente | M3 en Semana 15; M6–M7 sin medir |
 | 15 | 17 casos (3 U, 9 W, 5 B), matriz y defectos | `semana-15/`, `tests/casos.php` | 17/17 sobre develop; 16/17 en la base apilada (B3) | Rama `…semana-15-pruebas…` | Pendiente | Permisos HTTP reales (Semana 16) |
 | 16 | Integración en el API v1 de Laravel con autorización real | `semana-16/`, PR #602 | Feature 6/6 sobre develop; mutación detectada | PR #602 y rama `…semana-16-evidencia…` | Pendiente | **Bloqueado:** staging, H5, modelos User/Tenant, permisos RBAC |
+| 17 | Amenazas STRIDE, pruebas de seguridad y bitácora local | `semana-17/` | Feature 12/12 sobre develop | Rama `…semana-17-seguridad…` | Pendiente | **Bloqueado:** despliegue final; M6, M10 y M12 abiertos |
