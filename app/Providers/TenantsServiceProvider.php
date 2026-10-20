@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\JwtAuth;
 use App\Modules\Tenants\Application\Administration\ManageHospitalMembership;
 use App\Modules\Tenants\Application\Identity\AuthenticateUser;
 use App\Modules\Tenants\Application\Identity\RefreshUserSession;
@@ -14,6 +15,7 @@ use App\Modules\Tenants\Infrastructure\Persistence\RefreshTokenRepository;
 use App\Modules\Tenants\Infrastructure\Persistence\SessionRepository;
 use App\Modules\Tenants\Infrastructure\Security\JwtAccessTokenIssuer;
 use App\Rbac\AuditDenials;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use MicroHis\Rbac\Domain\DenialRecorder;
 
@@ -48,5 +50,13 @@ final class TenantsServiceProvider extends ServiceProvider
             $app->make(SessionRepository::class),
             $app->make(AuditLogRepositoryInterface::class),
         ));
+    }
+
+    public function boot(Router $router): void
+    {
+        // tymon/jwt-auth registra su propio alias 'jwt.auth' al arrancar el paquete y
+        // reemplaza el de bootstrap/app.php; se reafirma para que las rutas validen
+        // identidad, hospital, roles y sesión con App\Http\Middleware\JwtAuth.
+        $router->aliasMiddleware('jwt.auth', JwtAuth::class);
     }
 }
