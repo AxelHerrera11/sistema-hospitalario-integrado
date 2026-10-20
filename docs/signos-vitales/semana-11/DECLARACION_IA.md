@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** las bandas de severidad replican las de las reglas del micro-HIS (`adulto-2026.1`) y la conversión 18,016 es la del cambio práctico de la Semana 6; el prototipo no llama al servidor y los errores se simulan. Las razones de contraste se calcularon con la fórmula WCAG y se copiaron sin cambios. La prueba funcional se ejecutó con un guion temporal en Chrome que no se incluye en el repositorio. Las capturas son del prototipo, con datos ficticios. No se revisó con lector de pantalla, con axe ni con usuarios clínicos.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el prototipo, las capturas y esta declaración antes de aprobarla.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el prototipo, las capturas y esta declaración, y la aprueba.
