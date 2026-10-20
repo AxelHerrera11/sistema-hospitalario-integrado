@@ -1,0 +1,28 @@
+%% Capas de la persistencia en el modulo de ocupacion hospitalaria (micro-his).
+%% Fuente: micro-his/ocupacion-hospitalaria/** en origin/develop.
+flowchart TB
+    subgraph Capa1[Presentacion]
+        CTRL[OccupancyController]
+        HTTPR[ApiRequestHandler]
+        VIEW[JsonView]
+    end
+    subgraph Capa2[Aplicacion]
+        USE[ConsultOccupancy]
+        QUERY[OccupancySummaryQuery]
+        IFACE[BedSnapshotReader<br/>interfaz]
+    end
+    subgraph Capa3[Dominio]
+        SNAP[BedSnapshot]
+        CALC[OccupancyCalculator]
+    end
+    subgraph Capa4[Persistencia - adaptadores]
+        PDO[PdoBedSnapshotReader<br/>PDO con sentencias preparadas]
+        MEM[InMemoryBedSnapshotReader<br/>dobles de prueba]
+    end
+    DB[(Base HOSPITAL<br/>wards, beds, bed_stays)]
+    CTRL --> HTTPR --> USE
+    USE --> QUERY --> CALC
+    QUERY --> IFACE
+    IFACE -.-> PDO
+    IFACE -.-> MEM
+    PDO -->|SQL parametrizado| DB
