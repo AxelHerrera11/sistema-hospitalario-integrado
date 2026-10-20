@@ -9,6 +9,24 @@ use Illuminate\Support\Str;
 
 final class IdentityContextTest extends TenantAuthTestCase
 {
+    public function test_login_and_me_publish_effective_permissions_from_server_memberships(): void
+    {
+        $this->assertSame(\App\Modules\Tenants\Domain\Identity\CanonicalRole::ALL, array_keys(config('rbac.roles')));
+        foreach (['tecnico_laboratorio' => ['lab-results.create', 'lab-results.validate'],
+            'bioquimico' => ['lab-results.validate', 'lab-results.create'],
+            'jefatura_medica' => ['alertas.supervisar', 'notas_soap.ver']] as $role => [$allowed, $denied]) {
+            DB::connection('central')->table('hospital_memberships')->where('user_id', $this->userId)->delete();
+            $this->addMembership($this->userId, $this->hospitalA, $role);
+            $login = $this->login()->assertOk()->assertJsonPath('roles', [$role]);
+            $permissions = $login->json('user.permissions');
+            $this->assertContains($allowed, $permissions);
+            $this->assertNotContains($denied, $permissions);
+            $this->assertSame(array_values(array_unique($permissions)), $permissions);
+            $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])->withToken($this->tokenFrom($login))
+                ->getJson('/api/v1/auth/me')->assertOk()->assertJsonPath('user.permissions', $permissions);
+        }
+    }
+
     public function test_login_and_me_expose_central_identity_and_live_hospital_roles(): void
     {
         $this->addMembership($this->userId, $this->hospitalA, 'medico');

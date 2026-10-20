@@ -60,6 +60,7 @@ final class SessionLifecycleTest extends TenantAuthTestCase
 
         $refresh->assertOk()
             ->assertJsonPath('user.user_id', $this->userId)
+            ->assertJsonPath('user.permissions', $login->json('user.permissions'))
             ->assertJsonPath('hospital.hospital_id', $this->hospitalA)
             ->assertJsonPath('roles', ['medico'])
             ->assertJsonPath('expires_in', 900)
