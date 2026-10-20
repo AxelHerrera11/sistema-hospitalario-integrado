@@ -12,7 +12,7 @@
 
 El micro-HIS ejecuta el flujo con cuatro capas:
 
-- **Presentation:** `VitalSignHttpHandler` construye la medición y llama a `RecordVitalSigns`.
+- **Presentation:** `VitalSignHttpHandler` rechaza con `422 PAYLOAD_INVALID` el encabezado o `measured_at` que no son texto, construye la medición y llama a `RecordVitalSigns`.
 - **Application:** el caso de uso verifica el episodio, evalúa los umbrales, guarda la medición con su auditoría y notifica la alerta después del `COMMIT`.
 - **Domain:** valida la plausibilidad en `VitalSigns` y evalúa las reglas a través del contrato `VitalSignRule`.
 - **Persistence:** implementa los puertos con PDO y sentencias preparadas.
@@ -44,6 +44,7 @@ OK: regla de dominio: asignación terminada -> 403
 OK: regla de dominio: episodio cerrado -> 409
 OK: RF-SV-06: paciente de 9 años -> 201 THRESHOLDS_NOT_APPLICABLE, auditado y sin alerta
 OK: validación: measured_at inválido -> 422
+OK: validación de tipos: encabezado o measured_at no string -> 422 sin guardar
 OK: LSP: las 6 reglas cumplen la misma prueba de contrato
 OK: error de persistencia: auditoría caída -> 500, rollback y sin notificación
 Todas las pruebas pasaron.
