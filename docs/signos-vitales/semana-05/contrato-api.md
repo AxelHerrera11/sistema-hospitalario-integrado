@@ -31,16 +31,16 @@ Supuesto: enfermería no registra porque el trigger `enforce_vital_sign_integrit
 
 | Campo | Tipo | Regla |
 |---|---|---|
-| `measured_at` | string | obligatorio, `YYYY-MM-DD HH:MM:SS` válido |
+| `measured_at` | string | obligatorio, `YYYY-MM-DD HH:MM:SS` válido y no posterior a la hora del servidor más 5 minutos de tolerancia |
 | `temperature`, `heart_rate`, `respiratory_rate`, `systolic_bp`, `diastolic_bp`, `oxygen_saturation`, `weight`, `height`, `glucose` | number | al menos uno; dentro de los límites fisiológicos de `VitalSigns::LIMITS`; sistólica ≥ diastólica |
 
 Respuesta `201`:
 
 ```json
-{ "vital_sign_id": "…", "code": "ALERT_GENERATED", "severity": "critical", "findings": { "heart_rate": "critical", "oxygen_saturation": "warning" }, "trace_id": "…" }
+{ "vital_sign_id": "…", "code": "ALERT_GENERATED", "severity": "critical", "findings": { "heart_rate": "critical", "oxygen_saturation": "warning" }, "notification": "queued", "trace_id": "…" }
 ```
 
-`code` es `OK`, `ALERT_GENERATED` o `THRESHOLDS_NOT_APPLICABLE` (paciente menor de 18 años: se guarda sin evaluar).
+`code` es `OK`, `ALERT_GENERATED` o `THRESHOLDS_NOT_APPLICABLE` (paciente menor de 18 años: se guarda sin evaluar). `notification` es `not_required` (sin alerta), `queued` (alerta encolada) o `failed` (la medición se guardó pero el canal falló: el médico debe avisar directamente; el fallo se registra con el id de la medición). Un fallo del canal nunca cambia el `201`.
 
 ### `GET /api/v1/vital-signs/{vital_sign_id}`
 
@@ -56,7 +56,7 @@ Devuelve la medición (`care_episode_id`, `measured_at`, los signos medidos). Es
 | `404` | `ROUTE_NOT_FOUND` / `VITAL_SIGN_NOT_FOUND` | Ruta inexistente / medición inexistente |
 | `409` | `EPISODE_CLOSED` | El episodio no está abierto |
 | `422` | `PAYLOAD_INVALID` | JSON malformado o campo con tipo incorrecto |
-| `422` | `VITAL_SIGNS_INVALID` / `VITAL_SIGN_IMPLAUSIBLE` / `MEASURED_AT_INVALID` | Sin signos o signo no reconocido / valor fuera de rango fisiológico / fecha mal formada |
+| `422` | `VITAL_SIGNS_INVALID` / `VITAL_SIGN_IMPLAUSIBLE` / `MEASURED_AT_INVALID` | Sin signos o signo no reconocido / valor fuera de rango fisiológico / fecha mal formada o futura |
 | `500` | `VITAL_SIGN_PERSISTENCE_ERROR` | La base no está disponible; no se guardó nada ni se notificó |
 | `503` | `AUTHORIZATION_UNAVAILABLE` | RBAC caído: falla cerrada, no se atiende la petición |
 

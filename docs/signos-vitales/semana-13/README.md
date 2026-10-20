@@ -121,6 +121,8 @@ P-7  C-13     glucosa 5,5 (un valor normal en mmol/L) se evalúa como mg/dL: 201
 P-8  C-01     FC 138,5 se acepta (la columna heart_rate es integer); SpO2 0 se rechaza: 422 VITAL_SIGN_IMPLAUSIBLE (la base lo admite)
 ```
 
+Esa salida es la del commit congelado `c4787ea`. Tras la [corrección de P-2 y P-3](./correcciones/README.md), la misma sonda muestra `201 ALERT_GENERATED … notification failed` en P-2 y `422 MEASURED_AT_INVALID` en P-3 para la fecha futura; el resto no cambia.
+
 ## Archivos
 
 - [Checklist de 15 ítems](./checklist.md) y puntos de atención del autor.
