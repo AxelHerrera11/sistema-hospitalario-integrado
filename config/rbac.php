@@ -10,6 +10,7 @@ return [
      */
     'roles' => [
         'superadmin' => [
+            'pacientes.ver', 'pacientes.registrar', 'pacientes.editar',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
@@ -24,17 +25,20 @@ return [
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
+            'pacientes.ver',
             'rbac.autorizar',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'laboratorio.catalogo.ver', 'alergias.ver', 'alergias.registrar',
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'enfermeria' => [
+            'pacientes.ver',
             'rbac.autorizar', 'prescripciones.ver',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'alergias.ver', 'alergias.registrar',
         ],
         'recepcion' => [
+            'pacientes.ver', 'pacientes.registrar', 'pacientes.editar',
             'rbac.autorizar', 'muestras.recibir', 'muestras.ver',
             'admision.crear', 'camas.ver',
         ],
@@ -51,6 +55,7 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
+        'pacientes.ver', 'pacientes.registrar', 'pacientes.editar',
         'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
         'rbac.permisos.ver', 'rbac.denegaciones.ver',
         'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
