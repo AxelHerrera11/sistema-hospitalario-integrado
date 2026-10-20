@@ -16,6 +16,8 @@ final class CanonicalRoleTest extends TestCase
         ]));
         $this->assertTrue(CanonicalRole::isCanonical('tecnico_laboratorio'));
         $this->assertTrue(CanonicalRole::isCanonical('bioquimico'));
+        $this->assertTrue(CanonicalRole::isCanonical('jefatura_medica'));
+        $this->assertSame(['jefatura_medica'], CanonicalRole::canonicalize(['JefaturaMedica', 'jefatura_medica']));
         $this->assertNull(CanonicalRole::mapLegacyExplicitly('TecnicoLab'));
         $this->assertNull(CanonicalRole::mapLegacyExplicitly('Bioquimico'));
         $this->assertNotSame(CanonicalRole::version(['bioquimico']), CanonicalRole::version(['tecnico_laboratorio']));

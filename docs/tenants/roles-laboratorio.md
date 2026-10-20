@@ -8,6 +8,8 @@ versión de roles de una sesión. No se traducen `TecnicoLab` ni `Bioquimico`.
   de resultados. No recibe validación.
 - Bioquímico: consulta de muestras/órdenes/catálogo/resultados y validación.
   No recibe captura ni corrección.
+- Jefatura: código `jefatura_medica`, alertas/ver/acuse/supervisión del servicio
+  según el contrato ASII-21 #235. No hereda el rol médico ni acceso a expedientes.
 
 Los permisos los define `config/rbac.php` en la entrega de catálogo común de
 ASII-02; CanonicalRole no concede permisos. Ambos cambios deben integrarse.
