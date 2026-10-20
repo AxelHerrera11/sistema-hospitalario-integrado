@@ -10,7 +10,7 @@
 
 ## Resumen
 
-El micro-HIS ejecuta los tres pasos del flujo con cuatro capas. `DoctorHttpHandler` (Presentation) traduce la petición a los casos de uso `RegisterDoctor`, `AssociateSpecialty` y `QueryAvailability` (Application). Las reglas de vigencia, especialidad duplicada, principal única y franjas libres viven en Domain sin dependencias. `PdoDoctorStore` (Persistence) implementa los puertos con PDO y sentencias preparadas. Los puertos son los seis que salieron de aplicar ISP en la [Semana 2](../semana-02/solid-isp.md).
+El micro-HIS ejecuta los tres pasos del flujo con cuatro capas. `DoctorHttpHandler` (Presentation) rechaza con `422 PAYLOAD_INVALID` los encabezados y campos con tipo incorrecto (texto, `is_primary` booleano, `valid_to` nulo o texto) y traduce la petición a los casos de uso `RegisterDoctor`, `AssociateSpecialty` y `QueryAvailability` (Application). Las reglas de vigencia, especialidad duplicada, principal única y franjas libres viven en Domain sin dependencias. `PdoDoctorStore` (Persistence) implementa los puertos con PDO y sentencias preparadas. Los puertos son los seis que salieron de aplicar ISP en la [Semana 2](../semana-02/solid-isp.md).
 
 ## Archivos de evidencia
 
@@ -31,6 +31,7 @@ OK: camino feliz: alta 201 con CARD principal y auditoría
 OK: camino feliz: asociar NEURO secundaria -> 201
 OK: camino feliz: disponibilidad del lunes -> Ana libre 08:00 y 09:00 (08:30 confirmada)
 OK: RF-MED-07: médico sin horario aparece con SCHEDULE_NOT_CONFIGURED
+OK: vigencia del perfil: médico con perfil vencido no aparece en la disponibilidad
 OK: RF-MED-06: especialidad sin médicos -> 200 NO_DOCTORS_FOR_SPECIALTY
 OK: regla de dominio: misma especialidad en periodo solapado -> 409
 OK: regla de dominio: otra principal en el mismo periodo -> 409
@@ -38,6 +39,11 @@ OK: regla de dominio: vigencia fuera del perfil -> 422
 OK: regla de dominio: especialidad inactiva -> 422
 OK: regla de dominio: licencia repetida -> 409
 OK: validación: fecha inválida -> 422
+OK: validación de tipos: is_primary "false" (cadena) -> 422 sin guardar
+OK: validación de tipos: valid_to numérico o specialty_code arreglo -> 422 sin guardar
+OK: validación de tipos: encabezado o campo de alta no string -> 422 sin guardar
+OK: validación de tipos: consulta de disponibilidad con fecha no string -> 422
+OK: is_primary booleano: false se guarda como secundaria (0)
 OK: regla de dominio pura (sin BD): la política rechaza dos principales
 OK: error de persistencia: auditoría caída -> 500 y rollback del perfil
 OK: ISP: la disponibilidad no depende de puertos de escritura
