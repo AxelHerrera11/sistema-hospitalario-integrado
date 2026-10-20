@@ -12,6 +12,6 @@
 - Los revisores y el moderador están «por confirmar»: no se asignó a nadie sin su aceptación.
 - En esta entrega no se modificó código del micro-HIS ni del HIS.
 
-**Validación humana:** pendiente del visto bueno de Josué Fernando Hicho García.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el plan, el checklist de 15 ítems, los roles, los criterios de entrada y salida, el formato de hallazgos y los puntos de atención del autor, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
