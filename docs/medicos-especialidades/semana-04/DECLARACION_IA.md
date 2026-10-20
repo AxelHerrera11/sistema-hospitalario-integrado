@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** `DoctorRepository` agrupa los puertos de ISP de la Semana 2 sin cambiar lo que recibe cada caso de uso. El análisis del repositorio compartido se basa en las migraciones hospital `000100` a `000401` de `develop`, citadas por archivo y línea. Las pruebas se ejecutaron con PHP 8.3.33 y su salida se copió sin cambios, resumida solo donde el README lo indica.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el código, ejecutar las pruebas y aprobar esta declaración antes de abrir el PR.
+**Validación humana:** realizada el 2026-10-19. Josué Fernando Hicho García revisó el código, ejecutó las pruebas y aprueba esta documentación.
