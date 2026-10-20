@@ -1,0 +1,9 @@
+[
+  {"pr":245,"sha":"d889428c09c6bc19171778ddc62a18703905a9e4","path":"docs/asii-05-citas/contrato-api.md","permissions":["citas.ver","citas.crear","citas.confirmar","citas.cancelar"]},
+  {"pr":247,"sha":"d45f049374de4b564097f5fe801dab07b84ad525","path":"docs/asii-27-reportes/contrato-filtros-export.md","permissions":["reportes.ver","reportes.exportar"]},
+  {"pr":227,"sha":"0a8762ffd2636888cf0bd08c77217b70780700f2","path":"docs/asii-26-dashboard-base/contrato-ui-base.md","permissions":["documentacion.ver"]},
+  {"pr":236,"sha":"e296592cb9959795de2377542734434b7c771102","path":"resources/js/shared/navigation.js","permissions":["admision.ver","expediente.ver","medicamentos.ver","laboratorio.ver"]},
+  {"pr":546,"sha":"6c2de1d99d5cf6c58354838de522c0a7fc17cfd0","path":"docs/signos-vitales/semana-05/contrato-api.md","permissions":["signos_vitales.corregir"]},
+  {"pr":235,"sha":"3fd6d0a02e04eb3a2be378e3d7330e6aeed2d148","path":"docs/alertas-criticas/semana-12/cambio-solicitado.md","permissions":["alertas.supervisar"]},
+  {"pr":564,"sha":"6060d76fcaef4f8547dd1ee1346f63ae4d06fd90","path":"docs/gobernanza-auditoria/semana-01/narrativa-alcance.md","permissions":["auditoria.ver"]}
+]
