@@ -28,6 +28,7 @@ final class RbacServiceProvider extends ServiceProvider
     public function boot(Router $router): void
     {
         $router->aliasMiddleware('rbac', RequirePermission::class);
+        $router->aliasMiddleware('permission', RequirePermission::class);
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
             Route::get('permissions', fn () => response()->json(['permissions' => config('rbac.catalog')]))
                 ->middleware('rbac:rbac.permisos.ver');
