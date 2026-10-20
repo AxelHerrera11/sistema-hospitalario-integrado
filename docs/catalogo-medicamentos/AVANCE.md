@@ -6,3 +6,4 @@
 | 2 | RF/RNF, criterios e ISP | `semana-02/` | `evidencia/isp-segregacion.php` (4/4) | #540, #541 | #552 | Revisión humana |
 | 3 | Micro-HIS en 4 capas, PDO y C4 | `semana-03/`, `micro-his/catalogo-medicamentos/` | run, pdo | #542–#545, #547 | #552 | RBAC, H5 |
 | 4 | Repository PDO/InMemory, MVC y repositorio compartido | `semana-04/` | run 47, pdo 18, repository 19, http 17 | #572 (A); ramas `…semana-04-mvc…` (B) y `…semana-04-capas-docs…` (C) | Pendiente | Aprobación requerida en develop (@rortizs) |
+| 5 | Contrato API, cliente-servidor, microservicio y plan | `semana-05/` | `redocly lint` válido; PlantUML reproducible | Ramas `…semana-05-contrato-api…`, `…semana-05-cliente-servidor…` y `…semana-05-plan-integracion…` | Pendiente | Aprobación de 4A; acuerdos con RBAC y H5 |
