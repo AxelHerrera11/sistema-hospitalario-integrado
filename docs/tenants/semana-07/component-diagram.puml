@@ -1,0 +1,252 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam componentBackgroundColor #E3F2FD
+skinparam componentBorderColor #1565C0
+skinparam interfaceBackgroundColor #FFF3E0
+skinparam interfaceBorderColor #E65100
+skinparam packageStyle rectangle
+skinparam packageBackgroundColor #F5F5F5
+title **Diagrama de Componentes: Módulo Tenants & Auth (Backend + Frontend)**\n(Semana 07 | Versión 1.0)
+package "FRONTEND (Portal Web / App Móvil)" {
+    [Auth Pages] as AuthPages
+    [Admin User Management] as AdminUserUI
+    [Admin Tenant Management] as AdminTenantUI
+    [Profile / Settings] as ProfileUI
+    [MFA Challenge UI] as MfaUI
+    interface "Auth API Client\n(HttpClient + Interceptors)" as ApiClient
+    interface "Token Storage\n(Secure Storage / HttpOnly Cookie)" as TokenStorage
+    interface "Device Fingerprint Collector" as DeviceFP
+}
+package "BACKEND - PRESENTATION LAYER" {
+    [AuthController] as AuthCtrl
+    [AdminUserController] as AdminUserCtrl
+    [AdminTenantController] as AdminTenantCtrl
+    [Router + Middleware Chain] as Router
+    interface "Request DTOs\n(RegisterUserRequest, LoginRequest, ...)" as ReqDTOs
+    interface "Response Transformers\n(AuthResponseTransformer)" as RespTransformers
+}
+package "BACKEND - APPLICATION LAYER" {
+    [RegisterUserUseCase] as UCRegister
+    [AuthenticateUserUseCase] as UCAuth
+    [RefreshTokenUseCase] as UCRefresh
+    [RevokeSessionUseCase] as UCRevoke
+    [GetUserUseCase] as UCGetUser
+    [UpdateUserUseCase] as UCUpdateUser
+    [DeactivateUserUseCase] as UCDeactivate
+    [ListUsersUseCase] as UCListUsers
+    [RegisterTenantUseCase] as UCRegisterTenant
+    interface "Commands\n(RegisterUserCommand, AuthenticateCommand, ...)" as Commands
+    interface "Results\n(RegisterUserResult, AuthResult, ...)" as Results
+}
+package "BACKEND - DOMAIN LAYER" {
+    package "Entities" {
+        [User] as EntUser
+        [Tenant] as EntTenant
+        [Session] as EntSession
+        [RefreshToken] as EntRefresh
+    }
+    package "Value Objects" {
+        [Email] as VOEmail
+        [Password] as VOPassword
+        [TenantId] as VOTenantId
+        [UserId] as VOUserId
+        [SessionId] as VOSessionId
+        [JwtClaims] as VOJwtClaims
+        [Role] as VORole
+        [DeviceFingerprint] as VODeviceFP
+    }
+    package "Domain Services" {
+        [PasswordPolicy] as DSPassPolicy
+        [MfaPolicy] as DSMfaPolicy
+        [TokenFactory] as DSTokenFactory
+        [RefreshTokenRotator] as DSRefreshRotator
+        [DeviceTrustService] as DSDeviceTrust
+        [Argon2idHasher] as DSArgon2id
+    }
+    package "Domain Events" {
+        [UserCreated] as EvtUserCreated
+        [UserLoggedIn] as EvtUserLoggedIn
+        [SessionRevoked] as EvtSessionRevoked
+        [RefreshReuseDetected] as EvtRefreshReuse
+        [AccountLocked] as EvtAccountLocked
+        [CrossTenantAttempt] as EvtCrossTenant
+    }
+    package "Repository Interfaces (Ports)" {
+        () UserRepositoryInterface as IUserRepo
+        () TenantRepositoryInterface as ITenantRepo
+        () SessionRepositoryInterface as ISessionRepo
+        () RefreshTokenRepositoryInterface as IRefreshRepo
+        () AuditLogRepositoryInterface as IAuditRepo
+    }
+}
+package "BACKEND - INFRASTRUCTURE LAYER" {
+    package "Persistence (PDO)" {
+        [PDOUserRepository] as PDOUUser
+        [PDOTenantRepository] as PDOTenant
+        [PDOSessionRepository] as PDOSession
+    }
+    package "Persistence (Redis)" {
+        [RedisRefreshTokenRepository] as RedisRefresh
+        [RedisSessionRepository] as RedisSession
+        [RedisBlocklistRepository] as RedisBlocklist
+        [RedisLockoutRepository] as RedisLockout
+        [RedisRateLimitRepository] as RedisRateLimit
+    }
+    package "Persistence (InMemory - Tests)" {
+        [InMemoryUserRepository] as MemUser
+        [InMemoryTenantRepository] as MemTenant
+        [InMemorySessionRepository] as MemSession
+        [InMemoryRefreshTokenRepository] as MemRefresh
+        [InMemoryAuditLogRepository] as MemAudit
+    }
+    package "Persistence (Shared - Read Only)" {
+        [CentralUserReadOnlyRepository] as CentralUserRO
+    }
+    package "Security" {
+        [JwtTokenService] as JwtSvc
+        [TotpVerifier] as TotpSvc
+        [WebAuthnVerifier] as WebAuthnSvc
+        [Argon2idHasher] as ArgonSvc
+    }
+    package "Audit & Events" {
+        [PdoAuditLogRepository] as PdoAudit
+        [EventPublisher] as EventPub
+    }
+    package "External Integrations" {
+        [HaveIBeenPwnedClient] as HibpClient
+        [EmailNotificationService] as EmailSvc
+        [SiemForwarder] as SiemFwd
+    }
+}
+package "EXTERNAL SYSTEMS" {
+    [PostgreSQL Central\n(his_central)] as DBCentral
+    [PostgreSQL Hospital\n(his_hospital)] as DBHospital
+    [Redis Cluster] as RedisCluster
+    [HashiCorp Vault] as Vault
+    [Email Provider] as EmailProv
+    [SIEM] as SIEM
+    [SSO Providers] as SSOProv
+}
+' Frontend → Backend
+AuthPages --> ApiClient : POST /auth/login, /auth/register, /auth/mfa
+AdminUserUI --> ApiClient : GET/POST/PATCH/DELETE /admin/users/*
+AdminTenantUI --> ApiClient : GET/POST/PATCH/DELETE /admin/tenants/*
+ProfileUI --> ApiClient : GET /auth/me, PATCH /auth/me
+MfaUI --> ApiClient : POST /auth/mfa
+ApiClient --> TokenStorage : Store/Retrieve access+refresh tokens
+ApiClient --> DeviceFP : Collect device_id, IP, User-Agent
+ApiClient --> AuthCtrl : HTTP/REST + JWT + X-Tenant-ID
+' Presentation Layer
+AuthCtrl --> ReqDTOs : Binding & Validation
+AuthCtrl --> UCRegister : execute(RegisterUserCommand)
+AuthCtrl --> UCAuth : execute(AuthenticateCommand)
+AuthCtrl --> UCRefresh : execute(RefreshCommand)
+AuthCtrl --> UCRevoke : execute(RevokeCommand)
+AuthCtrl --> RespTransformers : transform(Result)
+AdminUserCtrl --> UCRegister : execute(RegisterUserCommand)
+AdminUserCtrl --> UCGetUser : execute(GetUserCommand)
+AdminUserCtrl --> UCUpdateUser : execute(UpdateUserCommand)
+AdminUserCtrl --> UCDeactivate : execute(DeactivateUserCommand)
+AdminUserCtrl --> UCListUsers : execute(ListUsersCommand)
+AdminUserCtrl --> UCRevoke : execute(RevokeCommand)
+AdminTenantCtrl --> UCRegisterTenant : execute(RegisterTenantCommand)
+Router --> AuthCtrl : Route dispatch
+Router --> Middleware : Tenant → RateLimit → JwtAuth
+' Application Layer
+UCRegister --> Commands : RegisterUserCommand
+UCRegister --> Results : RegisterUserResult
+UCRegister --> EntUser : create()
+UCRegister --> EntTenant : findById(), hasQuota()
+UCRegister --> DSPassPolicy : validate()
+UCRegister --> DSMfaPolicy : evaluate()
+UCRegister --> IUserRepo : save()
+UCRegister --> ITenantRepo : findById(), save()
+UCRegister --> IAuditRepo : log(UserCreated)
+UCRegister --> EventPub : publish(UserCreated)
+UCRegister --> EmailSvc : sendActivationEmail()
+UCAuth --> Commands : AuthenticateCommand
+UCAuth --> Results : AuthResult
+UCAuth --> IUserRepo : findByEmailAndTenant()
+UCAuth --> ITenantRepo : findById()
+UCAuth --> DSPassPolicy : verifyHash()
+UCAuth --> DSMfaPolicy : evaluate()
+UCAuth --> DSTokenFactory : createAccessToken()
+UCAuth --> DSRefreshRotator : generateAndStore()
+UCAuth --> DSDeviceTrust : registerDevice()
+UCAuth --> ISessionRepo : save()
+UCAuth --> IRefreshRepo : save()
+UCAuth --> IAuditRepo : log(UserLoggedIn, LoginFailed, MfaChallenged, MfaSucceeded, MfaFailed, AccountLocked)
+UCAuth --> EventPub : publish(UserLoggedIn)
+UCRefresh --> Commands : RefreshCommand
+UCRefresh --> Results : RefreshResult
+UCRefresh --> IUserRepo : findById()
+UCRefresh --> IRefreshRepo : findByTokenPrefix(), deleteAllByUserId()
+UCRefresh --> ISessionRepo : findById(), updateLastActivity()
+UCRefresh --> DSRefreshRotator : rotate()
+UCRefresh --> DSTokenFactory : createAccessToken()
+UCRefresh --> IAuditRepo : log(TokenRefreshed, RefreshReuseDetected)
+UCRefresh --> EventPub : publish(RefreshReuseDetected)
+UCRevoke --> Commands : RevokeCommand
+UCRevoke --> Results : RevokeResult
+UCRevoke --> IUserRepo : findById()
+UCRevoke --> ISessionRepo : findByUserId(), delete(), deleteAllByUserId()
+UCRevoke --> IRefreshRepo : deleteByUserIdAndDevice(), deleteAllByUserId()
+UCRevoke --> RedisBlocklist : add()
+UCRevoke --> IAuditRepo : log(SessionRevoked)
+UCRevoke --> EventPub : publish(SessionRevokedEvent)
+' Domain Layer Dependencies
+EntUser --> VOEmail : email
+EntUser --> VOPassword : password
+EntUser --> VOTenantId : tenantId
+EntUser --> VOUserId : id
+EntUser --> VORole : roles[]
+EntUser --> VODeviceFP : device (transient)
+EntTenant --> VOTenantId : id
+EntTenant --> VOPassword : policies (password_*)
+EntSession --> VOSessionId : id
+EntSession --> VOUserId : userId
+EntSession --> VOTenantId : tenantId
+EntSession --> VODeviceFP : device
+EntRefresh --> VOUserId : userId
+EntRefresh --> VOTenantId : tenantId
+EntRefresh --> VODeviceFP : device
+EntRefresh --> VOJwtClaims : accessTokenJti
+DSPassPolicy --> DSArgon2id : hash(), verify()
+DSPassPolicy --> HibpClient : check()
+DSMfaPolicy --> VORole : requiresMfa()
+DSTokenFactory --> JwtSvc : sign/validate
+DSRefreshRotator --> IRefreshRepo : save/delete
+DSRefreshRotator --> DSArgon2id : hash()
+DSRefreshRotator --> DSTokenFactory : createAccessToken()
+DSDeviceTrust --> ISessionRepo : findByUserIdAndDevice()
+' Repository Implementations
+IUserRepo <|.. PDOUUser
+IUserRepo <|.. MemUser
+ITenantRepo <|.. PDOTenant
+ITenantRepo <|.. MemTenant
+ISessionRepo <|.. PDOSession
+ISessionRepo <|.. RedisSession
+ISessionRepo <|.. MemSession
+IRefreshRepo <|.. RedisRefresh
+IRefreshRepo <|.. MemRefresh
+IAuditRepo <|.. PdoAudit
+IAuditRepo <|.. MemAudit
+' Infrastructure → External
+PDOUUser --> DBCentral : PostgreSQL (central_users, hospital_memberships)
+PDOTenant --> DBCentral : PostgreSQL (hospitals)
+PDOSession --> DBCentral : PostgreSQL (user_sessions)
+PdoAudit --> DBCentral : PostgreSQL (audit_log)
+RedisRefresh --> RedisCluster : refresh:{uid}:{dev}, session:{sid}, blocklist:{jti}
+RedisSession --> RedisCluster : session:{sid}, session:user:{uid}
+RedisBlocklist --> RedisCluster : blocklist:{jti}
+RedisLockout --> RedisCluster : login_failures:{uid}, mfa_failures:{uid}
+RedisRateLimit --> RedisCluster : login_attempts:{email}:{ip}
+JwtSvc --> Vault : RSA/EC Private Keys (rotated 24h)
+TotpSvc --> Vault : TOTP Secrets (encrypted)
+EmailSvc --> EmailProv : SMTP/API
+SiemFwd --> SIEM : Syslog/Kafka
+HibpClient --> HaveIBeenPwned : HTTPS API
+CentralUserRO --> DBCentral : Read-only access (Clinical, Governance)
+' Shared Adapter for other modules
+CentralUserRO --> EntUser : Reconstitute User Entity
+@enduml

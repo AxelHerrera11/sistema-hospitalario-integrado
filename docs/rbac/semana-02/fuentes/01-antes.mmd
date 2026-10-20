@@ -1,0 +1,33 @@
+---
+title: "ANTES — Autorización acoplada a condicionales de rol (diseño hipotético de referencia)"
+---
+classDiagram
+  direction LR
+
+  class RoleController {
+    +store(peticion)
+  }
+
+  class AuthorizationService {
+    +autorizar(rol, permiso) bool
+  }
+
+  class AuditLogger {
+    +registrarDenegacion(detalle)
+  }
+
+  class Central {
+    hospital_memberships.role_code
+  }
+
+  RoleController --> AuthorizationService : consulta decisión
+  RoleController ..> AuditLogger : audita la denegación en el propio controlador
+  AuthorizationService --> Central : lee role_code del usuario
+
+  AuthorizationService : +if rol == 'AdminHospital' → permisos de admin
+  AuthorizationService : +if rol == 'Medico' → prescripciones.crear
+  AuthorizationService : +if rol == 'TecnicoLab' → muestras.recibir
+  AuthorizationService : +mapa de permisos fijo en el código
+  AuthorizationService : +regla de alcance por hospital mezclada
+
+  note for AuthorizationService "Violación de OCP: un rol o permiso nuevo obliga a modificar AuthorizationService"
