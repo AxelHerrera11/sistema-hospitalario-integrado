@@ -88,6 +88,9 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
         && $r['body']['status'] === 'draft' && preg_match(Uuid::PATTERN, $nota) === 1 && $state['audits']() === ['nota_soap.registrada']);
     $r = $diagnose($nota, ['code' => 'J18.9', 'type' => 'primary']);
     check($t('camino feliz: diagnóstico principal J18.9 -> 201 con descripción del catálogo'), $r['status'] === 201 && $state['descriptions']() === ['Neumonía, no especificada']);
+    $r = call($router, "/soap-notes/$nota", [], method: 'GET');
+    check($t('lectura: GET /soap-notes/{id} -> 200 con las cuatro secciones y el diagnóstico'), $r['status'] === 200 && $r['body']['sections'] === SOAP
+        && $r['body']['diagnoses'] === [['code' => 'J18.9', 'type' => 'primary']]);
 
     check($t('regla de dominio: sección vacía -> 422'), $status(call($router, '/care-episodes/ep1/soap-notes', ['plan' => ' '] + SOAP)) === '422 SOAP_SECTION_INVALID');
     check($t('regla de dominio: asignación terminada -> 403'), $status(call($router, '/care-episodes/ep1/soap-notes', SOAP, ['X-User-ID' => 'dr.perez'])) === '403 NOT_TREATING_PHYSICIAN');
