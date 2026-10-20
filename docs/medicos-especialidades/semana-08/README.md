@@ -2,6 +2,8 @@
 
 **Estudiante:** Hicho García, Josué Fernando (`Jhos-hgnu`) · **Módulo:** ASII-04 · **Entrega:** user flow, wireframes iniciales y reglas de interacción.
 
+**Tarea individual:** Diseñe el flujo UX de «registro de médico, asociación de especialidad y consulta de disponibilidad» por sus roles autorizados. Incluya inicio, decisión, confirmación, estados vacío/carga/éxito, errores recuperables, ayuda contextual y protección de datos vinculados con médicos, especialidades, horarios, disponibilidad y conflictos de agenda.
+
 ## Objetivo
 
 Diseñar la experiencia del flujo «registro de médico, asociación de especialidad y consulta de disponibilidad» para cada rol autorizado, con estados vacío, carga, éxito y error recuperable, y mensajes que usan los códigos reales del [contrato API](../semana-05/contrato-api.md).
@@ -20,13 +22,13 @@ Diseñar la experiencia del flujo «registro de médico, asociación de especial
 flowchart TD
   start([Abre «Médicos»]) --> rol{¿Qué permisos tiene?}
   rol -- medicos.registrar --> form[Alta: usuario, licencia, especialidad principal, vigencia]
-  form --> r1{Respuesta}
+  form --> sum1[Confirmación: resumen del alta<br>Registrar · Corregir] --> r1{Respuesta}
   r1 -- 409 LICENSE_ALREADY_REGISTERED --> lic[«La licencia ya existe» con enlace al médico]
   r1 -- 422 --> fix[Error junto al campo]
   r1 -- sin respuesta --> verify[«No sabemos si se guardó: busque la licencia antes de repetir»]
   r1 -- 201 --> ok1[«Médico registrado» → ficha del médico]
   ok1 --> link[Asociar otra especialidad]
-  link --> r2{Respuesta}
+  link --> sum2[Confirmación: especialidad, tipo y vigencia] --> r2{Respuesta}
   r2 -- 409 PRIMARY_SPECIALTY_CONFLICT --> prim[«Ya tiene una principal en ese periodo»: marcar como secundaria]
   r2 -- 409 SPECIALTY_ALREADY_ASSOCIATED --> dup[«Ya tiene esa especialidad en ese periodo»]
   r2 -- 422 PERIOD_OUTSIDE_PROFILE --> per[«La vigencia sale del perfil del médico»]
@@ -36,7 +38,7 @@ flowchart TD
   who -- Sí --> mine[Mi disponibilidad de hoy · propuesto]
   res -- NO_DOCTORS_FOR_SPECIALTY --> empty[«No hay médicos vigentes para esta especialidad»]
   res -- OK --> list[Médicos con sus franjas libres]
-  list --> agenda[Elegir franja → continúa en Citas]
+  list --> agenda[Aviso: elegir no reserva] --> citas[Continúa en Citas]
   rol -- ninguno --> d403[403: «No tiene permiso para Médicos»]
 ```
 
@@ -78,7 +80,9 @@ flowchart TD
 
 | Estado | Qué ve el usuario |
 |---|---|
+| Inicio | Cada rol entra directo a su tarea: el administrador a «Médicos», la recepcionista y el médico a «Disponibilidad» |
 | Carga | Lista en gris y botones deshabilitados mientras llega la respuesta |
+| Confirmación | Resumen antes de registrar o asociar, con «Corregir» para volver al formulario sin perder lo escrito |
 | Vacío | «No hay médicos vigentes para esta especialidad» (`NO_DOCTORS_FOR_SPECIALTY`, es un `200`, no un error) |
 | Médico sin horario | Aparece con «Sin horario configurado» y sin franjas (`SCHEDULE_NOT_CONFIGURED`); no se oculta |
 | Conflicto (409) | Mensaje con el motivo y la acción sugerida: ver el médico existente o marcar como secundaria |
@@ -86,6 +90,25 @@ flowchart TD
 | Sin permiso (403) | «No tiene permiso para esta acción»; el botón no se muestra si el rol no tiene el permiso |
 | Servicio no disponible (503 o sin respuesta) | «No se pudo consultar; intente de nuevo». En el alta: «busque la licencia antes de repetir» |
 | Éxito (201 / 200) | Confirmación con enlace a la ficha del médico, o la lista de franjas |
+
+## Ayuda contextual
+
+| Dónde | Ayuda |
+|---|---|
+| Número de colegiado | «El del colegio profesional, sin espacios. No puede repetirse.» |
+| Especialidad principal | «Solo puede haber una principal en el mismo periodo; las demás son secundarias.» |
+| Vigente desde / hasta | «Desde cuándo atiende con esta especialidad. Deje “hasta” vacío si no tiene fin.» |
+| Sin horario configurado | «Este médico aún no tiene horario: pida a administración que lo cargue.» |
+| Franjas | «Se muestran solo las horas libres. Elegir una no la reserva: Citas la confirma.» |
+| Conflicto 409 | El mensaje dice qué se cruzó (licencia, principal o especialidad) y ofrece la acción que lo resuelve |
+
+## Protección de datos
+
+- **Disponibilidad sin pacientes:** solo muestra horas ocupadas o libres, nunca quién tiene la cita (RNF-MED-03).
+- **Licencia según el rol:** el número de colegiado se ve en la ficha del administrador; la recepcionista y el médico ven nombre y especialidades.
+- **Nada sensible en la URL ni en el navegador:** la licencia no viaja como parámetro de consulta, y lo escrito en un formulario se conserva solo en la memoria de la página, no en `localStorage`.
+- **Errores sin datos internos:** el usuario ve el mensaje y el `trace_id`; el detalle técnico queda en la bitácora.
+- **Trazabilidad:** cada alta y asociación queda auditada con el actor (RNF-MED-02).
 
 ## Reglas de interacción
 
