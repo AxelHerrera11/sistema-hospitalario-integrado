@@ -5,16 +5,13 @@ declare(strict_types=1);
 namespace MicroHis\Medicos\Persistence;
 
 use MicroHis\Medicos\Application\AppointmentReader;
-use MicroHis\Medicos\Application\DoctorProfileStore;
-use MicroHis\Medicos\Application\DoctorsBySpecialty;
-use MicroHis\Medicos\Application\DoctorSpecialtyStore;
-use MicroHis\Medicos\Application\SpecialtyCatalog;
+use MicroHis\Medicos\Application\DoctorRepository;
 use MicroHis\Medicos\Domain\Period;
 use MicroHis\Medicos\Domain\SpecialtyLink;
 use PDO;
 
-/** Un adaptador PDO cumple varios puertos pequeños; cada caso de uso solo ve el suyo (ISP). Siempre con sentencias preparadas. */
-final class PdoDoctorStore implements DoctorProfileStore, DoctorSpecialtyStore, SpecialtyCatalog, DoctorsBySpecialty, AppointmentReader
+/** Adaptador PDO del Repository (y lector de Citas); cada caso de uso solo ve su puerto (ISP). Siempre con sentencias preparadas. */
+final class PdoDoctorStore implements DoctorRepository, AppointmentReader
 {
     public function __construct(private readonly PDO $pdo)
     {
