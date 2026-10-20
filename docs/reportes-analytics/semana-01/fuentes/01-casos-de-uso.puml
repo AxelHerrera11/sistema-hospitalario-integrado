@@ -1,0 +1,50 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam actor {
+  BorderColor #263238
+  FontColor #263238
+}
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+actor "Usuario autorizado" as U
+rectangle "ASII-23 · Reportes y analytics básicos\n(componentes de analytics propuestos)" {
+  usecase "UC-RA-01\nConsultar tasa de cancelación\nde hospitalizaciones" as UC
+  usecase "Validar acceso y alcance\ndel hospital/tenant" as Access
+  usecase "Validar [desde, hasta), zona\ny servicio opcional" as Params
+  usecase "Calcular IND-RA-01\ncon lectura consistente" as Calc
+  usecase "Visualizar estado o resultado\ntrazable sin datos personales" as View
+  usecase "Informar sin datos\n(denominador cero)" as Empty
+  usecase "Informar lectura incompleta\no error de cálculo/consulta" as Error #FFEBEE
+}
+
+U --> UC
+UC .> Access : <<include>>
+UC .> Params : <<include>>
+UC .> Calc : <<include>>
+UC .> View : <<include>>
+Empty .> Calc : <<extend>>\n[N_finalizados = 0]
+Error .> Calc : <<extend>>\n[incompleto o fallo]
+
+note bottom of Calc
+  Propuesta TCI-1.0 = 100 × |C| / |F|.
+  F: inpatient, closed|cancelled, ended_at en periodo.
+  C es el subconjunto cancelled de F.
+end note
+note bottom of View
+  Sin datos o lectura incompleta: estado sin porcentaje,
+  con indicador, versión, periodo, filtros, fuente prevista
+  y fecha del intento. Un error no afirma éxito.
+end note
+@enduml

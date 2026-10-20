@@ -1,0 +1,80 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam sequence {
+  ParticipantBackgroundColor #E3F2FD
+  ParticipantBorderColor #1565C0
+  ParticipantFontColor #17212B
+  ActorBorderColor #263238
+  ActorFontColor #17212B
+  LifeLineBorderColor #263238
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+}
+autonumber
+
+actor "Usuario autorizado" as U
+participant "Visualización\npropuesta" as V
+participant "Acceso y alcance\npropuestos" as A
+participant "Calculador\npropuesto" as C
+participant "Lectura agregada\npropuesta" as R
+database "HOSPITAL\ncare_episodes (existente)" as DB
+
+U -> V: Solicitar UC-RA-01(periodo, servicio opcional)
+V -> A: Validar identidad, permiso y hospital/tenant
+alt Acceso o alcance inválido
+  A --> V: Rechazo sin consultar HOSPITAL
+  hnote over V #FFEBEE: Error de acceso o alcance
+  V --> U: Mostrar acceso rechazado
+else Acceso autorizado
+  A -> C: Calcular IND-RA-01 dentro del hospital activo
+  C -> C: Validar desde < hasta, zona/offset y servicio
+  alt Parámetros inválidos
+    C --> V: Error de validación, sin cálculo
+    hnote over V #FFEBEE: Parámetros inválidos
+    V --> U: Solicitar corrección
+  else Parámetros válidos
+    C -> R: Obtener |F| y |C| del periodo y filtro
+    R -> DB: Agregar inpatient, closed|cancelled, ended_at en [desde,hasta)
+    alt Error de consulta
+      DB -x R: Fallo
+      R -x C: Fuente no disponible
+      C --> V: Error sin valor ni éxito
+      hnote over V #FFEBEE: Error de consulta
+      V --> U: Mostrar error
+    else Consulta respondió
+      DB --> R: N_finalizados = |F|, N_cancelados = |C|
+      R -> R: Validar presentes, enteros y 0 <= |C| <= |F|
+      R --> C: Conteos de la misma lectura
+      alt Lectura incompleta o incoherente
+        C -> C: Preparar estado y trazabilidad del intento
+        C --> V: Sin porcentaje + IND-RA-01, TCI-1.0, periodo,<br/>filtros, fuente prevista y fecha del intento
+        hnote over C, V #FFEBEE: Conteos ausentes o inválidos
+      else finalizados = 0 (denominador cero)
+        C -> C: Preparar estado y trazabilidad del intento
+        C --> V: Sin datos ni porcentaje + IND-RA-01, TCI-1.0,<br/>periodo, filtros, fuente prevista y fecha del intento
+      else cancelados = 0
+        C --> V: 0.00 % válido + trazabilidad
+      else Datos calculables
+        C -> C: 100 × cancelados / finalizados
+        alt Error de cálculo
+          C --> V: Error de cálculo sin valor ni afirmación de éxito
+          hnote over V #FFEBEE: Error de cálculo
+        else Cálculo completado
+          C --> V: Porcentaje + trazabilidad
+        end
+      end
+      V --> U: Mostrar la respuesta correspondiente
+    end
+  end
+end
+
+note over C, DB
+  Propuesta IND-RA-01 / TCI-1.0, periodo, filtros,
+  HOSPITAL.care_episodes y fecha de cálculo o intento;
+  sin datos personales.
+end note
+@enduml
