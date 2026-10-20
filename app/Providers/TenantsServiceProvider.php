@@ -42,6 +42,7 @@ final class TenantsServiceProvider extends ServiceProvider
             $app->make(RefreshTokenRepository::class),
             $app->make(JwtAccessTokenIssuer::class),
             $app->make(AuditLogRepositoryInterface::class),
+            $app->make(AuthenticateUser::class),
         ));
         $this->app->bind(ManageHospitalMembership::class, fn ($app) => new ManageHospitalMembership(
             $app->make(MembershipRepository::class),
