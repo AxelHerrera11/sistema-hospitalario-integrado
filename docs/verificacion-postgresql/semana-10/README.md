@@ -17,6 +17,8 @@ apoyándose en las tablas de sincronización de la base CENTRAL.
 La ocupación es el caso de uso: el personal consulta el estado de las camas desde el
 teléfono, con red intermitente, y no puede volver a cargar la lista completa.
 
+Las cifras completas están en [metricas-medidas.md](./metricas-medidas.md).
+
 ## 2. Problema medido
 
 Con el volumen sintético de la medición de la semana 11 (1 003 camas y 50 002
