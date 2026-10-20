@@ -13,10 +13,10 @@ use MicroHis\NotasSoap\Domain\SoapSections;
 /** Adaptador en memoria del mismo contrato que PdoClinicalNoteStore: pruebas y demo sin base de datos. */
 final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
 {
-    /** @var array<string, array{episode: string, author: string, status: string, content: string}> */
-    private array $notes = [];
+    /** @var array<string, array{episode: string, author: string, status: string, content: string}> públicas solo para que las pruebas lean el estado */
+    public array $notes = [];
     /** @var array<string, list<array{code: string, type: string, description: string}>> */
-    private array $diagnoses = [];
+    public array $diagnoses = [];
     private int $sequence = 0;
 
     public function __construct(private readonly AuditTrail $audit)
