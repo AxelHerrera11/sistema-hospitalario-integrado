@@ -61,7 +61,8 @@ final class InMemoryDoctorRepository implements DoctorRepository
     {
         $ids = [];
         foreach ($this->profiles as $id => $profile) {
-            foreach ($profile['status'] === 'active' ? $this->links[$id] ?? [] : [] as $link) {
+            $vigente = $profile['status'] === 'active' && $profile['period']->from <= $date && ($profile['period']->to === null || $profile['period']->to > $date);
+            foreach ($vigente ? $this->links[$id] ?? [] : [] as $link) {
                 if ($link->specialtyId === $specialtyId && $link->period->from <= $date && ($link->period->to === null || $link->period->to > $date)) {
                     $ids[] = (string) $id;
                     break;
