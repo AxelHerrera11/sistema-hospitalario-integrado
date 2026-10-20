@@ -64,7 +64,7 @@ Si CENTRAL ya almacena PascalCase, el dueño del dato (Cindy/Javier) debe normal
 o el equipo debe acordar otro código; RBAC no agrega alias ni variantes. Una prueba
 verifica que `Medico` y `AdminHospital` no reciben permisos.
 
-## Permisos (22)
+## Permisos (26)
 
 | Permiso | Descripción | Origen | Estado |
 |---|---|---|---|
@@ -74,6 +74,10 @@ verifica que `Medico` y `AdminHospital` no reciben permisos.
 | `rbac.autorizar` | Solicitar una decisión de autorización | Semana 5 | Activo |
 | `rbac.permisos.ver` | Ver el catálogo de permisos | Semana 5 | Activo |
 | `rbac.denegaciones.ver` | Ver el historial de denegaciones | Semana 5 | Activo |
+| `usuarios.ver` | Listar usuarios del hospital autorizado | Integración Cindy | Activo |
+| `usuarios.desactivar` | Desactivar acceso en el hospital autorizado | Integración Cindy | Activo |
+| `tenants.crear` | Crear hospital CENTRAL inactivo | Integración Cindy | Activo solo `superadmin` |
+| `sesiones.revocar_ajenas` | Revocar sesiones ajenas del hospital autorizado | Integración Cindy | Activo |
 | `prescripciones.ver` | Ver prescripciones | Semana 5 | Activo |
 | `prescripciones.crear` | Crear prescripciones | Semana 5 | Activo |
 | `prescripciones.firmar` | Firmar prescripciones | Semana 5 | Activo |
@@ -104,6 +108,10 @@ permiso pendiente no tiene `X` en ninguna columna.
 | `rbac.autorizar` | X |  | X | X | X |
 | `rbac.permisos.ver` | X | X |  |  |  |
 | `rbac.denegaciones.ver` | X | X |  |  |  |
+| `usuarios.ver` | X | X |  |  |  |
+| `usuarios.desactivar` | X | X |  |  |  |
+| `tenants.crear` | X |  |  |  |  |
+| `sesiones.revocar_ajenas` | X | X |  |  |  |
 | `prescripciones.ver` | X |  | X | X |  |
 | `prescripciones.crear` | X |  | X |  |  |
 | `prescripciones.firmar` | X |  | X |  |  |
@@ -121,9 +129,9 @@ permiso pendiente no tiene `X` en ninguna columna.
 | `alertas.acusar` | X |  | X |  |  |
 | `alertas.cerrar` | X |  | X |  |  |
 
-Conteo activo: `superadmin` 21, `admin_hospital` 5, `medico` 10, `enfermeria` 7,
+Conteo activo: `superadmin` 25, `admin_hospital` 8, `medico` 10, `enfermeria` 7,
 `recepcion` 5. `superadmin` no recibe el permiso pendiente
-`prescripciones.excepcion_alergia`, por eso tiene 21 de los 22 publicados.
+`prescripciones.excepcion_alergia`, por eso tiene 25 de los 26 publicados.
 
 ## Justificación por rol (propuesta)
 
