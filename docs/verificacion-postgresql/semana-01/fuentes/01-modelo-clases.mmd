@@ -1,0 +1,139 @@
+%% Modelo de clases del HIS derivado de las migraciones HOSPITAL y CENTRAL.
+%% Fuente: database/migrations/central/* y database/migrations/hospital/* en origin/develop.
+%% El SVG se regenera con el generador documentado en README.md de esta semana.
+classDiagram
+    class CentralUser {
+        +uuid user_id PK
+        +text subject UK
+        +text email
+        +text status
+    }
+    class Hospital {
+        +uuid hospital_id PK
+        +uuid network_id FK
+        +text code
+        +text timezone
+    }
+    class Patient {
+        +uuid local_patient_id PK
+        +uuid global_id UK
+        +text code UK
+        +text given_name
+        +date birth_date
+        +text sex
+        +text status
+    }
+    class DoctorProfile {
+        +uuid doctor_profile_id PK
+        +uuid local_user_ref_id FK
+        +text license_number UK
+    }
+    class Specialty {
+        +uuid specialty_id PK
+        +text code UK
+        +text name
+    }
+    class Appointment {
+        +uuid appointment_id PK
+        +uuid local_patient_id FK
+        +uuid doctor_profile_id FK
+        +uuid specialty_id FK
+        +timestamptz starts_at
+        +timestamptz ends_at
+        +text status
+    }
+    class CareEpisode {
+        +uuid care_episode_id PK
+        +uuid local_patient_id FK
+        +text type
+        +text status
+        +timestamptz started_at
+        +timestamptz ended_at
+    }
+    class CareAssignment {
+        +uuid care_assignment_id PK
+        +uuid care_episode_id FK
+        +uuid doctor_profile_id FK
+        +uuid specialty_id FK
+        +jsonb scope
+        +timestamptz valid_from
+        +timestamptz valid_to
+        +text status
+    }
+    class MedicalRecord {
+        +uuid medical_record_id PK
+        +uuid local_patient_id FK UK
+        +text record_number UK
+        +text status
+    }
+    class ClinicalNote {
+        +uuid clinical_note_id PK
+        +uuid medical_record_id FK
+        +uuid care_episode_id FK
+        +uuid author_user_ref_id FK
+        +text note_type
+        +text status
+        +int version_no
+    }
+    class Diagnosis {
+        +uuid diagnosis_id PK
+        +uuid care_episode_id FK
+        +uuid clinical_note_id FK
+        +text code
+        +text status
+    }
+    class Allergy {
+        +uuid allergy_id PK
+        +uuid local_patient_id FK
+        +uuid care_episode_id FK
+        +text allergen
+        +text severity
+        +text status
+    }
+    class VitalSign {
+        +uuid vital_sign_id PK
+        +uuid local_patient_id FK
+        +uuid care_episode_id FK
+        +text kind
+        +numeric value
+        +text unit
+    }
+    class Ward {
+        +uuid ward_id PK
+        +text code
+        +text name
+        +text status
+    }
+    class Bed {
+        +uuid bed_id PK
+        +uuid ward_id FK
+        +text code
+        +text status
+    }
+    class BedStay {
+        +uuid bed_stay_id PK
+        +uuid bed_id FK
+        +uuid care_episode_id FK
+        +timestamptz started_at
+        +timestamptz ended_at
+    }
+
+    CentralUser "1" <-- "0..*" DoctorProfile : perfil profesional
+    CentralUser "1" <-- "0..*" Patient : referencia local
+    Hospital "1" *-- "0..*" Patient : base HOSPITAL
+    DoctorProfile "1" <-- "0..*" Appointment
+    Patient "1" <-- "0..*" Appointment
+    Specialty "1" <-- "0..*" Appointment
+    Patient "1" *-- "0..*" CareEpisode
+    CareEpisode "1" *-- "0..*" CareAssignment
+    DoctorProfile "1" <-- "0..*" CareAssignment
+    Specialty "1" <-- "0..*" CareAssignment
+    Patient "1" *-- "1" MedicalRecord
+    CareEpisode "1" *-- "0..*" ClinicalNote
+    CareEpisode "1" <-- "0..*" Diagnosis
+    ClinicalNote "1" <-- "0..*" Diagnosis
+    CareEpisode "1" *-- "0..*" Allergy
+    CareEpisode "1" <-- "0..*" VitalSign
+    Ward "1" *-- "0..*" Bed
+    Bed "1" <-- "0..*" BedStay
+    CareEpisode "1" *-- "0..*" BedStay
