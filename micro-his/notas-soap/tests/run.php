@@ -83,8 +83,8 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
 
     $r = call($router, '/care-episodes/ep1/soap-notes', SOAP);
     $nota = $r['body']['clinical_note_id'] ?? '';
-    check($t('camino feliz: POST /care-episodes/ep1/soap-notes -> 201 JSON en borrador con auditoría'), $r['status'] === 201 && str_starts_with($r['type'], 'application/json')
-        && $r['body']['status'] === 'draft' && $state['audits']() === ['nota_soap.registrada']);
+    check($t('camino feliz: POST /care-episodes/ep1/soap-notes -> 201 JSON en borrador, id UUID y auditoría'), $r['status'] === 201 && str_starts_with($r['type'], 'application/json')
+        && $r['body']['status'] === 'draft' && preg_match(Uuid::PATTERN, $nota) === 1 && $state['audits']() === ['nota_soap.registrada']);
     $r = $diagnose($nota, ['code' => 'J18.9', 'type' => 'primary']);
     check($t('camino feliz: diagnóstico principal J18.9 -> 201 con descripción del catálogo'), $r['status'] === 201 && $state['descriptions']() === ['Neumonía, no especificada']);
 
