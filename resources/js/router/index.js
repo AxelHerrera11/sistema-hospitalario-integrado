@@ -7,6 +7,12 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
+            path: '/rbac',
+            name: 'rbac',
+            component: () => import('@/modules/rbac/CatalogPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/',
             name: 'home',
             component: HomePage,

@@ -1,0 +1,18 @@
+flowchart LR
+  User[Usuario autorizado]
+  HIS[HIS principal<br/>autenticación + hospital]
+  subgraph Micro-HIS
+    Controller[Presentation<br/>OccupancyController]
+    UseCase[Application<br/>ConsultOccupancy]
+    Port{{BedSnapshotReader}}
+    Calculator[Domain<br/>OccupancyCalculator]
+    Adapter[Persistence<br/>PdoBedSnapshotReader]
+  end
+  DB[(PostgreSQL HOSPITAL<br/>wards + beds + bed_stays)]
+
+  User --> HIS --> Controller
+  Controller --> UseCase
+  UseCase --> Port
+  UseCase --> Calculator
+  Adapter -. implementa .-> Port
+  Adapter -->|una sentencia preparada| DB

@@ -6,14 +6,14 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Facades\JWTAuth as JwtFacade;
 
 class JwtAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
         try {
-            JWTAuth::parseToken()->authenticate();
+            JwtFacade::parseToken()->authenticate();
         } catch (JWTException $exception) {
             return response()->json([
                 'message' => 'Token inválido o expirado.',
