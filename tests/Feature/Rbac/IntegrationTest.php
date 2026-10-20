@@ -2,35 +2,17 @@
 
 namespace Tests\Feature\Rbac;
 
+use App\Rbac\ConfiguredPermissions;
 use App\Rbac\RequirePermission;
-use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use MicroHis\Rbac\Domain\{DenialRecorder, PermissionProvider, RoleResolver};
 use MicroHis\Rbac\Persistence\InMemoryRbacStore;
-use Tests\TestCase;
 
 /** Auth y tenant simulados SOLO en tests: nunca se registran en la aplicación. */
-class IntegrationTest extends TestCase
+class IntegrationTest extends RbacTestCase
 {
-    protected InMemoryRbacStore $store;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->store = new InMemoryRbacStore(['Reader' => ['rbac.permisos.ver']]);
-        $this->store->grant('reader', 'hospital-a', 'Reader');
-        foreach ([RoleResolver::class, PermissionProvider::class, DenialRecorder::class] as $contract) {
-            $this->app->instance($contract, $this->store);
-        }
-        TestIdentity::$user = new GenericUser(['id' => 'reader']);
-        TestIdentity::$hospital = 'hospital-a';
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $this->app['router']->aliasMiddleware('tenant', TestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', TestIdentity::class);
-    }
-
     public function test_catalog_is_registered_and_protected(): void
     {
         $route = Route::getRoutes()->match(Request::create('/api/v1/permissions'));
@@ -46,6 +28,7 @@ class IntegrationTest extends TestCase
         $this->getJson('/api/v1/permissions')->assertUnauthorized();
         TestIdentity::$user = new GenericUser(['id' => 'reader']);
         TestIdentity::$hospital = 'hospital-b';
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b']);
         $this->getJson('/api/v1/permissions')->assertForbidden()->assertJsonPath('code', 'RBAC_DENIED');
         $this->assertSame('hospital-b', $this->store->denials()[0]['hospital_id']);
     }
@@ -66,19 +49,45 @@ class IntegrationTest extends TestCase
             ->getJson('/api/v1/permissions')->assertForbidden();
         $this->assertSame('outsider', $this->store->denials()[0]['user_id']);
     }
-}
 
-class TestIdentity
-{
-    public static ?GenericUser $user;
-    public static ?string $hospital;
-
-    public function handle(Request $request, Closure $next)
+    public function test_pending_permission_is_denied_by_the_middleware(): void
     {
-        $request->setUserResolver(fn () => self::$user);
+        $this->app->instance(PermissionProvider::class, new ConfiguredPermissions());
+        $this->store = new InMemoryRbacStore(config('rbac.roles'));
+        $this->app->instance(RoleResolver::class, $this->store);
+        $this->app->instance(DenialRecorder::class, $this->store);
+        $this->store->grant('doctor', 'hospital-a', 'medico');
+
+        $request = Request::create('/rbac/pending', 'GET');
+        $request->headers->set('X-Tenant-ID', 'hospital-a');
+        $request->setUserResolver(fn () => new GenericUser(['id' => 'doctor']));
         $request->attributes->set('tenant', new class {
-            public function getKey(): ?string { return TestIdentity::$hospital; }
+            public function getKey(): ?string { return 'hospital-a'; }
         });
-        return $next($request);
+
+        $response = $this->app->make(RequirePermission::class)->handle(
+            $request,
+            fn () => response()->json(['ok' => true]),
+            'prescripciones.excepcion_alergia',
+        );
+
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertSame('RBAC_DENIED', $response->getData(true)['code']);
+    }
+
+    public function test_config_matrix_is_enforced_by_the_permission_middleware(): void
+    {
+        $this->app->instance(PermissionProvider::class, new ConfiguredPermissions());
+        $this->store = new InMemoryRbacStore(config('rbac.roles'));
+        $this->app->instance(RoleResolver::class, $this->store);
+        $this->app->instance(DenialRecorder::class, $this->store);
+
+        $this->store->grant('platform', 'hospital-a', 'superadmin');
+        TestIdentity::$user = new GenericUser(['id' => 'platform']);
+        $this->getJson('/api/v1/permissions')->assertOk();
+
+        $this->store->grant('doctor', 'hospital-a', 'medico');
+        TestIdentity::$user = new GenericUser(['id' => 'doctor']);
+        $this->getJson('/api/v1/permissions')->assertForbidden()->assertJsonPath('code', 'RBAC_DENIED');
     }
 }

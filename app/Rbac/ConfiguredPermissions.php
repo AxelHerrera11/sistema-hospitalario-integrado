@@ -11,6 +11,7 @@ final class ConfiguredPermissions implements PermissionProvider
     public function permissionsFor(string $roleCode): array
     {
         // Configuración del servidor, nunca roles/permisos enviados por el cliente.
-        return config('rbac.roles.'.$roleCode, []);
+        $roles = config('rbac.roles', []);
+        return $roles[$roleCode] ?? [];
     }
 }
