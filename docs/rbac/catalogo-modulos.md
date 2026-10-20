@@ -2,7 +2,7 @@
 
 Base revisada: develop b87bca1 y PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 67 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 69 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -21,6 +21,8 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
 | `medicamentos.ver` | Sí | Sí | Sí | Sí | — | — | — | — |
+| `medicamentos.registrar` | — | — | — | — | — | — | — | — |
+| `medicamentos.cambiar_vigencia` | — | — | — | — | — | — | — | — |
 | `laboratorio.ver` | Sí | Sí | Sí | — | — | Sí | Sí | — |
 | `auditoria.ver` | Sí | — | — | — | — | — | — | — |
 | `signos_vitales.corregir` | Sí | — | Sí | — | — | — | — | — |
@@ -92,6 +94,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Ocupación, `docs/ocupacion-hospitalaria/contrato-api.md` | ocupacion.ver; administración, recepción y enfermería, sin mutar camas |
 | Órdenes, `docs/ordenes-laboratorio/contrato-api.md` | laboratorio.ordenes.crear/ver/cancelar; médico muta, laboratorio consulta |
 | Catálogo de pruebas, `docs/catalogo-pruebas-lab` | conserva laboratorio.catalogo.ver y administración pendiente según pending |
+| Catálogo de medicamentos, #586–#604 | medicamentos.ver activo; medicamentos.registrar y medicamentos.cambiar_vigencia catalogados y pendientes para admin_hospital; ningún rol activo los recibe |
 | Muestras, `docs/recepcion-muestras/semana-01` | muestras.recibir/ver/etiquetar/rechazar; técnico opera, bioquímico consulta |
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
@@ -179,7 +182,7 @@ Las autorizaciones del backend siguen comprobándose en cada operación.
 
 La revisión cubre nombres concretos de contratos existentes, incluidos los PR
 pendientes, no funcionalidades futuras sin especificación. Las operaciones todavía
-sin nombres suficientes (mutaciones de catálogos de medicamentos/salas/camas,
+sin nombres suficientes (mutaciones de catálogos de salas/camas,
 traslados/altas y analytics) requieren contrato antes de habilitar concesiones.
 Los permisos de navegación no se convierten en permisos genéricos de escritura.
 La autenticación/tenant de Cindy y el acuerdo CENTRAL (#502/#507) siguen pendientes
