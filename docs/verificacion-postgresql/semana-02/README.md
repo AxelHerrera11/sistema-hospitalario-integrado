@@ -5,7 +5,7 @@
 - **Estudiante:** Fajardo López, Javier Alexander (`Javifa2324`)
 - **Módulo:** Verificación de Base de Datos PostgreSQL
 - **Semana:** Semana 2 — Requisitos de datos: integridad, unicidad, obligatoriedad, trazabilidad y retención
-- **Entregable / evidencia:** Lista de RF/RNF de datos con criterio de aceptación por cada uno (`rf-rnf-datos.md`).
+- **Entregable / evidencia:** Lista de RF/RNF de datos con criterio de aceptación por cada uno ([rf-rnf-datos.md](./rf-rnf-datos.md)) y su traza con el esquema ([matriz-verificacion.md](./matriz-verificacion.md)).
 - **Estructura:** Sistema Hospitalario Integrado 2026 | Semanas 1–15.
 
 ## 1. Alcance
