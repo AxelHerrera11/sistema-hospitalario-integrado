@@ -8,6 +8,6 @@
 
 **Herramienta en las semanas anteriores:** las Semanas 1 a 5 se declararon con Claude Code (Anthropic), modelo Claude Opus 5.5, cada una con su validación humana.
 
-**Validación humana:** *pendiente*. Josué Fernando Hicho García debe cotejar la tesis, la tabla de decisiones defendidas, el caso práctico y la petición a Javier con el código y con la migración `000400`, y registrar la aprobación con fecha antes de pedir la revisión.
+**Validación humana:** realizada el 2026-10-19. Josué Fernando Hicho García cotejó la tesis, la tabla de decisiones defendidas, el caso práctico y la petición a la base de datos con el código de `micro-his/notas-soap/` y con la migración `000400`, revisó el guion de la defensa y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
