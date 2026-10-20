@@ -11,3 +11,4 @@
 | 7 | Componentes, contratos y refactor | `semana-07/` | Fan-in medido; PlantUML | Rama `…semana-07-componentes…` | Pendiente | UI y controlador Laravel (Semanas 11 y 16) |
 | 8 | Flujo UX por rol, reglas y 5 wireframes | `semana-08/` | PlantUML y Salt renderizados y revisados | Rama `…semana-08-flujo-ux…` | Pendiente | Prueba con usuarios (no realizada) |
 | 9 | Usabilidad y accesibilidad: checklist, 8 hallazgos y backlog | `semana-09/` | `contraste.php` (exit 0, 6.47:1) | Rama `…semana-09-usabilidad…` | Pendiente | Lector de pantalla y usuarios (N/E) |
+| 10 | Movilidad: 4 pantallas, breakpoints y 2 escenarios | `semana-10/` | Salt renderizado y revisado | Rama `…semana-10-movilidad…` | Pendiente | Verificación a 320 px en el prototipo (Semana 11) |
