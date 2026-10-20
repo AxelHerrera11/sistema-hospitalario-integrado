@@ -1,0 +1,40 @@
+@startuml
+title ASII-14 - Casos de uso del catalogo de medicamentos
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontColor #172033
+skinparam ArrowColor #334155
+skinparam usecaseBackgroundColor #EAF4FF
+skinparam usecaseBorderColor #2563EB
+skinparam actorBorderColor #172033
+skinparam actorFontColor #172033
+skinparam noteBackgroundColor #FEF3C7
+skinparam noteBorderColor #D97706
+actor "Gestor autorizado\ndel catalogo" as Gestor
+actor "Usuario clinico\nautorizado" as Clinico
+actor "Control de acceso" as Acceso <<sistema>>
+rectangle "HIS - Catalogo de medicamentos (propuesto)" {
+  usecase "UC-MED-01\nDar de alta medicamento" as UC01
+  usecase "UC-MED-02\nBuscar medicamentos" as UC02
+  usecase "UC-MED-03\nConsultar vigencia" as UC03
+  usecase "UC-MED-04\nCambiar vigencia" as UC04
+  usecase "UC-MED-05\nValidar acceso" as UC05
+  usecase "UC-MED-06\nValidar datos e identidad" as UC06
+}
+Gestor --> UC01
+Gestor --> UC02
+Gestor --> UC03
+Gestor --> UC04
+Clinico --> UC02
+Clinico --> UC03
+Acceso --> UC05
+UC01 .> UC05 : <<include>>
+UC01 .> UC06 : <<include>>
+UC02 .> UC05 : <<include>>
+UC03 .> UC05 : <<include>>
+UC04 .> UC05 : <<include>>
+note bottom of UC06 : Identidad provisional: codigo normalizado\nunico por hospital. Esquema H5 pendiente.
+note bottom of UC04 : Vigencia propuesta = active/inactive.\nNo representa vencimiento de lotes.
+note right of UC01 #FCE7F3 : Resultados alternos: datos invalidos,\nduplicado, fallo de consulta o persistencia.
+@enduml
