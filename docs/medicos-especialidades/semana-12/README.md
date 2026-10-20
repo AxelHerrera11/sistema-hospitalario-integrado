@@ -18,10 +18,10 @@
 
 | Semana | Qué aportó | Evidencia |
 |---|---|---|
-| 7 | Componentes backend/frontend y refactorización del punto de mayor acoplamiento (la consulta de disponibilidad) | `semana-07/` (PR #396) |
-| 8 | Flujo UX por rol, wireframes, estados, ayuda contextual y protección de datos | `semana-08/` (PR #402) |
+| 7 | Componentes backend/frontend y refactorización del punto de mayor acoplamiento (la consulta de disponibilidad) | `semana-07/` (PR #382) |
+| 8 | Flujo UX por rol, wireframes, estados, ayuda contextual y protección de datos | `semana-08/` (PR #400) |
 | 9 | Evaluación de usabilidad (10 heurísticas) y accesibilidad (WCAG 2.1 AA): 9 hallazgos priorizados | `semana-09/` (PR #401) |
-| 10 | Diseño para movilidad de 320 a 430 px: jerarquía, navegación, formularios por pasos y recuperación ante conexión limitada | `semana-10/` (PR #400) |
+| 10 | Diseño para movilidad de 320 a 430 px: jerarquía, navegación, formularios por pasos y recuperación ante conexión limitada | `semana-10/` (PR #402) |
 | 11 | Prototipo navegable desktop y móvil, mapa de navegación y 9 capturas | `semana-11/` (PR #408) |
 | 12 | Defensa de la segunda evaluación parcial y medición de contraste, zoom y reflow | `semana-12/` (este PR) |
 
