@@ -54,6 +54,10 @@ check('regla de dominio: código repetido -> 409', $status($http->associateDiagn
 check('regla de dominio: segundo principal -> 409', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'I10', 'type' => 'primary'])) === '409 PRIMARY_DIAGNOSIS_EXISTS');
 check('regla de dominio: código inactivo en el catálogo -> 422', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'A00', 'type' => 'secondary'])) === '422 DIAGNOSIS_CODE_INVALID');
 check('validación: tipo de diagnóstico no permitido -> 422', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'I10', 'type' => 'otro'])) === '422 DIAGNOSIS_INVALID');
+check('validación de tipos: sección no string o encabezado no string -> 422 sin guardar', $status($http->registerNote($lopez, 'ep1', ['plan' => ['Amoxicilina']] + $soap)) === '422 PAYLOAD_INVALID'
+    && $status($http->registerNote(['X-User-ID' => 7], 'ep1', $soap)) === '422 PAYLOAD_INVALID' && $col($pdo, 'SELECT COUNT(*) FROM clinical_notes') === [1]);
+check('validación de tipos: código o tipo de diagnóstico no string -> 422 sin guardar', $status($http->associateDiagnosis($lopez, $nota, ['code' => 10, 'type' => 'secondary'])) === '422 PAYLOAD_INVALID'
+    && $status($http->associateDiagnosis($lopez, $nota, ['code' => 'I10', 'type' => ['secondary']])) === '422 PAYLOAD_INVALID' && $col($pdo, 'SELECT COUNT(*) FROM diagnoses') === [1]);
 $pdo->exec("UPDATE clinical_notes SET status = 'signed'");
 check('regla de dominio: nota firmada no acepta diagnósticos -> 409', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
 try {
