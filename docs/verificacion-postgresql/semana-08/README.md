@@ -44,6 +44,9 @@ internos.
    usuario.
 5. **Falla segura.** Si la base no responde, la respuesta es `503` con mensaje de
    indisponibilidad; nunca ceros ni listas vacías.
+6. **Cada regla es verificable.** La
+   [matriz de validación](./matriz-validacion.md) indica responsable y comprobación de
+   cada punto.
 
 ## 4. Validación ejecutada
 
