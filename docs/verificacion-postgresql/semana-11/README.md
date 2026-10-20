@@ -38,6 +38,9 @@ ORDER BY w.code, b.code;
 
 Corte usado: `2026-10-19 12:00:00+00`.
 
+Los planes completos están en [planes-ejecucion.md](./planes-ejecucion.md) y los
+índices en [indices-propuestos.sql](./indices-propuestos.sql).
+
 ## 3. Resultados
 
 | Variante | Índice disponible | Plan dominante | Tiempo de ejecución |
