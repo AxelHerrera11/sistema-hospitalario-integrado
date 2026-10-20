@@ -11,6 +11,6 @@
 - La firma y la corrección siguen marcadas como propuestas.
 - En esta entrega no se modificó código del micro-HIS ni del HIS.
 
-**Validación humana:** pendiente del visto bueno de Josué Fernando Hicho García.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó las cinco pantallas móviles, las reglas de breakpoint, la recuperación ante conexión limitada y los dos escenarios, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
