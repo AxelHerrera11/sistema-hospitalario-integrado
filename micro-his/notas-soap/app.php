@@ -5,6 +5,7 @@ declare(strict_types=1);
 use MicroHis\NotasSoap\Application\AssociateDiagnosis;
 use MicroHis\NotasSoap\Application\CareAssignmentReader;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
+use MicroHis\NotasSoap\Application\GetSoapNote;
 use MicroHis\NotasSoap\Application\Icd10Catalog;
 use MicroHis\NotasSoap\Application\PermissionChecker;
 use MicroHis\NotasSoap\Application\RegisterSoapNote;
@@ -25,6 +26,7 @@ function notas_soap_router(ClinicalNoteRepository $notes, CareAssignmentReader $
     $controller = new SoapNoteController(
         new RegisterSoapNote($guard, $notes),
         new AssociateDiagnosis($guard, $catalog, new DiagnosisPolicy(), $notes),
+        new GetSoapNote($guard, $notes),
         $view,
     );
     return new Router($controller, $view);
