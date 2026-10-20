@@ -1,0 +1,58 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam activity {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+  DiamondBackgroundColor #FFF8E1
+  DiamondBorderColor #B8860B
+}
+
+|Usuario autorizado|
+start
+:Solicitar UC-RA-01 con periodo\ny servicio opcional;
+|Acceso propuesto|
+if (¿Autenticado, autorizado y\nhospital/tenant válido?) then (No)
+  :Rechazar acceso; no consultar; <<#FFEBEE>>
+  stop
+else (Sí)
+endif
+|Cálculo propuesto|
+if (¿desde < hasta, zona/offset\ny servicio válidos?) then (No)
+  :Informar parámetros inválidos; <<#FFEBEE>>
+  stop
+else (Sí)
+endif
+|Lectura propuesta sobre HOSPITAL|
+:Leer |F| y |C| en una consulta agregada:\ninpatient, closed|cancelled, ended_at en [desde,hasta);
+if (¿Consulta completada?) then (No)
+  :Informar error sin éxito\nni cifras parciales; <<#FFEBEE>>
+  stop
+else (Sí)
+endif
+|Cálculo propuesto|
+if (¿Conteos presentes, enteros y\n0 <= |C| <= |F|?) then (No)
+  :Preparar estado lectura incompleta\no incoherente, sin porcentaje; <<#FFEBEE>>
+else (Sí)
+  if (¿N_finalizados = 0?) then (Sí)
+    :Preparar estado sin datos;\nno dividir ni mostrar 0 %; <<#FFEBEE>>
+  else (No)
+    if (¿N_cancelados = 0?) then (Sí)
+      :Resultado válido = 0.00 %; <<#E8F5E9>>
+    else (No)
+      :Calcular 100 × cancelados / finalizados;
+      if (¿Cálculo completado?) then (No)
+        :Informar error de cálculo, sin éxito; <<#FFEBEE>>
+        stop
+      else (Sí)
+      endif
+    endif
+  endif
+endif
+:Adjuntar IND-RA-01, TCI-1.0, periodo, filtros,\nfuente (prevista si no hay valor) y fecha de cálculo/intento;
+|Usuario autorizado|
+:Visualizar estado o resultado trazable\nsin datos personales;
+stop
+@enduml

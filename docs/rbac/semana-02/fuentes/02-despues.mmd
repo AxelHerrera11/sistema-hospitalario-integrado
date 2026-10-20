@@ -1,0 +1,53 @@
+---
+title: "DESPUÉS — Authorizer cerrado a modificación, dependiente de abstracciones"
+---
+classDiagram
+  direction LR
+
+  class Authorizer {
+    +autorizar(contexto) bool
+  }
+
+  class PermissionProvider {
+    <<interface>>
+    +permisosDe(rol) Permiso[]
+  }
+
+  class DenialRecorder {
+    <<interface>>
+    +registrar(denegacion, motivo)
+  }
+
+  class AuthorizationRule {
+    <<interface>>
+    +decide(contexto) ?motivo
+  }
+
+  class InMemoryPermissions {
+    +permisosDe(rol) Permiso[]
+  }
+
+  class RoleGrantsPermission {
+    +decide(contexto) ?motivo
+  }
+
+  class HospitalScopeRule {
+    +decide(contexto) ?motivo
+  }
+
+  class AuditLogger {
+    +registrar(denegacion, motivo)
+  }
+
+  Authorizer --> PermissionProvider : obtiene permisos de los roles
+  Authorizer --> AuthorizationRule : todas las reglas deben permitir
+  Authorizer --> DenialRecorder : registra la denegación con motivo
+  InMemoryPermissions ..|> PermissionProvider : implementa
+  RoleGrantsPermission ..|> AuthorizationRule : implementa
+  HospitalScopeRule ..|> AuthorizationRule : implementa
+  AuditLogger ..|> DenialRecorder : implementa
+
+  note for Authorizer "Permite solo si TODAS las reglas permiten; sin reglas, niega (denegación por defecto); la primera regla que niega define el motivo"
+  note for RoleGrantsPermission "permite si algún rol del usuario otorga el permiso"
+  note for HospitalScopeRule "solo restringe (nunca concede): niega si el hospital de la operación es distinto del de la asignación del rol"
+  note for Authorizer "OCP: un rol/permiso nuevo es dato, no código; una regla nueva es una clase que implementa AuthorizationRule y se registra, sin modificar Authorizer"

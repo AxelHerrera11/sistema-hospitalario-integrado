@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1350" viewBox="0 0 1500 1350" role="img" aria-labelledby="title desc">
+  <title id="title">Secuencia — Consulta autorizada del expediente longitudinal</title>
+  <desc id="desc">Interacciones de Médico, Vue/Axios, Laravel, Auth Guard, ExpedienteService y bases de datos CENTRAL y HOSPITAL para respuestas 200, 401, 403 y 404.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#3c526b"/></marker>
+    <marker id="return" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#6e8093"/></marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#172b4d}
+      .title{font-size:27px;font-weight:700}.sub{font-size:15px;fill:#52647a}
+      .head{fill:#eaf2ff;stroke:#3874bd;stroke-width:1.7}.life{stroke:#99a9bb;stroke-width:1.5;stroke-dasharray:7 6}
+      .msg{stroke:#3c526b;stroke-width:2;fill:none;marker-end:url(#arrow)}
+      .ret{stroke:#6e8093;stroke-width:1.7;stroke-dasharray:7 5;fill:none;marker-end:url(#return)}
+      .frame{fill:#fff;stroke:#8598ad;stroke-width:1.5}.alt{fill:#f8fafc;stroke:#8598ad;stroke-width:1.5}
+      .audit{fill:#f4edfa;stroke:#8c65a7;stroke-width:1.7}.error{fill:#fff0f0;stroke:#c44949;stroke-width:1.7}
+      .success{fill:#e8f7ef;stroke:#34946a;stroke-width:1.7}
+      .label{font-size:14px;font-weight:600}.small{font-size:12px}.tiny{font-size:11px;fill:#53657a}
+      .tag-bg{fill:#ffffff;opacity:0.95}
+    </style>
+  </defs>
+
+  <rect width="1500" height="1350" fill="#fff"/>
+  <text x="40" y="48" class="title">Diagrama de secuencia — Consulta autorizada del expediente</text>
+  <text x="40" y="75" class="sub">GET /api/v1/emr/patients/{id} · Flujo UC-01 / UC-03 / UC-04 / UC-05</text>
+
+  <!-- Participantes -->
+  <g>
+    <rect x="25" y="100" width="150" height="70" rx="10" class="head"/><text x="100" y="130" text-anchor="middle" class="label">Médico /</text><text x="100" y="148" text-anchor="middle" class="label">Clínico</text>
+    <rect x="225" y="100" width="170" height="70" rx="10" class="head"/><text x="310" y="130" text-anchor="middle" class="label">Frontend</text><text x="310" y="148" text-anchor="middle" class="label">Vue 3 / Axios</text>
+    <rect x="445" y="100" width="190" height="70" rx="10" class="head"/><text x="540" y="130" text-anchor="middle" class="label">Router / Middleware</text><text x="540" y="148" text-anchor="middle" class="label">Laravel 12</text>
+    <rect x="685" y="100" width="180" height="70" rx="10" class="head"/><text x="775" y="130" text-anchor="middle" class="label">Auth Guard</text><text x="775" y="148" text-anchor="middle" class="label">JWT / Spatie</text>
+    <rect x="920" y="100" width="190" height="70" rx="10" class="head"/><text x="1015" y="130" text-anchor="middle" class="label">ExpedienteService</text><text x="1015" y="148" text-anchor="middle" class="label">Laravel</text>
+    <rect x="1160" y="100" width="145" height="70" rx="10" class="head"/><text x="1232" y="130" text-anchor="middle" class="label">DB CENTRAL</text><text x="1232" y="148" text-anchor="middle" class="label">MPI / RBAC / log</text>
+    <rect x="1350" y="100" width="130" height="70" rx="10" class="head"/><text x="1415" y="130" text-anchor="middle" class="label">DB</text><text x="1415" y="148" text-anchor="middle" class="label">HOSPITAL</text>
+  </g>
+
+  <g class="life">
+    <line x1="100" y1="170" x2="100" y2="1290"/><line x1="310" y1="170" x2="310" y2="1290"/>
+    <line x1="540" y1="170" x2="540" y2="1290"/><line x1="775" y1="170" x2="775" y2="1290"/>
+    <line x1="1015" y1="170" x2="1015" y2="1290"/><line x1="1232" y1="170" x2="1232" y2="1290"/>
+    <line x1="1415" y1="170" x2="1415" y2="1290"/>
+  </g>
+
+  <!-- Petición Inicial -->
+  <path d="M100 200 H310" class="msg"/><text x="205" y="192" text-anchor="middle" class="label">Solicitar expediente</text>
+
+  <path d="M310 245 H540" class="msg"/>
+  <rect x="330" y="212" width="190" height="28" class="tag-bg"/>
+  <text x="425" y="225" text-anchor="middle" class="label">GET /api/v1/emr/patients/{id}</text>
+  <text x="425" y="238" text-anchor="middle" class="small">Authorization: Bearer token · X-Tenant-ID</text>
+
+  <path d="M540 280 H775" class="msg"/><text x="657" y="272" text-anchor="middle" class="label">Validar JWT + tenant (UC-04)</text>
+  <path d="M775 310 H1232" class="msg"/><text x="1002" y="302" text-anchor="middle" class="label">Verificar identidad y resolver tenant</text>
+  <path d="M1232 340 H775" class="ret"/><text x="1002" y="332" text-anchor="middle" class="small">Identidad / tenant válido o inválido</text>
+
+  <!-- Bloque Alt 1: Autenticación -->
+  <rect x="260" y="365" width="1020" height="155" rx="8" class="frame"/>
+  <rect x="260" y="365" width="50" height="22" fill="#edf1f6" stroke="#8598ad"/>
+  <text x="285" y="380" text-anchor="middle" class="small">alt</text>
+
+  <text x="330" y="395" class="label" fill="#c44949">[JWT ausente / inválido]</text>
+  <path d="M775 405 H1232" class="msg"/><text x="1002" y="397" text-anchor="middle" class="small">Registrar intento fallido (UC-05)</text>
+  <path d="M775 430 H540" class="ret"/><text x="657" y="422" text-anchor="middle" class="small">No autenticado</text>
+  <path d="M540 455 H310" class="ret"/><text x="425" y="447" text-anchor="middle" class="label" fill="#c44949">401 Unauthenticated</text>
+
+  <line x1="260" y1="475" x2="1280" y2="475" stroke="#8598ad" stroke-dasharray="6 5"/>
+  <text x="330" y="498" class="label" fill="#34946a">[JWT válido y tenant resuelto: continuar]</text>
+
+  <!-- Verificación RBAC -->
+  <path d="M540 540 H775" class="msg"/><text x="657" y="532" text-anchor="middle" class="label">Verificar rol / permiso (UC-04)</text>
+  <path d="M775 570 H1232" class="msg"/><text x="1002" y="562" text-anchor="middle" class="label">Consultar roles y permisos del usuario</text>
+  <path d="M1232 600 H775" class="ret"/><text x="1002" y="592" text-anchor="middle" class="small">Resultado RBAC</text>
+
+  <!-- Bloque Alt 2: Permisos -->
+  <rect x="260" y="620" width="1020" height="155" rx="8" class="frame"/>
+  <rect x="260" y="620" width="50" height="22" fill="#edf1f6" stroke="#8598ad"/>
+  <text x="285" y="635" text-anchor="middle" class="small">alt</text>
+
+  <text x="330" y="650" class="label" fill="#c44949">[Sin rol/permiso o tenant/módulo no autorizado]</text>
+  <path d="M775 660 H1232" class="msg"/><text x="1002" y="652" text-anchor="middle" class="small">Registrar denegación (UC-05)</text>
+  <path d="M775 685 H540" class="ret"/><text x="657" y="677" text-anchor="middle" class="small">Acceso denegado</text>
+  <path d="M540 710 H310" class="ret"/><text x="425" y="702" text-anchor="middle" class="label" fill="#c44949">403 Forbidden</text>
+
+  <line x1="260" y1="730" x2="1280" y2="730" stroke="#8598ad" stroke-dasharray="6 5"/>
+  <text x="330" y="753" class="label" fill="#34946a">[Permiso concedido: continuar]</text>
+
+  <!-- Consulta Clínica -->
+  <path d="M540 795 H1015" class="msg"/><text x="777" y="787" text-anchor="middle" class="label">Consultar expediente autorizado (UC-03)</text>
+  <path d="M1015 825 H1232" class="msg"/><text x="1123" y="817" text-anchor="middle" class="small">Resolver paciente por MPI (UC-01)</text>
+  <path d="M1232 850 H1015" class="ret"/><text x="1123" y="842" text-anchor="middle" class="small">Identidad / datos MPI</text>
+  <path d="M1015 880 H1415" class="msg"/><text x="1215" y="872" text-anchor="middle" class="label">Buscar expediente con contexto tenant</text>
+
+  <!-- Bloque Alt 3: Resultado de Búsqueda -->
+  <rect x="260" y="900" width="1200" height="340" rx="8" class="frame"/>
+  <rect x="260" y="900" width="50" height="22" fill="#edf1f6" stroke="#8598ad"/>
+  <text x="285" y="915" text-anchor="middle" class="small">alt</text>
+
+  <!-- Éxito -->
+  <text x="330" y="930" class="label" fill="#34946a">[Expediente encontrado]</text>
+  <path d="M1415 945 H1015" class="ret"/><text x="1215" y="937" text-anchor="middle" class="small">Expediente longitudinal</text>
+  <path d="M1015 975 H1232" class="msg"/><text x="1123" y="967" text-anchor="middle" class="small">Registrar consulta exitosa (UC-05)</text>
+  <path d="M1015 1005 H540" class="ret"/><text x="777" y="997" text-anchor="middle" class="small">Expediente autorizado</text>
+  <path d="M540 1035 H310" class="ret"/><text x="425" y="1027" text-anchor="middle" class="label" fill="#34946a">200 OK + JSON Expediente</text>
+
+  <line x1="260" y1="1065" x2="1460" y2="1065" stroke="#8598ad" stroke-dasharray="6 5"/>
+
+  <!-- No encontrado -->
+  <text x="330" y="1090" class="label" fill="#c44949">[Expediente no encontrado]</text>
+  <path d="M1415 1105 H1015" class="ret"/><text x="1215" y="1097" text-anchor="middle" class="small">Sin datos clínicos</text>
+  <path d="M1015 1135 H1232" class="msg"/><text x="1123" y="1127" text-anchor="middle" class="small">Registrar no encontrado (UC-05)</text>
+  <path d="M1015 1165 H540" class="ret"/><text x="777" y="1157" text-anchor="middle" class="small">Recurso no encontrado</text>
+  <path d="M540 1195 H310" class="ret"/><text x="425" y="1187" text-anchor="middle" class="label" fill="#c44949">404 Not Found</text>
+
+  <!-- Nota final -->
+  <text x="40" y="1320" class="tiny">Los logs de CENTRAL registran metadatos de trazabilidad, no el contenido clínico. La apertura UC-02/UC-06 reutiliza las validaciones antes de crear en HOSPITAL.</text>
+</svg>
