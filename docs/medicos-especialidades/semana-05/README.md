@@ -54,7 +54,7 @@ Resultado de `tests/api.php` con PHP 8.3.33 (código de salida 0):
 OK: servidor: POST /api/v1/doctors con permiso -> 201 con trace_id en cuerpo y encabezado
 OK: servidor: sin X-User-ID -> 401 UNAUTHENTICATED
 OK: servidor: recepción sin medicos.registrar -> 403 FORBIDDEN con el permiso faltante
-OK: servidor: recepción con medicos.disponibilidad.ver -> 200
+OK: servidor: recepción con medicos.ver_disponibilidad -> 200
 OK: servidor: ruta sin /api/v1 -> 404 ROUTE_NOT_FOUND
 OK: servidor: JSON malformado -> 422 PAYLOAD_INVALID con trace_id
 OK: servidor: bitácora de acceso con trace_id, método, ruta y estado, sin el cuerpo

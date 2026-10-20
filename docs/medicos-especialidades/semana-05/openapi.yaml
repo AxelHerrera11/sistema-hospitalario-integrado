@@ -26,7 +26,7 @@ paths:
         '503': { $ref: '#/components/responses/Error' }
   /doctors/{doctorId}/specialties:
     post:
-      summary: Asociar especialidad (permiso medicos.especialidades.asociar)
+      summary: Asociar especialidad (permiso medicos.asociar_especialidad)
       parameters:
         - { name: doctorId, in: path, required: true, schema: { type: string } }
       requestBody:
@@ -44,7 +44,7 @@ paths:
         '503': { $ref: '#/components/responses/Error' }
   /availability:
     get:
-      summary: Franjas libres por médico de una especialidad en una fecha (permiso medicos.disponibilidad.ver)
+      summary: Franjas libres por médico de una especialidad en una fecha (permiso medicos.ver_disponibilidad)
       parameters:
         - { name: specialty, in: query, required: true, schema: { type: string, example: NEURO } }
         - { name: date, in: query, required: true, schema: { type: string, format: date } }

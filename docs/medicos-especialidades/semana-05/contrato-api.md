@@ -16,14 +16,14 @@ Contrato que consumen Citas (Lis), Admisión (Axel), Órdenes (Javier) y Prescri
 | Método | Ruta | Permiso RBAC | Éxito | Estado |
 |---|---|---|---|---|
 | `POST` | `/api/v1/doctors` | `medicos.registrar` | `201` | implementado |
-| `POST` | `/api/v1/doctors/{doctor_profile_id}/specialties` | `medicos.especialidades.asociar` | `201` | implementado |
-| `GET` | `/api/v1/availability?specialty={code}&date={YYYY-MM-DD}` | `medicos.disponibilidad.ver` | `200` | implementado |
-| `GET` | `/api/v1/specialties` | `medicos.disponibilidad.ver` | `200` | propuesto |
-| `GET` | `/api/v1/doctors/{doctor_profile_id}` | `medicos.disponibilidad.ver` | `200` | propuesto |
+| `POST` | `/api/v1/doctors/{doctor_profile_id}/specialties` | `medicos.asociar_especialidad` | `201` | implementado |
+| `GET` | `/api/v1/availability?specialty={code}&date={YYYY-MM-DD}` | `medicos.ver_disponibilidad` | `200` | implementado |
+| `GET` | `/api/v1/specialties` | `medicos.ver_disponibilidad` | `200` | propuesto |
+| `GET` | `/api/v1/doctors/{doctor_profile_id}` | `medicos.ver_disponibilidad` | `200` | propuesto |
 
-Los tres permisos no están todavía en el [catálogo de RBAC](../../rbac/semana-05/permisos.md): se proponen a María (ASII-02) con esta matriz inicial (supuesto SD-MED-11):
+Los tres permisos vienen de RNF-MED-01 (Semana 2) y no están todavía en el [catálogo de RBAC](../../rbac/semana-05/permisos.md): se proponen a María (ASII-02) con esta matriz inicial (supuesto SD-MED-11):
 
-| Rol | `medicos.registrar` | `medicos.especialidades.asociar` | `medicos.disponibilidad.ver` |
+| Rol | `medicos.registrar` | `medicos.asociar_especialidad` | `medicos.ver_disponibilidad` |
 |---|---|---|---|
 | `admin_hospital` | X | X | X |
 | `recepcion` |  |  | X |
