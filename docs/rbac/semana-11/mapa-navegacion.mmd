@@ -1,0 +1,41 @@
+%% Mapa de navegación — Prototipo RBAC, Semana 11 (ASII-02)
+%% Autor: María de los Ángeles López Fajardo (Mar-03). Issue #4.
+%% Cada nodo indica la pantalla y el hash que la activa en prototipo.html.
+flowchart TD
+    I["Inicio<br/>#inicio"]
+    G["Gestión de roles<br/>#roles"]
+    SU["Selección de usuario<br/>(select en #roles)"]
+    RP["Revisión de permisos del rol actual y del nuevo<br/>(listas en #roles)"]
+    V{"Validación de requisitos"}
+    H["Falta un requisito: se informa junto al botón<br/>(el botón queda deshabilitado)"]
+    CF["Confirmación de asignación<br/>#confirmar"]
+    R201["Resultado exitoso<br/>201 · #roles-exito"]
+    DUP["Rol duplicado<br/>se previene antes de confirmar"]
+    O["Operación protegida<br/>#operacion"]
+    DA{"Decisión de autorización"}
+    P["Camino permitido<br/>#permitido"]
+    D["Camino denegado<br/>403 RBAC_DENIED · #denegado"]
+    TR["trace_id + evento de auditoría<br/>(fila en la bitácora simulada)"]
+    B["Consulta de auditoría<br/>#bitacora"]
+    REC["Recuperación y retorno<br/>(acciones alternativas y volver)"]
+
+    I --> G
+    I --> O
+    I --> B
+    G --> SU --> RP --> V
+    V -- "no cumple" --> H --> RP
+    V -- "cumple" --> CF
+    CF --> R201
+    CF --> D
+    V -- "rol ya vigente" --> DUP --> RP
+    R201 --> B
+    R201 --> O
+    R201 --> REC
+    O --> DA
+    DA -- "tiene el permiso" --> P
+    DA -- "no tiene el permiso" --> D
+    D --> TR --> B
+    P --> REC
+    D --> REC
+    B --> I
+    REC --> I
