@@ -5,7 +5,7 @@
 - **Estudiante:** Fajardo López, Javier Alexander (`Javifa2324`)
 - **Módulo:** Verificación de Base de Datos PostgreSQL
 - **Semana:** Semana 6 — Primera evaluación parcial
-- **Entregable / evidencia:** Presentación con modelo UML, requisitos de datos, arquitectura federada y matriz de acceso ([presentacion.md](./presentacion.md)).
+- **Entregable / evidencia:** Presentación con modelo UML, requisitos de datos, arquitectura federada y matriz de acceso ([presentacion.md](./presentacion.md)) y la autoevaluación en [autoevaluacion.md](./autoevaluacion.md)).
 - **Estructura:** Sistema Hospitalario Integrado 2026 | Semanas 1–15.
 
 ## 1. Evidencia de la semana
