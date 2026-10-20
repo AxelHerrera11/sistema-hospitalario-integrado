@@ -4,28 +4,18 @@ declare(strict_types=1);
 
 namespace MicroHis\SignosVitales\Persistence;
 
-use MicroHis\SignosVitales\Application\CareEpisodeReader;
-use MicroHis\SignosVitales\Application\EpisodeContext;
+use MicroHis\SignosVitales\Application\StoredVitalSign;
 use MicroHis\SignosVitales\Application\VitalSignRepository;
 use MicroHis\SignosVitales\Domain\Assessment;
 use MicroHis\SignosVitales\Domain\VitalSigns;
 use PDO;
 
-/** Persistencia de mediciones y auditoría con PDO. Los valores siempre van como parámetros de sentencias preparadas. */
-final class PdoVitalSignStore implements VitalSignRepository, CareEpisodeReader
+/** Adaptador PDO del Repository de mediciones y su auditoría. Los valores siempre van como parámetros de sentencias preparadas. */
+final class PdoVitalSignRepository implements VitalSignRepository
 {
     public function __construct(private readonly PDO $pdo)
     {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    }
-
-    public function contextFor(string $userId, string $episodeId): ?EpisodeContext
-    {
-        $stmt = $this->pdo->prepare("SELECT e.status, e.patient_birth_date FROM care_episodes e JOIN care_assignments a ON a.care_episode_id = e.care_episode_id
-            WHERE a.user_ref_id = ? AND e.care_episode_id = ? AND a.status = 'active'");
-        $stmt->execute([$userId, $episodeId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $row === false ? null : new EpisodeContext($row['status'] === 'open', (new \DateTimeImmutable($row['patient_birth_date']))->diff(new \DateTimeImmutable())->y);
     }
 
     public function record(string $episodeId, string $userId, VitalSigns $vitals, string $measuredAt, ?Assessment $assessment): string
@@ -50,6 +40,21 @@ final class PdoVitalSignStore implements VitalSignRepository, CareEpisodeReader
             throw new \RuntimeException('persistencia_no_disponible', 0, $e);
         }
         return $id;
+    }
+
+    public function find(string $vitalSignId): ?StoredVitalSign
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM vital_signs WHERE vital_sign_id = ?');
+        $stmt->execute([$vitalSignId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return null;
+        }
+        $values = [];
+        foreach (array_keys(VitalSigns::LIMITS) as $sign) {
+            $row[$sign] === null || $values[$sign] = (float) $row[$sign];
+        }
+        return new StoredVitalSign($row['vital_sign_id'], $row['care_episode_id'], $row['recorded_by'], $row['measured_at'], new VitalSigns($values));
     }
 
     private function audit(string $event, string $actorId, string $detail): void
