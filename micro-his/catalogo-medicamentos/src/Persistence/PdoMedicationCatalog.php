@@ -19,6 +19,11 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
     {
         // Los fallos deben llegar como excepción para no confundirlos con "sin resultados".
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // SQLite solo pasa a minúsculas los caracteres ASCII; se sustituye LOWER por una versión Unicode (defecto AV3).
+        // PostgreSQL ya aplica Unicode, así que solo se registra para SQLite.
+        if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $this->pdo->sqliteCreateFunction('LOWER', static fn (?string $value): ?string => $value === null ? null : mb_strtolower($value), 1);
+        }
     }
 
     public function findByCode(string $code): ?Medication
