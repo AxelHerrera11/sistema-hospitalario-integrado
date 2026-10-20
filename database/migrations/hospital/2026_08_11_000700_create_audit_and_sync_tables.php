@@ -3,6 +3,13 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Slice H8: auditoria local, outbox e inbox.
+ *
+ * Numero de archivo 000700: es el que reserva la especificacion para el slice H8
+ * (openspec .../tasks.md, tarea 3.7). El 000800 queda reservado para
+ * 000800_create_immutable_record_triggers.php.
+ */
 return new class extends Migration
 {
     protected $connection = 'hospital';
