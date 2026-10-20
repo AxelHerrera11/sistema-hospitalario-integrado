@@ -1,8 +1,7 @@
 # Registro de coordinación: tabla `doctor_schedules` (28.ª entidad)
 
 **Estado:** `PENDIENTE DE APROBACIÓN DEL GRUPO`
-**Solicitante:** módulo de médicos y especialidades (Josué), por necesidad de citas
-(Lis) y admisión (Axel).
+**Solicitante:** módulo de médicos (Josué), por necesidad de citas (Lis) y admisión (Axel).
 **Responsable de la verificación de BD:** Javier Alexander Fajardo López.
 
 ## 1. Qué se registra
