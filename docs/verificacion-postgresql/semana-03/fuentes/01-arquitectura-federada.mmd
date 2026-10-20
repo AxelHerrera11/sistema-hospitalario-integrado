@@ -1,0 +1,31 @@
+%% Vista de despliegue y de datos de la arquitectura federada.
+%% Fuente: config/database.php, README.md y las migraciones central/hospital de origin/develop.
+flowchart TB
+    subgraph Cliente
+        UI[Cliente web y movil<br/>Vue 3 + Pinia + Axios]
+    end
+    subgraph Aplicacion
+        API[API Laravel 12<br/>JWT + RBAC + TenantMiddleware]
+    end
+    subgraph CENTRAL[Base CENTRAL - una sola]
+        C1[networks, hospitals]
+        C2[central_users, hospital_memberships]
+        C3[mpi_patients, mpi_identifiers, links]
+        C4[patient_consents, grants, break_glass]
+        C5[sync_nodes, sync_checkpoints, inbox]
+    end
+    subgraph HOSPITAL[Base HOSPITAL - una por hospital]
+        H1[local_patients, care_episodes, care_assignments]
+        H2[wards, beds, bed_stays]
+        H3[medical_records, clinical_notes, diagnoses]
+        H4[allergies, vital_signs, appointments]
+        H5[lab_*, specimens, critical_alerts - pendiente]
+    end
+    UI -->|HTTPS + X-Tenant-ID| API
+    API -->|conexion central| C1
+    API -->|conexion hospital| H1
+    API -->|conexion hospital| H2
+    API -->|conexion hospital| H3
+    API -->|conexion hospital| H4
+    C2 -.->|referencia logica por UUID| H1
+    C5 <-.->|outbox / inbox - H8 pendiente| H5
