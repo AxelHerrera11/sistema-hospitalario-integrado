@@ -16,8 +16,8 @@ require __DIR__ . '/../app.php';
 
 $schedule = new ConfigScheduleProvider([]);
 $permissions = new InMemoryPermissionChecker([
-    'admin1' => ['medicos.registrar', 'medicos.especialidades.asociar', 'medicos.disponibilidad.ver'],
-    'recepcion1' => ['medicos.disponibilidad.ver'],
+    'admin1' => ['medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad'],
+    'recepcion1' => ['medicos.ver_disponibilidad'],
 ]);
 $log = static fn (array $entry) => error_log(json_encode($entry));
 $dsn = getenv('MEDICOS_DSN');

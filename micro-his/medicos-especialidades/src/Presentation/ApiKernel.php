@@ -17,8 +17,8 @@ final class ApiKernel
     /** Permiso `modulo.accion` que protege cada ruta (método + patrón sin el prefijo). */
     private const PERMISSIONS = [
         ['POST', '#^/doctors$#', 'medicos.registrar'],
-        ['POST', '#^/doctors/[\w-]+/specialties$#', 'medicos.especialidades.asociar'],
-        ['GET', '#^/availability$#', 'medicos.disponibilidad.ver'],
+        ['POST', '#^/doctors/[\w-]+/specialties$#', 'medicos.asociar_especialidad'],
+        ['GET', '#^/availability$#', 'medicos.ver_disponibilidad'],
     ];
 
     /** @var \Closure(): string */

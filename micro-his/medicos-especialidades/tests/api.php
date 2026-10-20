@@ -28,8 +28,8 @@ function api(bool $rbacDown = false, array &$log = []): ApiKernel
         ['doc-ana' => [new SpecialtyLink('sp-neuro', true, new Period('2026-01-01'))]],
     );
     $permissions = new InMemoryPermissionChecker([
-        'admin1' => ['medicos.registrar', 'medicos.especialidades.asociar', 'medicos.disponibilidad.ver'],
-        'recepcion1' => ['medicos.disponibilidad.ver'],
+        'admin1' => ['medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad'],
+        'recepcion1' => ['medicos.ver_disponibilidad'],
     ], $rbacDown);
     $sequence = 0;
     return medicos_api($doctors, new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => ['08:30']]]), new ConfigScheduleProvider(['doc-ana' => [1 => [['08:00', '09:30']]]]),
@@ -58,7 +58,7 @@ check('servidor: POST /api/v1/doctors con permiso -> 201 con trace_id en cuerpo 
 check('servidor: sin X-User-ID -> 401 UNAUTHENTICATED', call($server, 'POST', '/api/v1/doctors', [], $alta)[1]['code'] === 'UNAUTHENTICATED');
 [$status, $body] = call($server, 'POST', '/api/v1/doctors', ['X-User-ID' => 'recepcion1'], $alta);
 check('servidor: recepción sin medicos.registrar -> 403 FORBIDDEN con el permiso faltante', $status === 403 && $body['permission'] === 'medicos.registrar');
-check('servidor: recepción con medicos.disponibilidad.ver -> 200', call($server, 'GET', '/api/v1/availability', ['X-User-ID' => 'recepcion1'], [], ['specialty' => 'NEURO', 'date' => '2026-10-19'])[0] === 200);
+check('servidor: recepción con medicos.ver_disponibilidad -> 200', call($server, 'GET', '/api/v1/availability', ['X-User-ID' => 'recepcion1'], [], ['specialty' => 'NEURO', 'date' => '2026-10-19'])[0] === 200);
 check('servidor: ruta sin /api/v1 -> 404 ROUTE_NOT_FOUND', call($server, 'POST', '/doctors', body: $alta)[1]['code'] === 'ROUTE_NOT_FOUND');
 check('servidor: JSON malformado -> 422 PAYLOAD_INVALID con trace_id', call($server, 'POST', '/api/v1/doctors', validJson: false)[1] === ['code' => 'PAYLOAD_INVALID', 'trace_id' => 'trace-6']);
 check('servidor: bitácora de acceso con trace_id, método, ruta y estado, sin el cuerpo', count($log) === 6 && $log[2] === ['trace_id' => 'trace-3', 'method' => 'POST', 'path' => '/api/v1/doctors', 'status' => 403]);
