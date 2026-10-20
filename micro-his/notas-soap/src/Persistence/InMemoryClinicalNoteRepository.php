@@ -9,6 +9,7 @@ use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapSections;
+use MicroHis\NotasSoap\Domain\Uuid;
 
 /** Adaptador en memoria del mismo contrato que PdoClinicalNoteStore: pruebas y demo sin base de datos. */
 final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
@@ -17,7 +18,6 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
     public array $notes = [];
     /** @var array<string, list<array{code: string, type: string, description: string}>> */
     public array $diagnoses = [];
-    private int $sequence = 0;
 
     public function __construct(private readonly AuditTrail $audit)
     {
@@ -32,19 +32,20 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string
     {
-        $id = 'nota-' . ++$this->sequence;
+        $id = Uuid::v4();
         $this->atomically(function () use ($id, $episodeId, $authorId, $sections): void {
             $this->notes[$id] = ['episode' => $episodeId, 'author' => $authorId, 'status' => 'draft', 'content' => $sections->toJson()];
-            $this->audit->record('nota_soap_registrada', $authorId, $id);
+            $this->audit->record($authorId, 'nota_soap.registrada', 'clinical_note', $id, $episodeId, ['version_no' => 1]);
         });
         return $id;
     }
 
     public function addDiagnosis(ClinicalNote $note, Diagnosis $diagnosis, string $description): void
     {
-        $this->atomically(function () use ($note, $diagnosis, $description): void {
+        $id = Uuid::v4();
+        $this->atomically(function () use ($id, $note, $diagnosis, $description): void {
             $this->diagnoses[$note->id][] = ['code' => $diagnosis->code, 'type' => $diagnosis->type, 'description' => $description];
-            $this->audit->record('diagnostico_asociado', $note->authorId, $note->id . ':' . $diagnosis->code);
+            $this->audit->record($note->authorId, 'diagnostico.asociado', 'diagnosis', $id, $note->episodeId, ['clinical_note_id' => $note->id, 'code' => $diagnosis->code, 'type' => $diagnosis->type]);
         });
     }
 

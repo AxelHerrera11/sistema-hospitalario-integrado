@@ -42,7 +42,7 @@ function pdoApp(string $fail = ''): array
     return [notas_soap_router(new PdoClinicalNoteStore($pdo, new PdoAuditTrail($pdo)), new PdoCareAssignmentReader($pdo), $catalog), [
         'notes' => fn (): int => (int) $col('SELECT COUNT(*) FROM clinical_notes')[0],
         'descriptions' => fn (): array => $col('SELECT description FROM diagnoses'),
-        'audits' => fn (): array => $col('SELECT event FROM local_access_audits'),
+        'audits' => fn (): array => $col('SELECT action FROM local_access_audits'),
         'sign' => fn (string $id) => $pdo->prepare("UPDATE clinical_notes SET status = 'signed' WHERE clinical_note_id = ?")->execute([$id]),
     ]];
 }
@@ -56,7 +56,7 @@ function memoryApp(string $fail = ''): array
     return [notas_soap_router($notes, new InMemoryCareAssignmentReader(['ep1' => ['dra.lopez']]), $catalog), [
         'notes' => fn (): int => count($notes->notes),
         'descriptions' => fn (): array => array_column(array_merge([], ...array_values($notes->diagnoses)), 'description'),
-        'audits' => fn (): array => array_column($audit->events, 'event'),
+        'audits' => fn (): array => array_column($audit->events, 'action'),
         'sign' => fn (string $id) => $notes->markSigned($id),
     ]];
 }
@@ -84,7 +84,7 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     $r = call($router, '/care-episodes/ep1/soap-notes', SOAP);
     $nota = $r['body']['clinical_note_id'] ?? '';
     check($t('camino feliz: POST /care-episodes/ep1/soap-notes -> 201 JSON en borrador con auditoría'), $r['status'] === 201 && str_starts_with($r['type'], 'application/json')
-        && $r['body']['status'] === 'draft' && $state['audits']() === ['nota_soap_registrada']);
+        && $r['body']['status'] === 'draft' && $state['audits']() === ['nota_soap.registrada']);
     $r = $diagnose($nota, ['code' => 'J18.9', 'type' => 'primary']);
     check($t('camino feliz: diagnóstico principal J18.9 -> 201 con descripción del catálogo'), $r['status'] === 201 && $state['descriptions']() === ['Neumonía, no especificada']);
 

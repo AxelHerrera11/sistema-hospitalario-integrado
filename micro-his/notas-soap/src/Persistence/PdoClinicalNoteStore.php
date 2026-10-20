@@ -9,6 +9,7 @@ use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapSections;
+use MicroHis\NotasSoap\Domain\Uuid;
 use PDO;
 
 /** Repository de notas y diagnósticos con PDO. Siempre con sentencias preparadas; la auditoría entra en la misma transacción. */
@@ -29,21 +30,22 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string
     {
-        $id = 'nota-' . bin2hex(random_bytes(4));
+        $id = Uuid::v4();
         $this->transaction(function () use ($id, $episodeId, $authorId, $sections): void {
             $this->pdo->prepare("INSERT INTO clinical_notes (clinical_note_id, care_episode_id, author_user_ref_id, note_type, content) VALUES (?, ?, ?, 'soap', ?)")
                 ->execute([$id, $episodeId, $authorId, $sections->toJson()]);
-            $this->audit->record('nota_soap_registrada', $authorId, $id);
+            $this->audit->record($authorId, 'nota_soap.registrada', 'clinical_note', $id, $episodeId, ['version_no' => 1]);
         });
         return $id;
     }
 
     public function addDiagnosis(ClinicalNote $note, Diagnosis $diagnosis, string $description): void
     {
-        $this->transaction(function () use ($note, $diagnosis, $description): void {
-            $this->pdo->prepare('INSERT INTO diagnoses (clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES (?, ?, ?, ?, ?, ?, ?)')
-                ->execute([$note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
-            $this->audit->record('diagnostico_asociado', $note->authorId, $note->id . ':' . $diagnosis->code);
+        $id = Uuid::v4();
+        $this->transaction(function () use ($id, $note, $diagnosis, $description): void {
+            $this->pdo->prepare('INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$id, $note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
+            $this->audit->record($note->authorId, 'diagnostico.asociado', 'diagnosis', $id, $note->episodeId, ['clinical_note_id' => $note->id, 'code' => $diagnosis->code, 'type' => $diagnosis->type]);
         });
     }
 
