@@ -63,7 +63,7 @@ return new class extends Migration
 
         $connection->table('audit_chain_state')->where('chain_id', 1)->update(['head_hash' => $previousHash]);
         $connection->unprepared(<<<'SQL'
-            CREATE FUNCTION reject_audit_log_mutation() RETURNS trigger AS $$
+            CREATE OR REPLACE FUNCTION reject_audit_log_mutation() RETURNS trigger AS $$
             BEGIN
                 RAISE EXCEPTION 'audit_log is append-only';
             END;
