@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="RegisterUserFeatureTest" tests="5" failures="0" errors="0" skipped="0" time="4.4" timestamp="2026-10-18T15:45:00">
+    <testcase name="Crear usuario exitosamente" classname="RegisterUserFeatureTest" time="1.2"/>
+    <testcase name="Fallo - Tenant inactivo" classname="RegisterUserFeatureTest" time="0.8"/>
+    <testcase name="Fallo - Cupo excedido" classname="RegisterUserFeatureTest" time="0.7"/>
+    <testcase name="Fallo - Email duplicado en tenant" classname="RegisterUserFeatureTest" time="0.6"/>
+    <testcase name="Fallo - Password policy violada" classname="RegisterUserFeatureTest" time="1.1"/>
+  </testsuite>
+  <testsuite name="LoginMfaFeatureTest" tests="6" failures="0" errors="0" skipped="0" time="10.4" timestamp="2026-10-18T15:45:00">
+    <testcase name="Login exitoso sin MFA (rol MEDICO)" classname="LoginMfaFeatureTest" time="2.1"/>
+    <testcase name="Login exitoso CON MFA TOTP (TENANT_ADMIN)" classname="LoginMfaFeatureTest" time="3.2"/>
+    <testcase name="Fallo credenciales inválidas" classname="LoginMfaFeatureTest" time="0.5"/>
+    <testcase name="Fallo usuario inactivo" classname="LoginMfaFeatureTest" time="0.6"/>
+    <testcase name="Login + MFA WebAuthn (opcional)" classname="LoginMfaFeatureTest" time="2.8"/>
+    <testcase name="MFA bloqueo tras 3 fallos" classname="LoginMfaFeatureTest" time="1.2"/>
+  </testsuite>
+  <testsuite name="RefreshTokenFeatureTest" tests="3" failures="0" errors="0" skipped="0" time="3.3" timestamp="2026-10-18T15:45:00">
+    <testcase name="Refresh exitoso con rotación" classname="RefreshTokenFeatureTest" time="1.1"/>
+    <testcase name="Fallo - Refresh token inválido/revokado" classname="RefreshTokenFeatureTest" time="0.7"/>
+    <testcase name="Reuse Detection (ATAQUE) → Revocación total" classname="RefreshTokenFeatureTest" time="1.5"/>
+  </testsuite>
+  <testsuite name="RevokeSessionFeatureTest" tests="3" failures="0" errors="0" skipped="0" time="2.6" timestamp="2026-10-18T15:45:00">
+    <testcase name="Revocación propia (logout)" classname="RevokeSessionFeatureTest" time="0.9"/>
+    <testcase name="Force-revoke Admin (todas las sesiones)" classname="RevokeSessionFeatureTest" time="1.4"/>
+    <testcase name="Revocación sesión inexistente" classname="RevokeSessionFeatureTest" time="0.3"/>
+  </testsuite>
+  <testsuite name="MultiTenantIsolationFeatureTest" tests="3" failures="0" errors="0" skipped="0" time="2.2" timestamp="2026-10-18T15:45:00">
+    <testcase name="Usuario Tenant A no puede acceder Tenant B" classname="MultiTenantIsolationFeatureTest" time="0.9"/>
+    <testcase name="Tenant inactivo bloquea acceso" classname="MultiTenantIsolationFeatureTest" time="0.6"/>
+    <testcase name="Roles scopeados por tenant" classname="MultiTenantIsolationFeatureTest" time="0.7"/>
+  </testsuite>
+</testsuites>
