@@ -29,4 +29,38 @@ Se evalúan las tres pantallas de la [Semana 8](../semana-08/README.md): alta de
 | 9 | Ayudar a reconocer y corregir errores | Cumple | Cada 409 y 422 explica el motivo y sugiere la acción |
 | 10 | Ayuda y documentación | Parcial | «Sin horario configurado» no dice a quién acudir ni cuándo se resolverá |
 
-Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
+## Checklist WCAG 2.1 AA
+
+| Criterio | Resultado | Nota |
+|---|---|---|
+| 1.3.1 Información y relaciones | Parcial | Las franjas deben ser un grupo de opciones (`radiogroup`) por médico, no botones sueltos |
+| 1.4.1 Uso del color | Parcial | La especialidad principal se marca con ●; debe decir «principal» en texto (ya lo dice en el wireframe) y no depender del color |
+| 1.4.3 Contraste mínimo | Pendiente de verificar | Se mide en el prototipo de la Semana 11, porque los wireframes no tienen colores finales |
+| 1.4.4 Cambio de tamaño del texto | Pendiente de verificar | Zoom al 200 % sobre la lista de franjas en el prototipo |
+| 2.1.1 Teclado | Parcial | Flechas dentro de las franjas de un médico y Tab para pasar al siguiente |
+| 2.4.3 Orden del foco | Cumple | Usuario → licencia → especialidad → vigencia → Registrar |
+| 3.3.1 Identificación de errores | Cumple | El error nombra el campo y el motivo |
+| 3.3.2 Etiquetas o instrucciones | Parcial | El formato de fecha (`AAAA-MM-DD`) y que «Hasta» es opcional deben estar en la etiqueta |
+| 3.3.4 Prevención de errores (datos importantes) | Parcial | El alta no muestra un resumen antes de confirmar |
+| 4.1.3 Mensajes de estado | Parcial | «Médico registrado» y «No hay médicos vigentes» deben anunciarse con `role="status"` |
+
+## Hallazgos priorizados
+
+| # | Severidad | Hallazgo | Impacto | Mejora propuesta |
+|---|---|---|---|---|
+| H1 | Alta | Ante «sin respuesta» en el alta, el usuario puede repetirla | Intento de alta duplicada (la base lo rechaza con 409, pero confunde) | «No sabemos si se guardó» con botón «Buscar licencia» antes de permitir repetir |
+| H2 | Alta | Una franja seleccionada puede parecer reservada | La recepcionista promete una hora que Citas aún no confirmó | Texto «Elegir no reserva: se confirma en Citas» junto al botón |
+| H3 | Media | Las franjas no son un `radiogroup` | Con lector de pantalla no se sabe a qué médico pertenece cada hora | `role="radiogroup"` por médico con `aria-label` «Franjas de Dra. Ana López» |
+| H4 | Media | «Principal» no avisa antes de enviar | Un 409 evitable | Consultar las especialidades vigentes de la ficha y avisar al marcar la casilla |
+| H5 | Media | Sin «hoy» por defecto ni «día siguiente» | Más clics en la tarea más frecuente | Fecha de hoy por defecto y botones «‹ día anterior · día siguiente ›» |
+| H6 | Media | El alta no muestra resumen | Licencia o especialidad equivocada sin revisión | Paso de confirmación con usuario, licencia, especialidad y vigencia |
+| H7 | Baja | «Sin horario configurado» no orienta | Llamadas a soporte | Agregar «Pida a administración que cargue el horario» |
+| H8 | Baja | Falta el formato de fecha en la etiqueta | Errores 422 de fecha | Etiqueta «Vigente desde (AAAA-MM-DD)» y selector de fecha |
+
+## Plan de mejoras
+
+1. **Antes del prototipo (Semana 11):** H1 y H2, porque pueden generar un dato o una cita errónea.
+2. **En el prototipo:** H3 a H6, y la medición de contraste y zoom de los criterios pendientes.
+3. **Después:** H7 y H8.
+
+Las mejoras se incorporan en la adaptación móvil (Semana 10) y en el prototipo navegable (Semana 11). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
