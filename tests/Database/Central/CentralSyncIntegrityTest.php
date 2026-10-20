@@ -79,7 +79,17 @@ class CentralSyncIntegrityTest extends TestCase
 
     public function test_sync_migration_rolls_back_and_reinstalls_without_removing_c1_to_c3(): void
     {
-        Artisan::call('migrate:rollback', ['--database' => 'central', '--path' => database_path('migrations/central'), '--realpath' => true, '--step' => 1, '--force' => true]);
+        $migration = '2026_08_11_000400_create_central_sync_tables';
+        $repository = app('migrator')->getRepository();
+        $repository->setSource('central');
+        $otherMigrations = array_values(array_diff($repository->getRan(), [$migration]));
+        // Scan all applied migrations, but allow rollback only for the sync file.
+        $this->assertSame(0, Artisan::call('migrate:rollback', [
+            '--database' => 'central',
+            '--path' => database_path('migrations/central/'.$migration.'.php'),
+            '--realpath' => true, '--step' => count($repository->getRan()), '--force' => true,
+        ]));
+        $this->assertSame($otherMigrations, $repository->getRan());
         $this->assertFalse($this->tableExists('sync_nodes'));
         $this->assertTrue($this->tableExists('patient_consents'));
         Artisan::call('migrate', ['--database' => 'central', '--path' => database_path('migrations/central'), '--realpath' => true, '--force' => true]);
