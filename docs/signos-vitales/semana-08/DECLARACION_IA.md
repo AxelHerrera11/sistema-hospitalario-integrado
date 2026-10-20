@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** los `code`, estados y permisos salen del contrato de la Semana 5 y de las pruebas del micro-HIS; la unidad canónica y el factor de conversión son los del cambio práctico de la Semana 6. Las advertencias suaves de unidad, la regla de no cerrar la alerta crítica con un toast y el texto de «no evaluado» son propuestas de diseño sin validar con usuarios clínicos. El flujo de enfermería termina en `403 NOT_TREATING_PHYSICIAN` mientras no se asigne a enfermería a los episodios. Los datos de los wireframes son ficticios. No se implementó código.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar los flujos, los wireframes y esta declaración antes de aprobarla.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó los flujos, los wireframes y esta declaración, y la aprueba.
