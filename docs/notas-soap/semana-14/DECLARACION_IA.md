@@ -12,6 +12,6 @@
 - Este PR sale de `develop` y no enlaza a las semanas anteriores, que aún no están integradas.
 - En esta entrega no se modificó código del micro-HIS ni del HIS.
 
-**Validación humana:** pendiente del visto bueno de Josué Fernando Hicho García.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el plan SQA, las siete métricas con su umbral, fuente, responsable y acción, la matriz de riesgos, los controles y el calendario de seguimiento, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
