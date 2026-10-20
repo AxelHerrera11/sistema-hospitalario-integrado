@@ -1,0 +1,19 @@
+classDiagram
+  direction LR
+  class HospitalBedService {
+    <<anti-pattern hipotético>>
+    +listWards()
+    +loadInventory(cutoff, wardId)
+    +occupancySummary(filters)
+    +assignBed(patientId, bedId)
+    +transferPatient(stayId, bedId)
+    +dischargePatient(episodeId)
+    +updateBedStatus(bedId, status)
+  }
+  class DashboardController
+  class OccupancyAggregator
+  class WardFilterController
+  DashboardController --> HospitalBedService
+  OccupancyAggregator --> HospitalBedService
+  WardFilterController --> HospitalBedService
+  note for HospitalBedService "Todos dependen de siete operaciones,<br/>incluidas escrituras que ASII-09 no usa"

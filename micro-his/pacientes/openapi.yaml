@@ -1,0 +1,287 @@
+openapi: 3.1.0
+info:
+  title: API de Pacientes del Micro-HIS
+  version: 1.0.0
+  description: Contrato HTTP para los casos de uso existentes de registro, consulta por código y actualización parcial.
+servers:
+  - url: /
+paths:
+  /api/v1/patients:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserRef'
+      - $ref: '#/components/parameters/RequestId'
+    post:
+      operationId: registrarPaciente
+      summary: Registrar paciente
+      description: El código y global_id son identificadores inmutables después del registro.
+      x-required-permission: pacientes.registrar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientCreate'
+      responses:
+        '201':
+          description: Paciente registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/v1/patients/{code}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/UserRef'
+      - $ref: '#/components/parameters/RequestId'
+      - name: code
+        in: path
+        required: true
+        description: Código de paciente asignado al registrarlo.
+        schema:
+          type: string
+          minLength: 1
+    get:
+      operationId: consultarPaciente
+      summary: Consultar paciente por código
+      x-required-permission: pacientes.ver
+      responses:
+        '200':
+          description: Paciente encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      operationId: actualizarPaciente
+      summary: Actualizar datos editables de paciente
+      description: No acepta cambios a patient_id, global_id ni code.
+      x-required-permission: pacientes.editar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientUpdate'
+      responses:
+        '200':
+          description: Paciente actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientEnvelope'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    TenantId:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      description: Tenant/hospital al que pertenece la operación.
+      schema:
+        type: string
+        format: uuid
+    UserRef:
+      name: X-User-Ref
+      in: header
+      required: true
+      description: Referencia del usuario autenticado por la capa de identidad del HIS.
+      schema:
+        type: string
+        minLength: 1
+    RequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: Identificador de correlación; el servidor genera uno si se omite.
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    BadRequest:
+      description: Solicitud inválida o falta X-Tenant-ID. Para falta de tenant, code es TENANT_REQUIRED.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthenticated:
+      description: No se recibió una referencia de usuario autenticado válida.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Tenant distinto al hospital o permiso insuficiente. code es TENANT_MISMATCH en el primer caso.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: No existe paciente con ese código en el tenant.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: El código o global_id ya pertenece a otro paciente.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unprocessable:
+      description: Datos no válidos según las reglas del dominio.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    InternalError:
+      description: Error interno de persistencia.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    PatientCreate:
+      type: object
+      additionalProperties: false
+      required: [global_id, code, given_name, family_name, birth_date, sex]
+      properties:
+        global_id:
+          type: string
+          format: uuid
+          description: Referencia al identificador global del MPI.
+        code:
+          type: string
+          minLength: 1
+          description: Código local único del paciente en el tenant.
+        given_name:
+          type: string
+          minLength: 1
+        family_name:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        sex:
+          $ref: '#/components/schemas/Sex'
+        contact:
+          type: [string, 'null']
+        status:
+          $ref: '#/components/schemas/PatientStatus'
+          default: active
+    PatientUpdate:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        given_name:
+          type: string
+          minLength: 1
+        family_name:
+          type: string
+          minLength: 1
+        birth_date:
+          type: string
+          format: date
+        sex:
+          $ref: '#/components/schemas/Sex'
+        contact:
+          type: [string, 'null']
+        status:
+          $ref: '#/components/schemas/PatientStatus'
+    Patient:
+      type: object
+      additionalProperties: false
+      required: [patient_id, global_id, code, given_name, family_name, birth_date, sex, contact, status]
+      properties:
+        patient_id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: UUID local estable usado por las relaciones clínicas internas.
+        global_id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        given_name:
+          type: string
+        family_name:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        sex:
+          $ref: '#/components/schemas/Sex'
+        contact:
+          type: [string, 'null']
+        status:
+          $ref: '#/components/schemas/PatientStatus'
+    PatientEnvelope:
+      type: object
+      required: [patient]
+      properties:
+        patient:
+          $ref: '#/components/schemas/Patient'
+    Sex:
+      type: string
+      enum: [female, male, other, unknown]
+    PatientStatus:
+      type: string
+      enum: [active, inactive, deceased]
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [title, status, code, field, request_id]
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+          description: Código estable; incluye TENANT_REQUIRED y TENANT_MISMATCH.
+        field:
+          type: [string, 'null']
+        request_id:
+          type: string
+          minLength: 1
+          description: Siempre presente; se genera si X-Request-Id no llegó en la solicitud.
