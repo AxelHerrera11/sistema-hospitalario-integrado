@@ -1,11 +1,11 @@
-﻿Validación local 2026-10-19; PHP 8.2.12; auth/tenant simulados, sin staging.
+Validación local 2026-10-19; PHP 8.2.12; auth/tenant simulados, sin staging.
 > php artisan test --filter=IntegrationTest --no-ansi
 
    PASS  Tests\Feature\Rbac\IntegrationTest
-  ✓ catalog is registered and protected                                                                          0.17s  
-  ✓ anonymous and other hospital cannot access                                                                   0.01s  
-  ✓ dependency failure never runs protected action                                                               0.01s  
-  ✓ spoofed identity headers are ignored                                                                         0.01s  
+  ✓ catalog is registered and protected                                                                          0.17s
+  ✓ anonymous and other hospital cannot access                                                                   0.01s
+  ✓ dependency failure never runs protected action                                                               0.01s
+  ✓ spoofed identity headers are ignored                                                                         0.01s
 
   Tests:    4 passed (13 assertions)
   Duration: 0.54s
