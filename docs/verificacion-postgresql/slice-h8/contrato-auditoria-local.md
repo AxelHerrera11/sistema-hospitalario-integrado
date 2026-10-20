@@ -9,11 +9,19 @@
 | Elemento | Estado |
 |---|---|
 | Diseño de `local_access_audits` | Confirmado: es el Anexo A publicado en el PR #376 (ASII-11), con la aclaración de que `correlation_id` es un **uuid** y el `trace_id` del RBAC viaja en `metadata` |
-| Migración del slice H8 | **Escrita y probada** en este PR: `database/migrations/hospital/2026_08_11_000800_create_local_audit_and_outbox_tables.php` |
+| Migración del slice H8 | **Escrita y probada** en este PR: `database/migrations/hospital/2026_08_11_000700_create_audit_and_sync_tables.php` |
 | Pruebas | 14 pruebas y 122 aserciones sobre PostgreSQL 16, más la suite `Database` completa en verde (73 pruebas, 860 aserciones) |
 | Dueño del slice H8 | **PENDIENTE de acuerdo del grupo**: el slice no tiene dueño asignado (el PR #413 de `doctor_schedules` tiene el mismo tipo de bloqueo) |
-| Número de archivo `000800` | **Propuesta**: `000500`–`000700` están reservados para H5, H6 y H7, y `000900` para `doctor_schedules` |
+| Número de archivo `000700` | **Es el slot que reserva la especificación** (openspec `tasks.md`, tarea 3.7: `000700_create_audit_and_sync_tables.php`); el `000800` queda para `000800_create_immutable_record_triggers.php` |
 | Canal de publicación hacia ASII-21 | **PENDIENTE**: se coordina el contrato del evento; la tabla `outbox_events` ya existe con este PR, así que la publicación real es posible sin esperar a nadie |
+
+## Nombres de las tablas
+
+La especificación lista las entidades en singular (`local_access_audit`, `outbox_event`,
+`inbox_message`) y el Anexo A del PR #376 las propone en plural. Los nombres físicos siguen la
+convención ya usada en `develop` (`bed_stays`, `doctor_profiles`, `clinical_notes`,
+`local_user_refs`), por eso son en plural. Si el grupo decide lo contrario, el cambio es de nombre
+en la migración y en sus pruebas, sin cambiar el contrato de uso.
 
 ## 1. Las tres tablas
 
