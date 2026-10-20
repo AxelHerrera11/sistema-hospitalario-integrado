@@ -12,7 +12,7 @@
 
 El micro-HIS ejecuta el flujo con cuatro capas:
 
-- **Presentation:** `SoapNoteHttpHandler` construye los objetos de valor y llama a los casos de uso `RegisterSoapNote` y `AssociateDiagnosis`.
+- **Presentation:** `SoapNoteHttpHandler` rechaza con `422 PAYLOAD_INVALID` el encabezado o los campos que no son texto, construye los objetos de valor y llama a los casos de uso `RegisterSoapNote` y `AssociateDiagnosis`.
 - **Application:** los casos de uso coordinan el acceso (`TreatingPhysicianGuard`), el catálogo CIE-10 y la persistencia mediante puertos.
 - **Domain:** valida las secciones y aplica las reglas clínicas en `DiagnosisPolicy`, sin dependencias.
 - **Persistence:** implementa los puertos con PDO y sentencias preparadas.
@@ -42,6 +42,8 @@ OK: regla de dominio: código repetido -> 409
 OK: regla de dominio: segundo principal -> 409
 OK: regla de dominio: código inactivo en el catálogo -> 422
 OK: validación: tipo de diagnóstico no permitido -> 422
+OK: validación de tipos: sección no string o encabezado no string -> 422 sin guardar
+OK: validación de tipos: código o tipo de diagnóstico no string -> 422 sin guardar
 OK: regla de dominio: nota firmada no acepta diagnósticos -> 409
 OK: regla de dominio pura (sin BD): la política rechaza un segundo principal
 OK: doble de prueba: catálogo caído -> 503 y la nota queda sin diagnósticos
