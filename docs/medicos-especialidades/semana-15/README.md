@@ -111,9 +111,9 @@ Estado de todos: **Abierto**. Ninguno se corrige desde esta entrega; cada correc
 |---|---|---|---|---|---|---|
 | D-01 | U11 | Medio | La licencia se compara tal cual: ` COL-9` (espacio inicial) se registra aunque `COL-9` exista, y se burla la unicidad de RF-MED-02 | `RegisterDoctor::execute` devuelve `OK` | Nuevo | Autor |
 | D-02 | U10 | Medio | `SlotPlanner` solo bloquea franjas que empiezan exactamente a la hora de la cita: una cita a las 08:15 deja `08:00` libre | Salida `["08:00","08:30"]` | Misma raíz que H-02 (duración ignorada) | Autor + Lis |
-| D-03 | N07 | **Mayor** | Una petición con `X-Tenant-ID` ajeno se atiende: 201 | Alta con tenant `hospital-ajeno` → `201` | H-01 | Autor + María |
+| D-03 | N07 | **Mayor** | Una petición con `X-Tenant-ID` ajeno se atiende: 201 | Alta con tenant `hospital-ajeno` → `201` | H-01 | Autor + María · la plataforma lo valida con `tenant` y `rbac:` (ver sección 7) |
 | D-04 | N11 | Menor | `GET /availability` sin `specialty` responde `SPECIALTY_INACTIVE`, no `PAYLOAD_INVALID` | `422 SPECIALTY_INACTIVE` | H-08 | Autor |
-| D-05 | N12 | **Mayor** | `permissionFor('GET','/specialties')` devuelve `NULL`; una ruta nueva nacería sin permiso | `NULL` | H-04 | Autor |
+| D-05 | N12 | **Mayor** | `permissionFor('GET','/specialties')` devuelve `NULL`; una ruta nueva nacería sin permiso | `NULL` | H-04 | Autor · cada ruta de la plataforma declara su `rbac:` (ver sección 7) |
 
 **Recomendación mínima.** D-01: normalizar (`trim`, mayúsculas) la licencia antes de comprobarla y guardarla, y alinear el `UNIQUE` de la base. D-02: pasar de horas de inicio a intervalos `[inicio, fin)`. D-03, D-04 y D-05: las de la [Semana 13](../semana-13/hallazgos.md).
 
@@ -123,3 +123,15 @@ Estado de todos: **Abierto**. Ninguno se corrige desde esta entrega; cada correc
 - Sin probar y pendientes: un solo perfil activo por usuario (H-03), el rango de 14 días con `generated_at` (H-07) y la atomicidad bajo fallos reales de la base (RNF-MED-02).
 - La cobertura de ramas se calculó por análisis del código, no con un instrumento.
 - Al corregirse cada defecto, el caso correspondiente pasa de `DEFECTO` a `PASA (corregido Dnn)` sin cambiar el script.
+
+## 7. Actualización del 2026-10-20: RBAC y tenant de la plataforma
+
+María (ASII-02) confirmó que los permisos `medicos.registrar`, `medicos.asociar_especialidad` y `medicos.ver_disponibilidad` ya están en `config/rbac.php` de `develop`, y que cada ruta usa `tenant`, `jwt.auth` y `rbac:<permiso>`. Efecto sobre esta entrega:
+
+| Caso | Estado en el módulo aislado | Con la plataforma |
+|---|---|---|
+| N07 / D-03 (tenant ajeno) | `DEFECTO`: el `ApiKernel` no mira `X-Tenant-ID` | `tenant` y `rbac:` responden 400 `TENANT_REQUIRED` o 403 `TENANT_MISMATCH` |
+| N12 / D-05 (ruta sin permiso) | `DEFECTO`: `permissionFor` devuelve `NULL` | Cada ruta declara su `rbac:medicos.*` |
+| N05 y N06 (401, 403, 503) | `PASA` con los códigos del contrato de la Semana 5 | Los códigos pasan a `AUTH_REQUIRED`, `RBAC_DENIED` y `RBAC_UNAVAILABLE` |
+
+Los resultados de la sección 4 no cambian: el script sigue ejecutándose contra el módulo aislado y no contra la aplicación Laravel, donde el módulo aún no está montado. D-03 y D-05 se darán por cerrados cuando existan las pruebas de integración con RBAC real; los códigos de N05 y N06 se actualizarán junto con el contrato.
