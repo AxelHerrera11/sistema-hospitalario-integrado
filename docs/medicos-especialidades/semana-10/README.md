@@ -65,7 +65,7 @@ La barra inferior tiene dos destinos, con iconos y texto. El alta aparece como b
 
 | Acción | Confirmación |
 |---|---|
-| Registrar médico | Resumen con usuario, licencia, especialidad y vigencia; «Registrar» o «Corregir» (H6) |
+| Registrar médico | Resumen con usuario, licencia, especialidad y vigencia; «Corregir» en cada línea lleva a ese paso (H6) y «Registrar» confirma |
 | Asociar especialidad | «Agregar Neurología como secundaria desde 01/11/2026», «Asociar» o «Volver» |
 | Elegir franja | Aviso «Elegir no reserva: Citas confirma la hora» antes de pasar a Citas (H2) |
 | Éxito | Mensaje visible con `role="status"` y enlace a la ficha; nada se confirma solo con un aviso que desaparece |
