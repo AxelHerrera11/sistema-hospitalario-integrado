@@ -7,3 +7,4 @@
 | 3 | Micro-HIS en 4 capas, PDO y C4 | `semana-03/`, `micro-his/catalogo-medicamentos/` | run, pdo | #542–#545, #547 | #552 | RBAC, H5 |
 | 4 | Repository PDO/InMemory, MVC y repositorio compartido | `semana-04/` | run 47, pdo 18, repository 19, http 17 | #572 (A); ramas `…semana-04-mvc…` (B) y `…semana-04-capas-docs…` (C) | Pendiente | Aprobación requerida en develop (@rortizs) |
 | 5 | Contrato API, cliente-servidor, microservicio y plan | `semana-05/` | `redocly lint` válido; PlantUML reproducible | Ramas `…semana-05-contrato-api…`, `…semana-05-cliente-servidor…` y `…semana-05-plan-integracion…` | Pendiente | Aprobación de 4A; acuerdos con RBAC y H5 |
+| 6 | Defensa: presentación, trazabilidad, matriz y cambio práctico | `semana-06/` | Marp PDF (8 diapositivas) revisado visualmente; PlantUML | Rama `…semana-06-presentacion…` | Pendiente | Defensa oral real; cambio real del docente |
