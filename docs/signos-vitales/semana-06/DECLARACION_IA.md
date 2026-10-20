@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** el cambio práctico elegido es el de unidades (mmol/L y °F). Las severidades de la tabla «Qué pasa hoy» se calcularon ejecutando `GlucoseRule` con los valores indicados; el factor 18,016 y los umbrales son los del perfil ilustrativo `adulto-2026.1`, sin validación clínica. Los 50 casos de prueba se contaron de las salidas de `run.php`, `repository.php`, `api.php` y `client.php` con PHP 8.3.33. El cambio práctico es un diseño: no se implementó en esta semana.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar la presentación, la matriz y el registro del cambio, ejecutar las pruebas y revisar esta declaración antes de aprobarla.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el código, ejecutó las pruebas, revisó la documentación y esta declaración, y la aprueba.

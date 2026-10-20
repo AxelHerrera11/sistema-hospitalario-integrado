@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** la decisión es no dividir el módulo, con una frontera de eventos hacia Alertas críticas. Las cifras de `bench.php` se midieron con PHP 8.3.33 en proceso, sin red ni PostgreSQL, y su salida se copió sin cambios. La carga del hospital (300 camas, mediciones cada 4 h) es un supuesto sin validar. La matriz de roles, el evento `signo_vital.alerta_generada`, `Idempotency-Key` y `outbox_events` son propuestas pendientes de acordar con RBAC, base de datos y Alertas críticas.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el contrato, ejecutar las pruebas y la medición, revisar la documentación y esta declaración antes de aprobarla.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el código, ejecutó las pruebas, revisó la documentación y esta declaración, y la aprueba.
