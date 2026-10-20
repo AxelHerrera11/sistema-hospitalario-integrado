@@ -74,6 +74,9 @@ $enCola = count($notifier->queue);
 check('RF-SV-06: paciente de 9 años -> 201 THRESHOLDS_NOT_APPLICABLE, auditado y sin alerta', $status($http->record($lopez, 'ep2', ['heart_rate' => 138] + $hora)) === '201 THRESHOLDS_NOT_APPLICABLE'
     && in_array('signo_vital.sin_evaluacion', $col($pdo, 'SELECT event FROM local_access_audits'), true) && count($notifier->queue) === $enCola);
 check('validación: measured_at inválido -> 422', $status($http->record($lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => '14/10/2026'])) === '422 MEASURED_AT_INVALID');
+$filas = $col($pdo, 'SELECT COUNT(*) FROM vital_signs');
+check('validación de tipos: encabezado o measured_at no string -> 422 sin guardar', $status($http->record(['X-User-ID' => 7], 'ep1', ['heart_rate' => 80] + $hora)) === '422 PAYLOAD_INVALID'
+    && $status($http->record($lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => ['2026-10-14 08:30:00']])) === '422 PAYLOAD_INVALID' && $col($pdo, 'SELECT COUNT(*) FROM vital_signs') === $filas);
 check('LSP: las 6 reglas cumplen la misma prueba de contrato', count(array_filter(rules(), 'honorsContract')) === 6);
 
 [$pdo, $http, $notifier] = app();
