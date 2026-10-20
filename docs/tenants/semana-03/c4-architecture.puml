@@ -1,0 +1,50 @@
+@startuml
+' ============================================================
+' C4 MODEL - Context Diagram (Nivel 1)
+' Módulo: Gestión de usuarios, tenants y endurecimiento de autenticación
+' ============================================================
+
+!define C4_CONTEXT
+!define C4_CONTAINER
+!define C4_COMPONENT
+!define C4_DYNAMIC
+!define C4_DEPLOYMENT
+
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+
+title **C4 Context Diagram: Sistema Hospitalario Integrado - Módulo Tenants & Auth**\n(Semana 03 | Versión 1.0)
+
+Person(admin, "Admin Tenant / Platform Admin", "Gestiona usuarios, roles, tenants, políticas de seguridad")
+Person(user, "Usuario Final (Clínico/Admin)", "Inicia sesión, usa MFA, gestiona su sesión")
+Person(dev, "Desarrollador / DevOps", "Despliega, monitorea, opera la plataforma")
+
+System_Boundary(hospital, "Sistema Hospitalario Integrado") {
+    System(tenants_auth, "Módulo Tenants & Auth", "Gestión de identidad multi-tenant, autenticación JWT RS256 + MFA, revocación de sesión, auditoría inmutable")
+    System(expediente, "Módulo Expediente Médico", "Historia clínica longitudinal, acceso autorizado por rol y consentimiento")
+    System(gobernanza, "Módulo Gobernanza y Auditoría", "Registro inmutable y consulta filtrada de movimientos del sistema")
+    System(qa, "Pipeline CI/CD y Quality Gates", "Pruebas automatizadas, análisis estático, despliegue continuo")
+}
+
+System_Ext(sso, "Proveedor SSO Externo (SAML/OIDC)", "Identity Providers corporativos: Azure AD, Keycloak, Google Workspace")
+System_Ext(hibp, "HaveIBeenPwned API", "Verificación de contraseñas comprometidas")
+System_Ext(siem, "SIEM / SOC", "Ingesta de eventos de seguridad para correlación y alertas")
+System_Ext(email, "Servicio Email / Notificaciones", "Envío de credenciales temporales, alertas MFA, notificaciones admin")
+System_Ext(redis_ext, "Redis Cluster", "Almacén de refresh tokens, blocklist, sesiones, rate limiting, lockouts")
+System_Ext(db_central, "PostgreSQL Central (his_central)", "Usuarios centrales, memberships, consentimientos, auditoría cross-hospital")
+System_Ext(db_hospital, "PostgreSQL Hospital (his_hospital)", "Datos clínicos por tenant, expedientes, RLS enforzado")
+
+Rel(admin, tenants_auth, "Gestiona usuarios, roles, tenants, políticas", "HTTPS/REST + JWT")
+Rel(user, tenants_auth, "Login, MFA, logout, refresh, revocación", "HTTPS/REST + JWT")
+Rel(dev, tenants_auth, "Despliega, configura, monitorea", "GitOps / ArgoCD / K8s")
+Rel(tenants_auth, sso, "JIT Provisioning / SSO Login", "SAML 2.0 / OIDC")
+Rel(tenants_auth, hibp, "Verifica password en registro/cambio", "HTTPS/REST")
+Rel(tenants_auth, siem, "Envía eventos seguridad (login, MFA, revoke, cross-tenant)", "Syslog / Kafka / HTTP")
+Rel(tenants_auth, email, "Envía emails transaccionales", "SMTP / API")
+Rel(tenants_auth, redis_ext, "Refresh tokens, blocklist, sessions, lockouts", "Redis Protocol (TLS)")
+Rel(tenants_auth, db_central, "Usuarios, memberships, auditoría, consentimientos", "PostgreSQL Wire Protocol (TLS)")
+Rel(tenants_auth, db_hospital, "Configuración tenant, políticas", "PostgreSQL Wire Protocol (TLS)")
+Rel(tenants_auth, expediente, "Valida permisos acceso expediente", "gRPC / REST interno")
+Rel(tenants_auth, gobernanza, "Registra eventos de auditoría", "gRPC / REST interno")
+
+@enduml
