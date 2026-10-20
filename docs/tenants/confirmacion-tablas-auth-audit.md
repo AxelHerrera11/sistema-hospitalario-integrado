@@ -13,7 +13,9 @@ Verificación atribuida a Javier Alexander Fajardo López sobre origin/develop
 | audit_chain_state | ASII-25 escribe; ASII-25/ASII-02 consultan; estado auxiliar chain_id=1 |
 
 Las cinco tablas pertenecen a CENTRAL. Javier confirma nombres sin colisiones.
-ASII-25: Cindy Ruano, preparación de Mar-03. ASII-22: Boris Quiroa.
+Responsable de usuarios/auth y gobernanza/auditoría: Cindy Maytté Ruano Calderón.
+Corrección del usuario (20/10/2026): ASII-22 también corresponde a Cindy, no a Boris.
+Se conservan los identificadores técnicos de los módulos; preparación auth de Mar-03.
 
 Numeración propuesta por Javier y aplicada en las ramas, pendiente de acuerdo final:
 - #502: 2026_08_11_000500_create_auth_credentials_and_sessions.php
@@ -33,4 +35,4 @@ comprueba que las demás migraciones sigan registradas y reinstala sincronizaci�
 
 Pendiente: aprobación explícita del grupo/Javier/rortizs (coordinación Yamilet/Josué)
 para CENTRAL 15 → 20, actualización de central-control-schema, propiedad y numeración;
-ASII-22 debe revisar el contrato final de auditoría. No se declara listo para merge.
+Cindy, responsable también de ASII-22, debe revisar el contrato final de auditoría. No se declara listo para merge.
