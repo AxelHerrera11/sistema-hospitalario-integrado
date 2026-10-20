@@ -9,6 +9,30 @@ use Illuminate\Support\Str;
 
 final class AdminRoleManagementTest extends TenantAuthTestCase
 {
+    public function test_admin_assigns_laboratory_roles_and_revocation_invalidates_their_tokens(): void
+    {
+        $this->addMembership($this->userId, $this->hospitalA, 'admin_hospital');
+        $adminToken = $this->tokenFrom($this->login()->assertOk());
+        foreach (['tecnico_laboratorio', 'bioquimico'] as $role) {
+            $email = $role.'@example.test';
+            $targetId = $this->createTarget($email);
+            $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])->withToken($adminToken)
+                ->postJson("/api/v1/admin/users/{$targetId}/roles", ['role_code' => $role])
+                ->assertCreated()->assertJsonPath('roles', [$role]);
+            $login = $this->login($email)->assertOk()->assertJsonPath('roles', [$role]);
+            $targetToken = $this->tokenFrom($login);
+            $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])->withToken($targetToken)
+                ->getJson('/api/v1/auth/me')->assertOk()->assertJsonPath('roles', [$role]);
+            $this->withHeaders(['X-Tenant-ID' => $this->hospitalB])->withToken($targetToken)
+                ->getJson('/api/v1/auth/me')->assertForbidden()->assertJsonPath('error', 'TENANT_MISMATCH');
+            $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])->withToken($adminToken)
+                ->deleteJson("/api/v1/admin/users/{$targetId}/roles/{$role}")
+                ->assertOk()->assertJsonPath('roles', []);
+            $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])->withToken($targetToken)
+                ->getJson('/api/v1/auth/me')->assertForbidden()->assertJsonPath('error', 'NO_ACTIVE_ROLES');
+        }
+    }
+
     public function test_superadmin_assigns_role_and_revokes_target_sessions_with_audit(): void
     {
         $targetId = $this->createTarget('target@example.test');
