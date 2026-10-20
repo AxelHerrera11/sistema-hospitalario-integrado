@@ -18,11 +18,12 @@ return [
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
             'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
-            'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
+            'alertas.ver', 'alertas.acusar', 'alertas.cerrar', 'ocupacion.ver',
         ],
         'admin_hospital' => [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            'ocupacion.ver',
         ],
         'medico' => [
             'pacientes.ver',
@@ -64,5 +65,6 @@ return [
         'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
         'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
         'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
+        'ocupacion.ver',
     ],
 ];
