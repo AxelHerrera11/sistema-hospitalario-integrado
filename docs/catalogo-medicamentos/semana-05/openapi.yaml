@@ -1,0 +1,179 @@
+openapi: 3.1.0
+info:
+  title: ASII-14 Catálogo de medicamentos (propuesto)
+  version: 1.0.0-draft
+  description: >
+    Contrato de diseño. Alta, búsqueda y control de vigencia (active/inactive del registro) de medicamentos
+    en la base HOSPITAL del hospital activo. No incluye presentaciones, lotes ni vencimientos.
+    x-required-permission indica el permiso RBAC; los marcados como propuestos no existen aún en config/rbac.php.
+servers:
+  - url: /api/v1
+security:
+  - bearerJwt: []
+paths:
+  /medications:
+    get:
+      operationId: buscarMedicamentos
+      summary: Buscar por código, nombre o principio activo
+      x-required-permission: medicamentos.ver
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 60 } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50, default: 50 } }
+      responses:
+        '200':
+          description: Resultados con su vigencia; lista vacía si no hay coincidencias
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results, count, trace_id]
+                properties:
+                  results: { type: array, items: { $ref: '#/components/schemas/Medication' } }
+                  count: { type: integer, minimum: 0 }
+                  trace_id: { type: string }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+    post:
+      operationId: registrarMedicamento
+      summary: Alta de un medicamento (nace active)
+      x-required-permission: medicamentos.registrar (propuesto)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicationCreate' }
+      responses:
+        '201':
+          description: Registro confirmado por la persistencia
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [medication, trace_id]
+                properties:
+                  medication: { $ref: '#/components/schemas/Medication' }
+                  trace_id: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /medications/{medication_id}:
+    get:
+      operationId: consultarMedicamento
+      summary: Consulta por identificador, con su vigencia
+      x-required-permission: medicamentos.ver
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/MedicationId'
+      responses:
+        '200':
+          description: Medicamento encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [medication, trace_id]
+                properties:
+                  medication: { $ref: '#/components/schemas/Medication' }
+                  trace_id: { type: string }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /medications/{medication_id}/validity:
+    patch:
+      operationId: cambiarVigencia
+      summary: Cambiar la vigencia del registro (no borra ni vence lotes)
+      x-required-permission: medicamentos.cambiar_vigencia (propuesto)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/MedicationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [validity]
+              properties:
+                validity: { $ref: '#/components/schemas/Validity' }
+      responses:
+        '200':
+          description: Cambio confirmado por la persistencia
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [medication, trace_id]
+                properties:
+                  medication: { $ref: '#/components/schemas/Medication' }
+                  trace_id: { type: string }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerJwt: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    TenantId:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      description: Hospital activo; debe coincidir con el del token o se responde 403 TENANT_MISMATCH
+      schema: { type: string }
+    MedicationId:
+      name: medication_id
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    Validity:
+      type: string
+      enum: [active, inactive]
+      description: Vigencia del registro de catálogo; no es el vencimiento de un lote
+    MedicationCreate:
+      type: object
+      additionalProperties: false
+      required: [code, name, active_ingredient, pharmacological_group]
+      properties:
+        code: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9-]{1,19}$', description: Se normaliza a mayúsculas; único por hospital }
+        name: { type: string, minLength: 2, maxLength: 120 }
+        active_ingredient: { type: string, minLength: 2, maxLength: 120 }
+        pharmacological_group: { type: string, minLength: 2, maxLength: 120 }
+    Medication:
+      type: object
+      required: [medication_id, code, name, active_ingredient, pharmacological_group, validity]
+      properties:
+        medication_id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        active_ingredient: { type: string }
+        pharmacological_group: { type: string }
+        validity: { $ref: '#/components/schemas/Validity' }
+    Error:
+      type: object
+      required: [error, message, trace_id]
+      properties:
+        error:
+          type: string
+          enum: [BODY_INVALID, UNAUTHENTICATED, FORBIDDEN, TENANT_MISMATCH, MEDICATION_NOT_FOUND, MEDICATION_CODE_DUPLICATED, MEDICATION_INVALID, CATALOG_UNAVAILABLE]
+        message: { type: string }
+        field: { type: string }
+        trace_id: { type: string }
+  responses:
+    Error:
+      description: Error con código estable y trace_id; un fallo nunca se presenta como éxito
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
