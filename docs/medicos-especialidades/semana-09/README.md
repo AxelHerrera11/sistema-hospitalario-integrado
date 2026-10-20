@@ -2,6 +2,8 @@
 
 **Estudiante:** Hicho García, Josué Fernando (`Jhos-hgnu`) · **Módulo:** ASII-04 · **Entrega:** checklist, hallazgos y mejoras propuestas.
 
+**Tarea individual:** Evalúe el flujo UX de Médicos, especialidades y disponibilidad con heurísticas de usabilidad y WCAG: teclado, foco, contraste, etiquetas, mensajes y prevención de errores. Priorice correcciones según impacto en médicos, especialidades, horarios, disponibilidad y conflictos de agenda.
+
 ## Alcance
 
 Se evalúan las tres pantallas de la [Semana 8](../semana-08/README.md): alta de médico, ficha con asociación de especialidad y disponibilidad.
@@ -12,7 +14,7 @@ Se evalúan las tres pantallas de la [Semana 8](../semana-08/README.md): alta de
 - **Inspección WCAG 2.1 AA:** teclado, foco, contraste, etiquetas, mensajes, zoom al 200 % y uso de color.
 - **Recorridos simulados:** solo con teclado (Tab, Enter, Esc) y con lector de pantalla (NVDA), siguiendo el orden previsto del DOM.
 - **Severidad:** **alta** si puede inducir un dato o una cita errónea o bloquear la tarea; **media** si la dificulta; **baja** si es cosmética.
-- **Prioridad:** severidad × frecuencia de uso del rol (la recepcionista consulta disponibilidad muchas veces al día; el alta es ocasional).
+- **Prioridad:** severidad × frecuencia de uso del rol; cada hallazgo indica el área afectada (médicos, especialidades, horarios, disponibilidad o conflictos de agenda) (la recepcionista consulta disponibilidad muchas veces al día; el alta es ocasional).
 
 ## Heurísticas de Nielsen
 
@@ -39,6 +41,7 @@ Se evalúan las tres pantallas de la [Semana 8](../semana-08/README.md): alta de
 | 1.4.4 Cambio de tamaño del texto | Pendiente de verificar | Zoom al 200 % sobre la lista de franjas en el prototipo |
 | 2.1.1 Teclado | Parcial | Flechas dentro de las franjas de un médico y Tab para pasar al siguiente |
 | 2.4.3 Orden del foco | Cumple | Usuario → licencia → especialidad → vigencia → Registrar |
+| 2.4.7 Foco visible | No cumple | Los wireframes no definen cómo se ve el foco en campos, botones y franjas |
 | 3.3.1 Identificación de errores | Cumple | El error nombra el campo y el motivo |
 | 3.3.2 Etiquetas o instrucciones | Parcial | El formato de fecha (`AAAA-MM-DD`) y que «Hasta» es opcional deben estar en la etiqueta |
 | 3.3.4 Prevención de errores (datos importantes) | Parcial | El alta no muestra un resumen antes de confirmar |
@@ -46,21 +49,22 @@ Se evalúan las tres pantallas de la [Semana 8](../semana-08/README.md): alta de
 
 ## Hallazgos priorizados
 
-| # | Severidad | Hallazgo | Impacto | Mejora propuesta |
-|---|---|---|---|---|
-| H1 | Alta | Ante «sin respuesta» en el alta, el usuario puede repetirla | Intento de alta duplicada (la base lo rechaza con 409, pero confunde) | «No sabemos si se guardó» con botón «Buscar licencia» antes de permitir repetir |
-| H2 | Alta | Una franja seleccionada puede parecer reservada | La recepcionista promete una hora que Citas aún no confirmó | Texto «Elegir no reserva: se confirma en Citas» junto al botón |
-| H3 | Media | Las franjas no son un `radiogroup` | Con lector de pantalla no se sabe a qué médico pertenece cada hora | `role="radiogroup"` por médico con `aria-label` «Franjas de Dra. Ana López» |
-| H4 | Media | «Principal» no avisa antes de enviar | Un 409 evitable | Consultar las especialidades vigentes de la ficha y avisar al marcar la casilla |
-| H5 | Media | Sin «hoy» por defecto ni «día siguiente» | Más clics en la tarea más frecuente | Fecha de hoy por defecto y botones «‹ día anterior · día siguiente ›» |
-| H6 | Media | El alta no muestra resumen | Licencia o especialidad equivocada sin revisión | Paso de confirmación con usuario, licencia, especialidad y vigencia |
-| H7 | Baja | «Sin horario configurado» no orienta | Llamadas a soporte | Agregar «Pida a administración que cargue el horario» |
-| H8 | Baja | Falta el formato de fecha en la etiqueta | Errores 422 de fecha | Etiqueta «Vigente desde (AAAA-MM-DD)» y selector de fecha |
+| # | Severidad | Área | Hallazgo | Impacto | Mejora propuesta |
+|---|---|---|---|---|---|
+| H1 | Alta | Médicos | Ante «sin respuesta» en el alta, el usuario puede repetirla | Intento de alta duplicada (la base lo rechaza con 409, pero confunde) | «No sabemos si se guardó» con botón «Buscar licencia» antes de permitir repetir |
+| H2 | Alta | Conflictos de agenda | Una franja seleccionada puede parecer reservada | La recepcionista promete una hora que Citas aún no confirmó | Texto «Elegir no reserva: se confirma en Citas» junto al botón |
+| H3 | Media | Disponibilidad | Las franjas no son un `radiogroup` | Con lector de pantalla no se sabe a qué médico pertenece cada hora | `role="radiogroup"` por médico con `aria-label` «Franjas de Dra. Ana López» |
+| H4 | Media | Especialidades | «Principal» no avisa antes de enviar | Un 409 evitable | Consultar las especialidades vigentes de la ficha y avisar al marcar la casilla |
+| H5 | Media | Disponibilidad | Sin «hoy» por defecto ni «día siguiente» | Más clics en la tarea más frecuente | Fecha de hoy por defecto y botones «‹ día anterior · día siguiente ›» |
+| H6 | Media | Médicos y especialidades | El alta no muestra resumen | Licencia o especialidad equivocada sin revisión | Paso de confirmación con usuario, licencia, especialidad y vigencia |
+| H9 | Media | Todas | Sin foco visible definido (2.4.7) | Quien usa teclado no sabe dónde está, sobre todo entre franjas | Contorno de 3 px de alto contraste en todo control enfocable |
+| H7 | Baja | Horarios | «Sin horario configurado» no orienta | Llamadas a soporte | Agregar «Pida a administración que cargue el horario» |
+| H8 | Baja | Especialidades | Falta el formato de fecha en la etiqueta | Errores 422 de fecha | Etiqueta «Vigente desde (AAAA-MM-DD)» y selector de fecha |
 
 ## Plan de mejoras
 
 1. **Antes del prototipo (Semana 11):** H1 y H2, porque pueden generar un dato o una cita errónea.
-2. **En el prototipo:** H3 a H6, y la medición de contraste y zoom de los criterios pendientes.
+2. **En el prototipo:** H3 a H6 y H9, y la medición de contraste y zoom de los criterios pendientes.
 3. **Después:** H7 y H8.
 
 Las mejoras se incorporan en la adaptación móvil (Semana 10) y en el prototipo navegable (Semana 11). Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
