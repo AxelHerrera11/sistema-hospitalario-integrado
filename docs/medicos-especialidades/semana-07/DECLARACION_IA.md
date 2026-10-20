@@ -6,4 +6,4 @@
 
 **Revisado y ajustado:** lo que «ya está» en `develop` (middlewares, `axios`, prefijo `api/v1`, `spatie/laravel-permission`) se verificó en el repositorio; el código Laravel/Vue queda como propuesta.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar y aprobar esta entrega.
+**Validación humana:** realizada el 2026-10-19. Josué Fernando Hicho García revisó esta entrega y la aprueba.
