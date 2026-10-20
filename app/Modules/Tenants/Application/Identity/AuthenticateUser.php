@@ -17,6 +17,7 @@ use App\Modules\Tenants\Infrastructure\Security\JwtAccessTokenIssuer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use MicroHis\Rbac\Domain\PermissionProvider;
 
 final class AuthenticateUser
 {
@@ -135,10 +136,22 @@ final class AuthenticateUser
 
     public function userPayload(CentralUser $user): array
     {
+        $permissions = [];
+        $hospital = request()->attributes->get('tenant');
+        if ($hospital instanceof Hospital) {
+            $provider = app(PermissionProvider::class);
+            foreach ($this->memberships->activeRoles((string) $user->getKey(), (string) $hospital->getKey()) as $role) {
+                foreach ($provider->permissionsFor($role) as $permission) {
+                    $permissions[$permission] = true;
+                }
+            }
+        }
+        ksort($permissions, SORT_STRING);
         return [
             'user_id' => (string) $user->getKey(),
             'email' => $user->email,
             'display_name' => $user->display_name,
+            'permissions' => array_keys($permissions),
         ];
     }
 
