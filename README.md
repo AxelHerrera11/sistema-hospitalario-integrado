@@ -13,7 +13,7 @@ Repositorio base para el **Proyecto Final de Análisis de Sistemas II 2026**. Es
 | Seguridad base | JWT, middleware de tenant por `X-Tenant-ID`, base RBAC con roles/permisos. |
 | Base de datos | PostgreSQL federado: una base CENTRAL (red, identidad, MPI, consentimientos, auditoría, sincronización) y una base clínica HOSPITAL por hospital. Migraciones en `database/migrations/{central,hospital,framework}` con pruebas de integridad en `tests/Database`. |
 | Esquema en curso | Listo: CENTRAL completo y HOSPITAL hasta expediente, alergias y signos vitales. Pendiente: medicamentos/prescripciones, laboratorio, auditoría local, modelos Eloquent, factories y seeders (`openspec/changes/postgresql-federated-schema-rebuild/tasks.md`). |
-| API actual | Las rutas de autenticación bajo `/api/v1` existen pero **no funcionan** (HTTP 500): dependen de los modelos `User`/`Tenant` del esquema SQLite anterior, que se eliminaron. Queda pendiente definir dónde viven las credenciales (`central_users` no guarda contraseñas) y crear los modelos nuevos. |
+| API actual | En esta rama, login, `/auth/me`, logout, refresh y rutas administrativas RBAC usan identidad/credenciales CENTRAL y contexto hospitalario validado. La entrega sigue parcial: alta/activación de usuarios, MFA, lockout, SSO/JIT, provisionamiento clínico y validación PostgreSQL/staging están pendientes; ver `docs/tenants/entrega-cindy-usuarios-tenants-auth.md`. |
 | Módulos clínicos | Pendientes: faltan controllers, endpoints, pantallas, flujos, pruebas funcionales y contratos por módulo. |
 | Documentación nueva | Este README, el plan semanal, la guía de worktrees y las plantillas de issues/PR son la base de trabajo ASII. |
 
@@ -132,7 +132,7 @@ composer test
 Frontend y servidor local:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -152,17 +152,32 @@ php artisan test
 
 ## API base disponible
 
-Todas las rutas actuales están bajo `/api/v1` y requieren `X-Tenant-ID` cuando aplica.
+Todas las rutas actuales están bajo `/api/v1` y requieren `X-Tenant-ID`. Las
+identidades y roles se derivan del token y las membresías CENTRAL; las cabeceras
+`X-User-ID` y `X-User-Ref` no autentican.
 
 | Método | Ruta | Autenticación |
 |---|---|---|
-| POST | `/auth/register` | No |
 | POST | `/auth/login` | No |
 | GET | `/auth/me` | Bearer JWT |
-| POST | `/auth/refresh` | JWT refresh |
+| POST | `/auth/refresh` | Cookie HttpOnly de refresh; no requiere access token vigente |
 | POST | `/auth/logout` | Bearer JWT |
 
-Los endpoints clínicos de pacientes, admisiones, EMR, laboratorio, reportes y auditoría están pendientes y se construirán por módulos.
+El refresh usa una cookie HttpOnly y no requiere un access token vigente. Las
+rutas administrativas activas son:
+
+| Método | Ruta | Permiso y alcance |
+|---|---|---|
+| GET | `/admin/users` | `usuarios.ver`, hospital activo |
+| POST | `/admin/users/{user}/roles` | `rbac.asignar`, hospital activo |
+| DELETE | `/admin/users/{user}/roles/{role}` | `rbac.asignar`, hospital activo |
+| POST | `/admin/users/{user}/deactivate` | `usuarios.desactivar`, solo acceso local |
+| POST | `/admin/tenants` | `tenants.crear`, solo superadmin; queda inactivo hasta provisionamiento |
+| DELETE | `/admin/sessions/{session}` | `sesiones.revocar_ajenas`, hospital activo |
+
+No hay endpoint de registro/activación de usuarios ni de edición de tenants.
+Los endpoints clínicos de pacientes, admisiones, EMR, laboratorio y reportes
+están pendientes y se construirán por módulos.
 
 ## Plan semanal ASII
 
