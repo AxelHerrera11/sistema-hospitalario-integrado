@@ -8,4 +8,4 @@
 
 **Contenido aceptado o modificado:** el refactor elegido es extraer `ThresholdProfile` y `Measurement`/`Unit`. El "antes" de la demo ejecuta el código real del micro-HIS y el "después" está definido en el propio archivo, sin modificar el micro-HIS. Los componentes de Laravel y Vue son propuestas: no existen en `develop`, y el alias `permission` y los permisos `signos_vitales.*` faltan en RBAC. El factor 18,016 y los umbrales son del perfil ilustrativo `adulto-2026.1`, sin validación clínica. La salida de la demo se copió sin cambios (PHP 8.3.33).
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el diseño, ejecutar la demo y las pruebas, revisar la documentación y esta declaración antes de aprobarla.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó el código, ejecutó las pruebas, revisó la documentación y esta declaración, y la aprueba.
