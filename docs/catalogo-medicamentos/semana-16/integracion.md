@@ -1,0 +1,64 @@
+# Integración, validación y primera entrega funcional
+
+## Qué se integró (PR #602)
+
+| Pieza del HIS | Tipo | Cómo la usa el catálogo |
+|---|---|---|
+| `bootstrap/app.php` (`apiPrefix: api/v1`) y el grupo de middleware `api` | Existente | Rutas `/api/v1/medications` |
+| `tenant` y `jwt.auth` | Existentes | Delante de cada ruta, como en RBAC |
+| `App\Rbac\RequirePermission` (`rbac:<permiso>`), `Authorize`, `RoleGrantsPermission` y `ConfiguredPermissions` (`config/rbac.php`) | Existentes, sin cambios | Autorización por operación y tenant |
+| `MedicationCatalogServiceProvider` | Nuevo | Patrón de `RbacServiceProvider`: carga el micro-HIS y enlaza contratos |
+| `MedicationCatalogController` | Nuevo, delgado | Reutiliza el `Router` del micro-HIS; agrega `trace_id` y traduce `id` → `medication_id` |
+| `HospitalMedicationRepository` | Nuevo | `MedicationRepository` sobre la conexión `hospital`; si falla la conexión responde 503 |
+| Domain, Application y Persistence del micro-HIS | Existentes (Semanas 3–15) | Sin duplicar reglas en Laravel |
+
+**Propiedad de datos:** el catálogo es el único escritor de `medication`. Las lecturas de otros módulos pasan por `MedicationLookup` o por `GET /api/v1/medications/{id}`.
+
+## Configuración reproducible (sin secretos)
+
+Variables de `.env.example` que usa el catálogo: `DB_CONNECTION=hospital`, `HOSPITAL_DB_HOST`, `HOSPITAL_DB_PORT`, `HOSPITAL_DB_DATABASE`, `HOSPITAL_DB_USERNAME` y `HOSPITAL_DB_PASSWORD` (vacío en el ejemplo). No hay credenciales en el repositorio.
+
+```bash
+composer install && npm ci && npm run build
+cp .env.example .env && php artisan key:generate
+php artisan route:list --path=api/v1/medications      # 4 rutas
+php vendor/bin/phpunit tests/Feature/MedicationCatalog
+```
+
+En OneDrive, Windows marca `bootstrap/cache` y `storage` como solo lectura; hubo que ejecutar `attrib -R` para que PHP pudiera escribir.
+
+## Validación ejecutada (20/10/2026)
+
+| Comando | Dónde | Resultado |
+|---|---|---|
+| `phpunit tests/Feature/MedicationCatalog` | Merge de prueba de la rama con `origin/develop` | OK (6 tests, 58 assertions) |
+| Misma suite | Rama apilada (base `b87bca1`) | Lecturas 403: esa base no tiene `medicamentos.ver` (llegó en `7d7c9b0`) |
+| Mutación: quitar `rbac:medicamentos.ver` de `GET /medications` | Merge de prueba | 2 fallos: la protección está probada |
+| `phpunit --testsuite Unit,Feature` | Merge de prueba | 32 tests, **1 fallo**: `Rbac\PublishedContractsTest` por los permisos propuestos sin catalogar (bloqueo de #586) |
+| Suites del micro-HIS y `tests/casos.php` | Merge de prueba | Todas exit 0; casos 17/17 |
+
+Casos cubiertos por la integración:
+- **Acceso:** 401, `TENANT_REQUIRED` y `TENANT_MISMATCH`.
+- **Lectura:** matriz RBAC real, con recepcion → 403.
+- **Consulta:** forma del contrato y 404.
+- **Escritura:** denegada a todos los roles; con los permisos propuestos aprobados, en la prueba, alta 201, 409, 422, vigencia 200 y 422.
+- **Caída:** 503 sin detalles con la conexión `hospital` real ausente.
+
+## Errores corregidos durante la integración
+
+| Error | Corrección |
+|---|---|
+| El contrato promete `medication_id` y el micro-HIS serializa `id` | Traducción en el controlador; la prueba exige `medication_id` y que no exista `id` |
+| Abrir la conexión al construir el controlador daría 500 antes de la autenticación | Repositorio perezoso que convierte el fallo de conexión en 503 |
+| AV3, búsqueda no ASCII distinta entre adaptadores (Semana 15) | LOWER Unicode en SQLite |
+
+## Bloqueos y limitaciones (no se declaran completados)
+
+| Bloqueo | Dependencia | Efecto |
+|---|---|---|
+| No hay acceso a staging ni on-premise | Infraestructura del curso | No hay evidencia de despliegue real; solo ejecución local |
+| No existen los modelos `User` y `Tenant` (`app/Models`) | Tenants (ASII-25), PR #501–#515 abiertos | `tenant` y `jwt.auth` fallan; las pruebas sustituyen la identidad |
+| No existe la tabla `medication` (slice H5) | Esquema HOSPITAL (`openspec/.../tasks.md` 3.5) | Sin migración ni semilla: el API responde 503 contra la base real |
+| Permisos de escritura no aprobados ni catalogados | RBAC (@Mar-03) | Escritura 403; `PublishedContractsTest` bloquea #586 |
+| `limit` del contrato no se aplica | Propio | La API siempre devuelve como máximo 50; se corregirá o se ajustará el contrato |
+| Sin PostgreSQL de prueba (55431/55433) | Entorno | Suite `Database` no ejecutada |
