@@ -7,13 +7,16 @@
 
 ## Entregables
 
-La semana se entrega en dos PR para respetar el máximo de 400 líneas por PR.
+La semana se entrega en dos PR para respetar el máximo de 400 líneas por PR: parte 1 (#540) y parte 2.
 
 | Parte | Entregable | Documento | Estado |
 |---|---|---|---|
 | 1 | RF/RNF, criterios de aceptación y supuestos | [rf-rnf-criterios.md](./rf-rnf-criterios.md) | Incluido |
 | 1 | Declaración de uso de IA | [DECLARACION_IA.md](./DECLARACION_IA.md) | Incluido |
-| 2 | Ejemplo SOLID: diseño antes/después con ISP, responsabilidades, dependencias y evidencia | `diseno-isp.md`, `EVIDENCIA.md` | Pendiente del siguiente PR |
+| 2 | Ejemplo SOLID: diseño antes/después con ISP, responsabilidades y dependencias | [diseno-isp.md](./diseno-isp.md) | Incluido |
+| 2 | Evidencia verificable y validaciones | [EVIDENCIA.md](./EVIDENCIA.md) | Incluido |
+
+Fuentes editables: [`fuentes/01-diseno-antes-isp.puml`](./fuentes/01-diseno-antes-isp.puml) y [`fuentes/02-diseno-despues-isp.puml`](./fuentes/02-diseno-despues-isp.puml).
 
 ## Trazabilidad con Semana 1
 
@@ -27,8 +30,15 @@ La semana se entrega en dos PR para respetar el máximo de 400 líneas por PR.
 | UC-MED-05 Validar acceso | RF-07 | CA-09 |
 | Diseño (ISP) | RNF-04 | CA-11 |
 
+| Contrato después de ISP | Casos de uso que atiende |
+|---|---|
+| `MedicationRegistration::register` | UC-MED-01 y UC-MED-06 (validación interna) |
+| `MedicationLookup::search` / `findById` | UC-MED-02 / UC-MED-03 |
+| `MedicationValidityControl::changeValidity` | UC-MED-04 |
+| Ninguno: la autorización ocurre antes del contrato | UC-MED-05 (el cliente de lectura no tiene escrituras) |
+
 ## Estado real
 
 - **Existente en el repositorio:** casos de uso de Semana 1, base HOSPITAL por hospital y RBAC sin permisos de medicamentos. Slice H5 de `medication` pendiente.
-- **Propuesto en esta entrega:** requisitos, criterios y supuestos.
+- **Propuesto en esta entrega:** requisitos, criterios, supuestos, contratos segregados y la evidencia aislada en `evidencia/`.
 - **No implementado:** ninguna funcionalidad productiva, API, UI, migración ni permiso. El Micro-HIS ejecutable empieza en Semana 3.

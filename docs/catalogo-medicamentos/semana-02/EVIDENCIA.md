@@ -41,3 +41,12 @@ OK: 4 verificaciones aprobadas
 | RF-06 | `MedicationValidityControl` solo expone `changeValidity` con `active`/`inactive`; no hay borrado ni vencimiento de lotes. |
 
 Los criterios CA-01 a CA-08 y CA-10 describen comportamiento ejecutable. Se verificarán con pruebas del Micro-HIS en Semana 3; esta semana no se afirma que estén implementados.
+
+## Validaciones de la entrega
+
+| Comando | Resultado | Salida |
+|---|---|---|
+| `java -jar plantuml.jar -tsvg -charset UTF-8 -failfast2 fuentes/*.puml` (PlantUML 1.2026.9, Java 24.0.2) | Renderiza ambos diagramas. Al regenerarlos en una carpeta temporal, los SVG son idénticos byte a byte a los versionados (`cmp`) | 0 |
+| Carga de cada SVG con `DOMDocument` de PHP (script temporal) | 2 SVG válidos con raíz `<svg>` | 0 |
+| Revisión de enlaces relativos de los `.md` de esta carpeta (script temporal) | 16 enlaces, 0 rotos | 0 |
+| `git diff --check origin/develop...HEAD` | Sin errores de espacios | 0 |
