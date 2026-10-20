@@ -2,8 +2,8 @@
 
 **Herramienta:** Claude Code (Anthropic), modelo Claude Opus 5.5.
 
-**Uso:** apoyo para definir los escenarios móviles por rol, la prioridad de cada pantalla, la navegación móvil y los breakpoints.
+**Uso:** apoyo para adaptar el flujo a móvil (320–430 px): jerarquía de datos y acciones, navegación, formularios por pasos, confirmaciones, conflictos de agenda y recuperación ante conexión limitada.
 
-**Revisado y ajustado:** los escenarios usan los roles confirmados en la Semana 8 e incorporan los hallazgos H1, H2, H3, H5 y H6 de la Semana 9. Que el alta no se ofrezca en teléfono es una decisión de diseño.
+**Revisado y ajustado:** se rehízo según el enunciado de la tarea (solo teléfono y con el alta incluida). Usa los roles de la Semana 8, los hallazgos de la Semana 9 y el comportamiento del cliente de la Semana 5.
 
 **Validación humana:** pendiente. Josué Fernando Hicho García debe revisar y aprobar esta entrega.
