@@ -24,7 +24,7 @@ La vigencia es el estado del **registro de catálogo**. No representa la fecha d
 | RNF-01 | Seguridad | Una operación sin autorización se rechaza antes de llamar a cualquier contrato del catálogo (0 llamadas registradas). | P |
 | RNF-02 | Aislamiento | Cada operación actúa sobre una sola base HOSPITAL; ningún contrato recibe un hospital distinto del activo. | R: README, base clínica por hospital |
 | RNF-03 | Integridad | Un fallo de lectura o escritura nunca se presenta como éxito ni como lista vacía. | P |
-| RNF-04 | Mantenibilidad (ISP) | Cada cliente depende de un contrato sin métodos que no invoca: 0 métodos no usados; se verifica con la evidencia ISP de la parte 2 de esta semana. | P |
+| RNF-04 | Mantenibilidad (ISP) | Cada cliente depende de un contrato sin métodos que no invoca: 0 métodos no usados, verificado con [la evidencia](./EVIDENCIA.md). | P |
 | RNF-05 | Seguridad de datos | Los valores externos se envían a la base como parámetros de sentencias preparadas (se verificará en Semana 3). | P |
 | RNF-06 | Privacidad | La documentación y las pruebas usan solo datos ficticios; el catálogo no guarda datos de pacientes. | P |
 
