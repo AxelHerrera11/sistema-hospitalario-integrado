@@ -13,6 +13,51 @@ use Tests\TestCase;
 
 class PublishedContractsTest extends TestCase
 {
+    public function test_documented_matrix_matches_every_catalog_permission_and_active_role(): void
+    {
+        $document = file_get_contents(base_path('docs/rbac/catalogo-modulos.md'));
+        $roles = array_keys(config('rbac.roles'));
+        preg_match_all('/^\| `([^`]+)` \| (.+) \|$/m', $document, $rows, PREG_SET_ORDER);
+        $seen = [];
+        foreach ($rows as $row) {
+            $permission = $row[1];
+            $cells = array_map('trim', explode('|', $row[2]));
+            $this->assertCount(count($roles), $cells, $permission);
+            $this->assertNotContains($permission, $seen);
+            foreach ($roles as $index => $role) {
+                $expected = in_array($permission, config('rbac.roles')[$role], true) ? 'Sí' : '—';
+                $this->assertSame($expected, $cells[$index], $role.' -> '.$permission);
+            }
+            $seen[] = $permission;
+        }
+        $this->assertEqualsCanonicalizing(config('rbac.catalog'), $seen);
+    }
+
+    public function test_all_active_and_pending_grants_are_consistent_with_the_catalog(): void
+    {
+        $catalog = config('rbac.catalog');
+        $roles = config('rbac.roles');
+        $provider = new ConfiguredPermissions;
+        $referenced = [];
+        foreach ($roles as $role => $permissions) {
+            $this->assertSame(array_values(array_unique($permissions)), $permissions, $role);
+            foreach ($permissions as $permission) {
+                $this->assertContains($permission, $catalog, $role);
+                $referenced[] = $permission;
+            }
+        }
+        foreach (config('rbac.pending') as $permission => $proposedRoles) {
+            $this->assertContains($permission, $catalog);
+            $this->assertNotEmpty($proposedRoles, $permission);
+            foreach ($proposedRoles as $role) {
+                $this->assertArrayHasKey($role, $roles, $permission);
+                $this->assertNotContains($permission, $provider->permissionsFor($role), $role);
+            }
+            $referenced[] = $permission;
+        }
+        $this->assertEqualsCanonicalizing(array_values(array_unique($referenced)), $catalog);
+    }
+
     public function test_medication_write_contracts_are_pending_and_denied_to_every_active_role(): void
     {
         $provider = new ConfiguredPermissions;
@@ -25,17 +70,34 @@ class PublishedContractsTest extends TestCase
         }
     }
 
+    public function test_route_and_openapi_permission_declarations_use_catalogued_names(): void
+    {
+        foreach (['app', 'routes', 'resources', 'micro-his'] as $directory) {
+            $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path($directory)));
+            foreach ($files as $file) {
+                $path = str_replace('\\', '/', $file->getPathname());
+                if (str_contains($path, '/tests/') || !in_array($file->getExtension(), ['php', 'js', 'ts', 'vue', 'yaml', 'yml'], true)) {
+                    continue;
+                }
+                preg_match_all('/(?:rbac:|permission:|x-required-permission:\s*[\'"]?)([a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+)/', file_get_contents($path), $matches);
+                foreach (array_unique($matches[1]) as $permission) {
+                    $this->assertContains($permission, config('rbac.catalog'), $path);
+                }
+            }
+        }
+    }
+
     public function test_published_module_permissions_are_catalogued_or_explicitly_superseded(): void
     {
         $exceptions = ['diagnosticos.asociar', 'prescripciones.anular', 'laboratorio.catalogo', 'laboratorio.ordenes', 'admision.registrada'];
-        $prefixes = 'pacientes|medicos|admisiones|admision|camas|alergias|prescripciones|muestras|notas_soap|diagnosticos|signos_vitales|laboratorio|lab-results|ocupacion|alertas|usuarios|sesiones|citas|reportes|documentacion|expediente|medicamentos|auditoria';
+        $prefixes = 'pacientes|medicos|admisiones|admision|camas|alergias|prescripciones|muestras|notas_soap|diagnosticos|signos_vitales|laboratorio|lab-results|ocupacion|alertas|usuarios|sesiones|citas|reportes|documentacion|expediente|medicamentos|auditoria|salas|wards|traslados|altas|analytics';
         $seen = [];
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('docs')));
         foreach ($files as $file) {
-            if (!in_array($file->getExtension(), ['md', 'yaml'], true)) {
+            if (!in_array($file->getExtension(), ['md', 'yaml', 'yml'], true)) {
                 continue;
             }
-            preg_match_all('/\b(?:'.$prefixes.')\.[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*/', file_get_contents($file->getPathname()), $matches);
+            preg_match_all('/\b(?:'.$prefixes.')\.[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)*/', file_get_contents($file->getPathname()), $matches);
             foreach (array_unique($matches[0]) as $permission) {
                 if (!in_array($permission, $exceptions, true)) {
                     $this->assertContains($permission, config('rbac.catalog'), $file->getPathname());
@@ -48,8 +110,18 @@ class PublishedContractsTest extends TestCase
 
     public function test_pending_pr_contract_snapshot_is_also_covered(): void
     {
+        $reviewed = json_decode(file_get_contents(base_path('tests/Fixtures/Rbac/reviewed-pull-requests.json')), true, flags: JSON_THROW_ON_ERROR);
+        $heads = [];
+        foreach ($reviewed as $pr) {
+            $this->assertArrayNotHasKey($pr['pr'], $heads);
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{40}$/D', $pr['sha']);
+            $heads[$pr['pr']] = $pr['sha'];
+        }
         $contracts = json_decode(file_get_contents(base_path('tests/Fixtures/Rbac/pending-contracts.json')), true, flags: JSON_THROW_ON_ERROR);
         foreach ($contracts as $contract) {
+            $this->assertArrayHasKey($contract['pr'], $heads);
+            $this->assertSame($heads[$contract['pr']], $contract['sha']);
+            $this->assertNotEmpty($contract['permissions']);
             foreach ($contract['permissions'] as $permission) {
                 $this->assertContains($permission, config('rbac.catalog'), 'PR #'.$contract['pr'].' '.$contract['path']);
             }
