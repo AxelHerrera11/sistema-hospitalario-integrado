@@ -37,7 +37,7 @@ $check = static function (bool $condition, string $message): void {
 };
 
 $data = [
-    'global_id' => 'global-1',
+    'global_id' => '11111111-1111-4111-8111-111111111111',
     'code' => 'P-1',
     'given_name' => 'Ana',
     'family_name' => 'Paz',
@@ -75,7 +75,12 @@ $check(
 
 $updated = $controller->update(
     'P-1',
-    ['given_name' => 'Ana Maria']
+    [
+        'id' => 'other-local-id',
+        'global_id' => '22222222-2222-4222-8222-222222222222',
+        'code' => 'P-OTHER',
+        'given_name' => 'Ana Maria',
+    ]
 );
 
 $check(
@@ -84,6 +89,8 @@ $check(
 );
 
 $check(
+    $updated['body']['patient']['id'] === 'mem-1' &&
+    $updated['body']['patient']['global_id'] === '11111111-1111-4111-8111-111111111111' &&
     $updated['body']['patient']['code'] === 'P-1',
     'patient identity changed during update'
 );
