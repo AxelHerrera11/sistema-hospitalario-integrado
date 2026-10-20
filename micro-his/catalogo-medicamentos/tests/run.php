@@ -9,5 +9,6 @@ require __DIR__ . '/harness.php';
 require __DIR__ . '/domain.php';
 require __DIR__ . '/application.php';
 require __DIR__ . '/presentation.php';
+require __DIR__ . '/architecture.php';
 
 finish();
