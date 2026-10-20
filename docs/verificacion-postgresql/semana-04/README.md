@@ -61,7 +61,7 @@ Consultas principales que la interfaz debe sostener:
 | Estancia abierta de un episodio | `bed_stays` | Lectura | Índice único `bed_stays_open_care_episode_unique` |
 | Altas y traslados (ASII-07/08) | `bed_stays` | Escritura | Deben cerrar el intervalo en la misma transacción |
 
-SQL de referencia (extracto real de `PdoBedSnapshotReader`):
+SQL de referencia (extracto real de `PdoBedSnapshotReader`; el juego completo está en [consultas-principales.sql](./consultas-principales.sql)):
 
 ```sql
 SELECT b.bed_id, w.ward_id, w.code AS ward_code, b.status,
