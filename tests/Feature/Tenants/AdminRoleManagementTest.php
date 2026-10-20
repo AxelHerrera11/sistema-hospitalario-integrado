@@ -13,7 +13,7 @@ final class AdminRoleManagementTest extends TenantAuthTestCase
     {
         $this->addMembership($this->userId, $this->hospitalA, 'admin_hospital');
         $adminToken = $this->tokenFrom($this->login()->assertOk());
-        foreach (['tecnico_laboratorio', 'bioquimico'] as $role) {
+        foreach (['tecnico_laboratorio', 'bioquimico', 'jefatura_medica'] as $role) {
             $email = $role.'@example.test';
             $targetId = $this->createTarget($email);
             $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])->withToken($adminToken)
