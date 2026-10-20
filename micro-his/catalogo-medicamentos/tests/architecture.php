@@ -18,3 +18,11 @@ check('Presentation no conoce Persistence, PDO ni SQL', !$uses($presentation, 'P
     && !preg_match('/\b(SELECT|INSERT|UPDATE|DELETE)\b/', $presentation));
 check('Persistence usa prepare y nunca query/exec', str_contains($persistence, '->prepare(') && !preg_match('/->(query|exec)\(/', $persistence));
 check('ninguna capa implementa borrado de medicamentos', !preg_match('/\bDELETE\b|function\s+delete/i', $domain . $application . $presentation . $persistence));
+
+$implementsRepository = static fn (string $class): bool => in_array(\MicroHis\MedicationCatalog\Application\MedicationRepository::class, class_implements($class), true);
+check('ambos adaptadores de Persistence cumplen el contrato MedicationRepository', $implementsRepository(\MicroHis\MedicationCatalog\Persistence\PdoMedicationCatalog::class)
+    && $implementsRepository(\MicroHis\MedicationCatalog\Persistence\InMemoryMedicationRepository::class));
+$clients = array_merge(array_map(static fn (string $useCase): string => __DIR__ . "/../src/Application/{$useCase}.php",
+    ['RegisterMedication', 'ConsultMedications', 'ChangeMedicationValidity']), glob(__DIR__ . '/../src/Presentation/*Controller.php'));
+check('ningún caso de uso ni controlador depende del Repository completo (se conserva el ISP)', count(array_filter($clients, 'is_file')) === 6
+    && !preg_match('/\bMedicationRepository\b/', implode("\n", array_map('file_get_contents', $clients))));
