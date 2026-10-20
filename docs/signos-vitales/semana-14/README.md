@@ -38,10 +38,13 @@ Las métricas, con su fórmula, umbral, fuente, responsable y acción, están en
 | **Base de datos (ASII-09)** | Migraciones, tablas de auditoría y de salida (outbox); ejecuta las consultas de integridad | Javier |
 | **Seguridad y permisos (ASII-02)** | Catálogo `signos_vitales.*`, identidad por JWT, tenant | María |
 | **Alertas críticas (ASII-21)** | Canal de notificación y su reintento | Por designar |
-| **Responsable clínico** | Valida los umbrales del perfil `adulto-2026.1` y los factores de conversión | Por designar |
+| **Dueño del perfil de umbrales** | Define y mantiene el perfil `adulto-2026.1` y los factores de conversión, contrastándolos con NEWS2 y ADA | Josué Fernando Hicho García (autor; **sin formación clínica certificada**) |
+| **Revisión clínica externa** | Valida el perfil antes de cualquier uso asistencial | Por designar; no hay nadie disponible hoy |
 | **QA y regresión (ASII-28)** | Pruebas negativas, accesibilidad y regresión | Equipo de QA |
 
-Los nombres de Javier, María, Yamilet y el equipo de QA vienen de las dependencias ya documentadas en las semanas anteriores; **nadie ha aceptado todavía las tareas de este plan**, así que cada asignación es una propuesta. El responsable clínico y el dueño de Alertas críticas no están definidos: sin ellos, Q-06 no puede cerrarse.
+Los nombres de Javier, María, Yamilet y el equipo de QA vienen de las dependencias ya documentadas en las semanas anteriores; **nadie ha aceptado todavía las tareas de este plan**, así que cada asignación es una propuesta. El dueño de Alertas críticas no está definido.
+
+**Limitación sobre los umbrales.** El perfil `adulto-2026.1` lo define y mantiene el autor, que **no es médico ni tiene formación clínica certificada**. Es un perfil de referencia académico, contrastado con NEWS2 (Royal College of Physicians, 2017) y con los niveles de hipoglucemia de la ADA, **sin revisión clínica profesional y no apto para uso asistencial**. Una revisión clínica externa sigue pendiente; hasta entonces, el riesgo R-03 permanece en nivel alto y ninguna cifra del módulo debe presentarse como clínicamente validada.
 
 ## Reglas del proceso
 

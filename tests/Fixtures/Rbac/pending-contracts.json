@@ -1,4 +1,5 @@
 [
+  {"pr":586,"sha":"bad38bc2755616ef9320a565eb1341bc6e33dc7c","path":"docs/catalogo-medicamentos/semana-05/contrato-api.md","permissions":["medicamentos.ver","medicamentos.registrar","medicamentos.cambiar_vigencia"]},
   {"pr":245,"sha":"d889428c09c6bc19171778ddc62a18703905a9e4","path":"docs/asii-05-citas/contrato-api.md","permissions":["citas.ver","citas.crear","citas.confirmar","citas.cancelar"]},
   {"pr":247,"sha":"d45f049374de4b564097f5fe801dab07b84ad525","path":"docs/asii-27-reportes/contrato-filtros-export.md","permissions":["reportes.ver","reportes.exportar"]},
   {"pr":227,"sha":"0a8762ffd2636888cf0bd08c77217b70780700f2","path":"docs/asii-26-dashboard-base/contrato-ui-base.md","permissions":["documentacion.ver"]},

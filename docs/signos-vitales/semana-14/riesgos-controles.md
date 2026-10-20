@@ -8,9 +8,9 @@
 
 | ID | Riesgo | Área | P | I | Nivel | Control preventivo | Control detectivo | Responsable | Métrica |
 |---|---|---|---|---|---|---|---|---|---|
-| R-01 | Temperatura, sistólica y diastólica no tienen regla de umbral: una fiebre de 41 °C o una presión de 230/130 se guarda con `201 OK` y **no genera alerta** | Umbrales, alertas | 3 | 3 | **Alto (9)** | Definir y validar las tres reglas del Anexo B con el responsable clínico y agregarlas como subtipos de `RangeRule` | Prueba de la Semana 15: un valor crítico por cada signo del Anexo B | Responsable clínico y Autor | Q-06 |
+| R-01 | Temperatura, sistólica y diastólica no tienen regla de umbral: una fiebre de 41 °C o una presión de 230/130 se guarda con `201 OK` y **no genera alerta** | Umbrales, alertas | 3 | 3 | **Alto (9)** | Agregar las tres reglas del Anexo B como subtipos de `RangeRule`, contrastadas con NEWS2 por el autor y con la limitación de uso escrita | Prueba de la Semana 15: un valor crítico por cada signo del Anexo B | Autor | Q-06 |
 | R-02 | Sin unidad declarada, glucosa 5,5 mmol/L (normal) se evalúa como mg/dL y da una alerta crítica falsa | Unidades, alertas | 3 | 3 | **Alto (9)** | `Measurement` y `Unit` con unidad explícita y rechazo de la desconocida (diseño de la Semana 7) | Aviso suave en la UI; prueba de caja negra con valores en mmol/L | Autor | Q-03, Q-06 |
-| R-03 | Los umbrales `adulto-2026.1` son ilustrativos: cada alerta depende de valores sin validación clínica | Umbrales | 3 | 3 | **Alto (9)** | Validación por el responsable clínico y versión del perfil en la alerta | Revisión del perfil en cada hito | Responsable clínico | Q-06 |
+| R-03 | Los umbrales `adulto-2026.1` son ilustrativos: cada alerta depende de valores sin validación clínica | Umbrales | 3 | 3 | **Alto (9)** | Contraste del perfil con NEWS2 y ADA por el autor, aviso de «no apto para uso asistencial» y versión del perfil en la alerta; revisión clínica externa pendiente | Revisión del perfil en cada hito | Autor (dueño del perfil, sin formación clínica certificada) | Q-06 |
 | R-04 | El tenant no se aplica en el micro-HIS (0 coincidencias en `src/`): acceso a mediciones de otro hospital | Seguridad | 2 | 3 | **Alto (6)** | Filtrar por tenant en cada consulta y rechazar `X-Tenant-ID` ajeno | Prueba negativa con tenant ajeno | Autor y María | Q-05 |
 | R-05 | La identidad es la cabecera `X-User-ID`, sin firma: cualquiera puede suplantar al médico | Seguridad | 2 | 3 | **Alto (6)** | Identidad desde un JWT firmado y validado por el módulo (ASII-01, ASII-02) | Revisión mensual del permiso y de la bitácora | María | Q-05 |
 | R-06 | El canal de notificación falla y la alerta solo queda en un registro: no hay cola con reintentos (RF-SV-07) | Alertas | 2 | 3 | **Alto (6)** | Cola con reintentos y salida por outbox hacia Alertas críticas | `notification: failed` en la respuesta y `notification_failed` en el registro | Autor y Alertas críticas | Q-03 |
@@ -38,7 +38,7 @@ R-04, R-05, R-07, R-08, R-10 y R-11 salen de los puntos de atención de la [revi
 | PR de menos de 400 líneas con revisora | Preventivo | Autor y Yamilet | Cada PR |
 | Prueba por cada RF antes de integrar (Q-01) | Preventivo | Autor | Cada PR |
 | Revisión técnica formal con checklist de 15 ítems | Preventivo y detectivo | Moderador | Antes de integrar con PostgreSQL |
-| Validación clínica del perfil de umbrales y de la conversión | Preventivo | Responsable clínico | Antes de activar las alertas con datos reales |
+| Validación clínica del perfil de umbrales y de la conversión | Preventivo | Autor (dueño del perfil); revisión clínica externa pendiente | Antes de activar las alertas con datos reales |
 | Pruebas negativas de seguridad, con tenant ajeno (Q-05) | Preventivo | Revisora y María | Cada PR |
 | Consultas Q-TRZ, Q-PRIV y Q-INT | Detectivo | Javier y Autor | Semanal |
 | Bitácora de `ApiKernel` con duración y registro `notification_failed` (Q-03, Q-04) | Detectivo | Autor | Semanal |
@@ -55,7 +55,7 @@ Fechas propuestas; **ninguna ha sido aceptada por su responsable**.
 | Semanal (lunes) | Medir Q-03, Q-04, Q-06 y Q-07; correr las consultas de integridad | Autor y Javier | Tabla de métricas actualizada |
 | Semana del 26/10/2026 | Pruebas de unidad, caja blanca y caja negra (Semana 15) y medición de Q-06 | Autor | Matriz RF/RNF → prueba y defectos |
 | Semana del 02/11/2026 | Reunión de revisión técnica formal (tres sesiones de 90 min) | Moderador | Acta y decisión |
-| Semana del 09/11/2026 | Validación del perfil de umbrales y de la conversión | Responsable clínico | Perfil firmado o corregido |
+| Semana del 09/11/2026 | Validación del perfil de umbrales y de la conversión | Autor; revisión clínica externa pendiente | Perfil firmado o corregido |
 | Antes de integrar con PostgreSQL | Adaptador alineado con `000200` y `000401`, `local_access_audits` y tenant | Autor, Javier y María | R-04, R-07 y R-08 cerrados |
 | Cada hito | Revisar el plan: riesgos nuevos, métricas fuera de umbral, controles inútiles | Autor | Versión nueva del plan |
 
