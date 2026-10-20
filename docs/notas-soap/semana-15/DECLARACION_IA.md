@@ -13,6 +13,6 @@
 - Los defectos D-01 a D-03 se registran, **no se corrigen** en este PR.
 - Solo se añadieron archivos de prueba; no se modificó código del micro-HIS ni del HIS.
 
-**Validación humana:** pendiente del visto bueno de Josué Fernando Hicho García.
+**Validación humana:** realizada el 2026-10-20. Josué Fernando Hicho García revisó las 40 pruebas, la matriz RF/RNF → prueba, los resultados, las capturas y los defectos D-01 a D-03, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
