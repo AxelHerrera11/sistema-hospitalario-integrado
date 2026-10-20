@@ -99,6 +99,8 @@ return [
      * Formato: permiso => roles que lo recibirían si se aprobara.
      */
     'pending' => [
+        'medicamentos.registrar' => ['admin_hospital'],
+        'medicamentos.cambiar_vigencia' => ['admin_hospital'],
         'notas_soap.transferir_autoria' => ['medico', 'superadmin'],
         'prescripciones.excepcion_alergia' => ['medico', 'superadmin'],
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
@@ -106,6 +108,7 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
+        'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
         'citas.cancelar', 'reportes.ver', 'reportes.exportar',
         'documentacion.ver', 'admision.ver', 'expediente.ver',

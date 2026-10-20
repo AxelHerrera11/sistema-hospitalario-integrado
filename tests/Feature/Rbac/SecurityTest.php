@@ -55,7 +55,7 @@ class SecurityTest extends RbacTestCase
     public function test_policy_is_loaded_without_implicit_roles_or_dot_expansion(): void
     {
         $provider = new ConfiguredPermissions();
-        $pendingForSuperadmin = [];
+        $pendingForSuperadmin = ['medicamentos.registrar', 'medicamentos.cambiar_vigencia'];
         foreach (config('rbac.pending') as $permission => $roles) {
             if (in_array('superadmin', $roles, true)) {
                 $pendingForSuperadmin[] = $permission;

@@ -13,6 +13,18 @@ use Tests\TestCase;
 
 class PublishedContractsTest extends TestCase
 {
+    public function test_medication_write_contracts_are_pending_and_denied_to_every_active_role(): void
+    {
+        $provider = new ConfiguredPermissions;
+        foreach (['medicamentos.registrar', 'medicamentos.cambiar_vigencia'] as $permission) {
+            $this->assertContains($permission, config('rbac.catalog'));
+            $this->assertSame(['admin_hospital'], config('rbac.pending')[$permission]);
+            foreach (array_keys(config('rbac.roles')) as $role) {
+                $this->assertNotContains($permission, $provider->permissionsFor($role), $role);
+            }
+        }
+    }
+
     public function test_published_module_permissions_are_catalogued_or_explicitly_superseded(): void
     {
         $exceptions = ['diagnosticos.asociar', 'prescripciones.anular', 'laboratorio.catalogo', 'laboratorio.ordenes', 'admision.registrada'];
