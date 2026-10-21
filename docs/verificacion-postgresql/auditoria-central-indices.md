@@ -65,6 +65,10 @@ como el módulo es `modulo.accion`, el prefijo `modulo.%` ya incluye el caso exa
    El catálogo incluye `already_revoked` porque `AuthController::logout()` lo escribe cuando la
    sesión ya estaba revocada (dos cierres de sesión concurrentes del mismo token). Con el catálogo
    anterior esa escritura era rechazada con SQLSTATE **23514** y el cierre de sesión devolvía 500.
+   También incluye `unknown`, que escribe `AuditOutcome::Unknown` del módulo de Gobernanza y
+   auditoría. Verificado por la integradora el 21/10/2026 sobre develop con #671 (hashes `NOT NULL`):
+   `AuditLogQueryIndexTest` OK (7 tests) y suite completa OK (192 tests); sin `unknown` en el
+   `CHECK`, la prueba falla. La migración se numera `001100`, después de `001000`.
 4. **Índices existentes.** `audit_log_actor_index` y `audit_log_hospital_index` quedan **cubiertos**
    por los compuestos para las consultas del módulo, pero **no se eliminan en esta migración**:
    siguen sirviendo a consultas que filtren sin `hospital_id`, y borrarlos exige volver a medir.
