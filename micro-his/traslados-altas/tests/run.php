@@ -11,5 +11,6 @@ require __DIR__ . '/reglas.php';
 require __DIR__ . '/destino.php';
 require __DIR__ . '/planes.php';
 require __DIR__ . '/resultados.php';
+require __DIR__ . '/arquitectura.php';
 
 finish();
