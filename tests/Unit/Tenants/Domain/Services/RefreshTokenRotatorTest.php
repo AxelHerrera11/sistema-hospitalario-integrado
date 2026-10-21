@@ -1,152 +1,112 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Unit\Tenants\Domain\Services;
+
 use App\Modules\Tenants\Domain\Entities\RefreshToken;
-use App\Modules\Tenants\Domain\Entities\Tenant;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Repositories\RefreshTokenRepositoryInterface;
 use App\Modules\Tenants\Domain\Services\RefreshTokenRotator;
-use App\Modules\Tenants\Domain\Services\RotationResult;
-use App\Modules\Tenants\Domain\Services\TokenFactory;
 use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
-use App\Modules\Tenants\Domain\ValueObjects\Role;
 use App\Modules\Tenants\Domain\ValueObjects\SessionId;
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 use App\Modules\Tenants\Domain\ValueObjects\UserId;
+use App\Modules\Tenants\Infrastructure\Persistence\InMemory\InMemoryRefreshTokenRepository;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class RefreshTokenRotatorTest extends TestCase
+
+/**
+ * Semana 15 · UT-003 y WB-002: rotación de refresh tokens de un solo uso, recorriendo cada
+ * camino de rotate() con el repositorio en memoria real.
+ */
+#[Group('unitarias')]
+class RefreshTokenRotatorTest extends TestCase
 {
+    private InMemoryRefreshTokenRepository $repository;
+
     private RefreshTokenRotator $rotator;
-    private RefreshTokenRepositoryInterface $repository;
-    private TokenFactory $tokenFactory;
-    private User $user;
-    private Tenant $tenant;
-    private DeviceFingerprint $device;
-    private SessionId $sessionId;
+
     protected function setUp(): void
     {
-        $this->repository = $this->createMock(RefreshTokenRepositoryInterface::class);
-        $this->tokenFactory = $this->createMock(TokenFactory::class);
-        $this->rotator = new RefreshTokenRotator(
-            $this->repository,
-            new \App\Modules\Tenants\Domain\Services\Argon2idHasher(),
-            $this->tokenFactory,
-            604800
-        );
-        $this->user = User::create(
-            new \App\Modules\Tenants\Domain\ValueObjects\Email('test@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash('$argon2id$v=19$m=65536,t=4,p=3$test'),
-            'Dr. Test',
-            [Role::MEDICO],
-            new TenantId('550e8400-e29b-41d4-a716-446655440000')
-        );
-        $this->tenant = Tenant::create(
-            new TenantId('550e8400-e29b-41d4-a716-446655440000'),
-            'Hospital Test'
-        );
-        $this->device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $this->sessionId = SessionId::generate();
-    }
-    public function testGenerateAndStore(): void
-    {
-        $this->repository->expects($this->once())
-            ->method('save')
-            ->willReturnCallback(function ($token) {
-                $this->assertInstanceOf(RefreshToken::class, $token);
-                $this->assertNotEmpty($token->token());
-                $this->assertNotEmpty($token->hash());
-            });
-        $result = $this->rotator->generateAndStore(
-            $this->user,
-            $this->tenant,
-            $this->device,
-            $this->sessionId,
-            'access-jti-123'
-        );
-        $this->assertNotEmpty($result->token());
-        $this->assertGreaterThan(time(), $result->expiresAt());
+        $this->repository = new InMemoryRefreshTokenRepository();
+        $this->rotator = new RefreshTokenRotator($this->repository, 3600);
     }
 
-    public function testRotateSuccess(): void
+    public function test_issue_stores_only_the_hash_of_the_secret(): void
     {
-        $oldToken = 'old-refresh-token';
-        $oldHash = (new \App\Modules\Tenants\Domain\Services\Argon2idHasher())->hash($oldToken);
-        $storedToken = RefreshToken::reconstitute(
-            $oldToken,
-            $oldHash,
-            $this->user->id(),
-            $this->tenant->id(),
-            $this->device,
-            'old-access-jti',
-            new \DateTimeImmutable('-1 hour'),
-            new \DateTimeImmutable('+6 days'),
-            false
-        );
-        $this->repository->expects($this->once())
-            ->method('findByUserIdAndDevice')
-            ->willReturn($storedToken);
-        $this->repository->expects($this->once())
-            ->method('delete')
-            ->with($storedToken);
-        $newAccessToken = new \App\Modules\Tenants\Domain\Services\AccessToken(
-            'new.access.token',
-            new \App\Modules\Tenants\Domain\ValueObjects\JwtClaims(
-                $this->user->id()->value(),
-                $this->user->roleValues(),
-                $this->tenant->id()->value(),
-                $this->sessionId->value(),
-                'new-access-jti',
-                $this->device->deviceId(),
-                time(),
-                time() + 900,
-                time()
-            )
-        );
-        $this->tokenFactory->expects($this->once())
-            ->method('createAccessToken')
-            ->willReturn($newAccessToken);
-        $this->repository->expects($this->once())
-            ->method('save')
-            ->willReturnCallback(function ($token) {
-                $this->assertInstanceOf(RefreshToken::class, $token);
-                $this->assertNotEmpty($token->token());
-            });
-        $result = $this->rotator->rotate($oldToken, $this->user, $this->tenant, $this->device, $this->sessionId);
-        $this->assertTrue($result->isSuccess());
-        $this->assertEquals('new.access.token', $result->accessToken());
-        $this->assertNotEmpty($result->refreshToken());
+        $issued = $this->issue();
+        [$id, $secret] = RefreshToken::parse($issued->token());
+        $stored = $this->repository->findById($id);
+
+        $this->assertNotNull($stored);
+        $this->assertTrue($stored->matches($secret));
+        $this->assertStringNotContainsString($secret, json_encode($stored->toArray()));
+        $this->assertGreaterThan(time(), $issued->expiresAt());
     }
-    public function testRotateReuseDetected(): void
+
+    #[Group('caja-blanca')]
+    public function test_path_valid_token_rotates_and_old_one_is_marked(): void
     {
-        $oldToken = 'old-refresh-token';
-        $oldHash = (new \App\Modules\Tenants\Domain\Services\Argon2idHasher())->hash($oldToken);
-        $storedToken = RefreshToken::reconstitute(
-            $oldToken,
-            $oldHash,
-            $this->user->id(),
-            $this->tenant->id(),
-            $this->device,
-            'old-access-jti',
-            new \DateTimeImmutable('-1 hour'),
-            new \DateTimeImmutable('+6 days'),
-            false
-        );
-        $this->repository->expects($this->once())
-            ->method('findByUserIdAndDevice')
-            ->willReturn($storedToken);
-        $result = $this->rotator->rotate('different-token', $this->user, $this->tenant, $this->device, $this->sessionId);
+        $issued = $this->issue();
+
+        $result = $this->rotator->rotate($issued->token());
+
+        $this->assertTrue($result->isSuccess());
+        $this->assertNotSame($issued->token(), $result->next()->token());
+        $this->assertTrue($result->previous()->isRotated());
+        $this->assertTrue($this->rotator->rotate($result->next()->token())->isSuccess());
+    }
+
+    #[Group('caja-blanca')]
+    public function test_path_rotated_token_presented_again_is_reuse(): void
+    {
+        $issued = $this->issue();
+        $this->rotator->rotate($issued->token());
+
+        $result = $this->rotator->rotate($issued->token());
+
         $this->assertFalse($result->isSuccess());
         $this->assertTrue($result->isReuseDetected());
-        $this->assertEquals('Token compromise detected', $result->error());
+        $this->assertSame($issued->token(), $result->previous()->id() . '.' . RefreshToken::parse($issued->token())[1]);
     }
-    public function testRotateTokenNotFound(): void
+
+    #[Group('caja-blanca')]
+    public function test_path_unknown_or_malformed_token_fails_without_reuse(): void
     {
-        $this->repository->expects($this->once())
-            ->method('findByUserIdAndDevice')
-            ->willReturn(null);
-        $result = $this->rotator->rotate('any-token', $this->user, $this->tenant, $this->device, $this->sessionId);
+        foreach (['no-es-un-token', '9b2f6a2e-1c1d-4f5e-9a7b-3c2d1e0f4a5b.secreto', ''] as $raw) {
+            $result = $this->rotator->rotate($raw);
+            $this->assertFalse($result->isSuccess());
+            $this->assertFalse($result->isReuseDetected(), $raw);
+        }
+    }
+
+    #[Group('caja-blanca')]
+    public function test_path_wrong_secret_fails_without_revealing_reuse(): void
+    {
+        [$id] = RefreshToken::parse($this->issue()->token());
+
+        $result = $this->rotator->rotate($id . '.' . str_repeat('f', 64));
+
         $this->assertFalse($result->isSuccess());
         $this->assertFalse($result->isReuseDetected());
-        $this->assertEquals('Refresh token revocado o expirado', $result->error());
+    }
+
+    #[Group('caja-blanca')]
+    public function test_path_revoked_and_expired_tokens_fail(): void
+    {
+        $revoked = $this->issue();
+        $this->repository->findById(RefreshToken::parse($revoked->token())[0])->revoke();
+        // TTL 0: vence en el mismo instante en que se emite (isExpired usa >=).
+        $expired = (new RefreshTokenRotator($this->repository, 0))->issue(TenantId::generate(), UserId::generate(), SessionId::generate(), $this->device());
+
+        $this->assertFalse($this->rotator->rotate($revoked->token())->isSuccess());
+        $this->assertFalse($this->rotator->rotate($expired->token())->isSuccess());
+    }
+
+    private function issue(): \App\Modules\Tenants\Domain\Services\RefreshTokenResult
+    {
+        return $this->rotator->issue(TenantId::generate(), UserId::generate(), SessionId::generate(), $this->device());
+    }
+
+    private function device(): DeviceFingerprint
+    {
+        return DeviceFingerprint::createNew('equipo-01', '10.0.0.1', 'PHPUnit');
     }
 }

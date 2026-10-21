@@ -1,0 +1,60 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam sequence {
+  ParticipantBackgroundColor #E3F2FD
+  ParticipantBorderColor #1565C0
+  ParticipantFontColor #17212B
+  ActorBorderColor #263238
+  ActorFontColor #17212B
+  LifeLineBorderColor #263238
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+autonumber
+
+actor "Responsable de documentación" as R
+actor "Usuario por rol" as U
+boundary "API /documentacion" as API
+control "Servicio de documentación" as SVC
+database "Base de datos" as DB
+participant "Auth/roles" as AUTH
+
+== Publicación ==
+R -> API: POST /documentacion (título, contenido, roles[])
+API -> AUTH: Verificar token, rol y tenant
+alt Sin permiso de publicación
+  AUTH --> API: No autorizado
+  API --> R: 403
+  hnote over API #FFEBEE: 403 - solo responsable
+else Autorizado
+  API -> SVC: publicar(documento)
+  SVC -> SVC: Validar datos y roles destinatarios
+  alt Datos inválidos
+    SVC --> API: 422 (validation_failed)
+    API --> R: Error de validación
+  else Válido
+    SVC -> DB: INSERT documento + roles
+    DB --> SVC: documento creado
+    SVC --> API: 201 recurso
+    API --> R: Documento publicado
+  end
+end
+== Consulta por rol ==
+U -> API: GET /documentacion (texto, categoría)
+API -> AUTH: Verificar token, rol y tenant
+API -> SVC: listarParaRol(rol)
+SVC -> DB: SELECT documentos WHERE rol visible
+DB --> SVC: resultados
+SVC --> API: colección filtrada por rol
+API --> U: Catálogo del rol
+opt Documento no visible para el rol
+  U -> API: GET /documentacion/{id}
+  API --> U: 403 (no visible para el rol)
+  hnote over API #FFEBEE: 403 - fuera del catálogo del rol
+end
+@enduml

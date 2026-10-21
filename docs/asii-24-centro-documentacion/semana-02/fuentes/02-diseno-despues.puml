@@ -1,0 +1,66 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam class {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+interface RegistroDocumentos {
+  + publicar(documento): void
+  + clasificar(id: string, roles: array): void
+}
+interface ConsultaDocumentos {
+  + listar(rol: string): array
+  + buscar(texto: string): array
+}
+interface DescargaDocumentos {
+  + descargar(id: string): string
+}
+interface VersionDocumentos {
+  + versionar(id: string): void
+  + vigencia(id: string): string
+}
+class CatalogoController {
+  - consulta: ConsultaDocumentos
+}
+class ResponsableController {
+  - registro: RegistroDocumentos
+}
+class DescargaController {
+  - descarga: DescargaDocumentos
+}
+class DocumentosRepository {
+  + publicar(documento): void
+  + clasificar(id: string, roles: array): void
+  + listar(rol: string): array
+  + buscar(texto: string): array
+  + descargar(id: string): string
+  + versionar(id: string): void
+  + vigencia(id: string): string
+}
+
+CatalogoController o-- ConsultaDocumentos
+ResponsableController o-- RegistroDocumentos
+DescargaController o-- DescargaDocumentos
+DocumentosRepository ..|> RegistroDocumentos
+DocumentosRepository ..|> ConsultaDocumentos
+DocumentosRepository ..|> DescargaDocumentos
+DocumentosRepository ..|> VersionDocumentos
+
+note right of CatalogoController
+  Depende solo de ConsultaDocumentos
+  (2 metodos), no de la interfaz gorda.
+end note
+note bottom of DocumentosRepository
+  Un adaptador puede implementar
+  varias interfaces segregadas.
+end note
+@enduml

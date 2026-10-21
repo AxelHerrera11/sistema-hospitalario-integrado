@@ -8,11 +8,29 @@
                 <router-link class="layout__link" to="/">
                     Inicio
                 </router-link>
+                <router-link class="layout__link" to="/ocupacion">
+                    Ocupación
+                </router-link>
                 <router-link class="layout__link" to="/login">
                     Acceso
                 </router-link>
+                <router-link v-if="auth.token" class="layout__link" to="/admin/users">
+                    Usuarios
+                </router-link>
+                <router-link v-if="auth.token" class="layout__link" to="/patients">
+                    Pacientes
+                </router-link>
+                <button v-if="auth.token" class="layout__link layout__logout" @click="logout">
+                    Cerrar sesión
+                </button>
             </nav>
         </header>
+        <p v-if="auth.hospital" class="layout__tenant">
+            Hospital activo: {{ auth.hospital.name }} · {{ auth.hospital.hospital_id }}
+        </p>
+        <p v-if="logoutError" class="layout__error" role="alert">
+            {{ logoutError }}
+        </p>
         <main class="layout__main">
             <slot />
         </main>
@@ -20,6 +38,25 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+
+const auth = useAuthStore();
+const router = useRouter();
+const logoutError = ref('');
+
+async function logout() {
+    logoutError.value = '';
+
+    try {
+        await auth.logout();
+    } catch {
+        logoutError.value = 'Se cerró la sesión local, pero el servidor no confirmó la revocación.';
+    } finally {
+        await router.push({ name: 'login' });
+    }
+}
 </script>
 
 <style scoped>
@@ -60,8 +97,49 @@
     color: #2563eb;
 }
 
+.layout__logout {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+}
+
+.layout__tenant {
+    margin: 0;
+    padding: 0.5rem 1.5rem;
+    color: #475569;
+    background: #eff6ff;
+    font-size: 0.875rem;
+}
+
+.layout__error {
+    margin: 0;
+    padding: 0.5rem 1.5rem;
+    color: #b91c1c;
+    background: #fef2f2;
+}
+
 .layout__main {
     flex: 1;
     padding: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .layout__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .layout__nav {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .layout__main {
+        padding: 1rem;
+    }
 }
 </style>
