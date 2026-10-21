@@ -1,148 +1,97 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Feature\Tenants;
-use App\Modules\Tenants\Application\Commands\RegisterUserCommand;
-use App\Modules\Tenants\Application\UseCases\RegisterUserUseCase;
-use App\Modules\Tenants\Domain\Entities\Tenant;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\TenantRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
-use App\Modules\Tenants\Domain\Services\PasswordPolicy;
-use App\Modules\Tenants\Domain\Services\MfaPolicy;
-use App\Modules\Tenants\Domain\Services\Argon2idHasher;
-use App\Modules\Tenants\Domain\ValueObjects\Email;
-use App\Modules\Tenants\Domain\ValueObjects\Role;
+
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Domain\ValueObjects\UserId;
-use App\Modules\Tenants\Infrastructure\External\EmailNotificationService;
-use App\Modules\Tenants\Infrastructure\External\EventPublisher;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class RegisterUserFeatureTest extends TestCase
+use Tests\Feature\Tenants\Concerns\MicroHisHttp;
+
+/**
+ * Semana 15 · NB-001 (RF-01, RF-02, RF-03): alta de usuario por hospital vía POST /admin/users.
+ */
+#[Group('caja-negra')]
+class RegisterUserFeatureTest extends TestCase
 {
-    private RegisterUserUseCase $useCase;
-    private UserRepositoryInterface $userRepo;
-    private TenantRepositoryInterface $tenantRepo;
-    private PasswordPolicy $passwordPolicy;
-    private MfaPolicy $mfaPolicy;
-    private AuditLogRepositoryInterface $auditLog;
-    private EventPublisher $eventPublisher;
-    private EmailNotificationService $emailService;
+    use MicroHisHttp;
+
     protected function setUp(): void
     {
-        $this->userRepo = $this->createMock(UserRepositoryInterface::class);
-        $this->tenantRepo = $this->createMock(TenantRepositoryInterface::class);
-        $this->passwordPolicy = $this->createMock(PasswordPolicy::class);
-        $this->mfaPolicy = $this->createMock(MfaPolicy::class);
-        $this->auditLog = $this->createMock(AuditLogRepositoryInterface::class);
-        $this->eventPublisher = $this->createMock(EventPublisher::class);
-        $this->emailService = $this->createMock(EmailNotificationService::class);
-        $this->useCase = new RegisterUserUseCase(
-            $this->userRepo,
-            $this->tenantRepo,
-            $this->passwordPolicy,
-            $this->mfaPolicy,
-            $this->auditLog,
-            $this->eventPublisher,
-            $this->emailService
-        );}
-    public function testSuccessfulUserRegistration(): void
+        $this->bootMicroHis();
+    }
+
+    public function test_admin_registers_a_user_in_its_own_hospital(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $createdBy = new UserId('550e8400-e29b-41d4-a716-446655440001');
-        $tenant = Tenant::create($tenantId, 'Hospital Central', 100);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $this->userRepo->method('existsByEmailAndTenant')->willReturn(false);
-        $this->passwordPolicy->method('validate')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\ValidationResult(true));
-        $this->mfaPolicy->method('evaluate')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\MfaRequirement(false));
-        $this->userRepo->expects($this->once())->method('save');
-        $this->tenantRepo->expects($this->once())->method('save');
-        $this->auditLog->expects($this->once())->method('log');
-        $this->eventPublisher->expects($this->once())->method('publish');
-        $this->emailService->expects($this->once())->method('sendActivationEmail');
-        $command = new RegisterUserCommand(
-            new Email('nuevo@hospital.com'),
-            'Dr. Nuevo',
-            'SecurePass123!',
-            [Role::MEDICO],
-            $tenantId,
-            $createdBy,
-            false);
-        $result = $this->useCase->execute($command);
-        $this->assertNotNull($result->userId());
-        $this->assertEquals('nuevo@hospital.com', $result->email()->value());
-        $this->assertNotEmpty($result->tempPassword());}
-    public function testFailsWhenTenantInactive(): void
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+
+        $created = $this->createUser($admin['token'], 'medico@a.test', ['medico']);
+
+        $this->assertSame(201, $created['status']);
+        $this->assertSame($admin['tenant'], $created['body']['tenant_id']);
+        $this->assertNull($created['body']['totp_secret'], 'medico no requiere MFA');
+        $this->assertSame(200, $this->login('medico@a.test', $admin['tenant'])['status']);
+        $this->assertCount(2, $this->module->auditLog->findByEventName('USER_CREATED'), 'admin sembrado + médico');
+    }
+
+    public function test_privileged_role_gets_totp_enrollment_once(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $tenant = Tenant::create($tenantId, 'Hospital Suspendido');
-        $reflection = new \ReflectionClass($tenant);
-        $reflection->getProperty('status')->setValue($tenant, Tenant::STATUS_SUSPENDED);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $this->auditLog->expects($this->once())->method('log');
-        $command = new RegisterUserCommand(
-            new Email('nuevo@hospital.com'),
-            'Dr. Nuevo',
-            'SecurePass123!',
-            [Role::MEDICO],
-            $tenantId,
-            new UserId('550e8400-e29b-41d4-a716-446655440001'),);
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Tenant inactivo');
-        $this->useCase->execute($command);}
-    public function testFailsWhenQuotaExceeded(): void
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+
+        $created = $this->createUser($admin['token'], 'admin2@a.test', ['admin_hospital']);
+
+        $this->assertSame(201, $created['status']);
+        $this->assertMatchesRegularExpression('/^[A-Z2-7]{32}$/', $created['body']['totp_secret']);
+    }
+
+    public function test_inactive_hospital_rejects_registration(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $tenant = Tenant::create($tenantId, 'Hospital Lleno', 10);
-        $reflection = new \ReflectionClass($tenant);
-        $reflection->getProperty('usersCount')->setValue($tenant, 10);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $this->auditLog->expects($this->once())->method('log');
-        $command = new RegisterUserCommand(
-            new Email('nuevo@hospital.com'),
-            'Dr. Nuevo',
-            'SecurePass123!',
-            [Role::MEDICO],
-            $tenantId,
-            new UserId('550e8400-e29b-41d4-a716-446655440001'),);
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Cupo de usuarios excedido');
-        $this->useCase->execute($command);}
-    public function testFailsWhenEmailAlreadyExists(): void
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->module->tenants->findById(new TenantId($admin['tenant']))->suspend();
+
+        $this->assertSame(403, $this->createUser($admin['token'], 'x@a.test', ['medico'])['status']);
+    }
+
+    public function test_quota_exceeded_rejects_registration(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $tenant = Tenant::create($tenantId, 'Hospital Central', 100);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $this->userRepo->method('existsByEmailAndTenant')->willReturn(true);
-        $command = new RegisterUserCommand(
-            new Email('existente@hospital.com'),
-            'Dr. Nuevo',
-            'SecurePass123!',
-            [Role::MEDICO],
-            $tenantId,
-            new UserId('550e8400-e29b-41d4-a716-446655440001'),);
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Email ya registrado en este tenant');
-        $this->useCase->execute($command);}
-    public function testFailsWhenPasswordPolicyViolated(): void
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $tenant = $this->module->tenants->findById(new TenantId($admin['tenant']));
+        while ($tenant->hasQuota()) {
+            $tenant->incrementUsersCount();
+        }
+
+        $response = $this->createUser($admin['token'], 'x@a.test', ['medico']);
+
+        $this->assertSame(409, $response['status']);
+        $this->assertCount(1, $this->module->auditLog->findByEventName('TENANT_QUOTA_EXCEEDED'));
+    }
+
+    public function test_duplicate_email_in_same_hospital_is_rejected(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $tenant = Tenant::create($tenantId, 'Hospital Central', 100);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $this->userRepo->method('existsByEmailAndTenant')->willReturn(false);
-        $this->passwordPolicy->method('validate')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\ValidationResult(false, ['Contraseña muy corta']));
-        $command = new RegisterUserCommand(
-            new Email('nuevo@hospital.com'),
-            'Dr. Nuevo',
-            'short',
-            [Role::MEDICO],
-            $tenantId,
-            new UserId('550e8400-e29b-41d4-a716-446655440001'),);
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Contraseña muy corta');
-        $this->useCase->execute($command);
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($admin['token'], 'medico@a.test', ['medico']);
+
+        $this->assertSame(409, $this->createUser($admin['token'], 'MEDICO@a.test', ['enfermeria'])['status']);
+    }
+
+    public function test_weak_password_and_non_canonical_roles_are_rejected(): void
+    {
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+
+        $weak = $this->call('POST', '/admin/users', ['email' => 'y@a.test', 'name' => 'Y', 'password' => 'debil', 'roles' => ['medico']], null, $admin['token']);
+        $upper = $this->createUser($admin['token'], 'z@a.test', ['MEDICO']);
+
+        $this->assertSame(422, $weak['status']);
+        $this->assertStringContainsString('12 caracteres', $weak['body']['message']);
+        $this->assertSame(422, $upper['status']);
+    }
+
+    public function test_only_admin_hospital_can_register_users(): void
+    {
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($admin['token'], 'medico@a.test', ['medico']);
+        $medico = $this->login('medico@a.test', $admin['tenant'])['body'];
+
+        $this->assertSame(403, $this->createUser($medico['access_token'], 'otro@a.test', ['medico'])['status']);
+        $this->assertSame(401, $this->createUser('token-falso', 'otro@a.test', ['medico'])['status']);
     }
 }
