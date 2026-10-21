@@ -1,6 +1,6 @@
 # Contrato de la tabla `doctor_schedules` (horarios de atención)
 
-**Estado:** `PENDIENTE DE APROBACIÓN DEL GRUPO`
+**Estado:** `APROBADO` por ASII-04 el 20 de octubre de 2026 (issue #24).
 **Solicitante:** módulo de médicos y especialidades (ASII-04, `Jhos-hgnu`), necesario
 para calcular la disponibilidad que consumen Citas (ASII-05) y Admisión (ASII-07).
 **Publica:** módulo de verificación de base de datos (ASII-09, `Javifa2324`).
@@ -11,10 +11,10 @@ La tabla `doctor_schedules` **no figura** en la especificación vigente del esqu
 federado, que hoy tiene 15 entidades CENTRAL y 27 HOSPITAL
 (`openspec/changes/postgresql-federated-schema-rebuild/specs/hospital-clinical-schema/spec.md`).
 
-Para poder crearla hay que **aprobar que la especificación pase de 27 a 28 entidades**.
-Este PR entrega la definición, la migración reversible, las pruebas y el contrato
-funcional, y deja la aprobación registrada como pendiente: **el número de entidades
-de la especificación no se cambia en este PR**.
+Para poder crearla había que **aprobar que la especificación pase de 27 a 28 entidades**.
+ASII-04 aprobó la entidad 28 el 20 de octubre de 2026 (A-1 opción (b): se aprueba y la
+migración la mantiene el módulo de verificación de BD). La migración y las pruebas van en
+el PR #413; este documento es su contrato funcional.
 
 ## 2. Definición de la tabla
 
@@ -110,9 +110,8 @@ simplifica el cálculo de disponibilidad.
 ## 4. Migración
 
 - **Archivo:** `database/migrations/hospital/2026_08_11_000900_create_doctor_schedules.php`
-- **Número propuesto:** `000900`, elegido para no colisionar con los slices ya
-  reservados: H5 (`000500`, medicamentos y prescripciones), H6 (`000600`, laboratorio)
-  y H7 (`000700`, auditoría y sincronización).
+- **Número:** `000900`, **acordado con ASII-04** (A-2) el 20 de octubre de 2026: no colisiona
+  con los slices ya reservados (H5 `000500`, H6 `000600`, H7 `000700`).
 - **Reversión:** `DROP TRIGGER`, `DROP FUNCTION` y `DROP TABLE doctor_schedules;` — verificado en la prueba de rollback.
 - **Conexión:** `hospital`, como el resto del esquema clínico.
 
@@ -140,19 +139,19 @@ aserciones, ejecutadas sobre PostgreSQL 16:
 | `test_schedule_inside_the_validity_of_the_specialty_is_accepted` | El horario se acepta dentro de la vigencia de la especialidad |
 | `test_rollback_removes_the_table_and_keeps_the_previous_slices` | La reversión borra la tabla y **no** toca los slices anteriores |
 
-## 6. Acuerdos pendientes
+## 6. Acuerdos
 
 | Acuerdo | Responsable | Estado |
 |---|---|---|
-| Aprobar la entidad 28 (`doctor_schedules`) | Grupo | `PENDIENTE` |
-| Confirmar el número de archivo de la migración | Javier (BD) | `PENDIENTE` |
-| Confirmar quién escribe la migración | Javier (BD) con ASII-04 | `PENDIENTE` |
-| Formato de la respuesta de disponibilidad (slots concretos) | ASII-04 con ASII-05 | `PENDIENTE` |
+| Aprobar la entidad 28 (`doctor_schedules`) y quién mantiene la migración | ASII-04 | `APROBADO` (A-1 opción (b): la mantiene el módulo de verificación de BD) |
+| Confirmar el número de archivo de la migración | ASII-04 y grupo | `APROBADO` (`000900`) |
+| Regla de especialidad | ASII-04 | `APROBADO` (A-3 opción (b): trigger de integridad; la FK compuesta no es implementable, SQLSTATE 42830) |
+| Formato de la respuesta de disponibilidad (slots concretos) | ASII-04 con ASII-05 | `RESPONDIDO POR ASII-04`: horas de inicio `HH:MM` en bloques de 30 minutos, tal como lo devuelve hoy `GET /api/v1/availability`. Falta la confirmación de ASII-05 en el issue #207 |
 | Definir el modelo de ausencias (fuera de alcance aquí) | ASII-04 | `PENDIENTE` |
 
 ## 7. Consecuencia de no resolverlo
 
 Sin esta tabla, el cálculo de disponibilidad de médicos no tiene datos persistidos:
-Citas y Admisión no pueden ofrecer un horario real al paciente. El módulo de médicos
-puede seguir trabajando con su propio diseño, pero el día que este PR se integre, la
-tabla pasa a ser la fuente de verdad y hay que acordar su número de archivo antes.
+Citas y Admisión no pueden ofrecer un horario real al paciente. Con la entidad 28
+aprobada, la tabla pasa a ser la fuente de verdad de los horarios y su regla de
+especialidad queda garantizada en la base de datos, no en la aplicación.
