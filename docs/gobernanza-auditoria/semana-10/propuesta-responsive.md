@@ -26,7 +26,7 @@
 │ │ Usuario               │ │
 │ │ aaaaaaaa-…-001        │ │
 │ │ Evento                │ │
-│ │ sesiones.sesion.revoc.│ │
+│ │ Sesión revocada       │ │
 │ │ Resultado  [Ocurrió]  │ │
 │ │ [ Ver detalle ]       │ │  ← objetivo ≥ 44 px
 │ └───────────────────────┘ │
