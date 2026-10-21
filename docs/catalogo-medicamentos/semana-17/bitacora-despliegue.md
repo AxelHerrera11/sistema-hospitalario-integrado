@@ -33,5 +33,5 @@ Solo un **entorno local de verificación**: Windows 11, PHP 8.2.12, Composer 2.1
 
 1. Entorno staging u on-premise con PostgreSQL HOSPITAL y CENTRAL (credenciales fuera del repositorio).
 2. Migración de `medication` del slice H5 y semillas de prueba aprobadas.
-3. Permisos de escritura aprobados por RBAC; ya están catalogados como pendientes (#622).
+3. ~~Permisos de escritura aprobados por RBAC~~: resuelto con #627, que los concede solo a `admin_hospital`.
 4. Repetir los pasos 5–10 contra ese entorno y registrar las salidas.
