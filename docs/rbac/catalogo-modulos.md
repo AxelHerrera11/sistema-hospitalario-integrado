@@ -1,6 +1,6 @@
 # Catálogo común de integración RBAC
 
-Base revisada: develop b87bca1 y PR abiertos, 20 de octubre de 2026. Este documento y
+Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
 Catálogo: 69 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
@@ -144,13 +144,18 @@ Prescripciones.excepcion_alergia y notas_soap.transferir_autoria siguen reservad
 no se activan por publicar sus nombres. Los restantes pares pending son propuestas
 por rol; consulte config/rbac.php para las concesiones exactas que siguen denegadas.
 
-Se revisaron los 30 apartados del README y los 166 PR abiertos. Se inspeccionaron
-los archivos pertinentes de 160 PR con referencias disponibles; los restantes
-son integración o no contienen fuentes de contratos aplicables. Se buscaron tanto
+Se revisaron los 30 apartados del README y los 200 PR abiertos de la captura de
+auditoría. Las 200 referencias estaban disponibles. Se inspeccionaron sus archivos
+de texto modificados (MD, PHP, YAML/YML, JS/TS, Vue, HTML y JSON), sin depender de una
+lista fija de módulos para extraer los literales. Se buscaron tanto
 menciones de permisos como literales en tablas, código y navegación. Los eventos
 de auditoría, campos SQL, nombres de archivos y variables no se trataron como permisos.
 La evidencia de los contratos pendientes queda fijada por PR, SHA y ruta en
-`tests/Fixtures/Rbac/pending-contracts.json`, comprobada contra el catálogo.
+`tests/Fixtures/Rbac/pending-contracts.json`: 206 fuentes por PR, SHA y ruta,
+comprobadas contra el catálogo. El registro de las 200 referencias revisadas se
+entrega en el PR #687 para respetar el límite de 400 líneas. Los tests comprueban
+también que cada concesión activa o pendiente pertenezca al catálogo, que ningún
+par permiso/rol pendiente esté activo y que esta matriz coincida con la configuración.
 
 ## Ampliación de contratos pendientes
 
