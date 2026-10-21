@@ -1,5 +1,8 @@
 <?php
 
+use Tymon\JWTAuth\Providers\Auth\Illuminate;
+use Tymon\JWTAuth\Providers\JWT\Lcobucci;
+
 return [
 
     'secret' => env('JWT_SECRET'),
@@ -10,7 +13,7 @@ return [
         'passphrase' => env('JWT_PASSPHRASE'),
     ],
 
-    'ttl' => (int) env('JWT_TTL', 60),
+    'ttl' => (int) env('JWT_TTL', 15),
 
     'refresh_ttl' => (int) env('JWT_REFRESH_TTL', 20160),
 
@@ -38,8 +41,8 @@ return [
     'decrypt_cookies' => false,
 
     'providers' => [
-        'jwt' => Tymon\JWTAuth\Providers\JWT\Lcobucci::class,
-        'auth' => Tymon\JWTAuth\Providers\Auth\Illuminate::class,
+        'jwt' => Lcobucci::class,
+        'auth' => Illuminate::class,
         'storage' => Tymon\JWTAuth\Providers\Storage\Illuminate::class,
     ],
 
