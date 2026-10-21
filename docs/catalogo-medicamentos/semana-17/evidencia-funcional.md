@@ -67,7 +67,41 @@ María Yamilet Lindo Pablo confirmó una prueba manual en el entorno local de ve
 
 En la base HOSPITAL, `IBU-400` figura con `validity = inactive`, `created_at` 10:59:28 y `updated_at` 11:00:17 (UTC-6), lo que concuerda con esos pasos.
 
-**Alcance:** solo esos cinco pasos quedan revisados por una persona. El resto de esta evidencia proviene únicamente de ejecuciones automatizadas: duplicado, validación, búsqueda sin resultados, enfermería, médico, recepción, versión móvil, escrituras forzadas por API, tenant cruzado y caída de la base (503). No equivale a una revisión independiente de los PR ni a una aceptación del docente.
+### Segunda ronda: validación, duplicado, roles y vista móvil
+
+**Testimonio de la estudiante.** Declara que también hizo estas pruebas:
+- envió el alta con campos obligatorios vacíos y vio errores de validación;
+- intentó registrar de nuevo `IBU-400` con todos los campos y vio el rechazo por duplicado, sin mensaje de éxito;
+- como médico y como enfermería, buscó `IBU-400` y consultó su detalle sin ver el formulario de alta ni el botón de vigencia;
+- como recepción, vio el aviso de falta de `medicamentos.ver` sin datos del catálogo;
+- revisó la búsqueda, el detalle y el aviso en la vista móvil simulada del navegador.
+
+**Capturas.** Son 10 y las conserva la estudiante en su equipo. No se publican porque muestran pestañas y la barra de tareas de su equipo. Ninguna muestra contraseñas ni tokens: el único campo de contraseña visible está vacío.
+
+| Captura | Qué se ve | Vista | Usuario |
+|---|---|---|---|
+| `70462d3e` | Alta con valores de un carácter (`x`, `a`, `v`, `v`): error en los cuatro campos | Escritorio | No visible; solo `admin_hospital` ve el alta |
+| `6bbe8d07` | «Ya existe un medicamento con ese código en este hospital» junto al código y en el aviso, sin éxito. Los campos ya aparecen vacíos, así que no se ven los valores enviados | Escritorio | Igual que la anterior |
+| `5ee886de` | Login con `medico@prueba.local` y la contraseña vacía | — | Médico |
+| `622fe9a3` | Búsqueda sin formulario de alta | Escritorio | No visible |
+| `fb27c3da`, `32769f80` | Detalle de `IBU-400` «No vigente», sin alta ni botón de vigencia | Escritorio | No visible |
+| `0965903b` | Aviso de falta de `medicamentos.ver`, sin búsqueda ni datos | Escritorio | No visible |
+| `d800b0df` | El mismo aviso | DevTools «Responsive», 472 × 642 px | No visible |
+| `cb621caf` | El mismo aviso | DevTools «iPhone 16 Pro Max», 440 × 956 px | No visible |
+| `a32b1b39` | Búsqueda y detalle de `IBU-400` «No vigente», sin alta ni botón de vigencia | DevTools «iPhone 16 Pro Max», 440 × 956 px | No visible |
+
+En las capturas de escritorio no se ve el tamaño del viewport, así que solo se registran las dimensiones mostradas por DevTools.
+
+**Contraste:**
+- `auth_sessions` de CENTRAL registra inicios de sesión de `medico` (11:52:33 y 11:57:09), `enfermeria` (11:53:51) y `recepcion` (11:54:42). Las capturas no permiten distinguir la vista de médico de la de enfermería; que se probaran ambos roles se apoya en el testimonio y en esas sesiones.
+- Las capturas de validación muestran valores demasiado cortos, no campos vacíos. Que los campos vacíos se rechacen consta solo por el testimonio.
+- En `70462d3e` y `6bbe8d07` aparece de forma incidental «No hay medicamentos que coincidan» para `ZZZ999999`. Por indicación de la estudiante, la búsqueda sin resultados no se registra como prueba humana.
+
+**Alcance de la revisión humana:**
+- Revisado por una persona, con testimonio y capturas: alta, búsqueda, detalle y vigencia de `IBU-400`; validación local; rechazo del duplicado; solo lectura de médico y enfermería; aviso de recepción; vista móvil simulada a 440 px (búsqueda, detalle y aviso) y a 472 px (aviso).
+- Sin revisión humana: búsqueda sin resultados, navegación por teclado, escrituras forzadas por API, tenant cruzado y aislamiento entre hospitales, caída de la base (503), 375 px y lector de pantalla. Para estos solo existen las pruebas automatizadas de las secciones anteriores (E2E 11/11, fallo 4/4, HTTP con `curl` y PHPUnit).
+
+Esta revisión no equivale a una revisión independiente de los PR ni a una aceptación del docente.
 
 ## Límites de esta evidencia
 
