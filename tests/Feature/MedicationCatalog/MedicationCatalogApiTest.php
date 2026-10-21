@@ -118,7 +118,10 @@ final class MedicationCatalogApiTest extends TestCase
 
     public function test_unavailable_hospital_database_answers_503_without_details(): void
     {
-        // Sin sustituir el Repository: se usa el enlace real del provider sobre la conexión 'hospital' (no disponible aquí).
+        // Sin sustituir el Repository: se usa el enlace real del provider sobre la conexión 'hospital', apuntada a una base
+        // inexistente para que la caída no dependa de si el PostgreSQL de pruebas está levantado o ya tiene la tabla H5.
+        config()->set('database.connections.hospital.database', 'catalogo_base_inexistente');
+        \Illuminate\Support\Facades\DB::purge('hospital');
         $this->app->forgetInstance(MedicationRepository::class);
         $this->app->offsetUnset(MedicationRepository::class);
         $this->app->register(\App\Providers\MedicationCatalogServiceProvider::class, true);
