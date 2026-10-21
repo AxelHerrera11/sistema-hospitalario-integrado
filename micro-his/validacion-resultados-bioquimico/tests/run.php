@@ -5,6 +5,7 @@ declare(strict_types=1);
 use MicroHis\ValidacionResultados\Application\RejectReviewedResult;
 use MicroHis\ValidacionResultados\Application\RejectResultCommand;
 use MicroHis\ValidacionResultados\Application\ReviewAuditLogger;
+use MicroHis\ValidacionResultados\Application\ReviewResultNotFound;
 use MicroHis\ValidacionResultados\Application\ReviewResultRepository;
 use MicroHis\ValidacionResultados\Application\ValidateReviewedResult;
 use MicroHis\ValidacionResultados\Application\ValidateResultCommand;
@@ -12,6 +13,8 @@ use MicroHis\ValidacionResultados\Domain\DomainRuleViolation;
 use MicroHis\ValidacionResultados\Domain\ReviewableLabResult;
 use MicroHis\ValidacionResultados\Persistence\ArrayReviewAuditLogger;
 use MicroHis\ValidacionResultados\Persistence\InMemoryReviewResultRepository;
+use MicroHis\ValidacionResultados\Persistence\PdoReviewResultRepository;
+use MicroHis\ValidacionResultados\Presentation\HttpReviewController;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -47,6 +50,33 @@ $response = $useCase->execute(new ValidateResultCommand(
 ));
 assertTrue($response['status'] === 'validado', 'Camino feliz debe validar resultado.');
 assertTrue(count($audit->events) === 1, 'Camino feliz debe auditar validacion.');
+
+$isolatedRepository = new InMemoryReviewResultRepository([
+    new ReviewableLabResult('rev-isolated', 'hospital-a', 'PAC-000', 'GLU', '90', 'mg/dL', 'mg/dL'),
+]);
+$detached = $isolatedRepository->getPending('hospital-a', 'rev-isolated');
+$detached->validate('bioquimico');
+assertTrue($isolatedRepository->getPending('hospital-a', 'rev-isolated')->status->value === 'pendiente_revision', 'Leer y mutar no debe cambiar lo almacenado sin save().');
+
+$rollbackRepository = new InMemoryReviewResultRepository([
+    new ReviewableLabResult('rev-rollback', 'hospital-a', 'PAC-005', 'GLU', '90', 'mg/dL', 'mg/dL'),
+]);
+$failingAudit = new class implements ReviewAuditLogger {
+    public function record(array $event): void
+    {
+        throw new RuntimeException('Falla simulada de auditoria.');
+    }
+};
+expectException(RuntimeException::class, fn () => (new ValidateReviewedResult($rollbackRepository, $failingAudit))->execute(
+    new ValidateResultCommand('hospital-a', 'rev-rollback', 'bio-04', 'bioquimico')
+));
+assertTrue($rollbackRepository->getPending('hospital-a', 'rev-rollback')->status->value === 'pendiente_revision', 'La auditoria fallida debe revertir el estado.');
+
+$pdo = new PDO('sqlite::memory:');
+$pdo->exec('CREATE TABLE lab_results_for_review (id TEXT, tenant_id TEXT, patient_code TEXT, test_code TEXT, value TEXT, unit TEXT, expected_unit TEXT, status TEXT, decision_reason TEXT, version INTEGER, PRIMARY KEY (id, tenant_id))');
+$missing = new ReviewableLabResult('rev-missing', 'hospital-a', 'PAC-006', 'GLU', '90', 'mg/dL', 'mg/dL');
+$missing->validate('bioquimico');
+expectException(ReviewResultNotFound::class, fn () => (new PdoReviewResultRepository($pdo))->save($missing));
 
 $repository = new InMemoryReviewResultRepository([
     new ReviewableLabResult('rev-002', 'hospital-a', 'PAC-002', 'HB', '13.2', 'g/dL', 'g/dL'),
@@ -99,5 +129,14 @@ expectException(RuntimeException::class, fn () => $useCase->execute(new Validate
     userId: 'bio-03',
     role: 'bioquimico',
 )));
+
+$missingRepository = new InMemoryReviewResultRepository();
+$notFoundHttp = new HttpReviewController(new ValidateReviewedResult($missingRepository, new ArrayReviewAuditLogger()), new RejectReviewedResult($missingRepository, new ArrayReviewAuditLogger()));
+assertTrue($notFoundHttp->validate(['tenant_id' => 'hospital-a', 'result_id' => 'missing'])['status'] === 404, 'El controlador debe devolver 404 para un resultado inexistente.');
+$_POST = ['tenant_id' => 'hospital-a', 'result_id' => 'missing', 'role' => 'bioquimico'];
+ob_start();
+require __DIR__ . '/../public/index.php';
+ob_end_clean();
+assertTrue(http_response_code() === 404, 'El adaptador HTTP debe aplicar el estado 404 real.');
 
 echo "OK: validacion, reglas de dominio y error de persistencia verificados." . PHP_EOL;
