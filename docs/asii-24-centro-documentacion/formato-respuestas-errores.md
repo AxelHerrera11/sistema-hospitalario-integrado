@@ -140,3 +140,43 @@ Validación (`422`) agrega `errors`:
 - Éxito: `200` con `Content-Type: text/csv; charset=utf-8` y `Content-Disposition: attachment; filename="…"`.
 - Un error de exportación responde con el sobre JSON de `§3`, nunca con un CSV parcial.
 - Un formato no soportado responde `406` con `report_format_unsupported`; no se inventa un formato alternativo.
+
+## 10. Ejemplos de error
+
+```json
+{ "message": "Credenciales inválidas.", "code": "unauthenticated", "trace_id": "trace-91ab22c47d10" }
+```
+
+```json
+{ "message": "No tiene permiso para exportar este reporte.", "code": "forbidden", "trace_id": "trace-2c7e10f9a833" }
+```
+
+```json
+{ "message": "La cita ya fue cancelada y no admite cambios.", "code": "appointments_finalized_immutable", "trace_id": "trace-77d0b6e1c412" }
+```
+
+```json
+{ "message": "El formato pdf aún no está disponible.", "code": "report_format_unsupported", "trace_id": "trace-5e2f88a1b904" }
+```
+
+## 11. Adopción y compatibilidad
+
+| Componente | Forma actual | Acción propuesta |
+|---|---|---|
+| `TenantMiddleware` | `{ "error", "message" }` en 400/404/403 | Al tocarlo: `{ "message", "code", "trace_id" }`. |
+| `RequirePermission` (RBAC) | `{ "code", "trace_id" }` en 401/403/503 | Agregar `message` y mapear a `forbidden`/`unauthenticated`. |
+| `AuthController` | Payload plano y `{ "error", "message" }` | Excepción documentada hasta una ventana de cambio acordada. |
+| Catálogo de medicamentos | `{ "medication", …, "trace_id" }` | Alinear a `data` y al sobre de error en su siguiente PR. |
+| Citas (ASII-05) | `{ "data", "meta" }` y `{ "message", "code" }` | Ya sigue el sobre; falta `trace_id`. |
+| Reportes (ASII-27) | Contrato con `{ "message", "code" }` | Agregar `trace_id` al implementar. |
+
+- Los módulos nuevos cumplen este acuerdo desde su primer PR.
+- Ningún cambio de forma se hace sin aprobación del grupo; un cambio incompatible se anuncia con una semana de antelación.
+- Este documento no crea permisos, tablas ni dependencias: solo fija la forma de las respuestas.
+
+## 12. Referencias
+
+- `docs/asii-26-dashboard-base/contrato-ui-base.md` §7 (interceptor y errores).
+- `docs/asii-05-citas/contrato-api.md` §4 (errores de citas).
+- `docs/asii-27-reportes/contrato-filtros-export.md` §2 y §4 (errores y CSV).
+- `docs/asii-24-centro-documentacion/openapi.yaml` (esquema `Error` y `Pagination`).
