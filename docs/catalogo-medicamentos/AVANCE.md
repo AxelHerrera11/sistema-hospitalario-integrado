@@ -10,3 +10,4 @@
 | 6 | Defensa: presentación, trazabilidad, matriz y cambio práctico | `semana-06/` | Marp PDF (8 diapositivas) revisado visualmente; PlantUML | Rama `…semana-06-presentacion…` | Pendiente | Defensa oral real; cambio real del docente |
 | 7 | Componentes, contratos y refactor | `semana-07/` | Fan-in medido; PlantUML | Rama `…semana-07-componentes…` | Pendiente | UI y controlador Laravel (Semanas 11 y 16) |
 | 8 | Flujo UX por rol, reglas y 5 wireframes | `semana-08/` | PlantUML y Salt renderizados y revisados | Rama `…semana-08-flujo-ux…` | Pendiente | Prueba con usuarios (no realizada) |
+| 9 | Usabilidad y accesibilidad: checklist, 8 hallazgos y backlog | `semana-09/` | `contraste.php` (exit 0, 6.47:1) | Rama `…semana-09-usabilidad…` | Pendiente | Lector de pantalla y usuarios (N/E) |
