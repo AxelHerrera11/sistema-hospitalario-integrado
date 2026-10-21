@@ -36,6 +36,11 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
+            path: '/prototipos/tenants-responsive',
+            name: 'tenants-responsive-prototype',
+            component: () => import('@/modules/tenants/pages/ResponsivePrototypePage.vue'),
+        },
+        {
             path: '/patients',
             name: 'patients',
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
