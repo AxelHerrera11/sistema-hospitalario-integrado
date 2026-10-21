@@ -63,9 +63,10 @@ final class MedicationCatalogApiTest extends TestCase
         $this->getJson('/api/v1/medications?q=a')->assertStatus(422)->assertJsonPath('field', 'term');
     }
 
-    public function test_writes_are_denied_while_rbac_has_not_approved_the_proposed_permissions(): void
+    public function test_writes_are_denied_to_every_role_except_admin_hospital(): void
     {
-        foreach (['medico', 'admin_hospital', 'superadmin'] as $role) {
+        // Desde la activación RBAC solo admin_hospital escribe; superadmin no hereda la concesión.
+        foreach (['medico', 'superadmin'] as $role) {
             CatalogTestIdentity::as($role);
             $this->postJson('/api/v1/medications', ['code' => 'IBU-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
                 'pharmacological_group' => 'AINE'])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
@@ -73,7 +74,7 @@ final class MedicationCatalogApiTest extends TestCase
         }
         // Cada escritura denegada queda registrada con su permiso, actor y hospital (sin registro no hay 403: falla cerrado con 503).
         $denied = array_count_values(array_column(CatalogTestIdentity::$denials, 'permission'));
-        $this->assertSame(['medicamentos.registrar' => 3, 'medicamentos.cambiar_vigencia' => 3], $denied);
+        $this->assertSame(['medicamentos.registrar' => 2, 'medicamentos.cambiar_vigencia' => 2], $denied);
         $this->assertSame(['user-medico', 'hospital-a'], [CatalogTestIdentity::$denials[0]['user_id'], CatalogTestIdentity::$denials[0]['hospital_id']]);
         CatalogTestIdentity::as('medico');
         $this->getJson("/api/v1/medications/{$this->amoxicilina}")->assertJsonPath('medication.validity', 'active');
