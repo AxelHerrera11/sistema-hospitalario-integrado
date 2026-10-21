@@ -10,6 +10,12 @@ use Illuminate\Support\Facades\DB;
  * cuatro indices compuestos para las consultas de gobernanza y una restriccion
  * sobre los valores admitidos de `result`.
  *
+ * Catalogo de `result`: `success`, `failure`, `denied` y `already_revoked`.
+ * El ultimo lo escribe `AuthController::logout()` cuando la sesion ya estaba
+ * revocada (dos cierres de sesion concurrentes del mismo token); sin el, la
+ * restriccion rechazaria esa escritura con SQLSTATE 23514 y el cierre de
+ * sesion devolveria 500.
+ *
  * Nota de implementacion: los indices se crean con `CREATE INDEX` y no con
  * `CREATE INDEX CONCURRENTLY`, porque Laravel envuelve cada migracion en una
  * transicion y PostgreSQL no admite `CONCURRENTLY` dentro de una transaccion.
@@ -35,7 +41,7 @@ return new class extends Migration
 
             ALTER TABLE audit_log
                 ADD CONSTRAINT audit_log_result_check
-                CHECK (result IS NULL OR result IN ('success', 'failure', 'denied')) NOT VALID;
+                CHECK (result IS NULL OR result IN ('success', 'failure', 'denied', 'already_revoked')) NOT VALID;
             SQL);
 
         // La tabla es de solo insercion: una fila que incumpla la restriccion ya
@@ -48,7 +54,7 @@ return new class extends Migration
             BEGIN
                 IF NOT EXISTS (
                     SELECT 1 FROM audit_log
-                    WHERE result IS NOT NULL AND result NOT IN ('success', 'failure', 'denied')
+                    WHERE result IS NOT NULL AND result NOT IN ('success', 'failure', 'denied', 'already_revoked')
                 ) THEN
                     ALTER TABLE audit_log VALIDATE CONSTRAINT audit_log_result_check;
                 END IF;

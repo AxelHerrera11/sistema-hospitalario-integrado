@@ -64,11 +64,24 @@ class AuditLogQueryIndexTest extends TestCase
 
     public function test_the_result_constraint_accepts_the_catalogue_and_null(): void
     {
-        foreach (['success', 'failure', 'denied', null] as $result) {
+        foreach (['success', 'failure', 'denied', 'already_revoked', null] as $result) {
             $this->insertAudit('evento.'.$result, $result);
         }
 
-        $this->assertSame(4, (int) DB::connection('central')->scalar('SELECT count(*) FROM audit_log'));
+        $this->assertSame(5, (int) DB::connection('central')->scalar('SELECT count(*) FROM audit_log'));
+    }
+
+    public function test_the_result_constraint_accepts_the_value_written_by_the_logout(): void
+    {
+        // AuthController::logout() escribe 'already_revoked' cuando la sesion
+        // ya estaba revocada; si la restriccion lo rechaza, el cierre de
+        // sesion responde 500 con SQLSTATE 23514.
+        $this->insertAudit('auth.logout', 'already_revoked');
+
+        $this->assertSame(
+            'already_revoked',
+            DB::connection('central')->scalar("SELECT result FROM audit_log WHERE event = 'auth.logout'"),
+        );
     }
 
     public function test_the_result_constraint_is_validated_when_the_data_allows_it(): void

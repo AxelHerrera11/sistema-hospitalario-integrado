@@ -7,12 +7,13 @@ Gobernanza y Auditoría sobre `audit_log` (CENTRAL) y la convierte en una migrac
 |---|---|
 | Propuesta 001 | **Validada con ejecución real** y convertida en migración correctiva |
 | Migración | `database/migrations/central/2026_08_11_000900_add_audit_log_query_indexes.php` |
-| Pruebas | `tests/Database/Central/AuditLogQueryIndexTest.php` (6 pruebas, 54 aserciones) |
+| Pruebas | `tests/Database/Central/AuditLogQueryIndexTest.php` (7 pruebas) |
 
 ## 1. Método de medición
 
-- PostgreSQL 16 en contenedor, base `his_central_verify` con las migraciones reales (`develop` +
-  las de auditoría y autenticación de la rama de gobernanza).
+- PostgreSQL 16 en contenedor, base `his_central_verify` con las migraciones reales de `develop`
+  (`2026_08_11_000700_create_audit_log.php` y `2026_08_11_000800_enrich_audit_log.php`, ya
+  integradas en `develop`), sobre las que se aplicó este correctivo.
 - Volumen: **200 000 filas**, 5 hospitales, 60 actores, 40 eventos distintos
   (`moduloN.accionM`), 20 000 minutos de historial.
 - `ANALYZE` ejecutado y caché caliente en todas las mediciones; `EXPLAIN (ANALYZE, BUFFERS)`.
@@ -58,9 +59,12 @@ como el módulo es `modulo.accion`, el prefijo `modulo.%` ya incluye el caso exa
    La tabla es de solo inserciones (trigger `audit_log is append-only`), así que una fila que
    incumpliera el catálogo **no se podría corregir nunca** con un `UPDATE`. Por eso la migración
    añade el `CHECK` como `NOT VALID` y, en el mismo paso, lo valida si ninguna fila existente lo
-   incumple; si alguna lo incumple, queda `NOT VALID` y documentado, en lugar de bloquear el
+   incumple; si alguna lo    incumple, queda `NOT VALID` y documentado, en lugar de bloquear el
    despliegue. Verificado: `result = 'ok'` se rechaza con SQLSTATE **23514**; `NULL`, `success`,
-   `failure` y `denied` se aceptan.
+   `failure`, `denied` y `already_revoked` se aceptan.
+   El catálogo incluye `already_revoked` porque `AuthController::logout()` lo escribe cuando la
+   sesión ya estaba revocada (dos cierres de sesión concurrentes del mismo token). Con el catálogo
+   anterior esa escritura era rechazada con SQLSTATE **23514** y el cierre de sesión devolvía 500.
 4. **Índices existentes.** `audit_log_actor_index` y `audit_log_hospital_index` quedan **cubiertos**
    por los compuestos para las consultas del módulo, pero **no se eliminan en esta migración**:
    siguen sirviendo a consultas que filtren sin `hospital_id`, y borrarlos exige volver a medir.
