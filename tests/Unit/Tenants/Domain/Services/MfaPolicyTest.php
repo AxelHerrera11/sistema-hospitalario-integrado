@@ -1,89 +1,70 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Unit\Tenants\Domain\Services;
+
 use App\Modules\Tenants\Domain\Services\MfaPolicy;
-use App\Modules\Tenants\Domain\Services\MfaRequirement;
 use App\Modules\Tenants\Domain\ValueObjects\Role;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class MfaPolicyTest extends TestCase
+
+/**
+ * Semana 15 · UT-002: política MFA del micro-HIS (Semana 3) con roles canónicos de RBAC.
+ */
+#[Group('unitarias')]
+class MfaPolicyTest extends TestCase
 {
-    private MfaPolicy $policy;
-    protected function setUp(): void
+    /** @return array<string, array{0: string, 1: bool}> */
+    public static function rolesYExigencia(): array
     {
-        $this->policy = new MfaPolicy();
+        return [
+            'superadmin exige MFA' => ['superadmin', true],
+            'admin_hospital exige MFA' => ['admin_hospital', true],
+            'medico no lo exige' => ['medico', false],
+            'enfermeria no lo exige' => ['enfermeria', false],
+            'recepcion no lo exige' => ['recepcion', false],
+            'jefatura_medica no lo exige' => ['jefatura_medica', false],
+        ];
     }
-    public function testTenantAdminRequiresMfa(): void
+
+    #[DataProvider('rolesYExigencia')]
+    public function test_role_decides_mfa_when_no_policy_overrides(string $role, bool $required): void
     {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::TENANT_ADMIN)],
-            ['mfa_required' => false],
-            false
-        );
-        $this->assertTrue($requirement->required());
-        $this->assertEquals('TOTP', $requirement->type());
+        $requirement = (new MfaPolicy())->evaluate([new Role($role)], ['mfa_required' => false], false);
+
+        $this->assertSame($required, $requirement->required());
+        $this->assertSame('TOTP', $requirement->type());
     }
-    public function testAuditorRequiresMfa(): void
+
+    #[Group('caja-blanca')]
+    public function test_hospital_policy_forces_mfa_for_any_role(): void
     {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::AUDITOR)],
-            ['mfa_required' => false],
-            false
-        );
-        $this->assertTrue($requirement->required());
-    }
-    public function testPlatformAdminRequiresMfa(): void
-    {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::PLATFORM_ADMIN)],
-            ['mfa_required' => false],
-            false
-        );
+        $requirement = (new MfaPolicy())->evaluate([new Role('medico')], ['mfa_required' => true], false);
+
         $this->assertTrue($requirement->required());
     }
-    public function testMedicoDoesNotRequireMfaByDefault(): void
+
+    #[Group('caja-blanca')]
+    public function test_user_flag_forces_mfa_for_any_role(): void
     {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::MEDICO)],
-            ['mfa_required' => false],
-            false
-        );
-        $this->assertFalse($requirement->required());
-    }
-    public function testEnfermeroDoesNotRequireMfaByDefault(): void
-    {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::ENFERMERO)],
-            ['mfa_required' => false],
-            false
-        );
-        $this->assertFalse($requirement->required());
-    }
-    public function testTenantPolicyMfaRequiredOverrides(): void
-    {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::MEDICO)],
-            ['mfa_required' => true],
-            false
-        );
+        $requirement = (new MfaPolicy())->evaluate([new Role('enfermeria')], [], true);
+
         $this->assertTrue($requirement->required());
     }
-    public function testUserMfaRequiredOverrides(): void
+
+    #[Group('caja-blanca')]
+    public function test_one_privileged_role_among_several_is_enough(): void
     {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::MEDICO)],
-            ['mfa_required' => false],
-            true
-        );
+        $requirement = (new MfaPolicy())->evaluate([new Role('medico'), new Role('admin_hospital')], [], false);
+
         $this->assertTrue($requirement->required());
     }
-    public function testWebAuthnWhenEnabled(): void
+
+    public function test_only_totp_is_offered_even_if_webauthn_is_requested(): void
     {
-        $requirement = $this->policy->evaluate(
-            [new Role(Role::TENANT_ADMIN)],
-            ['mfa_required' => false, 'mfa_webauthn_enabled' => true],
-            false
-        );
-        $this->assertTrue($requirement->required());
-        $this->assertEquals('WEBAUTHN', $requirement->type());
+        // WebAuthn quedó fuera del micro-HIS: no había validación real de atestación.
+        $requirement = (new MfaPolicy())->evaluate([new Role('superadmin')], ['mfa_webauthn_enabled' => true], false);
+
+        $this->assertSame('TOTP', $requirement->type());
     }
 }

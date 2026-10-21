@@ -10,7 +10,8 @@ use MicroHis\Occupancy\Domain\BedSnapshot;
 
 final readonly class PdoBedSnapshotReader implements BedSnapshotReader
 {
-    public function __construct(private \PDO $pdo)
+    /** @param \PDO|\Closure(): \PDO $pdo Conexión directa o proveedor perezoso de la conexión. */
+    public function __construct(private \PDO|\Closure $pdo)
     {
     }
 
@@ -30,7 +31,13 @@ final readonly class PdoBedSnapshotReader implements BedSnapshotReader
             SQL;
 
         try {
-            $statement = $this->pdo->prepare($sql);
+            $pdo = $this->pdo instanceof \Closure ? ($this->pdo)() : $this->pdo;
+
+            if (! $pdo instanceof \PDO) {
+                throw new PersistenceFailure('Hospital occupancy is unavailable.');
+            }
+
+            $statement = $pdo->prepare($sql);
             $value = $cutoff->format(DATE_ATOM);
             $statement->execute(['cutoff_start' => $value, 'cutoff_end' => $value]);
 

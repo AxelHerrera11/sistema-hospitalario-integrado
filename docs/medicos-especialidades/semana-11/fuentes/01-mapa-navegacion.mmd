@@ -1,0 +1,21 @@
+---
+title: "Mapa de navegación del prototipo — Médicos, especialidades y disponibilidad"
+---
+flowchart LR
+  inicio([Abre el prototipo]) --> rol{Rol}
+  rol -- Administrador --> med[Médicos<br/>lista con licencia]
+  rol -- Recepcionista --> disp[Disponibilidad<br/>especialidad + fecha]
+  rol -- Médico --> mia[Mi disponibilidad]
+  med -- + Registrar médico --> p1[Paso 1 Usuario] --> p2[Paso 2 Colegiado] --> p3[Paso 3 Especialidad] --> p4[Paso 4 Vigencia]
+  p4 --> conf[Confirmar alta<br/>Corregir por línea]
+  conf -- Correcta --> ok1[Médico registrado<br/>vuelve a Médicos]
+  conf -- 409 licencia --> e1[Ya registrado<br/>abrir existente]
+  conf -- Sin respuesta --> e2[No sabemos si se guardó<br/>buscar licencia]
+  med -- Asociar especialidad --> asoc[Especialidad, principal y vigencia<br/>aviso de principal existente]
+  asoc -- Confirmar --> okA[Especialidad asociada<br/>vuelve a Médicos]
+  asoc -- 409 principal --> eA[Ya tiene principal<br/>marcar como secundaria]
+  disp --> franja[Elegir franja]
+  franja -- Correcta --> ok2[Lista para Citas<br/>elegir no reserva]
+  franja -- Franja tomada --> crit[ERROR CRÍTICO<br/>la hora ya no está libre<br/>lista actualizada]
+  crit --> franja
+  disp -- Sin conexión --> off[Última consulta<br/>franjas bloqueadas]

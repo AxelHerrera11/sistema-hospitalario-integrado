@@ -1,214 +1,93 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Feature\Tenants;
-use App\Modules\Tenants\Application\Commands\AuthenticateCommand;
-use App\Modules\Tenants\Application\UseCases\AuthenticateUserUseCase;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\RefreshTokenRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\TenantRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
-use App\Modules\Tenants\Domain\Services\Argon2idHasher;
-use App\Modules\Tenants\Domain\Services\BlocklistService;
-use App\Modules\Tenants\Domain\Services\DeviceTrustService;
-use App\Modules\Tenants\Domain\Services\MfaPolicy;
-use App\Modules\Tenants\Domain\Services\RefreshTokenRotator;
-use App\Modules\Tenants\Domain\Services\TokenFactory;
-use App\Modules\Tenants\Domain\Services\TotpVerifier;
-use App\Modules\Tenants\Domain\Services\WebAuthnVerifier;
-use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
-use App\Modules\Tenants\Domain\ValueObjects\Email;
-use App\Modules\Tenants\Domain\ValueObjects\Role;
+
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Domain\ValueObjects\UserId;
-use App\Modules\Tenants\Infrastructure\External\EventPublisher;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class MultiTenantIsolationFeatureTest extends TestCase
+use Tests\Feature\Tenants\Concerns\MicroHisHttp;
+
+/**
+ * Semana 15 · NB-005 (RF-10): aislamiento entre hospitales con el mismo usuario y dispositivo.
+ */
+#[Group('caja-negra')]
+class MultiTenantIsolationFeatureTest extends TestCase
 {
-    private AuthenticateUserUseCase $useCase;
-    private UserRepositoryInterface $userRepo;
-    private TenantRepositoryInterface $tenantRepo;
-    private RefreshTokenRepositoryInterface $refreshRepo;
-    private SessionRepositoryInterface $sessionRepo;
-    private AuditLogRepositoryInterface $auditLog;
-    private EventPublisher $eventPublisher;
-    private Argon2idHasher $hasher;
-    private MfaPolicy $mfaPolicy;
-    private TokenFactory $tokenFactory;
-    private RefreshTokenRotator $refreshRotator;
-    private DeviceTrustService $deviceTrust;
-    private TotpVerifier $totpVerifier;
-    private WebAuthnVerifier $webAuthnVerifier;
-    private BlocklistService $blocklist;
+    use MicroHisHttp;
+
     protected function setUp(): void
     {
-        $this->userRepo = $this->createMock(UserRepositoryInterface::class);
-        $this->tenantRepo = $this->createMock(TenantRepositoryInterface::class);
-        $this->refreshRepo = $this->createMock(RefreshTokenRepositoryInterface::class);
-        $this->sessionRepo = $this->createMock(SessionRepositoryInterface::class);
-        $this->auditLog = $this->createMock(AuditLogRepositoryInterface::class);
-        $this->eventPublisher = $this->createMock(EventPublisher::class);
-        $this->hasher = new Argon2idHasher();
-        $this->mfaPolicy = $this->createMock(MfaPolicy::class);
-        $this->tokenFactory = $this->createMock(TokenFactory::class);
-        $this->refreshRotator = $this->createMock(RefreshTokenRotator::class);
-        $this->deviceTrust = $this->createMock(DeviceTrustService::class);
-        $this->totpVerifier = $this->createMock(TotpVerifier::class);
-        $this->webAuthnVerifier = $this->createMock(WebAuthnVerifier::class);
-        $this->blocklist = $this->createMock(BlocklistService::class);
-        $this->useCase = new AuthenticateUserUseCase(
-            $this->userRepo,
-            $this->tenantRepo,
-            $this->refreshRepo,
-            $this->sessionRepo,
-            $this->auditLog,
-            $this->eventPublisher,
-            $this->hasher,
-            $this->mfaPolicy,
-            $this->tokenFactory,
-            $this->refreshRotator,
-            $this->deviceTrust,
-            $this->totpVerifier,
-            $this->webAuthnVerifier,
-            $this->blocklist
-        );
+        $this->bootMicroHis();
     }
-    public function testUserFromTenantACannotAccessTenantB(): void
+
+    public function test_token_of_hospital_a_cannot_be_used_against_hospital_b(): void
     {
-        $tenantA = new TenantId('550e8400-e29b-41d4-a716-446655440001');
-        $tenantB = new TenantId('550e8400-e29b-41d4-a716-446655440002');
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440000');
-        $passwordHash = $this->hasher->hash('CorrectPass123!');
-        $user = User::reconstitute(
-            $userId,
-            new Email('medico@hospital-a.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash($passwordHash),
-            'Dr. Medico',
-            [Role::MEDICO],
-            $tenantA,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            [$passwordHash]
-        );
-        $this->userRepo->method('findByEmailAndTenant')
-            ->with(new \App\Modules\Tenants\Domain\ValueObjects\Email('medico@hospital-a.com'), $tenantB)
-            ->willReturn(null);
-        $this->auditLog->expects($this->once())->method('log');
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('medico@hospital-a.com'),
-            'CorrectPass123!',
-            $tenantB,
-            $device,
-            '192.168.1.1'
-        );
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Credenciales inválidas');
-        $this->useCase->execute($command);
+        $a = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $b = $this->hospitalWithAdmin('Hospital B', 'admin@b.test');
+
+        $response = $this->call('GET', '/admin/users', [], $b['tenant'], $a['token']);
+
+        $this->assertSame(403, $response['status']);
+        $attempt = $this->module->auditLog->findByEventName('CROSS_TENANT_ATTEMPT')[0];
+        $this->assertSame($a['tenant'], $attempt['payload']['tenant_id']);
+        $this->assertSame($b['tenant'], $attempt['payload']['target_tenant_id']);
     }
-    public function testInactiveTenantBlocksAccess(): void
+
+    public function test_user_list_only_shows_the_admin_hospital(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440000');
-        $passwordHash = $this->hasher->hash('CorrectPass123!');
-        $user = User::reconstitute(
-            $userId,
-            new Email('medico@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash($passwordHash),
-            'Dr. Medico',
-            [Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            [$passwordHash]
-        );
-        $tenant = \App\Modules\Tenants\Domain\Entities\Tenant::create($tenantId, 'Hospital Suspendido');
-        $reflection = new \ReflectionClass($tenant);
-        $reflection->getProperty('status')->setValue($tenant, \App\Modules\Tenants\Domain\Entities\Tenant::STATUS_SUSPENDED);
-        $this->userRepo->method('findByEmailAndTenant')->willReturn($user);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('medico@hospital.com'),
-            'CorrectPass123!',
-            $tenantId,
-            $device,
-            '192.168.1.1'
-        );
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Tenant inactivo');
-        $this->useCase->execute($command);
+        $a = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $b = $this->hospitalWithAdmin('Hospital B', 'admin@b.test');
+        $this->createUser($a['token'], 'solo-a@red.test', ['medico']);
+
+        $emails = array_column($this->call('GET', '/admin/users', [], null, $b['token'])['body']['data'], 'email');
+
+        $this->assertSame(['admin@b.test'], $emails);
     }
-    public function testUserRolesAreScopedToTenant(): void
+
+    public function test_same_user_and_device_keep_roles_and_sessions_per_hospital(): void
     {
-        $tenantA = new TenantId('550e8400-e29b-41d4-a716-446655440001');
-        $tenantB = new TenantId('550e8400-e29b-41d4-a716-446655440002');
-        $this->userRepo->method('findByEmailAndTenant')
-            ->willReturnCallback(function ($email, $tenantId) {
-                if ($tenantId->value() === $tenantA->value()) {
-                    return User::reconstitute(
-                        new UserId('550e8400-e29b-41d4-a716-446655440000'),
-                        $email,
-                        \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash('$argon2id$test'),
-                        'Dr. Cross',
-                        [Role::MEDICO],
-                        $tenantA,
-                        User::STATUS_ACTIVE,
-                        null,
-                        false,
-                        new \DateTimeImmutable(),
-                        new \DateTimeImmutable(),
-                        null,
-                        new \DateTimeImmutable(),
-                        []
-                    );
-                }
-                return null;
-            });
-        $tenantATenant = \App\Modules\Tenants\Domain\Entities\Tenant::create($tenantA, 'Hospital A');
-        $this->tenantRepo->method('findById')->willReturn($tenantATenant);
-        $this->mfaPolicy->method('evaluate')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\MfaRequirement(false)
-        );
-        $accessToken = new \App\Modules\Tenants\Domain\Services\AccessToken(
-            'access.token',
-            new \App\Modules\Tenants\Domain\ValueObjects\JwtClaims(
-                '550e8400-e29b-41d4-a716-446655440000',
-                ['MEDICO'],
-                $tenantA->value(),
-                'session-123',
-                'jti-123',
-                'device-123',
-                time(),
-                time() + 900,
-                time()
-            )
-        );
-        $this->tokenFactory->method('createAccessToken')->willReturn($accessToken);
-        $this->refreshRotator->method('generateAndStore')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\RefreshTokenResult('refresh', time() + 604800)
-        );
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('cross@hospital.com'),
-            'CorrectPass123!',
-            $tenantA,
-            $device,
-            '192.168.1.1'
-        );
-        $result = $this->useCase->execute($command);
-        $this->assertFalse($result->isMfaRequired());
-        $this->assertEquals(['MEDICO'], $result->accessToken()->claims()->roles());
+        $a = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $b = $this->hospitalWithAdmin('Hospital B', 'admin@b.test');
+        $userId = $this->createUser($a['token'], 'ana@red.test', ['medico'])['body']['user_id'];
+        $this->assertSame(201, $this->createUser($b['token'], 'ana@red.test', ['jefatura_medica'], $userId)['status']);
+
+        $inA = $this->login('ana@red.test', $a['tenant'])['body'];
+        $inB = $this->login('ana@red.test', $b['tenant'])['body'];
+
+        $this->assertSame($inA['user']['id'], $inB['user']['id']);
+        $this->assertSame(['medico'], $inA['user']['roles']);
+        $this->assertSame(['jefatura_medica'], $inB['user']['roles']);
+
+        // Revocar en A no toca la sesión del mismo usuario y dispositivo en B.
+        $this->call('DELETE', "/admin/users/{$userId}/sessions", [], null, $a['token']);
+        $this->assertSame(401, $this->call('GET', '/auth/me', [], null, $inA['access_token'])['status']);
+        $this->assertSame(200, $this->call('GET', '/auth/me', [], null, $inB['access_token'])['status']);
+        $this->assertSame(401, $this->call('POST', '/auth/refresh', ['refresh_token' => $inA['refresh_token']])['status']);
+        $this->assertSame(200, $this->call('POST', '/auth/refresh', ['refresh_token' => $inB['refresh_token']])['status']);
+    }
+
+    public function test_failed_logins_lock_only_the_membership_of_that_hospital(): void
+    {
+        $a = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $b = $this->hospitalWithAdmin('Hospital B', 'admin@b.test');
+        $userId = $this->createUser($a['token'], 'ana@red.test', ['medico'])['body']['user_id'];
+        $this->createUser($b['token'], 'ana@red.test', ['medico'], $userId);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->login('ana@red.test', $a['tenant'], 'incorrecta');
+        }
+
+        $this->assertSame(423, $this->login('ana@red.test', $a['tenant'])['status']);
+        $this->assertSame(200, $this->login('ana@red.test', $b['tenant'])['status']);
+    }
+
+    public function test_suspended_hospital_blocks_login(): void
+    {
+        $a = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($a['token'], 'medico@a.test', ['medico']);
+        $this->module->tenants->findById(new TenantId($a['tenant']))->suspend();
+
+        $this->assertSame(403, $this->login('medico@a.test', $a['tenant'])['status']);
+        $this->assertCount(1, $this->module->auditLog->findByEventName('TENANT_INACTIVE'));
     }
 }
