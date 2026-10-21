@@ -1,650 +1,256 @@
-# Semana 11 — Pantallas Móvil (Capturas/Descripciones)
+# Semana 11 — Pantallas móvil (parte 1: acceso y alta)
 **Módulo:** Gestión de usuarios, tenants y endurecimiento de autenticación
-**Versión:** 1.0 | **Fecha:** 2026-10-18
+**Versión:** 1.1 | **Fecha:** 2026-10-21
+
+> **Qué es este documento.** Mockup estático de diseño (ASCII) para 375 px. **No describe
+> funcionalidad integrada**: cada pantalla indica si su comportamiento ya existe en el HIS
+> (`develop`) o si es una propuesta. La continuación (usuarios, revocación y auditoría) está en
+> [`prototype-screens-mobile1.md`](prototype-screens-mobile1.md).
+
+| Etiqueta | Significado |
+|---|---|
+| **[Implementado]** | Existe en `routes/api.php` y en el SPA Vue de `develop`. |
+| **[Propuesto]** | Diseño a validar: no hay contrato ni implementación en el HIS. |
+
+**Roles.** Se usan los códigos literales de `config/rbac.php` (`superadmin`, `admin_hospital`,
+`medico`, `enfermeria`, `recepcion`, `tecnico_laboratorio`, `bioquimico`, `jefatura_medica`).
+La versión anterior usaba TENANT_ADMIN, MEDICO, ENFERMERO, AUDITOR y PACIENTE: los tres primeros
+corresponden a `admin_hospital`, `medico` y `enfermeria`; AUDITOR y PACIENTE **no existen** en RBAC
+y se retiraron.
 
 ---
 
-## 1. Login Form (`/auth/login`) - Mobile 375px
+## 1. Inicio de sesión (`/login`) — [Implementado]
 
-### Estado: Vacío (Initial)
+Contrato vigente: `POST /api/v1/auth/login` con cabecera `X-Tenant-ID` (UUID del hospital).
+Componente real: `resources/js/modules/auth/pages/LoginPage.vue` y la versión responsive
+`resources/js/modules/tenants/responsive/LoginForm.vue` (Semana 10).
+
+### Estado: vacío
 ```
 ┌─────────────────────────────────────┐
-│  🏥 SISTEMA HOSPITALARIO            │
+│  Hospital HIS                       │
 ├─────────────────────────────────────┤
+│  Iniciar sesión                     │
 │                                     │
-│   ┌───────────────────────────────┐ │
-│   │  🔐 Iniciar Sesión            │ │
-│   │                               │ │
-│   │  Tenant: Hospital Central ▼  │ │
-│   │  [_________________________]  │ │  ← 100% width
-│   │                               │ │
-│   │  Email institucional     👤   │ │
-│   │  [_________________________]  │ │
-│   │                               │ │
-│   │  Contraseña             👁️    │ │
-│   │  [_________________________]  │ │
-│   │                               │ │
-│   │  [☐ Recordarme 30 días]       │ │
-│   │                               │ │
-│   │  [ INICIAR SESIÓN ]           │ │  ← 100% width, 48px height
-│   │                               │ │
-│   │  ¿Olvidó? | ¿Problemas MFA?   │ │
-│   │                               │ │
-│   │  ℹ️ Tenant: HCH-001           │ │
-│   └───────────────────────────────┘ │
-└─────────────────────────────────────┘
-```
-
-### Estado: Cargando
-```
-┌─────────────────────────────────────┐
-│  🏥 SISTEMA HOSPITALARIO            │
-├─────────────────────────────────────┤
+│  ID del hospital (X-Tenant-ID) *    │
+│  [______________________________]   │  ← UUID; se recuerda en el equipo
+│  Lo entrega la administración       │
 │                                     │
-│   ┌───────────────────────────────┐ │
-│   │  🔐 Iniciar Sesión            │ │
-│   │                               │ │
-│   │  Tenant: Hospital Central ▼  │ │
-│   │  [dra.gonzalez@hospital.com__] │ │  (disabled)
-│   │                               │ │
-│   │  Contraseña             👁️    │ │
-│   │  [●●●●●●●●●●●●●•••••]         │ │  (disabled)
-│   │                               │ │
-│   │  [☑ Recordarme...]  (disabled)│ │
-│   │                               │ │
-│   │  [ ⏳ Validando credenciales ] │ │  ← spinner + disabled
-│   │                               │ │
-│   │  ℹ️ Tenant: HCH-001           │ │
-│   └───────────────────────────────┘ │
+│  Correo *                           │
+│  [______________________________]   │  ← inputmode=email, 16 px
+│                                     │
+│  Contraseña *               [Ver]   │
+│  [______________________________]   │
+│                                     │
+│  [          ENTRAR          ]       │  ← 100 % ancho, mín. 44 px
 └─────────────────────────────────────┘
 ```
 
-### Estado: Error Credenciales
+### Estado: enviando
 ```
 ┌─────────────────────────────────────┐
-│  ...                                │
-│  ┌───────────────────────────────┐ │
-│  │  🔐 Iniciar Sesión            │ │
-│  │                               │ │
-│  │  Email institucional     👤   │ │
-│  │  [dra.gonzalez@hospital.com_] │ │
-│   │                               │ │
-│   │  Contraseña             👁️    │ │
-│  │  [●●●●●●●●●●●●••••••] .error  │ │  ← border rojo
-│   │  ⚠️ Credenciales inválidas. Intento 2/5 │  ← .error-msg
-│   │  [☐ Recordarme...]                        │
-│   │                                         │ │
-│   │  [ INICIAR SESIÓN ]                     │ │
-│   │                                         │ │
-│   │  ¿Olvidó? | ¿Problemas MFA?             │ │
-│   │                                         │ │
-│   │  🔴 Toast: Credenciales inválidas. Intento 2/5 │
-│   │     [ Reintentar ] [ ¿Olvidó? ] [ Cambiar Tenant ] │
-│   │  ℹ️ Tenant: HCH-001                       │ │
-│   └───────────────────────────────┘           │
+│  Iniciar sesión                     │
+│  ID del hospital  [26adadaf-…]      │
+│  Correo           [ana@hospital…]   │
+│  Contraseña       [••••••••••••]    │
+│                                     │
+│  [ ⏳ Verificando… ]  (deshabilitado)│  ← ignora doble toque y Enter
 └─────────────────────────────────────┘
 ```
 
-### Estado: Cuenta Bloqueada
+### Estado: error de credenciales
 ```
 ┌─────────────────────────────────────┐
-│  ...                                │
-│  ┌───────────────────────────────┐ │
-│  │  🔐 Iniciar Sesión            │ │
-│  │                               │ │
-│  │  Email institucional 👤       │ │  (disabled)
-│  │  [dra.gonzalez@hospital.com_] │ │
-│  │                               │ │
-│  │  Contraseña            👁️     │ │  (disabled)
-│  │  [●●●●●●●●●●●••••••••]        │ │
-│  │                               │ │
-│  │  [ INICIAR SESIÓN ] (disabled)│ │
-│  │                               │ │
-│  │  ⚠️ Cuenta bloqueada 15 min   │ │
-│  │     Intento 5 de 5            │ │
-│  │     ⏱️ Desbloqueo en: 14:52   │ │
-│   │                               │ │
-│   │  [ Contactar Administrador ]  │ │
-│   │                               │ │
-│   │  🔴 Modal: Cuenta bloqueada   │ │
-│   │     ⏱️ 14:51 restantes        │ │
-│   │     [ Esperar ] [ Contactar ] │ │
-│   │  ℹ️ Tenant: HCH-001           │ │
-│   └───────────────────────────────┘ │
+│  Iniciar sesión                     │
+│  ┌───────────────────────────────┐  │
+│  │ ⚠ Credenciales inválidas.     │  │  ← role="alert", mensaje del API
+│  └───────────────────────────────┘  │
+│  Correo      [ana@hospital.test]    │
+│  Contraseña  [________________]     │  ← se vacía tras el error
+│  [          ENTRAR          ]       │
+└─────────────────────────────────────┘
+```
+El mensaje es el que devuelve el API; no revela si el correo existe.
+
+### Estado: sin conexión — [Implementado en el prototipo de Semana 10]
+```
+┌─────────────────────────────────────┐
+│  ┌───────────────────────────────┐  │
+│  │ Sin conexión: el inicio de    │  │  ← role="status"
+│  │ sesión requiere red y no se   │  │
+│  │ guarda para después.          │  │
+│  └───────────────────────────────┘  │
+│  [          ENTRAR          ]  (deshabilitado)
 └─────────────────────────────────────┘
 ```
 
-### Estado: Éxito (Redirect)
+### Estado: cuenta bloqueada — [Propuesto]
 ```
 ┌─────────────────────────────────────┐
-│  ...                                │
-│  ┌───────────────────────────────┐ │
-│  │  🔐 Iniciar Sesión            │ │
-│  │                               │ │
-│  │  ✅ Toast: Bienvenida, Dra. G │ │
-│  │     Redirigiendo...           │ │
-│  │     [ ████████████████████ ] 100%│ │
-│   │                               │ │
-│   │  ℹ️ Tenant: HCH-001           │ │
-│   └───────────────────────────────┘ │
+│  Iniciar sesión                     │
+│  ┌───────────────────────────────┐  │
+│  │ ⛔ Cuenta bloqueada            │  │
+│  │ Demasiados intentos fallidos. │  │
+│  │ Vuelva a intentar más tarde o │  │
+│  │ contacte a la administración. │  │
+│  └───────────────────────────────┘  │
+│  [ Contactar administración ]       │
 └─────────────────────────────────────┘
 ```
+El HIS `develop` no expone hoy un estado de bloqueo propio (HTTP 423). Existe en el micro-HIS
+de Semana 3; integrarlo en `/api/v1/auth/login` requiere acordar el contrato.
+
+### Retirado respecto de la versión 1.0
+- «Recordarme 30 días»: no existe; la sesión se renueva con el refresh por cookie del API.
+- Validar el dominio `@hospital.com`: cada hospital usa su propio dominio.
+- Selector de tenant por nombre: el contrato pide el UUID en `X-Tenant-ID`.
 
 ---
 
-## 2. MFA Challenge (Mobile 375px)
+## 2. Segundo factor (MFA) — [Propuesto en el HIS]
 
-### Estado: Desafío TOTP
+El HIS `develop` **no tiene MFA**. El flujo TOTP sí está implementado y probado en el micro-HIS
+vanilla de Semana 3 (`POST /auth/mfa` con `challenge_id` y código de 6 dígitos; desafío de un solo
+uso, vence en 5 min y admite 3 intentos). Estas pantallas proponen su versión para el SPA.
+Passkeys/WebAuthn quedan **fuera de alcance**: no hay validación de atestación.
+
+### Estado: desafío TOTP
 ```
 ┌─────────────────────────────────────┐
-│  🔐 Autenticación 2FA              │
+│  Verificación en dos pasos          │
 ├─────────────────────────────────────┤
+│  Abra su app autenticadora e        │
+│  ingrese el código de 6 dígitos.    │
 │                                     │
-│  📱 App Autenticadora (TOTP)       │
+│  Código *                           │
+│  [ _ _ _ _ _ _ ]                    │  ← un solo input, inputmode=numeric,
+│                                     │    autocomplete=one-time-code
+│  [       VERIFICAR       ]          │  ← 100 % ancho
 │                                     │
-│  1. Abra su app                    │
-│  2. Ingrese código 6 dígitos       │
-│                                     │
-│  Código: [1][2][3][4][5][6]        │
-│  ← 6 inputs 100% width c/u         │
-│                                     │
-│  ⏱️ Expira en: 25s ████████░░░░░░  │
-│                                     │
-│  [ VERIFICAR CÓDIGO ]              │
-│  ← 100% width                      │
-│                                     │
-│  ─────────────────────────────────  │
-│                                     │
-│  🔑 ¿Prefiere Passkey?             │
-│  [ Usar FaceID / TouchID ]         │
-│                                     │
-│  ❓ ¿Problemas?                    │
-│  [ No tengo acceso a la app ]      │
+│  ¿Sin acceso a la app? Contacte a   │
+│  la administración del hospital.    │
+└─────────────────────────────────────┘
+```
+Se usa un único campo en lugar de 6 casillas: los lectores de pantalla y el autocompletado del
+sistema lo manejan mejor.
+
+### Estado: código incorrecto
+```
+┌─────────────────────────────────────┐
+│  Verificación en dos pasos          │
+│  ┌───────────────────────────────┐  │
+│  │ ⚠ Código inválido.            │  │  ← role="alert"
+│  └───────────────────────────────┘  │
+│  Código *  [ _ _ _ _ _ _ ]          │  ← campo vacío y con foco
+│  [       VERIFICAR       ]          │
 └─────────────────────────────────────┘
 ```
 
-### Estado: Verificando
+### Estado: desafío vencido o agotado
 ```
 ┌─────────────────────────────────────┐
-│  🔐 Autenticación 2FA              │
-├─────────────────────────────────────┤
-|                                     |
-|  📱 App Autenticadora (TOTP)       |
-|                                     |
-|  ⏳ Verificando código...          |
-|    [ ████████░░░░░░░░░░░░░░░░ ]    |
-|                                     |
-|  [ ⏳ Verificando... ]  (disabled) |
-|                                     |
-|  ⏱️ Restante: 18s ████████░░░░░░░░░░ |
-|                                     |
+│  Verificación en dos pasos          │
+│  ┌───────────────────────────────┐  │
+│  │ ⛔ El código venció o se       │  │
+│  │ agotaron los intentos.        │  │
+│  └───────────────────────────────┘  │
+│  [   VOLVER A INICIAR SESIÓN   ]    │  ← vuelve a /login
 └─────────────────────────────────────┘
 ```
-
-### Estado: Error Código
-```
-┌─────────────────────────────────────┐
-│  🔐 Autenticación 2FA              │
-├─────────────────────────────────────┤
-|                                     |
-|  📱 App Autenticadora (TOTP)       |
-|                                     |
-|  ❌ Código inválido. Intento 2/3   |
-|    Código: [1][2][3][4][5][6] ❌   │
-|                                     |
-|  ⏱️ Expira en: 12s ██████░░░░░░░░░░  |
-|                                     |
-|  [ VERIFICAR CÓDIGO ]              |
-|                                     |
-|  [ Reenviar código ]               |
-|                                     |
-|  ─────────────────────────────────  |
-|                                     |
-|  🔑 ¿Prefiere Passkey?             |
-|  [ Usar FaceID / TouchID ]         |
-|                                     |
-|  ❓ ¿Problemas? [ No tengo app ]   │
-└─────────────────────────────────────┘
-```
-
-### Estado: Bloqueo MFA (3 Fallos)
-```
-┌─────────────────────────────────────┐
-│  🔐 Autenticación 2FA          [×] │
-├─────────────────────────────────────┤
-|                                     |
-|  🔴 MFA Bloqueado: Demasiados      |
-|     intentos fallidos              |
-|     Intento 3 de 3                 |
-|     ⏱️ Desbloqueo en: 29:45       |
-|                                     |
-|     Código: [ ][ ][ ][ ][ ][ ]     |
-|     (disabled)                     |
-|                                     |
-|     [ Verificar Código ] (disabled) |
-|                                     |
-|     ⚠️ Demasiados intentos.        |
-|        Intente en 30 minutos.      |
-|        Notificado a admin.         |
-|                                     |
-|     [ Contactar Administrador ]    |
-|     [ Esperar desbloqueo ]         |
-|                                     |
-└─────────────────────────────────────┘
-```
-
-### Estado: WebAuthn (Passkey)
-```
-┌─────────────────────────────────────┐
-│  🔑 Autenticación con Passkey      │
-├─────────────────────────────────────┤
-|                                     |
-|  🔐 Toque sensor huella / FaceID   |
-|                                     |
-|       [ 👆 Autenticar con          |
-|        Dispositivo ]               |
-|                                     |
-|  Dispositivos registrados:         |
-| ┌───────────────────────────────┐  |
-| │ 📱 iPhone 15 Pro (FaceID)    │  |
-│ │  Hoy 08:30              [⋮]  │  |
-| ├────────────────────────────────┤  |
-| │ 💻 MacBook Pro (TouchID)      │  |
-| │ Ayer 14:22             [⋮]   │  |
-| ├────────────────────────────────┤  |
-| │ 🔐 YubiKey 5C NFC            │  |
-│ │ Semanal               [⋮]     │  |
-| └───────────────────────────────┘  |
-|                                     |
-| [ + Registrar nuevo Passkey ]      |
-|                                     |
-| ─────────────────────────────────  |
-|                                     |
-| 📱 ¿Prefiere código TOTP?          |
-| [ Usar código de 6 dígitos ]       |
-└─────────────────────────────────────┘
-```
+No se ofrece «Reenviar código»: TOTP se genera en el teléfono y no se envía.
 
 ---
 
-## 3. Admin - Alta Usuario (Mobile - Modal Full-Screen)
+## 3. Alta de usuario (modal a pantalla completa) — [Propuesto]
 
-### Estado: Vacío
+`develop` no tiene `POST /api/v1/admin/users`: hoy el administrador lista usuarios, asigna o
+quita roles y desactiva cuentas (ver parte 2). El alta se propone para `admin_hospital`, con los
+roles canónicos y la política de contraseñas del backend (12 caracteres y las cuatro clases).
+
+### Estado: vacío
 ```
 ┌─────────────────────────────────────┐
-│  ➕ Nuevo Usuario            [×]    │  ← Fixed header
+│  Nuevo usuario                [×]   │  ← encabezado fijo
 ├─────────────────────────────────────┤
-|                                     |
-|  Email *                            |
-|  [______________________________]  |
-|                                     |
-|  Nombre *                           |
-|  [______________________________]  |
-|                                     |
-|  Contraseña *               [👁️]   |
-|  [______________________________]  |
-|  Fortaleza: 🟢🟢🟢🟢⚪  FUERTE       |
-|                                     |
-|  Roles * (Mín 1, Máx 5)            |
-|  [☑] MEDICO                        |
-|  [☐] ENFERMERO                     |
-|  [☐] TENANT_ADMIN  ⚠️ MFA oblig.  |
-|  [☐] AUDITOR       ⚠️ MFA oblig.  |
-|  [☐] PACIENTE                      |
-|                                     |
-|  [☑] Forzar MFA primer login       |
-|                                     |
-|  ─────────────────────────────────  |
-|  [ Cancelar ]    [ CREAR USUARIO ]  │  ← Fixed footer
-|                                     |
+│  Correo *                           │
+│  [______________________________]   │
+│  Nombre *                           │
+│  [______________________________]   │
+│  Contraseña inicial *       [Ver]   │
+│  [______________________________]   │
+│  ▱▱▱▱▱  MUY DÉBIL · 0/12            │  ← PasswordStrengthMeter (Semana 10)
+│                                     │
+│  Roles * (al menos uno)             │
+│  [☐] medico                         │
+│  [☐] enfermeria                     │
+│  [☐] recepcion                      │
+│  [☐] jefatura_medica                │
+│  [☐] admin_hospital                 │
+├─────────────────────────────────────┤
+│  [ Cancelar ]   [ CREAR USUARIO ]   │  ← pie fijo, safe-area
+└─────────────────────────────────────┘
+```
+La lista de roles se toma del catálogo RBAC del hospital, no de un arreglo fijo en la vista.
+
+### Estado: errores de validación
+```
+┌─────────────────────────────────────┐
+│  Correo *                           │
+│  [ana-sin-arroba_______________] ✗  │
+│  ✗ Formato de correo inválido       │
+│  Contraseña inicial *               │
+│  [corta________________________] ✗  │
+│  ▰▱▱▱▱  MUY DÉBIL · 5/12            │
+│  ✗ 12+  ✓ a-z  ✗ A-Z  ✗ 0-9  ✗ !@#  │
+│  Roles *                            │
+│  ✗ Seleccione al menos un rol       │
+│  [ Cancelar ]   [ CREAR ] (deshab.) │
 └─────────────────────────────────────┘
 ```
 
-### Estado: Validando Tiempo Real
+### Estado: correo ya registrado en el hospital
 ```
 ┌─────────────────────────────────────┐
-|  ...                                |
-|  Email *                            |
-|  [dra.nueva@hospital.com_______] ⏳  │  ← .validating
-|  ✅ Formato válido + Dominio OK     │  ← .success-hint
-|                                     |
-|  Contraseña *              [👁️]    |
-|  [SecurePass123!________________]  |
-|  Fortaleza: 🟢🟢🟢🟢⚪  FUERTE       │
-|  ✅ 12+ chars  ✅ Mayús  ✅ Minús  ✅ Num  ✅ Símbolo |
-|  ✅ No HIBP  ✅ No historial        │
-|                                     |
-|  Roles * (Mín 1, Máx 5)            |
-|  [☑] MEDICO                        |
-|  [☐] ENFERMERO                     |
-|  [☐] TENANT_ADMIN  ⚠️ MFA oblig.  |
-|  [☐] AUDITOR       ⚠️ MFA oblig.  |
-|                                     |
-|  [ Cancelar ]    [ CREAR USUARIO ]  │
-|                                     |
+│  ┌───────────────────────────────┐  │
+│  │ ⚠ Ese correo ya tiene         │  │  ← HTTP 409 del API propuesto
+│  │ membresía en este hospital.   │  │
+│  └───────────────────────────────┘  │
+│  [ Cancelar ]   [ CREAR USUARIO ]   │
 └─────────────────────────────────────┘
 ```
+No se ofrece «¿Es usted? Iniciar sesión»: quien crea la cuenta es el administrador.
 
-### Estado: Error Campo
+### Estado: creado
 ```
 ┌─────────────────────────────────────┐
-|  ...                                |
-|  Email *                            |
-|  [dra.nueva@otrodominio.com_____] ❌ │  ← .error
-|  ❌ Use email @hospital.com        │  ← .error-msg
-|                                     |
-|  Contraseña *              [👁️]    |
-|  [weak________________________] ❌  │  ← .error
-|  ❌ Contraseña muy débil           │
-|  ❌ Mín 12 caracteres (actual: 4)  │
-|  ❌ Falta mayúscula                │
-|  ❌ Falta número                   │
-|  ❌ Falta símbolo                  │
-|  Fortaleza: 🔴🔴🔴🔴🔴 MUY DÉBIL   │
-|                                     |
-|  Roles * (Mín 1, Máx 5)            |
-|  [☐] MEDICO    [☐] ENFERMERO       │
-|  [☐] TENANT_ADMIN [☐] AUDITOR      |
-|  [☐] PACIENTE                      │
-|  ❌ Seleccione al menos un rol     │
-|                                     |
-|  [ Cancelar ]    [ CREAR ] (disabled)│
+│  ✓ Usuario creado                   │
+│                                     │
+│  Correo   ana@hospital.test         │
+│  Nombre   Dra. Ana López            │
+│  Roles    medico                    │
+│                                     │
+│  La contraseña inicial no se vuelve │
+│  a mostrar ni se envía por correo:  │
+│  entréguela por un canal seguro.    │
+│                                     │
+│  [ Volver a la lista ] [ Crear otro ]│
 └─────────────────────────────────────┘
 ```
-
-### Estado: Error Servidor (Email Duplicado)
-```
-┌─────────────────────────────────────┐
-|  ...                                |
-|  Email *                            |
-|  [dra.nueva@hospital.com_______] ❌  |
-|  ❌ Este email ya está registrado   │
-|     en su organización             │
-|     ¿Es usted? [ Iniciar sesión ]  │
-|                                     |
-|  [ Cancelar ]    [ CREAR USUARIO ]  │
-|                                     |
-|  🔴 Toast: Email ya registrado en  │
-|     este tenant. ¿Es usted? [Login] │
-└─────────────────────────────────────┘
-```
-
-### Estado: Éxito
-```
-┌─────────────────────────────────────┐
-|  ...                                |
-|  ✅ Toast Éxito: Usuario creado.    |
-|  Credenciales temporales enviadas   │
-|  por email                          |
-|  ┌───────────────────────────────┐  |
-|  │  ✅ Usuario creado            │  |
-|  │                               │  |
-|  │  📧 Email: dra.nueva@hospital.com│ |
-|  │  👤 Nombre: Dra. Ana López    │  |
-|  │  🏷️ Roles: MEDICO            │  |
-|  │  🏥 Tenant: HCH-001           │  |
-|  │  🔐 MFA: Requerido (1er login)│  |
-|  │                               │  |
-|  │  🔐 Password: Xk9#mP2$vL5    │  |
-|  │  [ Copiar ] [ Reenviar email ]│  |
-|  │                               │  |
-|  │  [ Continuar ] [ Crear otro ] │  |
-|  └───────────────────────────────┘  |
-└─────────────────────────────────────┘
-```
+Se retiró la versión 1.0, que mostraba la contraseña en pantalla con un botón «Copiar» y
+anunciaba credenciales temporales por correo: ninguna de las dos cosas es segura ni existe.
 
 ---
 
-## 5. Admin - Lista Usuarios + Force-Revoke (Mobile)
+## 4. Criterios móviles comunes
 
-### Lista - Cards Apiladas
-```
-┌─────────────────────────────────────┐
-│  👥 Usuarios HCH        [+] [☰]     │
-├─────────────────────────────────────┤
-|  🔍 [___________________] [▼]       |
-├─────────────────────────────────────┤
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 👤 Dra. González              │  |
-|  │ 📧 dra.g@hch.com              │  |
-|  │ 🏷️ MEDICO        🟢 Activo    │  |
-|  │ ─────────────────────────     │  |
-|  │ [⋮] Acciones                  │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 👤 Lic. Ruiz                  │  |
-|  │ 📧 lic.r@hch.com              │  |
-|  │ 🏷️ ENFERMERO       🟢 Activo  │  |
-|  │ ─────────────────────────     │  |
-|  │ [⋮] Acciones                  │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 👤 Dr. Silva                  │  |
-|  │ 📧 dr.s@hch.com               │  |
-|  │ 🏷️ AUDITOR        🟡 MFA      │  |
-|  │ ─────────────────────────     │  |
-|  │ [⋮] Acciones                  │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ◄ 1 [2] [3] [4] [5] ►   20/pág    |
-└─────────────────────────────────────┘
-```
+| Elemento | Criterio |
+|---|---|
+| Campos | `font-size: 16px` (evita el zoom de iOS), alto mínimo 44 px, `aria-describedby` hacia el error o la ayuda |
+| Botones | Mínimo 44 × 44 px; a 100 % del ancho por debajo de 480 px; `aria-busy` mientras envían |
+| Errores | `role="alert"` y texto; el color nunca es la única señal |
+| Pie fijo | `padding-bottom: env(safe-area-inset-bottom)` |
+| Movimiento | Spinners y transiciones se desactivan con `prefers-reduced-motion` |
 
-### Menú Acciones [⋮] - Touch Friendly
-```
-┌─────────────────────────────────────┐
-|  [⋮] Acciones - Dra. Torres       [×] │
-├─────────────────────────────────────┤
-|                                     |
-|  ✏️  Editar usuario                |
-|  ─────────────────────────────────  |
-|  🔑  Forzar MFA                    |
-|  ─────────────────────────────────  |
-|  🔒  Bloquear usuario              |
-|  ─────────────────────────────────  |
-|  🔴  Revocar TODAS las sesiones    │  ← .btn-danger
-|                                    |
-└─────────────────────────────────────┘
-```
-
-### Modal Force-Revoke (Mobile Full-Screen)
-```
-┌─────────────────────────────────────┐
-|  🔴 Revocar Sesiones - Dra. Torres [×] │
-├─────────────────────────────────────┤
-|                                     |
-|  ⚠️ Revocar TODAS las sesiones de   |
-|  Dra. Torres                        |
-|                                     |
-|  Se cerrarán sesión en TODOS los    |
-|  dispositivos (3 activos):          |
-|  📱 iPhone 15 Pro - Chrome 119 - Hoy│
-|  💻 MacBook Pro - Safari 17 - Ayer  |
-|  🔐 YubiKey 5C NFC - Hace 2 horas   |
-|                                     |
-|  El usuario deberá iniciar sesión   |
-|  nuevamente en todos los dispositivos.|
-|                                     |
-|  Motivo *:                          |
-|  ▼ [ Seguridad ▼ ] [ Cambio rol ]   |
-|  [ Sospecha compromiso ] [ Otro... ] |
-|                                     |
-|  Comentario (opcional):             |
-|  [________________________________] |
-|                                     |
-|  ⚠️ IRREVERSIBLE. Se auditará.      |
-|                                     |
-|  [ Cancelar ]      [ REVOCAR ]      │  ← 100% width, 48px height
-|                                     |
-└─────────────────────────────────────┘
-```
-
-### Toast Éxito Mobile
-```
-┌─────────────────────────────────────┐
-|  ✅ 3 sesiones revocadas para       │
-|  Dra. Torres                        |
-|  Motivo: Seguridad                  |
-|  [ Ver en Auditoría ] [ Deshacer ]  │
-└─────────────────────────────────────┘
-← Bottom fixed, 100% width, safe-area
-```
-
----
-
-## 7. Auditoría Mobile (Cards)
-
-```
-┌─────────────────────────────────────┐
-|  📋 Auditoría - HCH          [⚙️]   │
-├─────────────────────────────────────┤
-|  🔍 [Filtros ▼]  [Exportar]         |
-├─────────────────────────────────────┤
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 🔴 REFRESH_REUSE_DETECTED     │  |
-|  │ ─────────────────────────────  │  |
-|  │ 🕐 2026-10-18 10:45:00        │  |
-|  │ 👤 sys (service-account)      │  |
-|  │ 🏷️ CRÍTICO                     │  |
-|  │ 🔍 Ver detalle ▶              │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 🟢 LOGIN_SUCCESS              │  |
-|  │ ─────────────────────────────  │  |
-|  │ 🕐 2026-10-18 11:20:05        │  |
-|  │ 👤 dra.gonzalez               │  |
-|  │ 🏷️ INFO                        │  |
-|  │ 🔍 Ver detalle ▶              │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ◄ 1 [2] [3] [4] [5] ►   20/pág    |
-└─────────────────────────────────────┘
-
-Touch: Tap card → Expande detalle (slide-up)
-Swipe left → Acciones rápidas [Ver en SIEM] [Exportar]
-Long press → Selección múltiple
-Pull to refresh → Actualiza lista
-```
-
----
-
-## 8. Paciente Portal Mobile
-
-### Dashboard Apilado
-```
-┌─────────────────────────────────────┐
-│  🏥 Mi Portal - María Paz    👤 [≡] │
-├─────────────────────────────────────┤
-|  Hola, María              [🔔 3]    |
-├─────────────────────────────────────┤
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 📅 PRÓXIMAS CITAS             │  |
-|  │ ─────────────────────────────  │  |
-|  │ 📅 2026-10-20 10:00           │  |
-|  │ 🏥 Cardiología - Dr. González │  |
-|  │ [ Ver ] [ 🗓️ ]               │  |
-|  ├─────────────────────────────┤  |
-|  │ 📅 2026-10-25 09:30          │  |
-|  │ 🏥 Endocrinología - Dra. Torres│ │
-|  │ [ Ver ] [ 🗓️ ]               │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 💊 MEDICACIÓN ACTUAL          │  |
-|  │ ─────────────────────────────  │  |
-|  │ 💊 Losartán 50mg              │  |
-|  │ 1 comp/día - Desayuno         │  |
-|  ├─────────────────────────────┤  |
-|  │ 💊 Metformina 850mg           │  |
-|  │ 2 comp/día - Comida/Cena      │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 📋 RESULTADOS RECIENTES       │  |
-|  │ ─────────────────────────────  │  |
-|  │ 📄 Hemograma 2026-10-15      │  |
-|  │ [ Ver ]                       │  |
-|  ├─────────────────────────────┤  |
-|  │ 📄 Radiografía 2026-10-10   │  |
-|  │ [ Ver ]                      │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ─────────────────────────────────  |
-|  📄 Expediente | 📅 Citas | 💊 Meds │
-|  ─────────────────────────────────  |
-|  🔒 Último: 17/10 19:30             |
-|  🔐 MFA: No configurado [Configurar]│
-└─────────────────────────────────────┘
-
-Bottom Nav (Fixed):
-┌─────────────────────────────────────┐
-| 📄 Expediente  📅 Citas  💊 Meds  ⚙️ │
-└─────────────────────────────────────┘
-```
-
----
-
-## 9. Touch Targets & Accesibilidad Mobile
-
-| Elemento            | Tamaño Mínimo | Implementación                            |
-|---------------------|---------------|-------------------------------------------|
-| Botones Primarios   | 48×48px       | `min-height: 48px; min-width: 48px;`      |
-| Botones Secundarios | 44×44px       | `min-height: 44px; min-width: 44px;`      |
-| Inputs              | 48px height   | `height: 48px; font-size: 16px;`          |
-| Checkboxes/Radios   | 24×24px       | `width: 24px; height: 24px; accent-color` |
-| Toggle Switches     | 52×28px       | Custom CSS                                |
-| Dropdown Items      | 48px height   | `padding: 12px 16px; min-height: 48px`    |
-| Modal Buttons       | 48px height   | `min-height: 48px; width: 100%`           |
-| Toast Actions       | 44px height   | `padding: 12px 16px; min-height: 44px`    |
-
-### Safe Area Support
-```css
-/* iPhone notch / Dynamic Island */
-.bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-.modal-content {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
-}
-
-.fixed-footer {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-```
-
-### Haptic Feedback (iOS)
-```javascript
-// En botones de acción crítica
-button.addEventListener('click', () => {
-  if (navigator.vibrate) {
-    navigator.vibrate(10); // Light tap
-  }
-});
-
-// En error crítico
-button.addEventListener('click', () => {
-  if (navigator.vibrate) {
-    navigator.vibrate([50, 50, 50]); // Triple pulse
-  }
-});
-```
-
----
-
-## 10. Testing Matrix Mobile
-
-| Test                  | Dispositivo                             | Navegador               | Checklist                 |
-|-----------------------|-----------------------------------------|-------------------------|---------------------------|
-| **Visual Regression** | iPhone SE, 13, 14, 15, iPad, Galaxy S23 | Chrome, Safari, Firefox | Percy/Chromatic           |
-| **Accessibility**     | NVDA, VoiceOver, TalkBack               | Chrome, Safari          | axe-core + manual         |
-| **Performance**       | iPhone SE (throttled 3G)                | Chrome DevTools         | Lighthouse ≥ 90           |
-| **Touch Testing**     | iPhone 13, iPad, Galaxy Tab             | Safari, Chrome          | Touch targets, gestures   |
-| **Offline**           | Flight mode + throttled                 | Chrome DevTools         | Service Worker, Queue     |
-| **Orientation**       | Portrait + Landscape                    | Todos                   | Lock/Unlock, layout shift |
+Evidencia real de estos criterios en el SPA: capturas a 375, 768 y 1280 px en
+`docs/tenants/semana-10/evidencias/` (ruta `/prototipos/tenants-responsive`).

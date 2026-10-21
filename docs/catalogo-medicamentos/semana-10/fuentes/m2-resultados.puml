@@ -1,0 +1,20 @@
+@startsalt
+title M2 - Resultados como tarjetas
+{+
+  { [<] | <b>2 resultados</b> }
+  ---
+  {+
+    <b>AMX-500</b> · Activo
+    Amoxicilina 500 mg
+    Principio activo: Amoxicilina
+    [ Ver detalle de AMX-500 ]
+  }
+  {+
+    <b>AMX-250</b> · Inactivo
+    Amoxicilina 250 mg
+    <i>No disponible para nuevas indicaciones</i>
+    [ Ver detalle de AMX-250 ]
+  }
+  <i>Sin tabla horizontal: cada fila es una tarjeta con la vigencia en texto.</i>
+}
+@endsalt
