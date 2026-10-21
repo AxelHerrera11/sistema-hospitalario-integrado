@@ -1,181 +1,120 @@
-## 4. Casos de Prueba Caja Negra (4 Mínimo)
+# Semana 15 — Pruebas unitarias, de caja blanca y de caja negra (parte 2)
 
-### NB-001: Login Exitoso sin MFA (Rol MEDICO)
+Continúa [`pruebas-unitarias-caja-blanca-negra.md`](pruebas-unitarias-caja-blanca-negra.md). Cada
+escenario remite a la prueba PHPUnit que lo ejecuta. Todas recorren el router real del micro-HIS con
+peticiones PSR-7 (trait `Tests\Feature\Tenants\Concerns\MicroHisHttp`) y están en el grupo `caja-negra`.
+
+## 4. Casos de caja negra
+
+### NB-001 · Login sin MFA (`medico`)
 ```gherkin
-Feature: Login sin MFA para rol MEDICO
-  Scenario: Login exitoso sin MFA para médico
-    Given el usuario "dra.gonzalez@hospital.com" existe en tenant "HCH-001"
-    And el usuario tiene rol "MEDICO"
-    And el usuario tiene MFA deshabilitado
-    And la contraseña es "SecurePass123!"
-    When el usuario envía POST /auth/login con email y password
-    Then la respuesta es 200 OK
-    And el response contiene access_token (JWT RS256)
-    And el response contiene refresh_token (opaco)
-    And el response contiene expires_in = 900
-    And el response contiene user con roles ["MEDICO"]
-    And el response NO contiene mfa_required
+Escenario: login exitoso sin segundo factor
+  Dado un usuario "medico@a.test" con rol "medico" en el Hospital A
+  Cuando envía POST /auth/login con X-Tenant-ID del Hospital A y su contraseña
+  Entonces la respuesta es 200 con token_type "Bearer" y expires_in 900
+  Y user.roles es ["medico"]
+  Y la respuesta no incluye mfa_required
 ```
+Prueba: `LoginMfaFeatureTest::test_login_without_mfa_returns_tokens` — **Aprobado**.
 
-### NB-002: Login con MFA TOTP Exitoso (Rol TENANT_ADMIN)
+### NB-002 · Login con MFA TOTP (`admin_hospital`)
 ```gherkin
-Feature: Login con MFA TOTP para TENANT_ADMIN
-  Scenario: Login exitoso con MFA TOTP
-    Given el usuario "admin@hospital.com" existe en tenant "HCH-001"
-    And el usuario tiene rol "TENANT_ADMIN"
-    And el usuario tiene MFA TOTP configurado (secret: JBSWY3DPEHPK3PXP)
-    And la contraseña es "SecurePass123!"
-    When el usuario envía POST /auth/login con credenciales válidas
-    Then la respuesta es 200 con mfa_required: true
-    And challenge_id es generado
-    And method es "TOTP"
-    When el usuario envía POST /auth/mfa con código válido "123456" y challenge_id
-    Then la respuesta es 200 OK
-    And access_token y refresh_token son generados
-    And mfa_required es false
+Escenario: el desafío MFA es de un solo uso
+  Dado un usuario con rol "admin_hospital" y TOTP enrolado al darlo de alta
+  Cuando envía POST /auth/login con credenciales válidas
+  Entonces la respuesta es 202 con challenge_id y method "TOTP", sin tokens
+  Cuando envía POST /auth/mfa con el challenge_id y el código vigente
+  Entonces la respuesta es 200 con tokens y LOGIN_SUCCESS registra mfa_used = true
+  Cuando repite el mismo challenge_id
+  Entonces la respuesta es 401
 ```
+Prueba: `LoginMfaFeatureTest::test_login_with_totp_needs_a_valid_single_use_challenge` — **Aprobado**.
+Relacionadas: tres códigos incorrectos bloquean la cuenta (`test_three_wrong_codes_lock_the_account`).
 
-### NB-003: Force-Revoke Exitoso + Deshacer (5s)
+### NB-003 · Revocación forzada por `admin_hospital`
 ```gherkin
-Feature: Force-Revoke Admin con Deshacer
-  Scenario: Admin revoca sesiones y deshace en 5 segundos
-    Given admin "admin@hospital.com" autenticado como TENANT_ADMIN
-    And usuario objetivo "dra.torres@hospital.com" tiene 3 sesiones activas
-    When admin envía DELETE /admin/users/{targetId}/sessions con motivo "Seguridad"
-    Then respuesta es 200 OK
-    And body contiene { "revoked_sessions": 3 }
-    And toast muestra "3 sesiones revocadas" con botón "Deshacer (5s)"
-    When usuario hace click en "Deshacer" dentro de 5 segundos
-    Then sesiones son restauradas
-    And auditoría registra SESSION_RESTORED
-    And evento SessionRevokedEvent publicado con reason="force_revoke" luego "undo"
+Escenario: el administrador cierra todas las sesiones de un usuario
+  Dado "medico@a.test" con sesiones abiertas en "telefono" y "portatil"
+  Cuando el admin_hospital envía DELETE /admin/users/{id}/sessions
+  Entonces la respuesta es 200 con revoked_sessions = 2
+  Y los dos access tokens reciben 401 en la siguiente petición
+  Y SESSION_REVOKED registra reason "admin_revoke" y el requester_id del admin
+  Y el admin conserva su propia sesión
 ```
+Prueba: `RevokeSessionFeatureTest::test_admin_force_revokes_every_session_of_a_user` — **Aprobado**.
 
-### NB-004: Refresh Token Reuse Detection → Revocación Total
+La versión anterior pedía «Deshacer (5 s)» con sesiones restauradas y un evento `SESSION_RESTORED`.
+**Esa función no existe y se descartó**: revocar invalida los tokens y el acceso solo se recupera
+iniciando sesión otra vez (ver Semana 11, `prototype-screens-mobile1.md`, sección 6).
+
+### NB-004 · Reutilización de refresh token
 ```gherkin
-Feature: Refresh Token Reuse Detection
-  Scenario: Ataque de reutilización detectado y revocación total
-    Given usuario "dra.gonzalez@hospital.com" tiene sesión activa
-    And refresh token "rt-compromised" fue usado legítimamente una vez
-    When atacante reusa "rt-compromised" en POST /auth/refresh
-    Then respuesta es 401 Unauthorized
-    And error.code = "REFRESH_REUSE_DETECTED"
-    And error.severity = "CRITICAL"
-    And body contiene "revoked_sessions": 3
-    And body contiene "blocked_access_tokens": 3
-    And auditoría registra REFRESH_REUSE_DETECTED severity=CRITICAL
-    And SIEM alerta generada + Jira ticket SEC-XXXX auto-creado
-    And todas las sesiones del usuario revocadas
-    When usuario intenta login nuevamente
-    Then login requiere MFA obligatorio (policy reuse_detected)
-    And nuevos tokens generados con nuevos JTI
+Escenario: un refresh ya rotado vuelve a presentarse
+  Dado un usuario con sesión iniciada que ya rotó su refresh token una vez
+  Cuando alguien envía POST /auth/refresh con el refresh anterior
+  Entonces la respuesta es 401 y no informa cuántas sesiones se revocaron
+  Y el access token y el refresh nuevos dejan de servir
+  Y la auditoría registra REFRESH_REUSE_DETECTED con severidad CRITICAL
+  Y la cadena de hashes de la auditoría sigue siendo válida
 ```
+Prueba: `RefreshTokenFeatureTest::test_reusing_a_rotated_refresh_token_revokes_the_session` — **Aprobado**.
 
----
+Se retiraron de la versión anterior el ticket Jira automático, la alerta al SIEM, el campo
+`blocked_access_tokens` y la exigencia de MFA en el siguiente login: ninguno está implementado.
 
-## 5. Matriz de Cobertura de Pruebas
+### NB-005 · Aislamiento entre hospitales
+```gherkin
+Escenario: la misma persona y el mismo equipo en dos hospitales
+  Dada "ana@red.test" con rol "medico" en el Hospital A y "jefatura_medica" en el B
+  Cuando inicia sesión en ambos desde "equipo-01"
+  Entonces cada respuesta trae solo los roles de ese hospital y el mismo id de usuario
+  Cuando el admin del Hospital A revoca sus sesiones
+  Entonces la sesión de A recibe 401 y la de B sigue respondiendo 200, también al rotar el refresh
+```
+Prueba: `MultiTenantIsolationFeatureTest::test_same_user_and_device_keep_roles_and_sessions_per_hospital` — **Aprobado**.
+Relacionadas: token de A con cabecera de B → 403 y `CROSS_TENANT_ATTEMPT`; un bloqueo en A no
+bloquea en B; hospital suspendido → 403.
 
-| Componente                     | Pruebas Unitarias | Pruebas Caja Blanca | Pruebas Caja Negra | Cobertura Objetivo |
-|--------------------------------|-------------------|---------------------|--------------------|--------------------|
-| **PasswordPolicy**             | 9 tests           | 7 paths             | 3 casos            | 100%               |
-| **MfaPolicy**                  | 8 tests           | N/A                 | 4 casos            | 100%               |
-| **TokenFactory**               | 3 tests           | 2 paths             | 2 casos            | 95%                |
-| **RefreshTokenRotator**        | 4 tests           | 4 paths             | 2 casos            | 100%               |
-| **MfaPolicy**                  | 8 tests           | N/A                 | 4 casos            | 100%               |
-| **Argon2idHasher**             | 3 tests           | N/A                 | 2 casos            | 100%               |
-| **ValidateCredentialsUseCase** | 0 (use case)      | N/A                 | 5 casos            | 90%                |
-| **AuthenticateUserUseCase**    | 0                 | N/A                 | 4 casos            | 85%                |
-| **RefreshTokenUseCase**        | 0                 | N/A                 | 3 casos            | 90%                |
-| **RevokeSessionUseCase**       | 0                 | N/A                 | 3 casos            | 100%               |
-| **AuthController**             | 0                 | N/A                 | 5 casos            | 75%                |
-| **AdminUserController**        | 0                 | N/A                 | 4 casos            | 70%                |
+## 5. Matriz de cobertura por componente (casos ejecutados)
 
----
+| Componente | Unitarias | Caja blanca | Caja negra |
+|---|---|---|---|
+| `PasswordPolicy` | 10 | 8 | 1 (`RegisterUserFeatureTest`, clave débil) |
+| `MfaPolicy` | 10 | 3 | 2 (`LoginMfaFeatureTest`) |
+| `JwtTokenService` (`TokenFactory`) | 3 | 1 | todas (cada petición autenticada) |
+| `RefreshTokenRotator` | 6 | 5 | 4 (`RefreshTokenFeatureTest`) |
+| `AuthenticateUserUseCase` | — | — | 7 (`LoginMfaFeatureTest`) + 2 de aislamiento |
+| `RegisterUserUseCase` | — | — | 7 (`RegisterUserFeatureTest`) |
+| `RevokeSessionUseCase` | — | — | 4 (`RevokeSessionFeatureTest`) + 1 de aislamiento |
+| `JwtAuthMiddleware` | — | — | 2 (`MultiTenantIsolationFeatureTest`) + rechazos 401 |
 
-## 6. Comandos de Ejecución
+Sin porcentajes: no hay medición de cobertura de líneas (falta Xdebug o PCOV).
+
+## 6. Comandos
 
 ```bash
-# Tests Unitarios (cobertura)
-npm run test:unit
-npm run test:unit -- --coverage
+# Todas las pruebas del micro-HIS (Semanas 3 y 15)
+vendor/bin/phpunit --group unitarias
+vendor/bin/phpunit --group caja-blanca
+vendor/bin/phpunit --group caja-negra
+vendor/bin/phpunit tests/Feature/Tenants/MicroHisSmokeTest.php
 
-# Tests Caja Blanca (White Box)
-npm run test:whitebox
+# Reportes JUnit de esta carpeta (mismo comando con --log-junit)
+vendor/bin/phpunit --group unitarias --log-junit docs/tenants/semana-15/unit-tests.results.xml
 
-# Tests Caja Negra (Feature/Integration)
-npm run test:feature
-
-# Tests E2E (Cypress)
-npm run test:e2e
-
-# Tests Accesibilidad
-npm run test:a11y
-
-# Performance (k6)
-npm run test:perf
-
-# Cobertura Completa
-npm run test:coverage
-
-# Todos los tests
-npm run test:all
+# Micro-benchmark en proceso
+php docs/tenants/semana-15/bench/micro-his-bench.php 200
 ```
+El proyecto no tiene scripts `npm run test:*`, Cypress, k6 ni axe configurados; los comandos `npm`
+de la versión anterior no existían.
 
----
+## 7. Criterios de aceptación
 
-## 7. Criterios de Aceptación Final
-
-| Criterio                      | Umbral           | Estado |
-|-------------------------------|------------------|--------|
-| **Cobertura Domain Services** | ≥ 95%            | ✅      |
-| **Cobertura Use Cases**       | ≥ 90%            | ✅      |
-| **Cobertura Controllers**     | ≥ 80%            | ✅      |
-| **Tests Unitarios Pasando**   | 24/24            | ✅      |
-| **Tests Feature Pasando**     | 18/18            | ✅      |
-| **Tests Caja Blanca**         | 11 paths         | ✅      |
-| **Tests Caja Negra**          | 16 escenarios    | ✅      |
-| **Tests E2E**                 | 5/5 passing      | ✅      |
-| **Accesibilidad (axe-core)**  | 0 violaciones AA | ✅      |
-| **Performance Login p95**     | < 300ms          | ✅      |
-| **Performance Token Val p99** | < 50ms           | ✅      |
-| **Refresh Rotation**          | 100% success     | ✅      |
-| **Reuse Detection**           | 100% detection   | ✅      |
-| **Force-Revoke + Undo**       | 100% functional  | ✅      |
-| **Accesibilidad (axe-core)**  | 0 violaciones AA | ✅      |
-
----
-
-## 8. Entregables Semana 15
-
-| Archivo                      | Ubicación                 | Descripción                    |
-|------------------------------|---------------------------|--------------------------------|
-| `matriz-rf-rnf-tests.md`     | `docs/tenants/semana-15/` | Matriz RF/RNF → Tests completa |
-| `unit-tests.results.xml`     | `test-results/`           | Resultados JUnit unit tests    |
-| `whitebox-tests.results.xml` | `test-results/`           | Resultados caja blanca         |
-| `blackbox-tests.results.xml` | `test-results/`           | Resultados caja negra          |
-| `feature-tests.results.xml`  | `test-results/`           | Resultados feature tests       |
-| `accessibility-report.html`  | `test-results/`           | Reporte axe-core               |
-| `performance-report.html`    | `test-results/`           | Reporte k6                     |
-| `coverage-report/`           | `coverage/`               | Reporte cobertura completo     |
-| `test-summary.md`            | `docs/tenants/semana-15/` | Resumen ejecutivo pruebas      |
-
----
-
-## 9. Verificación Final
-
-```bash
-# Verificar todos los tests pasan
-npm run test:all
-
-# Verificar cobertura
-npm run test:coverage
-
-# Verificar accesibilidad
-npm run test:a11y
-
-# Verificar performance
-npm run test:perf
-
-# Generar reporte final
-npm run test:report
-```
+| Criterio | Umbral | Resultado |
+|---|---|---|
+| Pruebas unitarias | 0 fallos | **Cumple**: 29/29 |
+| Pruebas de caja blanca | todos los caminos de WB-001 y WB-002 | **Cumple**: 17/17 |
+| Pruebas de caja negra | ≥ 4 escenarios | **Cumple**: 27 casos, 5 escenarios documentados |
+| Requisitos funcionales con prueba | 15/15 | **No cumple**: 12/15 (faltan RF-12, RF-13 y RF-15; RF-05 solo TOTP) |
+| Cobertura de líneas | ≥ 90 % | **Sin medir** (sin Xdebug ni PCOV) |
+| Rendimiento con carga, accesibilidad, E2E | según RNF | **Sin ejecutar** |

@@ -3,137 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Performance - Módulo Tenants & Auth</title>
+    <title>Rendimiento del micro-HIS de Tenants (Semana 15)</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #1a1a1a; border-bottom: 2px solid #1976d2; padding-bottom: 10px; }
-        h2 { color: #1976d2; margin-top: 30px; }
-        h3 { color: #333; }
-        .summary { background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
-        .summary h2 { margin-top: 0; color: #2e7d32; }
-        .metric { display: inline-block; margin: 10px 20px 10px 0; padding: 15px 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .metric-value { font-size: 2rem; font-weight: bold; color: #1976d2; }
-        .metric-label { font-size: 0.875rem; color: #666; }
-        .pass { color: #2e7d32; }
-        .fail { color: #c62828; }
-        .warning { color: #ed6c00; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f5f5f5; font-weight: 600; }
-        .pass { color: #2e7d32; }
-        .fail { color: #c62828; }
-        .warning { color: #ed6c00; }
-        .pass-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 16px; font-size: 0.875rem; font-weight: 500; }
-        .fail-badge { background: #ffebee; color: #c62828; padding: 4px 12px; border-radius: 16px; font-size: 0.875rem; font-weight: 500; }
-        .warning-badge { background: #fff3e0; color: #ed6c00; padding: 4px 12px; border-radius: 16px; font-size: 0.875rem; font-weight: 500; }
-        .section { margin-bottom: 40px; }
-        code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-        .badge-pass { background: #e8f5e9; color: #2e7d32; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
-        .badge-fail { background: #ffebee; color: #c62828; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
-        .badge-warning { background: #fff3e0; color: #ed6c00; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 1.25rem; background: #f8fafc; color: #0f172a; }
+        main { max-width: 960px; margin: 0 auto; background: #ffffff; padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 12px; }
+        h1 { font-size: 1.4rem; margin-top: 0; }
+        h2 { font-size: 1.1rem; margin-top: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.95rem; }
+        th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f1f5f9; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .aviso { background: #fef3c7; color: #78350f; padding: 0.75rem 1rem; border-radius: 8px; }
+        code, pre { background: #f1f5f9; border-radius: 6px; }
+        code { padding: 0.1rem 0.35rem; }
+        pre { padding: 0.75rem; overflow-x: auto; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Reporte de Performance - Módulo Tenants & Auth</h1>
-        <p><strong>Fecha:</strong> 2026-10-18 | <strong>Versión:</strong> 1.0 | <strong>Herramienta:</strong> k6 v0.47+</p>
-        <div class="summary">
-            <h2>📊 Resumen Ejecutivo</h2>
-            <div class="metric">
-                <div class="metric-value pass">245ms</div>
-                <div class="metric-label">Login p95</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value pass">38ms</div>
-                <div class="metric-label">Token Validation p99</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value pass">68ms</div>
-                <div class="metric-label">Refresh p95</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value pass">1,240</div>
-                <div class="metric-label">Throughput (req/s)</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value pass">0.00%</div>
-                <div class="metric-label">Error Rate</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value pass">1,240</div>
-                <div class="metric-label">Peak Throughput (req/s)</div>
-            </div>
-        </div>
-        <div class="section">
-            <h2>🎯 Resultados por Endpoint (k6 Load Test)</h2>
-            <table>
-                <thead>
-<tr><th>Endpoint</th><th>Método</th><th>p50 (ms)</th><th>p90 (ms)</th><th>p95 (ms)</th><th>p99 (ms)</th><th>Error Rate</th><th>Throughput (req/s)</th><th>Estado</th></tr></thead><tbody>
-<tr><td>POST /auth/login</td><td>POST</td><td>185ms</td><td>220ms</td><td><strong class="pass">245ms</strong></td><td>310ms</td><td>0.00%</td><td>485 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>POST /auth/mfa</td><td>POST</td><td>85ms</td><td>110ms</td><td><strong class="pass">125ms</strong></td><td>180ms</td><td>0.00%</td><td>320 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>POST /auth/refresh</td><td>POST</td><td>42ms</td><td>55ms</td><td><strong class="pass">68ms</strong></td><td>95ms</td><td>0.00%</td><td>1,240 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>POST /auth/logout</td><td>POST</td><td>28ms</td><td>38ms</td><td><strong class="pass">45ms</strong></td><td>58ms</td><td>0.00%</td><td>890 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>POST /auth/mfa</td><td>POST</td><td>95ms</td><td>135ms</td><td><strong class="pass">185ms</strong></td><td>280ms</td><td>0.00%</td><td>280 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>DELETE /admin/users/{id}/sessions</td><td>DELETE</td><td>45ms</td><td>78ms</td><td><strong class="pass">112ms</strong></td><td>185ms</td><td>0.00%</td><td>185 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>GET /admin/users</td><td>GET</td><td>38ms</td><td>62ms</td><td><strong class="pass">89ms</strong></td><td>134ms</td><td>0.00%</td><td>410 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>GET /audit/logs</td><td>GET</td><td>62ms</td><td>105ms</td><td><strong class="pass">145ms</strong></td><td>210ms</td><td>0.00%</td><td>280 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>GET /health</td><td>GET</td><td>8ms</td><td>12ms</td><td><strong class="pass">15ms</strong></td><td>22ms</td><td>0.00%</td><td>2,100 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr></tbody></table></div><div class="section"><h2>📈 Pruebas de Carga (Load Testing)</h2><table><thead>
-<tr><th>Tipo Prueba</th><th>Configuración</th><th>Duración</th><th>Usuarios Virtuales</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
-<tr><td>Load Testing</td><td>500 VUs, Ramp 2min, 10min steady</td><td>15 min</td><td>500 VUs</td><td>p95 245ms, Error Rate 0.00%, Throughput 485 req/s</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Stress Test</td><td>Ramp 500→2000 VUs, 5min</td><td>10 min</td><td>2,000 VUs</td><td>Graceful degradation, 0 errors, Auto-scaling OK</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Spike Test</td><td>Ramp 500→5000 VUs, 2min</td><td>5 min</td><td>5,000 VUs</td><td>Auto-scaling < 2min, 0 errors, Graceful degradation</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Soak Test (4h)</td><td>500 VUs constant</td><td>4 horas</td><td>500 VUs</td><td>No memory leaks, Latency stable, 0 memory leaks</td><td><span class="pass-badge">✅ Pass</span></td></tr></tbody></table></div><div class="section"><h2>🔄 Pruebas de Estrés y Pico (Stress/Spike)</h2><table><thead>
-<tr><th>Escenario</th><th>Configuración</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
-<tr><td>Ramp up 500→2000 VUs en 5min</td><td>Ramp 5min, hold 5min, down 2min</td><td>Auto-scaling triggered at 1500 VUs, scale-up < 2min, 0 errors</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Spike 10x (500→5000 VUs)</td><td>Instant spike, hold 2min</td><td>Auto-scaling triggered < 2min, Circuit breaker activated, 0 errors</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Redis Failure During Load</td><td>Kill Redis master during load</td><td>Auto-failover < 30s, 0 data loss, Circuit breaker activated</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>DB Failover During Load</td><td>Kill PG Primary during load</td><td>Patroni failover < 30s, 0 data loss, 0 connection drops</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Network Partition (Chaos)</td><td>Network partition Auth ↔ Redis/DB</td><td>Circuit breaker activated, Degraded mode, Graceful degradation</td><td><span class="pass-badge">✅ Pass</span></td></tr></tbody></table></div><div class="section"><h2>🔄 Pruebas de Chaos Engineering (LitmusChaos)</h2><table><thead>
-<tr><th>Experimento</th><th>Configuración</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
-<tr><td>Pod Kill (Auth Service)</td><td>Kill random pod, 3 replicas</td><td>K8s reschedule < 30s, 0 request loss, HPA scales</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Redis Master Kill</td><td>Kill Redis master pod</td><td>Sentinel failover < 30s, Sentinel promotes replica, 0 data loss</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>PostgreSQL Primary Kill</td><td>Kill Patroni primary</td><td>Patroni failover < 30s, Replica promoted, 0 data loss</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Network Partition (Auth ↔ Redis)</td><td>Network partition 30s</td><td>Circuit breaker opens, Degraded mode, Queue requests, Auto-recovery</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Network Partition (Auth ↔ DB)</td><td>Network partition 30s</td><td>Circuit breaker, Read from replicas, Queue writes, Auto-recovery</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Clock Drift (NTP)</td><td>Clock drift ±5s on Auth pods</td><td>JWT validation handles clock skew (leeway 30s), No false expirations</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Disk Full (Redis)</td><td>Fill Redis disk to 95%</td><td>Eviction policy works, Alert fired, Auto-cleanup expires</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>CPU Saturation (Auth Pods)</td><td>CPU 100% for 5min</td><td>HPA scales replicas 3→6, Latency stable, No OOM kills</td><span class="pass-badge">✅ Pass</span></td></tr></tbody></table></div><div class="section"><h2>🔒 Pruebas de Seguridad (Pen Testing Auth Focus)</h2><table><thead>
-<tr><th>Prueba</th><th>Herramienta</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
-<tr><td>Credential Stuffing</td><td>OWASP ZAP + Custom Scripts</td><td>Rate limiting blocks > 20 req/min, Account lockout after 5 attempts</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Brute Force MFA</td><td>Custom Script + OWASP ZAP</td><td>MFA lockout after 3 attempts (30min), Alert generated</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>JWT Token Theft / Replay</td><td>Custom Script + JWT Toolkit</td><td>Blocklist validates JTI, Refresh reuse detection works</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>JWT Algorithm Confusion (RS256→HS256)</td><td>Custom Script</td><td>Algorithm validation rejects HS256, Only RS256 accepted</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>JWT None Algorithm</td><td>Custom Script</td><td>Algorithm "none" rejected, Signature validation enforced</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>JWT Key Confusion</td><td>Custom Script</td><td>Key ID (kid) validation, JWKS cache prevents key confusion</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Session Hijacking (Cookie Theft)</td><td>Burp Suite + Custom</td><td>HttpOnly, Secure, SameSite=Strict cookies prevent theft</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Session Fixation</td><td>Custom Script</td><td>Session ID regenerated on login, Old session invalidated</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Session Replay (Refresh Reuse)</td><td>Custom Script + k6</td><td>Reuse detection triggers total revocation + alert CRITICAL</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>MFA Bypass (SIM Swap/Social Eng)</td><td>Social Engineering Simulation</td><td>WebAuthn/FIDO2 resistant, TOTP + Device Trust, Recovery codes</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Session Fixation</td><td>Custom Script</td><td>Session ID regenerated on login, Old session invalidated</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>CSRF (Cross-Site Request Forgery)</td><td>OWASP ZAP + Custom</td><td>CSRF tokens on state-changing ops, SameSite=Strict cookies</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>XSS (Stored/Reflected/DOM)</td><td>OWASP ZAP + Custom Payloads</td><td>React auto-escaping, DOMPurify for HTML, CSP blocks inline scripts</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>SQL Injection (Login/Register)</td><td>SQLMap + Custom Payloads</td><td>Parameterized queries (Zod + Prisma), 0 vulnerabilities</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Broken Access Control (IDOR)</td><td>Custom Scripts + AuthZ Testing</td><td>RLS enforces tenant isolation, RBAC enforces role permissions</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Security Misconfiguration</td><td>Lynis + kube-bench + kube-hunter</td><td>K8s hardening: non-root, readOnlyRootFS, NetworkPolicies, PSP/OPA</td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Sensitive Data Exposure</td><td>Custom + TruffleHog</td><td>No secrets in logs/URLs, AES-256 encryption, Vault for secrets</td><span class="pass-badge">✅ Pass</span></td></tr></tbody></table></div><div class="section"><h2>📊 Métricas de Calidad - Resumen</h2><table><thead>
-<tr><th>Métrica</th><th>Objetivo</th><th>Resultado</th><th>Estado</th></tr></thead><tbody>
-<tr><td>Login p95</td><td>< 300ms</td><td>245ms</td><td><span class="pass-badge">✅ Pass</span></td></tr>
-<tr><td>Token Validation p99</td><td>< 50ms</td><td>38ms</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>Refresh p95</td><td>< 100ms</td><td>68ms</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>Throughput (sustained)</td><td>500-2000 req/s</td><td>1,240 req/s peak</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>Error Rate (load)</td><td>< 0.1%</td><td>0.00%</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>Availability</td><td>99.99%</td><td>99.99%</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>MTTR (Auth incidents)</td><td>< 15 min</td><td>12 min avg</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>MTBF</td><td>> 720h</td><td>720h+</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>RTO (Disaster Recovery)</td><td>< 4h</td><td>3.2h (tested)</td><td><span class="pass-badge">✅ Pass</span></td>
-<tr><td>RPO</td><td>0</td><td>0 (sync replication)</td><td><span class="pass-badge">✅ Pass</span></td></tbody></table></div><div class="section"><h2>📊 Gráficos de Performance (Referencia)</h2><div style="background: #f5f5f5; padding: 20px; border-radius: 8px; text-align: center; color: #666;"><p>📈 Gráficos disponibles en Grafana Dashboard: <code>http://grafana.tenants-auth.internal/d/performance</code></p><p>📊 <strong>Latency Percentiles:</strong> p50, p90, p95, p99, p99.9 over time</p><p>📊 <strong>Throughput:</strong> Requests/sec over time, by endpoint</p><p>📊 <strong>Error Rate:</strong> Error rate over time, by type (4xx, 5xx)</p><p>📊 <strong>Resource Usage:</strong> CPU, Memory, Disk, Network per pod</p><p>📊 <strong>Queue Depth:</strong> Redis queue depth, pending actions</p><p>📊 <strong>Circuit Breaker State:</strong> Open/Closed/Half-open over time</p></div></div><div class="section"><h2>🏁 Conclusiones y Estado Final</h2><table><thead>
-<tr><th>Categoría</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>
-<tr><td>Performance (Load/Stress/Spike/Soak)</td><td><span class="pass-badge">✅ Pass</span></td><td>Todos los SLA cumplidos, auto-scaling funcional</td></tr>
-<tr><td>Chaos Engineering</td><td><span class="pass-badge">✅ Pass</span></td><td>8/8 experimentos pasados, RTO < 15min, RPO=0</td>
-<tr><td>Penetration Testing (Auth)</td><td><span class="pass-badge">✅ Pass</span></td><td>0 Critical/High, 0 Medium findings</td>
-<tr><td>Dependency/Supply Chain</td><td><span class="pass-badge">✅ Pass</span></td><td>0 Critical/High vulns, SLSA Level 2</td>
-<tr><td>Disaster Recovery</td><td><span class="pass-badge">✅ Pass</span></td><td>RTO 3.2h, RPO=0, Full restore verified</td>
-<tr><td>Backup Restore</td><td><span class="pass-badge">✅ Pass</span></td><td>Restore < 2h, Data integrity verified</td>
-<tr><td>Accessibility (WCAG 2.1 AA)</td><td><span class="warning-badge">⚠️ Parcial</span></td><td>7 violaciones AA pendientes (Sprint 2 fix)</td>
-<tr><td>Security (Pen Testing Auth)</td><td><span class="pass-badge">✅ Pass</span></td><td>0 Critical/High, 0 Medium findings</td></tbody></table></div><div class="section"><h2>✅ Estado Final y Aprobación</h2><div class="summary"><h2>✅ APROBADO PARA PRODUCCIÓN</h2><p>Todos los criterios de performance, seguridad, confiabilidad y caos engineering cumplidos.</ <p>7 violaciones de accesibilidad WCAG 2.1 AA pendientes (Sprint 2 fix programado).</p></div><div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;"><h3>📋 Próximos Pasos Inmediatos</h3><ol><li>Fix accesibilidad (Sprint 1-2): H-001, H-002, H-003, H-004, H-005, H-004, H-014</li><li>Configurar axe-core en CI/CD pipeline</li><li>Ejecutar Chaos Engineering experiments (Semana 2)</li><li>Configurar Pact Broker + Consumer-Driven Contracts (Semana 2)</li><li>Ejecutar Red Team Exercise (Semana 4)</li></ol></div><hr style="margin: 40px 0; border-color: #eee;"><p style="text-align: center; color: #666; font-size: 0.875rem;"><strong>Reporte generado:</strong> 2026-10-18 | <strong>Versión:</strong> 1.0 | <strong>Herramientas:</strong> k6 v0.47+, LitmusChaos, OWASP ZAP, k6, Grafana, Prometheus | <strong>Generado por:</strong> QA Lead / Performance Engineer </p></div></body></html>
+<main>
+    <h1>Rendimiento del micro-HIS de Tenants — Semana 15</h1>
+    <p class="aviso" role="note">
+        <strong>Alcance.</strong> Micro-benchmark <em>en proceso</em>: peticiones PSR-7 directas al router,
+        sin red, servidor web ni base de datos. <strong>No es una prueba de carga</strong>: no mide concurrencia,
+        throughput ni disponibilidad. La versión anterior de este reporte mostraba resultados de k6,
+        caos (LitmusChaos), pentesting y recuperación ante desastres que nunca se ejecutaron; se retiraron.
+    </p>
+
+    <h2>Corrida</h2>
+    <table>
+        <tbody>
+        <tr><th scope="row">Fecha</th><td>2026-10-21</td></tr>
+        <tr><th scope="row">Código</th><td>micro-HIS de Semana 3 (<code>16f68b0</code>) con las pruebas de Semana 15</td></tr>
+        <tr><th scope="row">Entorno</th><td>PHP 8.2.12 (XAMPP), Windows 11 x64, equipo de desarrollo; una sola ejecución</td></tr>
+        <tr><th scope="row">Script</th><td><code>docs/tenants/semana-15/bench/micro-his-bench.php</code></td></tr>
+        <tr><th scope="row">Iteraciones</th><td>200 ciclos login → me → refresh → logout de un usuario <code>medico</code> sin MFA</td></tr>
+        <tr><th scope="row">Argon2id</th><td>Parámetros reales del módulo: 64 MiB, 4 pasadas, 1 hilo</td></tr>
+        </tbody>
+    </table>
+    <pre>php docs/tenants/semana-15/bench/micro-his-bench.php 200</pre>
+
+    <h2>Resultados medidos (milisegundos)</h2>
+    <table>
+        <thead><tr><th scope="col">Operación</th><th scope="col">Ruta</th><th scope="col">p50</th><th scope="col">p95</th><th scope="col">p99</th><th scope="col">Máx.</th></tr></thead>
+        <tbody>
+        <tr><td>Login</td><td><code>POST /auth/login</code></td><td class="num">170.41</td><td class="num">178.54</td><td class="num">192.84</td><td class="num">235.80</td></tr>
+        <tr><td>Validar token</td><td><code>GET /auth/me</code></td><td class="num">0.14</td><td class="num">0.24</td><td class="num">0.33</td><td class="num">0.46</td></tr>
+        <tr><td>Rotar refresh</td><td><code>POST /auth/refresh</code></td><td class="num">0.11</td><td class="num">0.19</td><td class="num">0.36</td><td class="num">2.36</td></tr>
+        <tr><td>Logout</td><td><code>POST /auth/logout</code></td><td class="num">0.15</td><td class="num">0.23</td><td class="num">0.48</td><td class="num">1.00</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Lectura</h2>
+    <ul>
+        <li>El login cuesta unos 170 ms y casi todo es Argon2id: es el costo intencional de la verificación
+            de contraseña, y por eso frena los ataques de fuerza bruta.</li>
+        <li>Validar el JWT, revisar que la sesión siga activa y rotar el refresh cuestan menos de 0,5 ms (p95)
+            en proceso: el refresh usa SHA-256 sobre un secreto aleatorio de 256 bits, no Argon2id.</li>
+        <li>Estas cifras no incluyen red, TLS, PHP-FPM ni almacenamiento persistente: en un despliegue real serán
+            mayores. Solo sirven para comparar operaciones entre sí.</li>
+    </ul>
+
+    <h2>Objetivos de los RNF frente a lo medido</h2>
+    <table>
+        <thead><tr><th scope="col">RNF</th><th scope="col">Objetivo</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+        <tr><td>RNF-02 Login</td><td>p95 &lt; 300 ms</td><td>Indicio favorable en proceso (178,54 ms); <strong>sin medir</strong> en un despliegue</td></tr>
+        <tr><td>RNF-03 Validación de token</td><td>p99 &lt; 50 ms</td><td>Indicio favorable en proceso (0,33 ms); <strong>sin medir</strong> en un despliegue</td></tr>
+        <tr><td>RNF-04 Revocación</td><td>p99 &lt; 100 ms</td><td>Indicio favorable en proceso (logout 0,48 ms); <strong>sin medir</strong> en un despliegue</td></tr>
+        <tr><td>RNF-05 Throughput</td><td>500–2000 req/s</td><td><strong>Sin medir</strong>: requiere prueba de carga (k6) sobre un servidor</td></tr>
+        <tr><td>RNF-01 Disponibilidad 99,99 %, RNF-13 RPO/RTO</td><td>—</td><td><strong>Sin medir</strong>: no hay despliegue ni simulacro</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Pendiente</h2>
+    <ol>
+        <li>Prueba de carga con k6 contra <code>php -S</code> o PHP-FPM con el front controller <code>app/Modules/Tenants/micro-his.php</code>.</li>
+        <li>Repetir la corrida en otro equipo y publicar las dos series.</li>
+    </ol>
+</main>
+</body>
+</html>
