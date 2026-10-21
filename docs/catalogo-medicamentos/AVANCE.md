@@ -13,3 +13,4 @@
 | 9 | Usabilidad y accesibilidad: checklist, 8 hallazgos y backlog | `semana-09/` | `contraste.php` (exit 0, 6.47:1) | Rama `…semana-09-usabilidad…` | Pendiente | Lector de pantalla y usuarios (N/E) |
 | 10 | Movilidad: 4 pantallas, breakpoints y 2 escenarios | `semana-10/` | Salt renderizado y revisado | Rama `…semana-10-movilidad…` | Pendiente | Verificación a 320 px en el prototipo (Semana 11) |
 | 11 | Prototipo navegable desktop y móvil, mapa y capturas | `semana-11/` | `verificar-prototipo.mjs` 24/24 (exit 0) | Rama `…semana-11-prototipo…` | Pendiente | Datos simulados; sin backend |
+| 12 | Defensa con el prototipo, matriz y cambio simulado | `semana-12/` | Marp PDF (6 diapositivas) revisado | Rama `…semana-12-evaluacion…` | Pendiente | Defensa oral real |
