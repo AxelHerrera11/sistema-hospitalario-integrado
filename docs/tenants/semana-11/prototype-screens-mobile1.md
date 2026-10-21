@@ -1,252 +1,183 @@
-## 5. Admin - Lista Usuarios + Force-Revoke (Mobile)
-### Lista - Cards Apiladas
-```
-┌─────────────────────────────────────┐
-│  👥 Usuarios HCH        [+] [☰]     │
-├─────────────────────────────────────┤
-|  🔍 [___________________] [▼]       |
-├─────────────────────────────────────┤
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 👤 Dra. González              │  |
-|  │ 📧 dra.g@hch.com              │  |
-|  │ 🏷️ MEDICO        🟢 Activo    │  |
-|  │ ─────────────────────────     │  |
-|  │ [⋮] Acciones                  │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 👤 Lic. Ruiz                  │  |
-|  │ 📧 lic.r@hch.com              │  |
-|  │ 🏷️ ENFERMERO       🟢 Activo  │  |
-|  │ ─────────────────────────     │  |
-|  │ [⋮] Acciones                  │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 👤 Dr. Silva                  │  |
-|  │ 📧 dr.s@hch.com               │  |
-|  │ 🏷️ AUDITOR        🟡 MFA      │  |
-|  │ ─────────────────────────     │  |
-|  │ [⋮] Acciones                  │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ◄ 1 [2] [3] [4] [5] ►   20/pág    |
-└─────────────────────────────────────┘
-```
+# Semana 11 — Pantallas móvil (parte 2: usuarios, sesiones y auditoría)
+**Versión:** 1.1 | **Fecha:** 2026-10-21
 
-### Menú Acciones [⋮] - Touch Friendly
-```
-┌─────────────────────────────────────┐
-|  [⋮] Acciones - Dra. Torres       [×] │
-├─────────────────────────────────────┤
-|                                     |
-|  ✏️  Editar usuario                |
-|  ─────────────────────────────────  |
-|  🔑  Forzar MFA                    |
-|  ─────────────────────────────────  |
-|  🔒  Bloquear usuario              |
-|  ─────────────────────────────────  |
-|  🔴  Revocar TODAS las sesiones    │  ← .btn-danger
-|                                    |
-└─────────────────────────────────────┘
-```
-
-### Modal Force-Revoke (Mobile Full-Screen)
-```
-┌─────────────────────────────────────┐
-|  🔴 Revocar Sesiones - Dra. Torres [×] │
-├─────────────────────────────────────┤
-|                                     |
-|  ⚠️ Revocar TODAS las sesiones de   |
-|  Dra. Torres                        |
-|                                     |
-|  Se cerrarán sesión en TODOS los    |
-|  dispositivos (3 activos):          |
-|  📱 iPhone 15 Pro - Chrome 119 - Hoy│
-|  💻 MacBook Pro - Safari 17 - Ayer  |
-|  🔐 YubiKey 5C NFC - Hace 2 horas   |
-|                                     |
-|  El usuario deberá iniciar sesión   |
-|  nuevamente en todos los dispositivos.|
-|                                     |
-|  Motivo *:                          |
-|  ▼ [ Seguridad ▼ ] [ Cambio rol ]   |
-|  [ Sospecha compromiso ] [ Otro... ] |
-|                                     |
-|  Comentario (opcional):             |
-|  [________________________________] |
-|                                     |
-|  ⚠️ IRREVERSIBLE. Se auditará.      |
-|                                     |
-|  [ Cancelar ]      [ REVOCAR ]      │  ← 100% width, 48px height
-|                                     |
-└─────────────────────────────────────┘
-```
-
-### Toast Éxito Mobile
-```
-┌─────────────────────────────────────┐
-|  ✅ 3 sesiones revocadas para       │
-|  Dra. Torres                        |
-|  Motivo: Seguridad                  |
-|  [ Ver en Auditoría ] [ Deshacer ]  │
-└─────────────────────────────────────┘
-← Bottom fixed, 100% width, safe-area
-```
+> Continuación de [`prototype-screens-mobile.md`](prototype-screens-mobile.md), con las mismas
+> etiquetas **[Implementado]** / **[Propuesto]** y los roles canónicos de `config/rbac.php`.
+> Mockup estático de diseño: no describe funcionalidad que no exista en `develop`.
+>
+> **Consolidación.** La versión 1.0 de este archivo repetía las secciones 5 a 10 de la parte 1.
+> Ahora cada pantalla aparece una sola vez: la parte 1 cubre acceso y alta, y esta parte cubre
+> el resto. El portal de paciente se retiró: no pertenece a este módulo y no existe un rol de paciente.
 
 ---
 
-## 7. Auditoría Mobile (Cards)
+## 5. Usuarios del hospital (`/admin/users`) — [Implementado]
+
+Contrato vigente: `GET /api/v1/admin/users` con el permiso `usuarios.ver`. Componente real:
+`resources/js/modules/tenants/pages/HospitalUsersPage.vue`. En móvil la tabla se muestra como tarjetas.
 
 ```
 ┌─────────────────────────────────────┐
-|  📋 Auditoría - HCH          [⚙️]   │
+│  Usuarios · Hospital Central  [≡]   │
 ├─────────────────────────────────────┤
-|  🔍 [Filtros ▼]  [Exportar]         |
+│  Buscar [_____________________]     │  ← [Propuesto]: hoy no hay filtro en el API
 ├─────────────────────────────────────┤
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 🔴 REFRESH_REUSE_DETECTED     │  |
-|  │ ─────────────────────────────  │  |
-|  │ 🕐 2026-10-18 10:45:00        │  |
-|  │ 👤 sys (service-account)      │  |
-|  │ 🏷️ CRÍTICO                     │  |
-|  │ 🔍 Ver detalle ▶              │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 🟢 LOGIN_SUCCESS              │  |
-|  │ ─────────────────────────────  │  |
-|  │ 🕐 2026-10-18 11:20:05        │  |
-|  │ 👤 dra.gonzalez               │  |
-|  │ 🏷️ INFO                        │  |
-|  │ 🔍 Ver detalle ▶              │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ◄ 1 [2] [3] [4] [5] ►   20/pág    |
+│  ┌───────────────────────────────┐  │
+│  │ Dra. Ana González             │  │
+│  │ ana.gonzalez@hch.test         │  │
+│  │ medico · jefatura_medica      │  │
+│  │ ● Activa          [Acciones ▾]│  │  ← botón de 44 px
+│  └───────────────────────────────┘  │
+│  ┌───────────────────────────────┐  │
+│  │ Lic. Pedro Ruiz               │  │
+│  │ pedro.ruiz@hch.test           │  │
+│  │ enfermeria                    │  │
+│  │ ● Activa          [Acciones ▾]│  │
+│  └───────────────────────────────┘  │
+│  ┌───────────────────────────────┐  │
+│  │ Carlos Méndez                 │  │
+│  │ carlos.mendez@hch.test        │  │
+│  │ recepcion                     │  │
+│  │ ○ Desactivada     [Acciones ▾]│  │
+│  └───────────────────────────────┘  │
 └─────────────────────────────────────┘
-
-Touch: Tap card → Expande detalle (slide-up)
-Swipe left → Acciones rápidas [Ver en SIEM] [Exportar]
-Long press → Selección múltiple
-Pull to refresh → Actualiza lista
 ```
+El estado se indica con texto además del punto de color.
+
+### Menú de acciones (hoja inferior)
+
+| Acción | Contrato | Permiso | Estado |
+|---|---|---|---|
+| Asignar rol | `POST /api/v1/admin/users/{user}/roles` | `rbac.asignar` | [Implementado] |
+| Quitar rol | `DELETE /api/v1/admin/users/{user}/roles/{role}` | `rbac.asignar` | [Implementado] |
+| Desactivar usuario | `POST /api/v1/admin/users/{user}/deactivate` | `usuarios.desactivar` | [Implementado] |
+| Cerrar una sesión | `DELETE /api/v1/admin/sessions/{session}` | `sesiones.revocar_ajenas` | [Implementado] |
+| Cerrar todas las sesiones | — | — | [Propuesto] |
+
+```
+┌─────────────────────────────────────┐
+│  Acciones · Dra. Ana González  [×]  │
+├─────────────────────────────────────┤
+│  Asignar rol                        │
+│  ─────────────────────────────────  │
+│  Quitar rol                         │
+│  ─────────────────────────────────  │
+│  Cerrar una sesión                  │
+│  ─────────────────────────────────  │
+│  Desactivar usuario                 │  ← estilo de peligro
+└─────────────────────────────────────┘
+```
+Cada opción se muestra solo si el usuario autenticado tiene el permiso correspondiente
+(`can()` de `resources/js/router/permissions.js`).
 
 ---
 
-## 8. Paciente Portal Mobile
+## 6. Cerrar una sesión de otro usuario — [Implementado]
 
-### Dashboard Apilado
+### Confirmación (modal a pantalla completa)
 ```
 ┌─────────────────────────────────────┐
-│  🏥 Mi Portal - María Paz    👤 [≡] │
+│  Cerrar sesión · Dra. González [×]  │
 ├─────────────────────────────────────┤
-|  Hola, María              [🔔 3]    |
-├─────────────────────────────────────┤
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 📅 PRÓXIMAS CITAS             │  |
-|  │ ─────────────────────────────  │  |
-|  │ 📅 2026-10-20 10:00           │  |
-|  │ 🏥 Cardiología - Dr. González │  |
-|  │ [ Ver ] [ 🗓️ ]               │  |
-|  ├─────────────────────────────┤  |
-|  │ 📅 2026-10-25 09:30          │  |
-|  │ 🏥 Endocrinología - Dra. Torres│ │
-|  │ [ Ver ] [ 🗓️ ]               │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 💊 MEDICACIÓN ACTUAL          │  |
-|  │ ─────────────────────────────  │  |
-|  │ 💊 Losartán 50mg              │  |
-|  │ 1 comp/día - Desayuno         │  |
-|  ├─────────────────────────────┤  |
-|  │ 💊 Metformina 850mg           │  |
-|  │ 2 comp/día - Comida/Cena      │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ┌───────────────────────────────┐  |
-|  │ 📋 RESULTADOS RECIENTES       │  |
-|  │ ─────────────────────────────  │  |
-|  │ 📄 Hemograma 2026-10-15      │  |
-|  │ [ Ver ]                       │  |
-|  ├─────────────────────────────┤  |
-|  │ 📄 Radiografía 2026-10-10   │  |
-|  │ [ Ver ]                      │  |
-|  └───────────────────────────────┘  |
-|                                     |
-|  ─────────────────────────────────  |
-|  📄 Expediente | 📅 Citas | 💊 Meds │
-|  ─────────────────────────────────  |
-|  🔒 Último: 17/10 19:30             |
-|  🔐 MFA: No configurado [Configurar]│
-└─────────────────────────────────────┘
-
-Bottom Nav (Fixed):
-┌─────────────────────────────────────┐
-| 📄 Expediente  📅 Citas  💊 Meds  ⚙️ │
+│  Se cerrará esta sesión:            │
+│  Chrome · Android · 21/10 08:30     │
+│                                     │
+│  El dispositivo deberá volver a     │
+│  iniciar sesión.                    │
+│                                     │
+│  Esta acción no se puede deshacer:  │
+│  el token revocado ya no se acepta. │
+│                                     │
+│  [ Cancelar ]   [ CERRAR SESIÓN ]   │  ← 100 % ancho, 44 px
 └─────────────────────────────────────┘
 ```
+
+### Resultado
+```
+┌─────────────────────────────────────┐
+│  ✓ Sesión cerrada para la           │  ← role="status"
+│  Dra. González.                     │
+└─────────────────────────────────────┘
+← fijo abajo, 100 % ancho, safe-area
+```
+
+**Por qué no hay «Deshacer».** La versión 1.0 ofrecía «Deshacer (5 s)» y «restaurar sesiones».
+Ese contrato no existe y no tendría sentido: al revocar, el backend invalida los tokens de la
+sesión, y reactivarlos reabriría un acceso que el administrador decidió cortar (por ejemplo, ante
+una sospecha de robo). La única forma de recuperar el acceso es que el usuario vuelva a iniciar
+sesión. Por eso la confirmación previa es explícita y la acción queda auditada.
+
+Respuesta al hallazgo H-002 de Semana 9 («revocar sin Deshacer»): el riesgo de error que señalaba
+se atiende **antes** de ejecutar, no después. La confirmación ocupa toda la pantalla, nombra a la
+persona y la sesión afectadas, explica las consecuencias, separa «Cancelar» de la acción con
+botones de 44 px y no se ejecuta con un solo toque.
+
+### Cerrar todas las sesiones — [Propuesto]
+Mismo diseño con la lista de sesiones activas y un motivo obligatorio (Seguridad, Cambio de rol,
+Sospecha de compromiso, Otro). Requiere definir un endpoint nuevo; hoy el administrador debe
+cerrarlas una por una o desactivar la cuenta.
 
 ---
 
-## 9. Touch Targets & Accesibilidad Mobile
+## 7. Auditoría de seguridad — [Propuesto]
 
-| Elemento            | Tamaño Mínimo | Implementación                            |
-|---------------------|---------------|-------------------------------------------|
-| Botones Primarios   | 48×48px       | `min-height: 48px; min-width: 48px;`      |
-| Botones Secundarios | 44×44px       | `min-height: 44px; min-width: 44px;`      |
-| Inputs              | 48px height   | `height: 48px; font-size: 16px;`          |
-| Checkboxes/Radios   | 24×24px       | `width: 24px; height: 24px; accent-color` |
-| Toggle Switches     | 52×28px       | Custom CSS                                |
-| Dropdown Items      | 48px height   | `padding: 12px 16px; min-height: 48px`    |
-| Modal Buttons       | 48px height   | `min-height: 48px; width: 100%`           |
-| Toast Actions       | 44px height   | `padding: 12px 16px; min-height: 44px`    |
+El permiso `auditoria.ver` existe en el catálogo RBAC, pero `develop` no expone una vista ni un
+endpoint de auditoría para este módulo. Diseño propuesto en tarjetas:
 
-### Safe Area Support
+```
+┌─────────────────────────────────────┐
+│  Auditoría · Hospital Central       │
+├─────────────────────────────────────┤
+│  [Filtros ▾]                        │
+├─────────────────────────────────────┤
+│  ┌───────────────────────────────┐  │
+│  │ CRÍTICO · Reutilización de    │  │
+│  │ refresh token                 │  │
+│  │ 21/10/2026 10:45              │  │
+│  │ Usuario: ana.gonzalez         │  │
+│  │ [Ver detalle]                 │  │
+│  └───────────────────────────────┘  │
+│  ┌───────────────────────────────┐  │
+│  │ INFO · Inicio de sesión       │  │
+│  │ 21/10/2026 11:20              │  │
+│  │ Usuario: pedro.ruiz           │  │
+│  │ [Ver detalle]                 │  │
+│  └───────────────────────────────┘  │
+│  [ Anterior ]  2 / 5  [ Siguiente ] │
+└─────────────────────────────────────┘
+```
+- La severidad se muestra con texto, no solo con color.
+- El detalle nunca muestra tokens, contraseñas ni códigos.
+- Interacción con botones visibles. Se retiraron los gestos ocultos de la v1.0 («deslizar para
+  acciones», «mantener presionado») porque no tienen alternativa accesible por teclado.
+
+---
+
+## 8. Objetivos táctiles y de accesibilidad
+
+| Elemento | Tamaño mínimo | Implementación |
+|---|---|---|
+| Botones | 44 × 44 px | `min-height: 44px` (`BaseButton.vue`) |
+| Campos | 44 px de alto | `min-height: 44px; font-size: 16px` (`FormField.vue`) |
+| Casillas | 24 × 24 px con zona táctil de 44 px | etiqueta clicable que envuelve el input |
+| Elementos de menú | 44 px de alto | `padding: 12px 16px` |
+
 ```css
-/* iPhone notch / Dynamic Island */
-.bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-.modal-content {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
-}
-
-.fixed-footer {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-```
-
-### Haptic Feedback (iOS)
-```javascript
-// En botones de acción crítica
-button.addEventListener('click', () => {
-  if (navigator.vibrate) {
-    navigator.vibrate(10); // Light tap
-  }
-});
-
-// En error crítico
-button.addEventListener('click', () => {
-  if (navigator.vibrate) {
-    navigator.vibrate([50, 50, 50]); // Triple pulse
-  }
-});
+/* Pie y hojas inferiores respetan el área segura de iPhone. */
+.sheet-footer { padding-bottom: env(safe-area-inset-bottom, 0); }
 ```
 
 ---
 
-## 10. Testing Matrix Mobile
+## 9. Plan de pruebas móvil (pendiente de ejecutar)
 
-| Test                  | Dispositivo                             | Navegador               | Checklist                 |
-|-----------------------|-----------------------------------------|-------------------------|---------------------------|
-| **Visual Regression** | iPhone SE, 13, 14, 15, iPad, Galaxy S23 | Chrome, Safari, Firefox | Percy/Chromatic           |
-| **Accessibility**     | NVDA, VoiceOver, TalkBack               | Chrome, Safari          | axe-core + manual         |
-| **Performance**       | iPhone SE (throttled 3G)                | Chrome DevTools         | Lighthouse ≥ 90           |
-| **Touch Testing**     | iPhone 13, iPad, Galaxy Tab             | Safari, Chrome          | Touch targets, gestures   |
-| **Offline**           | Flight mode + throttled                 | Chrome DevTools         | Service Worker, Queue     |
-| **Orientation**       | Portrait + Landscape                    | Todos                   | Lock/Unlock, layout shift |
+Es un **plan**, no un resultado. La única evidencia ejecutada hoy son las capturas del prototipo
+Vue a 375, 768 y 1280 px (`docs/tenants/semana-10/evidencias/`) y las pruebas `node` de los
+componentes de Semana 10.
+
+| Prueba | Alcance | Herramienta | Estado |
+|---|---|---|---|
+| Diseño responsive | 375 / 768 / 1280 px | Chrome headless | Ejecutada (Semana 10) |
+| Teclado y lector de pantalla | Login, usuarios | NVDA, TalkBack | Pendiente |
+| Contraste y ARIA | Pantallas implementadas | axe-core | Pendiente |
+| Orientación | Vertical y horizontal | Dispositivo real | Pendiente |
