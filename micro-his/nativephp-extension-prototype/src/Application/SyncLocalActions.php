@@ -32,7 +32,7 @@ final class SyncLocalActions
                 $failed++;
             }
 
-            $this->actions->save($action);
+            $this->actions->update($action);
             $this->telemetry->record([
                 'tenant_id' => $action->tenantId,
                 'action_id' => $action->id,

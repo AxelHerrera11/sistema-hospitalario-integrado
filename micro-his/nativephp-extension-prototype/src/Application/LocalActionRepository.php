@@ -10,6 +10,8 @@ interface LocalActionRepository
 {
     public function save(LocalHisAction $action): void;
 
+    public function update(LocalHisAction $action): void;
+
     /** @return LocalHisAction[] */
     public function pendingForTenant(string $tenantId): array;
 }
