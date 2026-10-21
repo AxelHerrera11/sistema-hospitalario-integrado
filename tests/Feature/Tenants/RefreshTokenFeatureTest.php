@@ -1,167 +1,67 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Feature\Tenants;
-use App\Modules\Tenants\Application\Commands\RefreshCommand;
-use App\Modules\Tenants\Application\Results\RefreshResult;
-use App\Modules\Tenants\Application\UseCases\RefreshTokenUseCase;
-use App\Modules\Tenants\Domain\Entities\RefreshToken;
-use App\Modules\Tenants\Domain\Entities\Tenant;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\RefreshTokenRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
-use App\Modules\Tenants\Domain\Services\RefreshTokenRotator;
-use App\Modules\Tenants\Domain\Services\RotationResult;
-use App\Modules\Tenants\Domain\Services\TokenFactory;
-use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
-use App\Modules\Tenants\Domain\ValueObjects\SessionId;
-use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Domain\ValueObjects\UserId;
-use App\Modules\Tenants\Infrastructure\External\EventPublisher;
+
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class RefreshTokenFeatureTest extends TestCase
+use Tests\Feature\Tenants\Concerns\MicroHisHttp;
+
+/**
+ * Semana 15 · NB-004 (RF-06, RF-07): rotación de refresh y detección de reutilización vía
+ * POST /auth/refresh.
+ */
+#[Group('caja-negra')]
+class RefreshTokenFeatureTest extends TestCase
 {
-    private RefreshTokenUseCase $useCase;
-    private UserRepositoryInterface $userRepo;
-    private RefreshTokenRepositoryInterface $refreshRepo;
-    private SessionRepositoryInterface $sessionRepo;
-    private AuditLogRepositoryInterface $auditLog;
-    private EventPublisher $eventPublisher;
-    private RefreshTokenRotator $rotator;
-    private TokenFactory $tokenFactory;
+    use MicroHisHttp;
+
+    private array $session;
+
     protected function setUp(): void
     {
-        $this->userRepo = $this->createMock(UserRepositoryInterface::class);
-        $this->refreshRepo = $this->createMock(RefreshTokenRepositoryInterface::class);
-        $this->sessionRepo = $this->createMock(SessionRepositoryInterface::class);
-        $this->auditLog = $this->createMock(AuditLogRepositoryInterface::class);
-        $this->eventPublisher = $this->createMock(EventPublisher::class);
-        $this->rotator = $this->createMock(RefreshTokenRotator::class);
-        $this->tokenFactory = $this->createMock(TokenFactory::class);
-        $this->useCase = new RefreshTokenUseCase(
-            $this->userRepo,
-            $this->refreshRepo,
-            $this->sessionRepo,
-            $this->auditLog,
-            $this->eventPublisher,
-            $this->rotator,
-            $this->tokenFactory
-        );
+        $this->bootMicroHis();
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($admin['token'], 'medico@a.test', ['medico']);
+        $this->session = $this->login('medico@a.test', $admin['tenant'])['body'];
     }
-    public function testSuccessfulTokenRefresh(): void
+
+    public function test_refresh_rotates_both_tokens_and_keeps_the_session(): void
     {
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440000');
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $user = User::reconstitute(
-            $userId,
-            new \App\Modules\Tenants\Domain\ValueObjects\Email('test@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash('$argon2id$test'),
-            'Test User',
-            [\App\Modules\Tenants\Domain\ValueObjects\Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            []
-        );
-        $storedToken = RefreshToken::reconstitute(
-            'valid-refresh-token',
-            '$argon2id$hashed',
-            $userId,
-            $tenantId,
-            \App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0'),
-            'old-access-jti',
-            new \DateTimeImmutable('-1 hour'),
-            new \DateTimeImmutable('+6 days'),
-            false
-        );
-        $this->refreshRepo->method('findByTokenPrefix')->willReturn($storedToken);
-        $this->userRepo->method('findById')->willReturn($user);
-        $newAccessToken = new \App\Modules\Tenants\Domain\Services\AccessToken(
-            'new.access.token',
-            new \App\Modules\Tenants\Domain\ValueObjects\JwtClaims(
-                $userId->value(),
-                ['MEDICO'],
-                $tenantId->value(),
-                'new-session',
-                'new-jti',
-                'device-123',
-                time(),
-                time() + 900,
-                time()
-            )
-        );
-        $this->rotator->method('rotate')->willReturn(
-            RotationResult::success(
-                'new.access.token',
-                'new-refresh-token',
-                time() + 900,
-                time() + 604800
-            )
-        );
-        $this->sessionRepo->expects($this->once())->method('findById');
-        $this->auditLog->expects($this->once())->method('log');
-        $this->eventPublisher->expects($this->never())->method('publish'); // No reuse detected
-        $command = new RefreshCommand('valid-refresh-token');
-        $result = $this->useCase->execute($command);
-        $this->assertInstanceOf(RefreshResult::class, $result);
-        $this->assertEquals('new.access.token', $result->accessToken()->token());
-        $this->assertEquals('new-refresh-token', $result->refreshToken());
+        $rotated = $this->call('POST', '/auth/refresh', ['refresh_token' => $this->session['refresh_token']]);
+
+        $this->assertSame(200, $rotated['status']);
+        $this->assertNotSame($this->session['refresh_token'], $rotated['body']['refresh_token']);
+        $this->assertNotSame($this->session['access_token'], $rotated['body']['access_token']);
+        $me = $this->call('GET', '/auth/me', [], null, $rotated['body']['access_token'])['body'];
+        $this->assertSame($this->session['session_id'], $me['session_id']);
+        $this->assertCount(1, $this->module->auditLog->findByEventName('TOKEN_REFRESHED'));
     }
-    public function testFailsWithInvalidRefreshToken(): void
+
+    public function test_invalid_or_missing_refresh_token_is_rejected(): void
     {
-        $this->refreshRepo->method('findByTokenPrefix')->willReturn(null);
-        $command = new RefreshCommand('invalid-token');
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Refresh token inválido o revocado');
-        $this->useCase->execute($command);
+        $this->assertSame(401, $this->call('POST', '/auth/refresh', ['refresh_token' => 'inventado'])['status']);
+        $this->assertSame(422, $this->call('POST', '/auth/refresh', [])['status']);
     }
-    public function testFailsWithReuseDetected(): void
+
+    public function test_reusing_a_rotated_refresh_token_revokes_the_session(): void
     {
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440000');
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $user = User::reconstitute(
-            $userId,
-            new \App\Modules\Tenants\Domain\ValueObjects\Email('test@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash('$argon2id$test'),
-            'Test User',
-            [\App\Modules\Tenants\Domain\ValueObjects\Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            []
-        );
-        $storedToken = RefreshToken::reconstitute(
-            'valid-refresh-token',
-            '$argon2id$hashed',
-            $userId,
-            $tenantId,
-            \App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0'),
-            'old-access-jti',
-            new \DateTimeImmutable('-1 hour'),
-            new \DateTimeImmutable('+6 days'),
-            false
-        );
-        $this->refreshRepo->method('findByTokenPrefix')->willReturn($storedToken);
-        $this->userRepo->method('findById')->willReturn($user);
-        $this->rotator->method('rotate')->willReturn(
-            RotationResult::reuseDetected($userId->value())
-        );
-        $this->auditLog->expects($this->once())->method('log');
-        $this->eventPublisher->expects($this->once())->method('publish');
-        $command = new RefreshCommand('reused-token');
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Token compromise detected');
-        $this->useCase->execute($command);
+        $rotated = $this->call('POST', '/auth/refresh', ['refresh_token' => $this->session['refresh_token']])['body'];
+
+        $reuse = $this->call('POST', '/auth/refresh', ['refresh_token' => $this->session['refresh_token']]);
+
+        $this->assertSame(401, $reuse['status']);
+        $this->assertArrayNotHasKey('revoked_sessions', $reuse['body'], 'no se informa al atacante qué se revocó');
+        $this->assertSame(401, $this->call('GET', '/auth/me', [], null, $rotated['access_token'])['status']);
+        $this->assertSame(401, $this->call('POST', '/auth/refresh', ['refresh_token' => $rotated['refresh_token']])['status']);
+        $alert = $this->module->auditLog->findByEventName('REFRESH_REUSE_DETECTED')[0];
+        $this->assertSame('CRITICAL', $alert['severity']);
+        $this->assertTrue($this->module->auditLog->verifyHashChain());
+    }
+
+    public function test_access_token_stays_valid_only_while_its_session_is_alive(): void
+    {
+        $this->call('POST', '/auth/logout', [], null, $this->session['access_token']);
+
+        $this->assertSame(401, $this->call('POST', '/auth/refresh', ['refresh_token' => $this->session['refresh_token']])['status']);
     }
 }

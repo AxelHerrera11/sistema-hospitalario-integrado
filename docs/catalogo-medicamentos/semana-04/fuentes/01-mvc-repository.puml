@@ -1,0 +1,73 @@
+@startuml
+title ASII-14 Semana 4 - Entrada MVC y Repository del Micro-HIS
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #334155
+skinparam packageStyle rectangle
+left to right direction
+
+package "Presentation (MVC)" #EAF4FF {
+  class Router <<controlador frontal>> {
+    + dispatch(Request): array
+  }
+  class RegistrationController
+  class SearchController
+  class ValidityController
+  class JsonView <<vista>>
+  class Request
+}
+
+package "Application" #FEF9C3 {
+  interface MedicationRegistration
+  interface MedicationLookup
+  interface MedicationValidityControl
+  class RegisterMedication
+  class ConsultMedications
+  class ChangeMedicationValidity
+  interface MedicationRegistry <<puerto>>
+  interface MedicationReader <<puerto>>
+  interface MedicationValidityStore <<puerto>>
+  interface MedicationRepository <<Repository>>
+}
+
+package "Domain (modelo)" #DCFCE7 {
+  class Medication
+  enum Validity
+}
+
+package "Persistence" #FCE7F3 {
+  class PdoMedicationCatalog
+  class InMemoryMedicationRepository
+}
+
+Router --> RegistrationController
+Router --> SearchController
+Router --> ValidityController
+Router ..> Request
+RegistrationController --> MedicationRegistration
+SearchController --> MedicationLookup
+ValidityController --> MedicationValidityControl
+RegisterMedication ..|> MedicationRegistration
+ConsultMedications ..|> MedicationLookup
+ChangeMedicationValidity ..|> MedicationValidityControl
+RegisterMedication --> MedicationRegistry
+ConsultMedications --> MedicationReader
+ChangeMedicationValidity --> MedicationValidityStore
+MedicationRepository --|> MedicationRegistry
+MedicationRepository --|> MedicationReader
+MedicationRepository --|> MedicationValidityStore
+PdoMedicationCatalog ..|> MedicationRepository
+InMemoryMedicationRepository ..|> MedicationRepository
+RegisterMedication ..> Medication
+ChangeMedicationValidity ..> Validity
+
+note bottom of MedicationRepository
+  Contrato completo que cumple cada adaptador.
+  Cada caso de uso recibe solo su puerto (ISP).
+end note
+note bottom of Router
+  Sin SQL ni reglas de negocio:
+  solo método, ruta y forma del JSON.
+end note
+@enduml

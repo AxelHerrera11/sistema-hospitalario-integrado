@@ -1,0 +1,15 @@
+@startsalt
+title W2 - Resultados con vigencia visible en texto
+{+
+  {/ <b>Catálogo de medicamentos</b> | [+ Dar de alta] <i>(solo gestor)</i> }
+  ---
+  { "amox          " | [Buscar] }
+  2 resultados
+  {#
+    <b>Código</b> | <b>Nombre</b> | <b>Principio activo</b> | <b>Vigencia</b> | <b>Acción</b>
+    AMX-500 | Amoxicilina 500 mg | Amoxicilina | Activo | [Cambiar vigencia]
+    AMX-250 | Amoxicilina 250 mg | Amoxicilina | Inactivo - no disponible para nuevas indicaciones | [Cambiar vigencia]
+  }
+  <i>Sin coincidencias: "No se encontraron medicamentos para «xyz». Pruebe con otro término."</i>
+}
+@endsalt
