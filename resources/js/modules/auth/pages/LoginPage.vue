@@ -4,6 +4,9 @@
             Iniciar sesión
         </h2>
         <form class="login__form" @submit.prevent="handleSubmit">
+            <p v-if="auth.authError" class="login__error" role="alert">
+                {{ auth.authError }}
+            </p>
             <label class="login__label">
                 ID de tenant (X-Tenant-ID)
                 <input

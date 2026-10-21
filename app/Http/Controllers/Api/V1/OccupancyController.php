@@ -12,11 +12,9 @@ use MicroHis\Occupancy\Application\OccupancySummaryQuery;
 use MicroHis\Occupancy\Application\PersistenceFailure;
 
 /**
- * Fotografía de ocupación hospitalaria (ASII-09).
- *
- * Solo lectura: no asigna, traslada ni libera camas. La autorización la
- * resuelven los middleware compartidos de tenant, JWT y RBAC antes de llegar
- * aquí. El log es estructurado y no contiene datos de pacientes.
+ * Fotografía de ocupación hospitalaria (ASII-09). Solo lectura: no asigna,
+ * traslada ni libera camas. La autorización la resuelven los middleware de
+ * tenant, JWT y RBAC. El log es estructurado y no contiene datos de pacientes.
  */
 final class OccupancyController extends Controller
 {

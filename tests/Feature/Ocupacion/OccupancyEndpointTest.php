@@ -7,6 +7,7 @@ namespace Tests\Feature\Ocupacion;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use MicroHis\Occupancy\Application\BedSnapshotReader;
 use MicroHis\Occupancy\Application\PersistenceFailure;
 use MicroHis\Occupancy\Domain\BedSnapshot;
@@ -15,11 +16,9 @@ use MicroHis\Rbac\Persistence\InMemoryRbacStore;
 use Tests\TestCase;
 
 /**
- * Contrato HTTP de la fotografía de ocupación (ASII-09, semana 16).
- *
- * La persistencia se sustituye por un lector en memoria: la prueba verifica
- * la capa HTTP, la autorización y el formato de error. La consulta real
- * contra PostgreSQL se verifica en tests/Database/Hospital.
+ * Contrato HTTP de la fotografía de ocupación (ASII-09, semana 16). La capa
+ * HTTP, la autorización y el formato de error se prueban con dobles; una
+ * prueba usa la conexión HOSPITAL real apuntando a una base inexistente.
  */
 final class OccupancyEndpointTest extends TestCase
 {
@@ -128,6 +127,17 @@ final class OccupancyEndpointTest extends TestCase
             ->assertStatus(503)
             ->assertJsonPath('error.code', 'OCCUPANCY_UNAVAILABLE')
             ->assertJsonMissingPath('data.global.total_beds');
+    }
+
+    public function test_una_base_hospital_inexistente_responde_503_y_no_500(): void
+    {
+        config(['database.connections.hospital.database' => 'base_inexistente_asii09']);
+        DB::purge('hospital');
+        $this->app->forgetInstance(BedSnapshotReader::class);
+
+        $this->getJson('/api/v1/occupancy')
+            ->assertStatus(503)
+            ->assertJsonPath('error.code', 'OCCUPANCY_UNAVAILABLE');
     }
 
     public function test_otro_metodo_responde_405(): void
