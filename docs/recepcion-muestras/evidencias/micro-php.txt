@@ -1,0 +1,40 @@
+PASS 1 RF01 aceptación y dígito
+PASS 2 RF02 actualización de orden
+PASS 3 RF03 reimpresión conserva código
+PASS 4 RNF01 aislamiento en consulta
+PASS 5 RF04 doble aceptación bloqueada
+PASS 6 RF05 rechazo patient_code otro
+PASS 7 RF06 outbox y nueva toma
+PASS 8 RF05 rechazo patient_name Otra persona
+PASS 9 RF06 outbox y nueva toma
+PASS 10 RF05 rechazo type urine
+PASS 11 RF06 outbox y nueva toma
+PASS 12 RF05 rechazo container frasco
+PASS 13 RF06 outbox y nueva toma
+PASS 14 RF05 rechazo volume 2.9
+PASS 15 RF06 outbox y nueva toma
+PASS 16 RF05 rechazo temperature 14.9
+PASS 17 RF06 outbox y nueva toma
+PASS 18 RF05 rechazo temperature 25.1
+PASS 19 RF06 outbox y nueva toma
+PASS 20 RF05 rechazo collected_at 2026-10-20T09:59:59-06:00
+PASS 21 RF06 outbox y nueva toma
+PASS 22 RF05 rechazo collected_at 2026-10-20T11:00:01-06:00
+PASS 23 RF06 outbox y nueva toma
+PASS 24 RF05 rechazo hemolizada 1
+PASS 25 RF06 outbox y nueva toma
+PASS 26 RF05 rechazo coagulada 1
+PASS 27 RF06 outbox y nueva toma
+PASS 28 RF05 rechazo derramada 1
+PASS 29 RF06 outbox y nueva toma
+PASS 30 LSP urine
+PASS 31 LSP swab
+PASS 32 RNF01 orden ajena H2
+PASS 33 RNF01 orden ajena missing
+PASS 34 RF04 orden cancelada
+PASS 35 RNF02 rollback por fallo
+PASS 36 RF03 código malformado
+PASS 37 RF03 dígito alterado
+PASS 38 RF03 1000 códigos secuenciales sin duplicados (no concurrencia)
+PASS 39 MVC payload inválido
+OK 39 comprobaciones; sin medición de cobertura ni integraciones externas.
