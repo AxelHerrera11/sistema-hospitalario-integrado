@@ -1,50 +1,36 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Presentation\Middleware;
-use App\Modules\Tenants\Infrastructure\Persistence\Redis\RedisRateLimitRepository;
+use App\Modules\Tenants\Presentation\Transformers\AuthResponseTransformer;
+use ArrayObject;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-final class RateLimitMiddleware implements MiddlewareInterface
+/** Limita respuestas de error por IP en los endpoints de autenticación (ventana fija). */
+final class RateLimitMiddleware
 {
+    /** @param ArrayObject<string, array{count: int, window_start: int}> $hits estado compartido del módulo */
     public function __construct(
-        private RedisRateLimitRepository $rateLimit,
+        private ArrayObject $hits,
+        private AuthResponseTransformer $responses,
         private int $maxAttempts = 20,
-        private int $windowSeconds = 900
+        private int $windowSeconds = 900,
+        private array $limitedPaths = ['/auth/login', '/auth/mfa', '/auth/refresh']
     ) {}
-    public function process(Request $request, RequestHandlerInterface $handler): Response
+    public function __invoke(Request $request, callable $next): Response
     {
         $path = $request->getUri()->getPath();
-        $authEndpoints = ['/auth/login', '/auth/register', '/auth/mfa'];
-        if (!in_array($path, $authEndpoints, true)) {
-            return $handler->handle($request);
-        }
-        $email = '';
-        $data = $request->getParsedBody();
-        if (is_array($data) && isset($data['email'])) {
-            $email = $data['email'];
-        }
-        $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
-        if ($this->rateLimit->isRateLimited($email, $ip, $this->maxAttempts)) {
-            $response = new \Nyholm\Psr7\Response(429, [
-                'Content-Type' => 'application/json',
-                'Retry-After' => (string)$this->windowSeconds
-            ]);
-            $response->getBody()->write(json_encode([
-                'success' => false,
-                'error' => [
-                    'message' => 'Demasiados intentos. Intente nuevamente más tarde.',
-                    'code' => 429,
-                    'retry_after' => $this->windowSeconds
-                ]
-            ]));
-            return $response;
-        }
-        $response = $handler->handle($request);
+        if (!in_array($path, $this->limitedPaths, true)) {
+            return $next($request);}
+        $key = ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown') . '|' . $path;
+        $now = time();
+        $entry = $this->hits[$key] ?? ['count' => 0, 'window_start' => $now];
+        if ($now - $entry['window_start'] >= $this->windowSeconds) {
+            $entry = ['count' => 0, 'window_start' => $now];}
+        if ($entry['count'] >= $this->maxAttempts) {
+            $retryAfter = $this->windowSeconds - ($now - $entry['window_start']);
+            return $this->responses->json(['message' => 'Demasiados intentos. Intente nuevamente más tarde.', 'retry_after' => $retryAfter], 429, ['Retry-After' => (string) $retryAfter]);}
+        $response = $next($request);
         if ($response->getStatusCode() >= 400) {
-            $this->rateLimit->incrementAttempts($email, $ip);
-        }
-        return $response;
-    }
-}
+            $entry['count']++;}
+        $this->hits[$key] = $entry;
+        return $response;}}

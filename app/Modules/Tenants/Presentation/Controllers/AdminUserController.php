@@ -2,69 +2,63 @@
 declare(strict_types=1);
 namespace App\Modules\Tenants\Presentation\Controllers;
 use App\Modules\Tenants\Application\Commands\RegisterUserCommand;
+use App\Modules\Tenants\Application\Commands\RevokeCommand;
 use App\Modules\Tenants\Application\UseCases\RegisterUserUseCase;
 use App\Modules\Tenants\Application\UseCases\RevokeSessionUseCase;
-use App\Modules\Tenants\Application\Results\RegisterUserResult;
-use App\Modules\Tenants\Application\Results\RevokeResult;
-use App\Modules\Tenants\Domain\ValueObjects\Email;
+use App\Modules\Tenants\Domain\Entities\User;
+use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
+use App\Modules\Tenants\Domain\ValueObjects\JwtClaims;
 use App\Modules\Tenants\Domain\ValueObjects\Role;
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Domain\ValueObjects\UserId;
+use App\Modules\Tenants\Presentation\Requests\RegisterUserRequest;
+use App\Modules\Tenants\Presentation\Requests\RevokeSessionRequest;
 use App\Modules\Tenants\Presentation\Transformers\AuthResponseTransformer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+/** Administración de usuarios del hospital del token; solo admin_hospital. */
 final class AdminUserController
 {
-    private RegisterUserUseCase $registerUseCase;
-    private RevokeSessionUseCase $revokeUseCase;
-    private AuthResponseTransformer $transformer;
     public function __construct(
-        RegisterUserUseCase $registerUseCase,
-        RevokeSessionUseCase $revokeUseCase,
-        AuthResponseTransformer $transformer) {
-        $this->registerUseCase = $registerUseCase;
-        $this->revokeUseCase = $revokeUseCase;
-        $this->transformer = $transformer;}
-    public function list(Request $request, Response $response): Response
+        private RegisterUserUseCase $registerUseCase,
+        private RevokeSessionUseCase $revokeUseCase,
+        private UserRepositoryInterface $users,
+        private AuthResponseTransformer $transformer
+    ) {}
+    public function list(Request $request): Response
     {
-        $response->getBody()->write(json_encode([
-            'success' => true,
-            'data' => [],
-            'message' => 'Endpoint no implementado aún']));
-        return $response->withHeader('Content-Type', 'application/json');}
-    public function create(Request $request, Response $response): Response
+        $auth = self::authorize($request);
+        $query = $request->getQueryParams();
+        $limit = max(1, min(100, (int) ($query['limit'] ?? 50)));
+        $offset = max(0, (int) ($query['offset'] ?? 0));
+        $tenantId = new TenantId($auth->tenantId());
+        return $this->transformer->json([
+            'data' => array_map(fn(User $u) => $u->toArray(), $this->users->findAllByTenant($tenantId, $limit, $offset)),
+            'total' => $this->users->countByTenant($tenantId),]);}
+    public function create(Request $request): Response
     {
-        $data = \App\Modules\Tenants\Presentation\Requests\RegisterUserRequest::fromRequest($request);
-        $command = new RegisterUserCommand(
+        self::authorize($request);
+        $data = RegisterUserRequest::fromRequest($request);
+        $result = $this->registerUseCase->execute(new RegisterUserCommand(
             $data->email(),
             $data->name(),
             $data->password(),
             $data->roles(),
             $data->tenantId(),
             $data->createdBy(),
-            $data->mfaRequired());
-        $result = $this->registerUseCase->execute($command);
-        return $this->transformer->transformRegister($response, $result, 201);}
-    public function get(Request $request, Response $response): Response
+            $data->mfaRequired(),
+            $data->existingUserId()));
+        return $this->transformer->transformRegister($result);}
+    public function revokeSessions(Request $request): Response
     {
-        $userId = $request->getAttribute('id');
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => 'No implementado', 'code' => 501]]));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
-    public function update(Request $request, Response $response): Response
+        self::authorize($request);
+        $data = RevokeSessionRequest::fromRequest($request);
+        $result = $this->revokeUseCase->execute(new RevokeCommand($data->tenantId(), $data->requesterId(), null, $data->targetUserId(), $data->reason()));
+        return $this->transformer->transformRevoke($result);}
+    private static function authorize(Request $request): JwtClaims
     {
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => 'No implementado', 'code' => 501]]));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
-    public function deactivate(Request $request, Response $response): Response
-    {
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => 'No implementado', 'code' => 501]]));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
-}
+        $auth = $request->getAttribute('auth');
+        if (!$auth instanceof JwtClaims) {
+            throw new \DomainException('Usuario no autenticado', 401);}
+        if (!$auth->hasRole(Role::ADMIN_HOSPITAL)) {
+            throw new \DomainException('Requiere el rol admin_hospital', 403);}
+        return $auth;}}

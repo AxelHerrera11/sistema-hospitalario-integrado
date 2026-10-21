@@ -1,15 +1,13 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\Services;
+/** Solo se admite TOTP: WebAuthn queda fuera del micro-HIS hasta tener una validación real de atestación. */
 final class MfaRequirement
 {
+    public const TOTP = 'TOTP';
     private bool $required;
-    private string $type;
-    public function __construct(bool $required, string $type = 'TOTP')
+    public function __construct(bool $required)
     {
-        $this->required = $required;
-        $this->type = strtoupper($type);}
+        $this->required = $required;}
     public function required(): bool { return $this->required; }
-    public function type(): string { return $this->type; }
-    public function isTotp(): bool { return $this->type === 'TOTP'; }
-    public function isWebAuthn(): bool { return $this->type === 'WEBAUTHN'; }}
+    public function type(): string { return self::TOTP; }}

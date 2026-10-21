@@ -2,94 +2,72 @@
 declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\Entities;
 use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
+use App\Modules\Tenants\Domain\ValueObjects\SessionId;
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 use App\Modules\Tenants\Domain\ValueObjects\UserId;
+use DateTimeImmutable;
+use Ramsey\Uuid\Uuid;
+/**
+ * Refresh token de un solo uso. El cliente recibe "{id}.{secreto}" una única vez;
+ * la entidad solo conserva el SHA-256 del secreto (256 bits aleatorios, no necesita Argon2id).
+ */
 final class RefreshToken
 {
-    private string $token;
-    private string $hash;
-    private UserId $userId;
+    private string $id;
     private TenantId $tenantId;
+    private UserId $userId;
+    private SessionId $sessionId;
     private DeviceFingerprint $device;
-    private string $accessTokenJti;
-    private \DateTimeImmutable $createdAt;
-    private \DateTimeImmutable $expiresAt;
-    private bool $revoked;
-    private function __construct(
-        string $token,
-        string $hash,
-        UserId $userId,
-        TenantId $tenantId,
-        DeviceFingerprint $device,
-        string $accessTokenJti,
-        \DateTimeImmutable $expiresAt
-    ) {
-        $this->token = $token;
-        $this->hash = $hash;
-        $this->userId = $userId;
+    private string $secretHash;
+    private DateTimeImmutable $expiresAt;
+    private bool $rotated = false;
+    private bool $revoked = false;
+    private function __construct(string $id, TenantId $tenantId, UserId $userId, SessionId $sessionId, DeviceFingerprint $device, string $secretHash, DateTimeImmutable $expiresAt)
+    {
+        $this->id = $id;
         $this->tenantId = $tenantId;
+        $this->userId = $userId;
+        $this->sessionId = $sessionId;
         $this->device = $device;
-        $this->accessTokenJti = $accessTokenJti;
-        $this->createdAt = new \DateTimeImmutable();
-        $this->expiresAt = $expiresAt;
-        $this->revoked = false;
-    }
-    public static function create(
-        UserId $userId,
-        TenantId $tenantId,
-        DeviceFingerprint $device,
-        string $accessTokenJti,
-        int $ttlSeconds = 604800
-    ): self {
-        $token = bin2hex(random_bytes(32));
-        return new self(
-            $token,
-            '',
-            $userId,
-            $tenantId,
-            $device,
-            $accessTokenJti,
-            (new \DateTimeImmutable())->modify("+{$ttlSeconds} seconds"));}
-    public static function reconstitute(
-        string $token,
-        string $hash,
-        UserId $userId,
-        TenantId $tenantId,
-        DeviceFingerprint $device,
-        string $accessTokenJti,
-        \DateTimeImmutable $createdAt,
-        \DateTimeImmutable $expiresAt,
-        bool $revoked
-    ): self {
-        $rt = new self($token, $hash, $userId, $tenantId, $device, $accessTokenJti, $expiresAt);
-        $reflection = new \ReflectionClass($rt);
-        $reflection->getProperty('createdAt')->setValue($rt, $createdAt);
-        $reflection->getProperty('revoked')->setValue($rt, $revoked);
-        return $rt;}
-    public function token(): string { return $this->token; }
-    public function hash(): string { return $this->hash; }
-    public function userId(): UserId { return $this->userId; }
+        $this->secretHash = $secretHash;
+        $this->expiresAt = $expiresAt;}
+    /** @return array{0: self, 1: string} la entidad y el token en claro que se entrega al cliente */
+    public static function issue(TenantId $tenantId, UserId $userId, SessionId $sessionId, DeviceFingerprint $device, int $ttlSeconds): array
+    {
+        $id = Uuid::uuid4()->toString();
+        $secret = bin2hex(random_bytes(32));
+        $expiresAt = (new DateTimeImmutable())->modify("+{$ttlSeconds} seconds");
+        return [new self($id, $tenantId, $userId, $sessionId, $device, hash('sha256', $secret), $expiresAt), $id . '.' . $secret];}
+    /** @return array{0: string, 1: string}|null [id, secreto] */
+    public static function parse(string $raw): ?array
+    {
+        $parts = explode('.', $raw, 2);
+        if (count($parts) !== 2 || !Uuid::isValid($parts[0]) || $parts[1] === '') {
+            return null;}
+        return $parts;}
+    public function matches(string $secret): bool
+    { return hash_equals($this->secretHash, hash('sha256', $secret));}
+    public function id(): string { return $this->id; }
     public function tenantId(): TenantId { return $this->tenantId; }
+    public function userId(): UserId { return $this->userId; }
+    public function sessionId(): SessionId { return $this->sessionId; }
     public function device(): DeviceFingerprint { return $this->device; }
-    public function accessTokenJti(): string { return $this->accessTokenJti; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
-    public function expiresAt(): \DateTimeImmutable { return $this->expiresAt; }
+    public function expiresAt(): DateTimeImmutable { return $this->expiresAt; }
+    public function isRotated(): bool { return $this->rotated; }
     public function isRevoked(): bool { return $this->revoked; }
-    public function setHash(string $hash): void
-    { $this->hash = $hash;}
-    public function revoke(): void
-    { $this->revoked = true;}
-    public function isExpired(): bool
-    { return new \DateTimeImmutable() >= $this->expiresAt;}
+    public function isExpired(): bool { return new DateTimeImmutable() >= $this->expiresAt; }
+    public function markRotated(): void { $this->rotated = true; }
+    public function revoke(): void { $this->revoked = true; }
+    /** Representación persistible: nunca incluye el secreto en claro. */
     public function toArray(): array
     {
         return [
-            'token' => $this->token,
-            'hash' => $this->hash,
-            'user_id' => $this->userId->value(),
+            'id' => $this->id,
             'tenant_id' => $this->tenantId->value(),
-            'device' => $this->device->toArray(),
-            'access_token_jti' => $this->accessTokenJti,
-            'created_at' => $this->createdAt->format('c'),
+            'user_id' => $this->userId->value(),
+            'session_id' => $this->sessionId->value(),
+            'device_id' => $this->device->deviceId(),
+            'secret_hash' => $this->secretHash,
             'expires_at' => $this->expiresAt->format('c'),
+            'rotated' => $this->rotated,
             'revoked' => $this->revoked,];}}

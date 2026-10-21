@@ -5,64 +5,42 @@ use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
 use App\Modules\Tenants\Domain\ValueObjects\SessionId;
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 use App\Modules\Tenants\Domain\ValueObjects\UserId;
+use DateTimeImmutable;
+/** Sesión autenticada. Su id es el claim session_id del JWT: revocarla invalida sus access tokens. */
 final class Session
 {
     private SessionId $id;
     private UserId $userId;
     private TenantId $tenantId;
     private DeviceFingerprint $device;
-    private \DateTimeImmutable $createdAt;
-    private \DateTimeImmutable $lastActivityAt;
-    private bool $revoked;
-    private function __construct(
-        SessionId $id,
-        UserId $userId,
-        TenantId $tenantId,
-        DeviceFingerprint $device
-    ) {
+    private DateTimeImmutable $createdAt;
+    private DateTimeImmutable $lastActivityAt;
+    private bool $revoked = false;
+    private function __construct(SessionId $id, UserId $userId, TenantId $tenantId, DeviceFingerprint $device)
+    {
         $this->id = $id;
         $this->userId = $userId;
         $this->tenantId = $tenantId;
         $this->device = $device;
-        $this->createdAt = new \DateTimeImmutable();
-        $this->lastActivityAt = new \DateTimeImmutable();
-        $this->revoked = false;}
-    public static function create(
-        UserId $userId,
-        TenantId $tenantId,
-        DeviceFingerprint $device
-    ): self { return new self(SessionId::generate(), $userId, $tenantId, $device);}
-    public static function reconstitute(
-        SessionId $id,
-        UserId $userId,
-        TenantId $tenantId,
-        DeviceFingerprint $device,
-        \DateTimeImmutable $createdAt,
-        \DateTimeImmutable $lastActivityAt,
-        bool $revoked
-    ): self {
-        $session = new self($id, $userId, $tenantId, $device);
-        $reflection = new \ReflectionClass($session);
-        $reflection->getProperty('createdAt')->setValue($session, $createdAt);
-        $reflection->getProperty('lastActivityAt')->setValue($session, $lastActivityAt);
-        $reflection->getProperty('revoked')->setValue($session, $revoked);
-        return $session;}
+        $this->createdAt = new DateTimeImmutable();
+        $this->lastActivityAt = new DateTimeImmutable();}
+    public static function start(SessionId $id, UserId $userId, TenantId $tenantId, DeviceFingerprint $device): self
+    { return new self($id, $userId, $tenantId, $device);}
     public function id(): SessionId { return $this->id; }
     public function userId(): UserId { return $this->userId; }
     public function tenantId(): TenantId { return $this->tenantId; }
     public function device(): DeviceFingerprint { return $this->device; }
-    public function createdAt(): \DateTimeImmutable { return $this->createdAt; }
-    public function lastActivityAt(): \DateTimeImmutable { return $this->lastActivityAt; }
+    public function createdAt(): DateTimeImmutable { return $this->createdAt; }
+    public function lastActivityAt(): DateTimeImmutable { return $this->lastActivityAt; }
     public function isRevoked(): bool { return $this->revoked; }
+    public function belongsTo(TenantId $tenantId, UserId $userId): bool
+    { return $this->tenantId->equals($tenantId) && $this->userId->equals($userId);}
     public function updateActivity(): void
-    { $this->lastActivityAt = new \DateTimeImmutable();}
+    { $this->lastActivityAt = new DateTimeImmutable();}
     public function revoke(): void
     { $this->revoked = true;}
     public function isIdle(int $idleTimeoutSeconds): bool
-    {
-        $now = new \DateTimeImmutable();
-        $diff = $now->getTimestamp() - $this->lastActivityAt->getTimestamp();
-        return $diff > $idleTimeoutSeconds;}
+    { return time() - $this->lastActivityAt->getTimestamp() > $idleTimeoutSeconds;}
     public function toArray(): array
     {
         return [

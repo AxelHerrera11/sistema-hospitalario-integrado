@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Container>
+title ASII-14 - C4 nivel 2: contenedores del Micro-HIS Catálogo de medicamentos
+LAYOUT_LEFT_RIGHT()
+AddRelTag("futuro", $lineStyle = DashedLine(), $legendText = "no implementado")
+
+Person(gestor, "Gestor autorizado del catálogo", "Da de alta medicamentos y cambia su vigencia (Semana 1)")
+Person(clinico, "Usuario clínico autorizado", "Busca medicamentos y consulta su vigencia (Semana 1)")
+
+System_Boundary(microhis, "Micro-HIS Catálogo de medicamentos (micro-his/catalogo-medicamentos)") {
+  Container(cli, "Consola del catálogo", "PHP 8.2 CLI, bin/catalogo.php", "Punto de composición: init, alta, buscar, vigencia y cambiar; responde JSON {status, body}")
+  Container(core, "Núcleo por capas", "PHP 8.2 vanilla, sin framework", "Presentation, Application, Domain y Persistence")
+  ContainerDb(db, "Base SQLite local", "SQLite vía PDO", "Tabla medications: UNIQUE(code) y CHECK(validity). Una base = un hospital")
+}
+
+System_Ext(laravel, "Backend Laravel del HIS", "Productivo; el micro-HIS es independiente y no lo usa ni lo modifica")
+System_Ext(h5, "Base HOSPITAL (PostgreSQL)", "Slice H5 de medication pendiente: no hay integración")
+System_Ext(rbac, "RBAC", "Sin permisos de medicamentos: la autorización queda pendiente")
+
+Rel(gestor, cli, "alta / cambiar", "argumentos de consola")
+Rel(clinico, cli, "buscar / vigencia", "argumentos de consola")
+Rel(cli, core, "compone y llama a los controladores")
+Rel(core, db, "lee y escribe", "PDO, sentencias preparadas")
+Rel_U(core, h5, "integración futura", $tags = "futuro")
+Rel_U(cli, rbac, "autorización futura", $tags = "futuro")
+
+SHOW_LEGEND()
+@enduml

@@ -5,13 +5,12 @@ use App\Modules\Tenants\Domain\Entities\User;
 use App\Modules\Tenants\Domain\ValueObjects\Email;
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 use App\Modules\Tenants\Domain\ValueObjects\UserId;
+/** Cada User es una membresía (usuario + hospital): el mismo UserId puede existir en varios hospitales. */
 interface UserRepositoryInterface
 {
     public function save(User $user): void;
-    public function findById(UserId $id): ?User;
-    public function findByEmailAndTenant(Email $email, TenantId $tenantId): ?User;
     public function findByIdAndTenant(UserId $id, TenantId $tenantId): ?User;
+    public function findByEmailAndTenant(Email $email, TenantId $tenantId): ?User;
     public function existsByEmailAndTenant(Email $email, TenantId $tenantId): bool;
     public function findAllByTenant(TenantId $tenantId, int $limit = 50, int $offset = 0): array;
-    public function countByTenant(TenantId $tenantId): int;
-    public function delete(UserId $id): void;}
+    public function countByTenant(TenantId $tenantId): int;}

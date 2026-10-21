@@ -1,21 +1,22 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\Services;
-use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
 use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
+use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
+use App\Modules\Tenants\Domain\ValueObjects\TenantId;
+use App\Modules\Tenants\Domain\ValueObjects\UserId;
 final class DeviceTrustService
 {
     private SessionRepositoryInterface $sessionRepository;
     public function __construct(SessionRepositoryInterface $sessionRepository)
     {
         $this->sessionRepository = $sessionRepository;}
-    public function registerDevice(UserId $userId, DeviceFingerprint $device): DeviceTrustResult
+    public function registerDevice(TenantId $tenantId, UserId $userId, DeviceFingerprint $device): DeviceTrustResult
     {
-        $existingSession = $this->sessionRepository->findByUserIdAndDevice($userId, $device->deviceId());
+        $existingSession = $this->sessionRepository->findByUserAndDevice($tenantId, $userId, $device->deviceId());
         if ($existingSession !== null) {
             $trustScore = min(100, $existingSession->device()->trustScore() + 10);
-            $updatedDevice = $device->withTrustScore($trustScore);
-            return new DeviceTrustResult($updatedDevice, true, 'Dispositivo conocido');}
+            return new DeviceTrustResult($device->withTrustScore($trustScore), true, 'Dispositivo conocido');}
         return new DeviceTrustResult($device, false, 'Dispositivo nuevo');}
     public function evaluateTrust(DeviceFingerprint $device): TrustLevel
     {
