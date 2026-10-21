@@ -19,6 +19,8 @@ final class CatalogTestIdentity implements RoleResolver, DenialRecorder
 {
     public static ?GenericUser $user = null;
     public static ?string $hospital = null;
+    /** Hospital de la membresía; por defecto, el del contexto. */
+    public static ?string $membershipHospital = null;
     /** @var list<string> */
     public static array $roles = [];
     /** @var list<array<string, mixed>> */
@@ -39,7 +41,7 @@ final class CatalogTestIdentity implements RoleResolver, DenialRecorder
 
     public function rolesIn(string $userId, string $hospitalId): array
     {
-        return self::$user !== null && $userId === self::$user->getAuthIdentifier() && $hospitalId === self::$hospital ? self::$roles : [];
+        return self::$user !== null && $userId === self::$user->getAuthIdentifier() && $hospitalId === (self::$membershipHospital ?? self::$hospital) ? self::$roles : [];
     }
 
     public function record(array $denial): void
@@ -47,8 +49,9 @@ final class CatalogTestIdentity implements RoleResolver, DenialRecorder
         self::$denials[] = $denial;
     }
 
-    public static function as(?string $role, string $hospital = 'hospital-a'): void
+    public static function as(?string $role, string $hospital = 'hospital-a', ?string $membershipHospital = null): void
     {
+        self::$membershipHospital = $membershipHospital;
         self::$user = $role === null ? null : new GenericUser(['id' => "user-{$role}"]);
         self::$hospital = $hospital;
         self::$roles = $role === null ? [] : [$role];
