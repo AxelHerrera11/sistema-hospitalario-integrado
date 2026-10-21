@@ -1,0 +1,153 @@
+@startuml
+
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBackgroundColor #E3F2FD
+skinparam sequenceParticipantBorderColor #1565C0
+skinparam sequenceActorBackgroundColor #FFF3E0
+skinparam sequenceActorBorderColor #E65100
+skinparam sequenceDatabaseBackgroundColor #FCE4EC
+skinparam sequenceDatabaseBorderColor #C62828
+
+title **Secuencia: Autenticación Segura - Login + MFA + JWT RS256 + Refresh Rotation (RF-04, RF-05, RF-06)**
+
+actor "Usuario" as User
+participant "AuthController\n(Presentation)" as Ctrl
+participant "AuthenticateUserUseCase\n(Application)" as UC
+participant "UserRepository\n(Domain Interface)" as UserRepo
+participant "PasswordPolicy\n(Domain Service)" as PassPolicy
+participant "MfaPolicy\n(Domain Service)" as MfaPolicy
+participant "TokenFactory\n(Domain Service)" as TokenFactory
+participant "RefreshTokenRotator\n(Domain Service)" as RefreshRotator
+participant "DeviceTrustService\n(Domain Service)" as DeviceTrust
+participant "PDOUserRepository\n(Infrastructure)" as UserRepoImpl
+participant "RedisRefreshTokenRepo\n(Infrastructure)" as RefreshRepo
+participant "RedisSessionRepo\n(Infrastructure)" as SessionRepo
+participant "JwtTokenService\n(Infrastructure)" as JwtSvc
+participant "TotpVerifier\n(Infrastructure)" as TotpSvc
+participant "PostgreSQL Central" as DB
+participant "Redis Cluster" as Redis
+participant "EventPublisher" as Events
+participant "AuditLogRepo" as AuditRepo
+
+User -> Ctrl : POST /auth/login\n{email, password, device_fingerprint}\nX-Tenant-ID: tenant-001
+
+Ctrl -> Ctrl : Validar LoginRequest DTO
+Ctrl -> UC : execute(AuthenticateCommand)
+
+UC -> UserRepo : findByEmailAndTenant(email, tenant-001)
+UserRepo <|.. UserRepoImpl
+UserRepoImpl -> DB : SELECT u.*, hm.role_code FROM central_users u\nJOIN hospital_memberships hm ON u.user_id = hm.user_id\nWHERE lower(u.email) = ? AND hm.hospital_id = ? AND hm.status = 'active'\n  AND u.status = 'active' AND (hm.valid_to IS NULL OR hm.valid_to > now())
+DB --> UserRepoImpl : UserDTO + role
+UserRepoImpl --> UC : User Entity
+
+alt Usuario no encontrado
+    UC -> AuditRepo : log(LOGIN_FAILED, user_not_found)
+    UC --> Ctrl : Failure(InvalidCredentials)
+else Usuario encontrado
+    UC -> PassPolicy : verifyHash(password, user.password_hash)
+    PassPolicy -> PassPolicy : Argon2id verify
+
+    alt Password inválido
+        UC -> Redis : INCR login_failures:{user_id}
+        Redis --> UC : count
+        UC -> UC : Evaluar lockout progresivo (5/10/20 fallos)
+        UC -> AuditRepo : log(LOGIN_FAILED, bad_password)
+        UC --> Ctrl : Failure(InvalidCredentials)
+    else Password válido
+        UC -> Redis : DEL login_failures:{user_id}
+        UC -> UC : Verificar password_expiry
+
+        alt Password expirado
+            UC --> Ctrl : Failure(PasswordExpired)
+        else Password OK
+            UC -> MfaPolicy : evaluate(user.roles, tenant.policies, user.mfa_required)
+            MfaPolicy --> UC : MfaRequirement {required: bool, type: TOTP|WEBAUTHN}
+
+            alt MFA NO requerido
+                UC -> UC : Generar tokens (saltar a Token Generation)
+            else MFA REQUERIDO
+                UC -> UC : Generar MFA Challenge
+                UC -> AuditRepo : log(MFA_CHALLENGED)
+                UC --> Ctrl : MFA_CHALLENGE {challenge_id, method: TOTP
+            }
+            Ctrl --> User : 200 MFA_CHALLENGE
+
+            User -> Ctrl : POST /auth/mfa\n{
+                code, challenge_id}
+                Ctrl -> UC : verifyMfa(MfaVerificationCommand)
+                UC -> TotpSvc : verify(user.totp_secret, code)
+                TotpSvc --> UC : valid/invalid
+
+                alt MFA Inválido
+                    UC -> Redis : INCR mfa_failures:{user_id}
+                    UC -> UC : Evaluar lockout MFA (3 fallos → 30min)
+                    UC -> AuditRepo : log(MFA_FAILED)
+                    UC --> Ctrl : Failure(MfaInvalid)
+                else MFA Válido
+                    UC -> Redis : DEL mfa_failures:{user_id}
+                    UC -> AuditRepo : log(MFA_SUCCEEDED)
+                    UC -> UC : Generar tokens
+                end
+            end
+        end
+    end
+end
+
+group **Token Generation (Post-MFA / Sin MFA)**
+    UC -> TokenFactory : createAccessToken(user, tenant, session_id, device_id)
+    TokenFactory -> JwtSvc : sign(JwtClaims, RS256, private_key)
+    JwtSvc --> TokenFactory : access_token (JWT RS256, 15min, jti)
+    TokenFactory --> UC : AccessToken
+
+    UC -> RefreshRotator : generateAndStore(user_id, device_id, access_token.jti)
+    RefreshRotator -> RefreshRotator : refresh_token = random(32 bytes)
+    RefreshRotator -> RefreshRotator : hash = Argon2id(refresh_token)
+    RefreshRotator -> RefreshRepo : save(RefreshTokenEntity{user_id, device_id, hash, jti_access, exp: 7d
+}
+)
+RefreshRepo -> Redis : SET refresh:{
+    user_id}:{device_id} {hash, jti, exp
+}
+EX 7d
+Redis --> RefreshRepo : OK
+RefreshRotator --> UC : RefreshToken (opaco)
+
+UC -> UC : Verificar Single Session Policy (tenant.single_session)
+alt Habilitado + sesión previa existe
+    UC -> SessionRepo : findByUserId(user_id)
+    SessionRepo -> Redis : KEYS session:{user_id}:*
+    Redis --> SessionRepo : session_keys
+    loop Por sesión previa
+        UC -> Redis : GET session:{sid} → {jti_old}
+        UC -> Redis : SET blocklist:{jti_old} TTL=exp-now
+        UC -> Redis : DEL refresh:{user_id}:{old_device}
+        UC -> Redis : DEL session:{sid}
+        UC -> AuditRepo : log(SESSION_REVOKED_SINGLE)
+    end
+end
+
+UC -> SessionRepo : save(SessionEntity{session_id, user_id, tenant_id, device_id, last_activity: now
+}
+)
+SessionRepo -> Redis : SET session:{
+session_id} {
+    {user_id, tenant_id, device_id, last_activity
+}
+EX 7d
+Redis --> SessionRepo : OK
+
+UC -> AuditRepo : log(LOGIN_SUCCESS, {
+    mfa_used, device_id, session_id})
+    AuditRepo -> DB : INSERT INTO audit_log (...) + hash_chain
+    DB --> AuditRepo : OK
+
+    UC --> Ctrl : AuthResult {
+        access_token, refresh_token, expires_in, user, session_id}
+    end
+
+    Ctrl -> transformer : toJson(result)
+    transformer --> Ctrl : JSON
+    Ctrl --> User : 200 OK\n{access_token, refresh_token, expires_in: 900, token_type: Bearer, user, session_id}
+
+    @enduml
