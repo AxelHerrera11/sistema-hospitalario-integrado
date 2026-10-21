@@ -1,0 +1,38 @@
+%% DESPUÉS (diseño implementado en micro-his/gobernanza-auditoria).
+classDiagram
+    direction LR
+    class AuditLogger {
+        <<interface>>
+        +append(AuditEvent) void
+    }
+    class AuditEventReader {
+        <<interface>>
+        +search(tenantId, AuditFilter) AuditPage
+    }
+    class RecordAuditEvent {
+        +record(actor, tenant, module, action, outcome, criticality, ...) bool
+    }
+    class SearchAuditEvents {
+        +execute(AccessContext, filtros) AuditPage
+    }
+    class AccessGate {
+        <<interface>>
+        +decide(user, tenant, permission) AccessDecision
+    }
+    class InMemoryAuditLog
+    class PdoAuditLog
+    class RbacAccessGate
+    class AuditHttpHandler {
+        +search(server, headers, query) array
+    }
+    AuditLogger <|.. InMemoryAuditLog
+    AuditLogger <|.. PdoAuditLog
+    AuditEventReader <|.. InMemoryAuditLog
+    AuditEventReader <|.. PdoAuditLog
+    AccessGate <|.. RbacAccessGate
+    RecordAuditEvent --> AuditLogger
+    SearchAuditEvents --> AuditEventReader
+    SearchAuditEvents --> AccessGate
+    SearchAuditEvents --> RecordAuditEvent
+    AuditHttpHandler --> SearchAuditEvents
+    note for RecordAuditEvent "Cerrado a modificación: un almacén nuevo\nes otra clase que implementa AuditLogger"

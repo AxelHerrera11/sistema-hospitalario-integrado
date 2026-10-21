@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Médicos, especialidades y disponibilidad (ASII-04)
+  version: 1.0.0
+  description: API v1 del micro-HIS de Médicos. El actor llega del contexto autenticado (X-User-ID solo en el micro-HIS).
+servers:
+  - url: http://localhost:8004/api/v1
+security:
+  - actor: []
+paths:
+  /doctors:
+    post:
+      summary: Registrar médico con su especialidad principal (permiso medicos.registrar)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewDoctor' }
+      responses:
+        '201': { description: Médico creado, content: { application/json: { schema: { $ref: '#/components/schemas/DoctorCreated' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /doctors/{doctorId}/specialties:
+    post:
+      summary: Asociar especialidad (permiso medicos.asociar_especialidad)
+      parameters:
+        - { name: doctorId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewSpecialtyLink' }
+      responses:
+        '201': { description: Especialidad asociada, content: { application/json: { schema: { $ref: '#/components/schemas/SpecialtyLinked' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /availability:
+    get:
+      summary: Franjas libres por médico de una especialidad en una fecha (permiso medicos.ver_disponibilidad)
+      parameters:
+        - { name: specialty, in: query, required: true, schema: { type: string, example: NEURO } }
+        - { name: date, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        '200': { description: Disponibilidad, content: { application/json: { schema: { $ref: '#/components/schemas/Availability' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    actor: { type: apiKey, in: header, name: X-User-ID }
+  responses:
+    Error:
+      description: Error con código estable y trace_id
+      headers:
+        X-Trace-Id: { schema: { type: string } }
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, trace_id]
+            properties:
+              code: { type: string, example: LICENSE_ALREADY_REGISTERED }
+              permission: { type: string, description: Solo en 403 }
+              trace_id: { type: string }
+  schemas:
+    NewDoctor:
+      type: object
+      required: [local_user_ref_id, license_number, specialty_code, valid_from]
+      properties:
+        local_user_ref_id: { type: string }
+        license_number: { type: string }
+        specialty_code: { type: string }
+        valid_from: { type: string, format: date }
+    DoctorCreated:
+      type: object
+      properties: { doctor_profile_id: { type: string }, trace_id: { type: string } }
+    NewSpecialtyLink:
+      type: object
+      required: [specialty_code, valid_from]
+      properties:
+        specialty_code: { type: string }
+        is_primary: { type: boolean, default: false }
+        valid_from: { type: string, format: date }
+        valid_to: { type: string, format: date, nullable: true }
+    SpecialtyLinked:
+      type: object
+      properties:
+        doctor_profile_id: { type: string }
+        specialty_id: { type: string }
+        is_primary: { type: boolean }
+        trace_id: { type: string }
+    Availability:
+      type: object
+      properties:
+        code: { type: string, enum: [OK, NO_DOCTORS_FOR_SPECIALTY] }
+        doctors:
+          type: array
+          items:
+            type: object
+            properties:
+              doctor_id: { type: string }
+              status: { type: string, enum: [OK, SCHEDULE_NOT_CONFIGURED] }
+              slots: { type: array, items: { type: string, example: '08:00' } }
+        trace_id: { type: string }

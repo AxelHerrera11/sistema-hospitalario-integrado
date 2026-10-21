@@ -1,6 +1,0 @@
-OfflineIndicator.tsx: 109 líneas
-OfflineQueueManager.ts: 393 líneas
-PendingActionsPanel.tsx: 230 líneas
-index.ts: 5 líneas
-offlineTypes.ts: 29 líneas
-useOfflineQueue.ts: 84 líneas

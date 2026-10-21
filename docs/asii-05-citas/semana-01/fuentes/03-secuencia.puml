@@ -1,0 +1,69 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam sequence {
+  ParticipantBackgroundColor #E3F2FD
+  ParticipantBorderColor #1565C0
+  ParticipantFontColor #17212B
+  ActorBorderColor #263238
+  ActorFontColor #17212B
+  LifeLineBorderColor #263238
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+autonumber
+
+actor "Usuario de admisión" as U
+boundary "API /citas" as API
+control "Servicio de citas" as SVC
+participant "Repositorio\n(appointments)" as REPO
+database "Base de datos" as DB
+participant "Auth/tenant" as AUTH
+
+U -> API: POST /citas (paciente, doctor, especialidad, horario, motivo)
+API -> AUTH: Verificar token y tenant
+alt Sin sesión o sin permiso
+  AUTH --> API: No autorizado
+  API --> U: 401/403
+  hnote over API #FFEBEE: Acceso denegado
+else Autorizado
+  API -> SVC: solicitarCita(datos)
+  SVC -> SVC: Validar campos y rango de horario
+  alt Datos inválidos
+    SVC --> API: 422 (validation_failed)
+    API --> U: Error de validación
+  else Datos válidos
+    SVC -> DB: Comprobar especialidad activa en starts_at
+    SVC -> REPO: buscarSolape(paciente, doctor)
+    REPO -> DB: Consulta de exclusiones (GiST)
+    alt Solape activo
+      DB --> REPO: 23P01
+      REPO --> SVC: overlap
+      SVC --> API: 409 (appointments_overlap)
+      API --> U: Horario no disponible
+      hnote over API #FFEBEE: 409 - solape
+    else Horario libre
+      DB --> REPO: sin solape
+      SVC -> REPO: crear(datos) estado scheduled
+      REPO -> DB: INSERT appointments
+      DB --> REPO: fila creada
+      REPO --> SVC: Appointment
+      SVC --> API: 201 recurso
+      API --> U: Cita registrada (scheduled)
+      hnote over API #E8F5E9: 201 - cita creada
+    end
+  end
+end
+opt Confirmar o cancelar
+  U -> API: POST /citas/{id}/confirmar | /cancelar
+  API -> SVC: transicionar(estado)
+  SVC -> DB: UPDATE status (validar transición)
+  DB --> SVC: fila actualizada
+  SVC --> API: 200 recurso
+  API --> U: Estado actualizado (confirmed | cancelled)
+end
+@enduml
