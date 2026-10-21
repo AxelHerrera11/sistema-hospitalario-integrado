@@ -217,6 +217,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid #2563eb; outline-
     .meds__grid { grid-template-columns: 1fr; }
     .meds__card { padding: 0.85rem; }
     .meds form > button, .meds article > button { width: 100%; }
-    .meds__detail { grid-template-columns: 1fr; }
+    .meds__detail { grid-template-columns: 1fr; gap: 0; }
+    .meds__detail dt { font-size: 0.85rem; }
+    .meds__detail dd { margin-bottom: 0.5rem; }
 }
 </style>
