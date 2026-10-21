@@ -11,11 +11,13 @@ declare(strict_types=1);
 use MicroHis\TrasladosAltas\Application\AltaHospitalaria;
 use MicroHis\TrasladosAltas\Application\ExitoConfirmado;
 use MicroHis\TrasladosAltas\Application\FalloConfirmado;
+use MicroHis\TrasladosAltas\Application\Operacion;
 use MicroHis\TrasladosAltas\Application\RechazoConfirmado;
 use MicroHis\TrasladosAltas\Application\TrasladoInterno;
 use MicroHis\TrasladosAltas\Domain\Rechazo;
 use MicroHis\TrasladosAltas\Domain\SolicitudAlta;
 use MicroHis\TrasladosAltas\Domain\SolicitudTraslado;
+use MicroHis\TrasladosAltas\Persistence\AutorizadorReferenciaActiva;
 use MicroHis\TrasladosAltas\Persistence\PdoRegistroInternacion;
 
 require __DIR__ . '/harness.php';
@@ -81,5 +83,15 @@ $r = (new AltaHospitalaria(new SolicitudAlta((string) $destino), $actor, $regist
 check('alta → ExitoConfirmado; estancia y episodio cerrados con el mismo T', $r instanceof ExitoConfirmado && $valor("SELECT s.ended_at = e.ended_at AND e.status = 'closed'
     FROM bed_stays s JOIN care_episodes e USING (care_episode_id) WHERE s.bed_stay_id = :s", ['s' => $destino]) === true && $abiertas($episodio1) === 0);
 check('el otro episodio no se tocó', $abiertas($episodio2) === 1);
+
+// Autorización mínima del micro-HIS: actor activo sí; revocado, inexistente o con id inválido no (falla cerrada).
+$autorizador = new AutorizadorReferenciaActiva($conectar());
+$revocado = $valor("INSERT INTO local_user_refs (central_user_id, membership_id, display_name, role_code, status, synced_at)
+    VALUES (gen_random_uuid(), gen_random_uuid(), 'Usuario revocado', 'enfermeria', 'revoked', now()) RETURNING local_user_ref_id");
+check('actor activo → autorizado', $autorizador->permite($actor, Operacion::Traslado));
+check('actor revocado, inexistente o con id inválido → no autorizado', !$autorizador->permite($revocado, Operacion::Alta)
+    && !$autorizador->permite('00000000-0000-4000-8000-000000000000', Operacion::Alta) && !$autorizador->permite('no-es-uuid', Operacion::Alta));
+$r = (new AltaHospitalaria(new SolicitudAlta($estancia1), $revocado, $registro, $autorizador))->ejecutar();
+check('alta pedida por un actor revocado → NO_AUTORIZADO', $r instanceof RechazoConfirmado && $r->motivo === Rechazo::NoAutorizado);
 
 finish();
