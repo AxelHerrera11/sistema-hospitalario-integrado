@@ -1,35 +1,53 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
-use App\Models\Tenant;
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
-class TenantMiddleware
+final class TenantMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantId = $request->header('X-Tenant-ID');
+        $hospitalId = $request->header('X-Tenant-ID');
 
-        if ($tenantId === null || $tenantId === '') {
+        if ($hospitalId === null || $hospitalId === '') {
             return response()->json([
+                'error' => 'TENANT_REQUIRED',
                 'message' => 'La cabecera X-Tenant-ID es obligatoria.',
             ], 400);
         }
 
-        /** @var Tenant|null $tenant */
-        $tenant = Tenant::query()->find($tenantId);
-
-        if ($tenant === null) {
+        if (! Str::isUuid($hospitalId)) {
             return response()->json([
-                'message' => 'Tenant no encontrado.',
+                'error' => 'TENANT_INVALID',
+                'message' => 'El hospital indicado no es válido.',
+            ], 400);
+        }
+
+        $hospital = Hospital::query()->find($hospitalId);
+
+        if ($hospital === null) {
+            return response()->json([
+                'error' => 'HOSPITAL_NOT_FOUND',
+                'message' => 'Hospital no encontrado.',
             ], 404);
         }
 
-        $request->attributes->set('tenant', $tenant);
-        app()->instance('currentTenant', $tenant);
+        if ($hospital->status !== 'active') {
+            return response()->json([
+                'error' => 'HOSPITAL_INACTIVE',
+                'message' => 'El hospital no está activo.',
+            ], 403);
+        }
+
+        $request->attributes->set('tenant', $hospital);
+        app()->instance('currentTenant', $hospital);
 
         return $next($request);
     }

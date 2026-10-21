@@ -1,0 +1,42 @@
+@startuml
+title ASII-14 - Diseño ANTES de ISP: un contrato para todos los clientes
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #334155
+skinparam class {
+  BackgroundColor #EAF4FF
+  BorderColor #2563EB
+}
+
+interface MedicationCatalogService <<contrato excesivo>> {
+  + register(draft): Medication
+  + search(term): Medication[]
+  + findById(id): Medication?
+  + changeValidity(id, validity): Medication
+}
+
+class AltaClient <<gestor>> {
+  usa: register
+}
+class BusquedaClient <<gestor o clínico>> {
+  usa: search, findById
+}
+class VigenciaClient <<gestor>> {
+  usa: changeValidity
+}
+class CatalogServiceImpl
+
+AltaClient --> MedicationCatalogService : depende de 4 métodos\nno usa 3
+BusquedaClient --> MedicationCatalogService : depende de 4 métodos\nno usa 2 (escrituras)
+VigenciaClient --> MedicationCatalogService : depende de 4 métodos\nno usa 3
+CatalogServiceImpl ..|> MedicationCatalogService
+
+note bottom of MedicationCatalogService #FCE7F3
+  Problema: el cliente de búsqueda, usado por el
+  usuario clínico, puede invocar register y
+  changeValidity. Sus dobles de prueba deben
+  implementar escrituras que nunca usa.
+  8 de 12 dependencias no se usan.
+end note
+@enduml

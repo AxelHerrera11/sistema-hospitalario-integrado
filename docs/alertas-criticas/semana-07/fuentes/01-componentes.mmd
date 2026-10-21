@@ -1,0 +1,19 @@
+---
+title: "Componentes backend/frontend — Alertas críticas y notificaciones internas"
+---
+flowchart LR
+  subgraph FE[Frontend Vue 3]
+    page[AlertInboxPage.vue<br/>AlertItem.vue · ReadBackDialog.vue] --> store[stores/criticalAlerts.js<br/>Pinia]
+    store --> api[api/criticalAlertsApi.js<br/>plugins/axios + X-Tenant-ID + JWT]
+  end
+  subgraph BE[Backend Laravel 12]
+    mw[Middlewares<br/>tenant · jwt.auth · permission:modulo.accion] --> ctrl[Api/V1/CriticalAlertController<br/>+ AcknowledgeAlertRequest]
+    ctrl --> app[Application<br/>HandleResultValidated · AcknowledgeAlert · GetInbox]
+    app --> dom[Domain<br/>CriticalAlert · DomainRuleViolation]
+    app --> port{{AlertRepository<br/>«interfaz»}}
+    eloq[EloquentAlertRepository] -. implementa .-> port
+    mem[InMemoryAlertRepository<br/>pruebas] -. implementa .-> port
+    app --> audit[AuditLogger<br/>ASII-22 / Cindy]
+  end
+  api --> mw
+  eloq --> db[(critical_alerts · local_access_audits · lab_tests y care_assignments solo lectura)]
