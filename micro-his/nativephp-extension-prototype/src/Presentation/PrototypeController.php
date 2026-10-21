@@ -34,8 +34,6 @@ final class PrototypeController
             return ['status' => 200, 'body' => $response];
         } catch (DomainRuleViolation $error) {
             return ['status' => 422, 'body' => ['error' => $error->getMessage()]];
-        } catch (LocalActionNotFound $error) {
-            return ['status' => 404, 'body' => ['error' => $error->getMessage()]];
         } catch (\Throwable) {
             return ['status' => 500, 'body' => ['error' => 'No fue posible preparar la accion local.']];
         }
@@ -53,6 +51,8 @@ final class PrototypeController
             return ['status' => 200, 'body' => $response];
         } catch (DomainRuleViolation $error) {
             return ['status' => 422, 'body' => ['error' => $error->getMessage()]];
+        } catch (LocalActionNotFound $error) {
+            return ['status' => 404, 'body' => ['error' => $error->getMessage()]];
         } catch (\Throwable) {
             return ['status' => 500, 'body' => ['error' => 'No fue posible sincronizar.']];
         }

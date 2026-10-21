@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use MicroHis\NativePhpPrototype\Application\LocalActionRepository;
+use MicroHis\NativePhpPrototype\Application\LocalActionNotFound;
 use MicroHis\NativePhpPrototype\Application\PrepareLocalAction;
 use MicroHis\NativePhpPrototype\Application\PrepareLocalActionCommand;
 use MicroHis\NativePhpPrototype\Application\SyncLocalActions;
@@ -13,6 +14,7 @@ use MicroHis\NativePhpPrototype\Domain\LocalHisAction;
 use MicroHis\NativePhpPrototype\Persistence\ArrayTelemetryRecorder;
 use MicroHis\NativePhpPrototype\Persistence\FakeSyncGateway;
 use MicroHis\NativePhpPrototype\Persistence\InMemoryLocalActionRepository;
+use MicroHis\NativePhpPrototype\Presentation\PrototypeController;
 
 require_once __DIR__ . '/../bootstrap.php';
 
@@ -82,5 +84,32 @@ expectException(RuntimeException::class, fn () => $prepare->execute(new PrepareL
     kind: 'lab_result_preview',
     payload: '{"result_id":"res-003"}',
 )));
+
+$repositoryWithUpdateError = static fn (Throwable $error): LocalActionRepository => new class($error) implements LocalActionRepository {
+    public function __construct(private readonly Throwable $error)
+    {
+    }
+
+    public function save(LocalHisAction $action): void
+    {
+    }
+
+    public function update(LocalHisAction $action): void
+    {
+        throw $this->error;
+    }
+
+    public function pendingForTenant(string $tenantId): array
+    {
+        return [new LocalHisAction('missing-001', $tenantId, 'user-04', 'lab_result_preview', '{}')];
+    }
+};
+$controllerFor = static fn (LocalActionRepository $actions): PrototypeController => new PrototypeController(
+    new PrepareLocalAction($actions, new ArrayTelemetryRecorder()),
+    new SyncLocalActions($actions, new FakeSyncGateway(true), new ArrayTelemetryRecorder()),
+);
+$request = ['tenant_id' => 'hospital-a', 'connectivity' => 'online'];
+assertTrue($controllerFor($repositoryWithUpdateError(new LocalActionNotFound('No existe.')))->sync($request)['status'] === 404, 'Una actualizacion inexistente debe devolver 404.');
+assertTrue($controllerFor($repositoryWithUpdateError(new RuntimeException('Falla interna.')))->sync($request)['status'] === 500, 'Una falla interna debe conservar HTTP 500.');
 
 echo "OK: preparacion local, regla offline y error de persistencia verificados." . PHP_EOL;
