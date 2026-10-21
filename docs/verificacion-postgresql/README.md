@@ -55,6 +55,14 @@ Este directorio reúne la evidencia de las 15 semanas, un PR por semana.
 **Entrega técnica independiente (excepción documentada):** tabla `doctor_schedules`
 con migración reversible y 13 pruebas, [#412](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/412).
 
+## Verificaciones posteriores a la semana 15
+
+| Documento | Qué verifica |
+|---|---|
+| [`estado-integracion-esquema.md`](./estado-integracion-esquema.md) | Inventario real del esquema en `develop`: CENTRAL 15/15 y HOSPITAL 16/27, con el dueño de cada slice faltante. |
+| [`doctor-schedules/acuerdos.md`](./doctor-schedules/acuerdos.md) | Los tres acuerdos que bloquean el PR #413: entidad 28 y propiedad de la migración, número de archivo definitivo y regla de especialidad. |
+| [`../ocupacion-hospitalaria/semana-16/README.md`](../ocupacion-hospitalaria/semana-16/README.md) | Entrega de la semana 16 del módulo ASII-09 (dashboard de ocupación) con integración en Laravel y pantalla Vue. |
+
 ## Principles and rules of this module
 
 1. Nada se afirma sin evidencia ejecutada en el repositorio o en una base de prueba.

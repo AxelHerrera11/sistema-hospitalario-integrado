@@ -46,6 +46,6 @@ La vigencia es el estado del **registro de catálogo**. No representa la fecha d
 
 ## Supuestos según la evidencia del repositorio
 
-- **Permisos:** `config/rbac.php` no define permisos `medicamentos.*`. Los roles "gestor" y "usuario clínico" siguen siendo actores de Semana 1 y su permiso concreto queda pendiente con RBAC.
+- **Permisos:** al redactar Semana 2, `config/rbac.php` no tenía permisos `medicamentos.*`. Desde entonces RBAC concede `medicamentos.ver` a `superadmin`, `admin_hospital`, `medico` y `enfermeria`. Los permisos de alta y vigencia siguen sin existir: Semana 5 propone `medicamentos.registrar` y `medicamentos.cambiar_vigencia` ([contrato API](../semana-05/contrato-api.md)).
 - **Alcance por hospital:** el README define una base clínica HOSPITAL por hospital. El catálogo no añade una columna de hospital y queda limitado a la base activa.
 - **Unicidad:** el slice H5 (`000500_create_medication_tables.php`) sigue pendiente en `openspec/.../tasks.md`. El código único por base HOSPITAL es una identidad provisional, no una restricción existente.

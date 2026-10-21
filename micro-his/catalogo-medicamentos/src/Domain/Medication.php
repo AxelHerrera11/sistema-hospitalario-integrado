@@ -42,11 +42,6 @@ final readonly class Medication
         return new self($id, $code, $name, $activeIngredient, $group, $validity);
     }
 
-    public static function normalizeCode(string $code): string
-    {
-        return strtoupper(trim($code));
-    }
-
     /** Cambia solo la vigencia; los demás datos y el registro se conservan. */
     public function changeValidity(Validity $validity): self
     {
