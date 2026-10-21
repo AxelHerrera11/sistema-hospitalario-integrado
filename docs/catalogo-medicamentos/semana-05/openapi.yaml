@@ -32,8 +32,8 @@ paths:
                   results: { type: array, items: { $ref: '#/components/schemas/Medication' } }
                   count: { type: integer, minimum: 0 }
                   trace_id: { type: string }
-        '401': { $ref: '#/components/responses/Error' }
-        '403': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/AccessError' }
+        '403': { $ref: '#/components/responses/AccessError' }
         '422': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
     post:
@@ -59,8 +59,8 @@ paths:
                   medication: { $ref: '#/components/schemas/Medication' }
                   trace_id: { type: string }
         '400': { $ref: '#/components/responses/Error' }
-        '401': { $ref: '#/components/responses/Error' }
-        '403': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/AccessError' }
+        '403': { $ref: '#/components/responses/AccessError' }
         '409': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
@@ -83,8 +83,8 @@ paths:
                 properties:
                   medication: { $ref: '#/components/schemas/Medication' }
                   trace_id: { type: string }
-        '401': { $ref: '#/components/responses/Error' }
-        '403': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/AccessError' }
+        '403': { $ref: '#/components/responses/AccessError' }
         '404': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
   /medications/{medication_id}/validity:
@@ -117,8 +117,8 @@ paths:
                   medication: { $ref: '#/components/schemas/Medication' }
                   trace_id: { type: string }
         '400': { $ref: '#/components/responses/Error' }
-        '401': { $ref: '#/components/responses/Error' }
-        '403': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/AccessError' }
+        '403': { $ref: '#/components/responses/AccessError' }
         '404': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
         '503': { $ref: '#/components/responses/Error' }
@@ -167,11 +167,21 @@ components:
       properties:
         error:
           type: string
-          enum: [BODY_INVALID, UNAUTHENTICATED, FORBIDDEN, TENANT_MISMATCH, MEDICATION_NOT_FOUND, MEDICATION_CODE_DUPLICATED, MEDICATION_INVALID, CATALOG_UNAVAILABLE]
+          enum: [BODY_INVALID, MEDICATION_NOT_FOUND, MEDICATION_CODE_DUPLICATED, MEDICATION_INVALID, CATALOG_UNAVAILABLE]
         message: { type: string }
         field: { type: string }
         trace_id: { type: string }
   responses:
+    AccessError:
+      description: Error de acceso del middleware compartido RequirePermission (verificado en Semana 16)
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, trace_id]
+            properties:
+              code: { type: string, enum: [AUTH_REQUIRED, TENANT_REQUIRED, TENANT_MISMATCH, RBAC_DENIED, RBAC_UNAVAILABLE] }
+              trace_id: { type: string }
     Error:
       description: Error con código estable y trace_id; un fallo nunca se presenta como éxito
       content:

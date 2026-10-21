@@ -29,15 +29,18 @@ Para los dos permisos se propone el rol `admin_hospital`, como gestor del catál
 - **Vigencia:** `{ "validity": "active" | "inactive" }`. Repetir el estado actual: 422.
 - **Medicamento:** `medication_id`, `code`, `name`, `active_ingredient`, `pharmacological_group` y `validity`. No hay presentación, lote ni fecha de vencimiento: no forman parte de este catálogo.
 
+**Desviación conocida (Semana 16):** la implementación todavía no aplica `limit`; siempre devuelve como máximo 50 resultados.
+
 ## Errores
 
-Cuerpo único: `{ "error": "CODE", "message": "...", "field": "campo", "trace_id": "..." }`. `field` aparece solo cuando aplica.
+Errores del catálogo: `{ "error": "CODE", "message": "...", "field": "campo", "trace_id": "..." }`; `field` aparece solo cuando aplica. Errores de acceso, emitidos por el middleware compartido `RequirePermission` (verificado en Semana 16): `{ "code": "CODE", "trace_id": "..." }`.
 
 | Estado | `error` | Cuándo |
 |---|---|---|
 | 400 | `BODY_INVALID` | El cuerpo no es un objeto JSON |
-| 401 | `UNAUTHENTICATED` | Falta el JWT o no es válido |
-| 403 | `FORBIDDEN` / `TENANT_MISMATCH` | Sin permiso, o `X-Tenant-ID` distinto del hospital del token |
+| 400 | `code: TENANT_REQUIRED` | Falta `X-Tenant-ID` (acceso) |
+| 401 | `code: AUTH_REQUIRED` | Sin usuario autenticado (acceso) |
+| 403 | `code: RBAC_DENIED` / `code: TENANT_MISMATCH` | Sin permiso, o `X-Tenant-ID` distinto del hospital del contexto (acceso) |
 | 404 | `MEDICATION_NOT_FOUND` | El identificador no existe en el hospital |
 | 409 | `MEDICATION_CODE_DUPLICATED` | Código normalizado ya registrado en el hospital |
 | 422 | `MEDICATION_INVALID` | Regla de dominio o tipo inválido (con `field`) |
