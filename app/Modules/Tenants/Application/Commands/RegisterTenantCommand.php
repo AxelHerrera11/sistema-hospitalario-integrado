@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Application\Commands;
-use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 final class RegisterTenantCommand
 {
     private string $name;
