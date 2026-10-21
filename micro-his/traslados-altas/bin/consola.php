@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 // Punto de entrada de consola del micro-HIS (raíz de composición). Uso:
 //   TRASLADOS_PG_DSN="pgsql:host=...;port=...;dbname=..." TRASLADOS_PG_PASSWORD=... TRASLADOS_ACTOR_REF=<local_user_ref_id> \
-//   php micro-his/traslados-altas/bin/traslados.php trasladar <estancia_id> <cama_destino_id> "<motivo>"
-//   php micro-his/traslados-altas/bin/traslados.php alta <estancia_id>
+//   php micro-his/traslados-altas/bin/consola.php trasladar <estancia_id> <cama_destino_id> "<motivo>"
+//   php micro-his/traslados-altas/bin/consola.php alta <estancia_id>
 // Imprime JSON y sale con 0 (éxito), 1 (rechazo), 2 (fallo), 3 (incierto) o 64 (solicitud inválida).
 
 use MicroHis\TrasladosAltas\Persistence\AutorizadorReferenciaActiva;

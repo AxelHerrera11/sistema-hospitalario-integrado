@@ -9,7 +9,7 @@ sobre la base HOSPITAL (`care_episodes`, `bed_stays` y `beds`).
 | `src/Application` | Contrato `OperacionConLiberacionDeCama`, `ProtocoloLiberacion`, `TrasladoInterno`, `AltaHospitalaria` y los puertos `RegistroInternacion` y `Autorizador` |
 | `src/Persistence` | `PdoRegistroInternacion` (PostgreSQL, sentencias preparadas y `FOR UPDATE`) y `AutorizadorReferenciaActiva` |
 | `src/Presentation` | `ConsolaTraslados` (controller, sin SQL ni reglas) y `VistaResultado` (JSON y código de salida) |
-| `bin/traslados.php` | Raíz de composición de consola |
+| `bin/consola.php` | Raíz de composición de consola |
 
 ## Pruebas
 
@@ -30,9 +30,9 @@ TRASLADOS_PG_DSN="pgsql:host=127.0.0.1;port=55433;dbname=his_hospital_traslados_
 3. Defina `TRASLADOS_PG_DSN`, `TRASLADOS_PG_PASSWORD` y `TRASLADOS_ACTOR_REF=00000000-0000-4000-8000-0000000000f1`, y ejecute:
 
 ```bash
-php micro-his/traslados-altas/bin/traslados.php trasladar 00000000-0000-4000-8000-0000000000e1 00000000-0000-4000-8000-0000000000b3 "Aislamiento"   # 1: DESTINO_NO_DISPONIBLE
-php micro-his/traslados-altas/bin/traslados.php trasladar 00000000-0000-4000-8000-0000000000e1 00000000-0000-4000-8000-0000000000b2 "Aislamiento"   # 0: éxito
-php micro-his/traslados-altas/bin/traslados.php alta <estancia_destino_id del paso anterior>                                                      # 0: éxito
+php micro-his/traslados-altas/bin/consola.php trasladar 00000000-0000-4000-8000-0000000000e1 00000000-0000-4000-8000-0000000000b3 "Aislamiento"   # 1: DESTINO_NO_DISPONIBLE
+php micro-his/traslados-altas/bin/consola.php trasladar 00000000-0000-4000-8000-0000000000e1 00000000-0000-4000-8000-0000000000b2 "Aislamiento"   # 0: éxito
+php micro-his/traslados-altas/bin/consola.php alta <estancia_destino_id del paso anterior>                                                      # 0: éxito
 ```
 
 Códigos de salida: 0 éxito, 1 rechazo, 2 fallo sin cambios, 3 resultado incierto (consultar antes de reintentar), 64 solicitud inválida.
