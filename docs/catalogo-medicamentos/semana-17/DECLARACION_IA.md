@@ -8,4 +8,4 @@
 
 **Ampliación del 21/10/2026:** con la misma herramienta se escribieron la migración H5, el adaptador PostgreSQL, la pantalla Vue y los scripts del recorrido, y se corrigieron tres defectos detectados al probar contra PostgreSQL. Todos los resultados citados provienen de ejecuciones reales en el entorno local descrito en `evidencia-funcional.md`.
 
-**Validación:** la revisión humana queda **pendiente**.
+**Validación:** el 21/10/2026, María Yamilet Lindo Pablo confirmó manualmente el alta, la búsqueda, el detalle y el cambio de vigencia de `IBU-400` y que el estado se conservaba al volver por el menú (ver «Revisión humana confirmada» en `evidencia-funcional.md`). La revisión humana del resto de la semana (matriz de amenazas, pruebas de seguridad, migración, adaptador y demás escenarios de la interfaz) queda **pendiente**.
