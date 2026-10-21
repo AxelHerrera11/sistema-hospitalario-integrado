@@ -1,62 +1,48 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Presentation\Controllers;
-use App\Modules\Tenants\Application\UseCases\RegisterTenantUseCase;
 use App\Modules\Tenants\Application\Commands\RegisterTenantCommand;
-use App\Modules\Tenants\Application\Results\RegisterTenantResult;
+use App\Modules\Tenants\Application\UseCases\RegisterTenantUseCase;
+use App\Modules\Tenants\Domain\Entities\Tenant;
+use App\Modules\Tenants\Domain\Repositories\TenantRepositoryInterface;
+use App\Modules\Tenants\Domain\ValueObjects\JwtClaims;
+use App\Modules\Tenants\Domain\ValueObjects\Role;
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
+use App\Modules\Tenants\Presentation\Transformers\AuthResponseTransformer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+/** Alta y consulta de hospitales; solo superadmin. */
 final class AdminTenantController
 {
-    private RegisterTenantUseCase $registerUseCase;
-    public function __construct(RegisterTenantUseCase $registerUseCase)
-    {$this->registerUseCase = $registerUseCase;}
-    public function list(Request $request, Response $response): Response
+    public function __construct(
+        private RegisterTenantUseCase $registerUseCase,
+        private TenantRepositoryInterface $tenants,
+        private AuthResponseTransformer $transformer
+    ) {}
+    public function list(Request $request): Response
     {
-        $response->getBody()->write(json_encode([
-            'success' => true,
-            'data' => [],
-            'message' => 'Endpoint no implementado aún']));
-        return $response->withHeader('Content-Type', 'application/json');}
-    public function create(Request $request, Response $response): Response
+        self::authorize($request);
+        return $this->transformer->json(['data' => array_map(fn(Tenant $t) => $t->toArray(), $this->tenants->findAll())]);}
+    public function create(Request $request): Response
     {
-        $data = $request->getParsedBody();
-        $command = new RegisterTenantCommand(
-            $data['name'] ?? '',
-            $data['user_quota'] ?? 100,
-            $data['policies'] ?? []);
-        $result = $this->registerUseCase->execute($command);
-        $response->getBody()->write(json_encode([
-            'success' => true,
-            'data' => [
-                'tenant_id' => $result->tenantId()->value(),
-                'name' => $result->name(),
-                'message' => 'Tenant creado correctamente'
-            ]
-        ]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);}
-    public function get(Request $request, Response $response): Response
+        self::authorize($request);
+        $data = (array) $request->getParsedBody();
+        $result = $this->registerUseCase->execute(new RegisterTenantCommand(
+            (string) ($data['name'] ?? ''),
+            (int) ($data['user_quota'] ?? 100),
+            is_array($data['policies'] ?? null) ? $data['policies'] : []));
+        return $this->transformer->json(['tenant_id' => $result->tenantId()->value(), 'name' => $result->name()], 201);}
+    public function get(Request $request): Response
     {
-        $tenantId = $request->getAttribute('id');
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => 'No implementado', 'code' => 501]
-        ]));
-        return $response->withHeader('Content-Type', 'application/json');}
-    public function update(Request $request, Response $response): Response
+        self::authorize($request);
+        $tenant = $this->tenants->findById(new TenantId((string) $request->getAttribute('id')));
+        if ($tenant === null) {
+            return $this->transformer->error('Hospital no encontrado', 404);}
+        return $this->transformer->json($tenant->toArray());}
+    private static function authorize(Request $request): void
     {
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => 'No implementado', 'code' => 501]
-        ]));
-        return $response->withHeader('Content-Type', 'application/json');}
-    public function delete(Request $request, Response $response): Response
-    {
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => 'No implementado', 'code' => 501]
-        ]));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
-}
+        $auth = $request->getAttribute('auth');
+        if (!$auth instanceof JwtClaims) {
+            throw new \DomainException('Usuario no autenticado', 401);}
+        if (!$auth->hasRole(Role::SUPERADMIN)) {
+            throw new \DomainException('Requiere el rol superadmin', 403);}}}

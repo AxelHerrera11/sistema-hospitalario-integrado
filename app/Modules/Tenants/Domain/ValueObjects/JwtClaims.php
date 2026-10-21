@@ -3,7 +3,6 @@ declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\ValueObjects;
 use InvalidArgumentException;
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
 final class JwtClaims
 {
     private string $subject;
@@ -26,22 +25,13 @@ final class JwtClaims
         int $expiresAt,
         int $notBefore
 ) {
-        if (empty($subject)) throw new InvalidArgumentException('Subject (sub) requerido');
         if (empty($roles)) throw new InvalidArgumentException('Roles requeridos');
-        if (empty($tenantId)) throw new InvalidArgumentException('Tenant ID requerido');
-        if (empty($sessionId)) throw new InvalidArgumentException('Session ID requerido');
-        if (empty($jti)) throw new InvalidArgumentException('JTI requerido');
         if (empty($deviceId)) throw new InvalidArgumentException('Device ID requerido');
         if ($expiresAt <= $issuedAt) throw new InvalidArgumentException('ExpiresAt debe ser mayor que IssuedAt');
         if ($notBefore > $issuedAt) throw new InvalidArgumentException('NotBefore no puede ser mayor que IssuedAt');
-        try {
-            Uuid::isValid($subject) || throw new InvalidArgumentException('Subject debe ser UUID válido');
-            Uuid::isValid($tenantId) || throw new InvalidArgumentException('TenantId debe ser UUID válido');
-            Uuid::isValid($sessionId) || throw new InvalidArgumentException('SessionId debe ser UUID válido');
-            Uuid::isValid($jti) || throw new InvalidArgumentException('JTI debe ser UUID válido');
-            Uuid::isValid($deviceId) || throw new InvalidArgumentException('DeviceId debe ser UUID válido');
-        } catch (UnsatisfiedDependencyException) {
-            throw new InvalidArgumentException('UUID library no disponible');}
+        // El device_id lo envía el cliente (X-Device-ID) y no tiene por qué ser UUID.
+        foreach (['Subject' => $subject, 'TenantId' => $tenantId, 'SessionId' => $sessionId, 'JTI' => $jti] as $name => $value) {
+            if (!Uuid::isValid($value)) throw new InvalidArgumentException($name . ' debe ser UUID válido');}
         $this->subject = $subject;
         $this->roles = $roles;
         $this->tenantId = $tenantId;
@@ -60,6 +50,7 @@ final class JwtClaims
     public function issuedAt(): int { return $this->issuedAt; }
     public function expiresAt(): int { return $this->expiresAt; }
     public function notBefore(): int { return $this->notBefore; }
+    public function hasRole(string $role): bool { return in_array($role, $this->roles, true); }
     public function toArray(): array
     {
         return [
@@ -71,16 +62,4 @@ final class JwtClaims
             'device_id' => $this->deviceId,
             'iat' => $this->issuedAt,
             'exp' => $this->expiresAt,
-            'nbf' => $this->notBefore,];}
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            $data['sub'],
-            $data['roles'],
-            $data['tenant_id'],
-            $data['session_id'],
-            $data['jti'],
-            $data['device_id'],
-            $data['iat'],
-            $data['exp'],
-            $data['nbf'] ?? $data['iat'],);}}
+            'nbf' => $this->notBefore,];}}

@@ -2,31 +2,37 @@
 declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\ValueObjects;
 use InvalidArgumentException;
+/**
+ * Rol de una membresía hospitalaria. Usa los mismos códigos que config/rbac.php
+ * (hospital_memberships.role_code); distingue mayúsculas y no los convierte.
+ */
 final class Role
 {
-    public const TENANT_ADMIN = 'TENANT_ADMIN';
-    public const MEDICO = 'MEDICO';
-    public const ENFERMERO = 'ENFERMERO';
-    public const PACIENTE = 'PACIENTE';
-    public const AUDITOR = 'AUDITOR';
-    public const PLATFORM_ADMIN = 'PLATFORM_ADMIN';
-    private static array $validRoles = [
-        self::TENANT_ADMIN,
+    public const SUPERADMIN = 'superadmin';
+    public const ADMIN_HOSPITAL = 'admin_hospital';
+    public const MEDICO = 'medico';
+    public const ENFERMERIA = 'enfermeria';
+    public const RECEPCION = 'recepcion';
+    public const TECNICO_LABORATORIO = 'tecnico_laboratorio';
+    public const BIOQUIMICO = 'bioquimico';
+    public const JEFATURA_MEDICA = 'jefatura_medica';
+    private const VALID_ROLES = [
+        self::SUPERADMIN,
+        self::ADMIN_HOSPITAL,
         self::MEDICO,
-        self::ENFERMERO,
-        self::PACIENTE,
-        self::AUDITOR,
-        self::PLATFORM_ADMIN,];
-    private static array $mfaRequiredRoles = [
-        self::TENANT_ADMIN,
-        self::AUDITOR,
-        self::PLATFORM_ADMIN,];
+        self::ENFERMERIA,
+        self::RECEPCION,
+        self::TECNICO_LABORATORIO,
+        self::BIOQUIMICO,
+        self::JEFATURA_MEDICA,];
+    private const MFA_REQUIRED_ROLES = [
+        self::SUPERADMIN,
+        self::ADMIN_HOSPITAL,];
     private string $value;
     public function __construct(string $role)
     {
-        $role = strtoupper(trim($role));
-        if (!in_array($role, self::$validRoles, true)) {
-            throw new InvalidArgumentException('Rol inválido: ' . $role . '. Válidos: ' . implode(', ', self::$validRoles));}
+        if (!in_array($role, self::VALID_ROLES, true)) {
+            throw new InvalidArgumentException('Rol inválido: ' . $role . '. Válidos: ' . implode(', ', self::VALID_ROLES));}
         $this->value = $role;}
     public static function fromString(string $role): self
     {
@@ -36,7 +42,7 @@ final class Role
         return $this->value;}
     public function requiresMfa(): bool
     {
-        return in_array($this->value, self::$mfaRequiredRoles, true);}
+        return in_array($this->value, self::MFA_REQUIRED_ROLES, true);}
     public function equals(Role $other): bool
     {
         return $this->value === $other->value;}
@@ -45,7 +51,7 @@ final class Role
         return $this->value;}
     public static function all(): array
     {
-        return self::$validRoles;}
+        return self::VALID_ROLES;}
     public static function mfaRequiredRoles(): array
     {
-        return self::$mfaRequiredRoles;}}
+        return self::MFA_REQUIRED_ROLES;}}

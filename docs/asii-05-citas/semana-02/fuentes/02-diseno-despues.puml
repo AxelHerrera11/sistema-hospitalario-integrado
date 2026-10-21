@@ -1,0 +1,57 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam class {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+interface AppointmentRepositoryContract {
+  + crear(datos: array): array
+  + buscar(id: string): ?array
+  + buscarSolape(paciente: string, doctor: string, desde: string, hasta: string): bool
+}
+class AppointmentStatusPolicy {
+  + puedeConfirmar(estado: string): bool
+  + puedeCancelar(estado: string): bool
+}
+class EloquentAppointmentRepository implements AppointmentRepositoryContract
+class InMemoryAppointmentRepository implements AppointmentRepositoryContract
+class AppointmentController {
+  - repositorio: AppointmentRepositoryContract
+  - politica: AppointmentStatusPolicy
+  + store(datos: array): array
+  + confirmar(id: string): array
+  + cancelar(id: string): array
+}
+class AppServiceProvider {
+  + register(): void
+}
+
+AppointmentController o-- AppointmentRepositoryContract
+AppointmentController --> AppointmentStatusPolicy
+EloquentAppointmentRepository ..|> AppointmentRepositoryContract
+InMemoryAppointmentRepository ..|> AppointmentRepositoryContract
+AppServiceProvider ..> EloquentAppointmentRepository : bind
+AppServiceProvider ..> AppointmentController : inyecta
+
+note right of AppointmentController
+  Depende de la abstraccion
+  (contrato), no del ORM.
+end note
+note bottom of EloquentAppointmentRepository
+  Adaptador real: unico punto que
+  conoce Eloquent y las GiST.
+end note
+note bottom of InMemoryAppointmentRepository
+  Adaptador de prueba: sustituye
+  la persistencia sin tocar el dominio.
+end note
+@enduml
