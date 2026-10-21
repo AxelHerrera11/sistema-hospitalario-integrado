@@ -16,17 +16,22 @@ final class CorrectCapturedResult
     public function execute(CorrectionCommand $command): array
     {
         $result = $this->results->getById($command->tenantId, $command->resultId);
+        $previousValue = $result->value;
+        $previousUnit = $result->unit;
         $result->correct($command->value, $command->unit, $command->reason);
 
-        $this->results->save($result);
-        $this->audit->record([
+        $this->results->saveWithAudit($result, [
             'tenant_id' => $command->tenantId,
             'result_id' => $command->resultId,
             'action' => 'correction',
             'reason' => $command->reason,
             'user_id' => $command->userId,
+            'previous_value' => $previousValue,
+            'new_value' => $result->value,
+            'previous_unit' => $previousUnit,
+            'new_unit' => $result->unit,
             'version' => $result->version,
-        ]);
+        ], $this->audit);
 
         return [
             'id' => $result->id,

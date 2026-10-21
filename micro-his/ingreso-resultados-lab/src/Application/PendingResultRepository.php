@@ -11,4 +11,7 @@ interface PendingResultRepository
     public function getById(string $tenantId, string $resultId): PendingLabResult;
 
     public function save(PendingLabResult $result): void;
+
+    /** @param array<string, string|int|null> $event */
+    public function saveWithAudit(PendingLabResult $result, array $event, AuditLogger $audit): void;
 }

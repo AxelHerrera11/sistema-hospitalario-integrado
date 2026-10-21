@@ -15,10 +15,18 @@ foreach ([
     '/Application/CorrectCapturedResult.php',
     '/Application/PendingResultRepository.php',
     '/Application/AuditLogger.php',
+    '/Application/PendingResultNotFound.php',
+] as $file) {
+    require_once $root . $file;
+}
+
+foreach ([
     '/Persistence/InMemoryPendingResultRepository.php',
     '/Persistence/PdoPendingResultRepository.php',
     '/Persistence/ArrayAuditLogger.php',
     '/Presentation/HttpResultController.php',
 ] as $file) {
-    require_once $root . $file;
+    if (is_file($root . $file)) {
+        require_once $root . $file;
+    }
 }

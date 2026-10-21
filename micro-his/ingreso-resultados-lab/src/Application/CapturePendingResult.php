@@ -18,14 +18,17 @@ final class CapturePendingResult
         $result = $this->results->getById($command->tenantId, $command->resultId);
         $result->capture($command->value, $command->unit, $command->observation);
 
-        $this->results->save($result);
-        $this->audit->record([
+        $this->results->saveWithAudit($result, [
             'tenant_id' => $command->tenantId,
             'result_id' => $command->resultId,
             'action' => 'capture',
             'user_id' => $command->userId,
+            'previous_value' => null,
+            'new_value' => $result->value,
+            'previous_unit' => null,
+            'new_unit' => $result->unit,
             'version' => $result->version,
-        ]);
+        ], $this->audit);
 
         return [
             'id' => $result->id,
