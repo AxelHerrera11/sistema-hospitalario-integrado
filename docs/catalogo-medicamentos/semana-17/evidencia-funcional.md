@@ -23,7 +23,7 @@ Windows 11, PHP 8.2.12, Laravel 12.58.0, Node 24.15.0, PostgreSQL 17.10 (clúste
 | `php vendor/bin/phpunit` (con PostgreSQL) | OK (215 tests, 5366 assertions) | 0 |
 | `php vendor/bin/phpunit --testsuite Unit,Feature` (sin PostgreSQL) | OK (104 tests, 4138 assertions) | 0 |
 | `php vendor/bin/phpunit --testsuite Database` | OK (101 tests, 1112 assertions); incluye `MedicationIntegrityTest` (6) | 0 |
-| `node resources/js/modules/medicamentos/medicamentos.test.mjs` | OK | 0 |
+| `node --test "resources/js/modules/medicamentos/*.test.mjs"` | OK (pass 1, fail 0) | 0 |
 | `MSYS_NO_PATHCONV=1 VITE_API_URL=/api/v1 npm run build` | Build correcto | 0 |
 | `node catalogo-e2e.mjs http://127.0.0.1:8770 <hospital A>` | 11/11 | 0 |
 | `node fallo-e2e.mjs http://127.0.0.1:8771 <hospital A>` (HOSPITAL inexistente) | 4/4 | 0 |
