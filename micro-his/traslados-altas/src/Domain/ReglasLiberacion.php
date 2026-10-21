@@ -21,4 +21,19 @@ final class ReglasLiberacion
             default => null,
         };
     }
+
+    /**
+     * RF-TA-05: el destino existe, no es la cama actual y está libre desde T. La exigencia de beds.status = available
+     * es la decisión PROPUESTA R-TA-01 (Semana 2), pendiente de acordar con salas y camas (ASII-06).
+     */
+    public static function rechazoDeDestino(?CamaDestino $destino, EstadoInternacion $estado): ?Rechazo
+    {
+        return match (true) {
+            $destino === null => Rechazo::DestinoInexistente,
+            $destino->camaId === $estado->camaActualId => Rechazo::DestinoIgualOrigen,
+            !$destino->libreDesdeT => Rechazo::DestinoOcupado,
+            $destino->estado !== 'available' => Rechazo::DestinoNoDisponible,
+            default => null,
+        };
+    }
 }

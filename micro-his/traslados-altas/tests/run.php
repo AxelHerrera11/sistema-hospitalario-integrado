@@ -8,5 +8,6 @@ require __DIR__ . '/harness.php';
 
 require __DIR__ . '/solicitudes.php';
 require __DIR__ . '/reglas.php';
+require __DIR__ . '/destino.php';
 
 finish();
