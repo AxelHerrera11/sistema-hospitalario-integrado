@@ -1,397 +1,205 @@
-# Semana 11 — Prototipo Navegable: Desktop + Mobile
+# Semana 11 — Especificación del prototipo (parte 1: navegación y flujos)
 **Módulo:** Gestión de usuarios, tenants y endurecimiento de autenticación
-**Flujo:** «Alta de usuario por tenant, autenticación segura y revocación de sesión»
-**Versión:** 1.0 | **Fecha:** 2026-10-18
+**Flujo:** acceso por hospital, administración de usuarios y revocación de sesión
+**Versión:** 1.1 | **Fecha:** 2026-10-21
+
+> **Alcance.** Especificación de diseño con prototipo **estático** (mockups ASCII y Mermaid) más
+> un prototipo navegable **parcial** en el SPA Vue (`/prototipos/tenants-responsive`, Semana 10).
+> Cada flujo indica qué existe en `develop` **[Implementado]** y qué es diseño **[Propuesto]**.
+> Roles: códigos literales de `config/rbac.php`. La parte 2 (consistencia, stack y plan de
+> pruebas) está en [`prototype-spec1.md`](prototype-spec1.md).
 
 ---
 
-## 1. Mapa de Navegación (Site Map / Flow Diagram)
+## 1. Mapa de navegación
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│                           MAPA DE NAVEGACIÓN - MÓDULO TENANTS & AUTH                        │
-└─────────────────────────────────────────────────────────────────────────────────────────────┘
+                         ┌──────────────────────┐
+                         │  /login [Impl.]      │
+                         │  X-Tenant-ID + correo│
+                         │  + contraseña        │
+                         └──────────┬───────────┘
+                                    │
+                 ┌──────────────────┴──────────────────┐
+                 ▼                                     ▼
+       ┌───────────────────┐                ┌────────────────────┐
+       │ MFA TOTP [Prop.]  │                │ Error / sin red     │
+       │ (existe en el     │                │ [Impl.]             │
+       │ micro-HIS sem. 3) │                └────────────────────┘
+       └─────────┬─────────┘
+                 ▼
+       ┌──────────────────────────────────────────────┐
+       │  Inicio (/) [Impl.] — menú según permisos     │
+       └───────┬──────────────────┬───────────────────┘
+               │                  │
+               ▼                  ▼
+     ┌──────────────────┐  ┌──────────────────────────┐
+     │ Módulos clínicos │  │ /admin/users [Impl.]      │
+     │ (otros equipos)  │  │ usuarios.ver              │
+     └──────────────────┘  └────────────┬─────────────┘
+                                         │
+              ┌──────────────┬───────────┼────────────┬───────────────┐
+              ▼              ▼           ▼            ▼               ▼
+        ┌──────────┐  ┌────────────┐ ┌──────────┐ ┌───────────┐ ┌────────────┐
+        │Asignar / │  │ Desactivar │ │ Cerrar   │ │ Alta de   │ │ Auditoría  │
+        │quitar rol│  │ [Impl.]    │ │ 1 sesión │ │ usuario   │ │ [Prop.]    │
+        │ [Impl.]  │  │            │ │ [Impl.]  │ │ [Prop.]   │ │auditoria.ver│
+        └──────────┘  └────────────┘ └──────────┘ └───────────┘ └────────────┘
 
-                                    ┌─────────────────┐
-                                    │   ENTRY POINT   │
-                                    │  /auth/login    │
-                                    └────────┬────────┘
-                                             │
-                          ┌──────────────────┼──────────────────┐
-                          ▼                  ▼                  ▼
-                    ┌───────────┐      ┌─────────────┐    ┌──────────────┐
-                    │  LOGIN    │      │  MFA CHALLENGE │  │  FORGOT PASS │
-                    │  (Email/  │      │  (TOTP/WebAuthn)│  │  /forgot     │
-                    │  Password)│      └───────┬───────┘    └──────────────┘
-                    └─────┬─────┘              │
-                          │                    │
-                    ┌─────┴─────┐      ┌───────┴───────┐
-                    │  SUCCESS  │      │  MFA SUCCESS  │
-                    └─────┬─────┘      └───────┬───────┘
-                          │                    │
-                          ▼                    ▼
-                    ┌─────────────────────────────────────┐
-                    │         DASHBOARD (Role-based)       │
-                    └─────────────────┬───────────────────┘
-                                      │
-          ┌───────────────────────────┼───────────────────────────┐
-          ▼                           ▼                           ▼
-    ┌───────────────┐         ┌───────────────┐          ┌───────────────┐
-    │   PACIENTE    │         │   CLÍNICO     │          │   ADMIN       │
-    │  (Patient)    │         │  (Medic/Enf)  │          │  (Tenant/Plat)│
-    └───────┬───────┘         └───────┬───────┘          └───────┬───────┘
-            │                         │                         │
-    ┌───────┴───────┐         ┌───────┴───────┐         ┌───────┴───────┐
-    ▼               ▼         ▼               ▼         ▼               ▼
-┌─────────┐  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
-│Dashboard│  │Citas/Meds│ │Pacientes │ │Expediente│ │Usuarios  │ │Tenants   │
-│  Resumen│  │  /Recetas│ │  Lista   │ │  Clínico │ │  CRUD    │ │  CRUD    │
-└────┬────┘  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
-     │            │            │            │            │            │
-     ▼            ▼            ▼            ▼            ▼            ▼
+  Transversal [Impl.]: refresh por cookie (POST /api/v1/auth/refresh), logout,
+  sesión expirada → evento auth:session-expired → /login.
+  Superadmin [Impl.]: alta de hospital (POST /api/v1/admin/tenants, tenants.crear).
+```
+
+Se retiraron de la v1.0: recuperación de contraseña, break-glass, gestión global de sesiones,
+alertas de seguridad y portal de paciente. Ninguno tiene contrato en `develop`; quedan como
+trabajo futuro, fuera de este prototipo.
+
+---
+
+## 2. Camino feliz: acceso → usuarios → cerrar una sesión
+
+| Paso | Pantalla | Acción | Contrato | Permiso / rol | Estado |
+|---|---|---|---|---|---|
+| 1 | `/login` | Ingresa UUID del hospital, correo y contraseña | `POST /api/v1/auth/login` + `X-Tenant-ID` | — | [Implementado] |
+| 2 | MFA | Código TOTP de 6 dígitos | `POST /auth/mfa` del micro-HIS sem. 3 | `admin_hospital`, `superadmin` | [Propuesto en el HIS] |
+| 3 | `/` | Menú según permisos de la sesión | `GET /api/v1/auth/me` | — | [Implementado] |
+| 4 | `/admin/users` | Abre la lista de usuarios del hospital | `GET /api/v1/admin/users` | `usuarios.ver` | [Implementado] |
+| 5 | Acciones → Cerrar una sesión | Confirma en el modal | `DELETE /api/v1/admin/sessions/{session}` | `sesiones.revocar_ajenas` | [Implementado] |
+| 6 | Resultado | Aviso «Sesión cerrada» | — | — | [Implementado] |
+| 7 | Auditoría | Consulta el evento | — | `auditoria.ver` | [Propuesto] |
+
+Diferencias con la v1.0:
+- No hay «Deshacer» ni «restaurar sesiones». Una revocación invalida los tokens y no se revierte;
+  el usuario recupera el acceso volviendo a iniciar sesión.
+- El paso 5 cierra **una** sesión, que es lo que existe. «Cerrar todas» queda [Propuesto].
+
+### 2.1 Pantallas del camino feliz (escritorio)
+
+Las versiones móviles están en `prototype-screens-mobile.md` y `prototype-screens-mobile1.md`.
+
+**Pantalla 1 — Inicio de sesión [Implementado]**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Hospital HIS                               Inicio  Acceso      │
+├─────────────────────────────────────────────────────────────────┤
+│                 ┌───────────────────────────────┐               │
+│                 │  Iniciar sesión               │               │
+│                 │  ID del hospital (X-Tenant-ID)│               │
+│                 │  [___________________________]│               │
+│                 │  Correo                       │               │
+│                 │  [___________________________]│               │
+│                 │  Contraseña             [Ver] │               │
+│                 │  [___________________________]│               │
+│                 │  [          ENTRAR          ] │               │
+│                 └───────────────────────────────┘               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Pantalla 2 — Usuarios del hospital [Implementado]**
+```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         TRANSVERSAL: AUTENTICACIÓN / SESIONES               │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
-│  │ REFRESH     │  │ LOGOUT      │  │ FORCE REVOKE│  │ MFA SETUP   │       │
-│  │ TOKEN       │  │ (own/admin) │  │ (admin)     │  │ (TOTP/Pass) │       │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-     │                         │                         │
-     ▼                         ▼                         ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         TRANSVERSAL: AUDITORÍA / SEGURIDAD                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐       │
-│  │ AUDIT LOGS  │  │ BREAK-GLASS │  │ SESSION MGR │  │ SECURITY    │       │
-│  │ (Filtros/Exp)│ │  (Emergency)│  │ (List/Revoke)│ │  ALERTS     │       │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘       │
+│  Hospital HIS · Hospital Central             Inicio  Usuarios  Salir        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Usuarios del hospital                                                      │
+│  ┌──────────────────┬──────────────────────┬───────────────────┬──────────┐ │
+│  │ Usuario          │ Correo               │ Roles             │ Acciones │ │
+│  ├──────────────────┼──────────────────────┼───────────────────┼──────────┤ │
+│  │ Dra. Ana González│ ana.gonzalez@hch.test│ medico            │  [▾]     │ │
+│  │ Lic. Pedro Ruiz  │ pedro.ruiz@hch.test  │ enfermeria        │  [▾]     │ │
+│  │ Carlos Méndez    │ carlos.m@hch.test    │ recepcion (inact.)│  [▾]     │ │
+│  └──────────────────┴──────────────────────┴───────────────────┴──────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## 2. Happy Path: Login → MFA → Dashboard → Admin → Force-Revoke
-
-### 2.1 Flujo Completo (Pasos Numerados)
-
-| Paso  | Pantalla                      | Acción Usuario                | Resultado                           | Validación             |
-|-------|-------------------------------|-------------------------------|-------------------------------------|------------------------|
-| **1** | `/auth/login`                 | Ingresa email + password      | POST /auth/login                    | 200 + tokens           |
-| **2** | MFA Challenge                 | Ingresa código TOTP 6 dígitos | POST /auth/mfa                      | 200 + tokens           |
-| **3** | Dashboard                     | Redirección automática        | Dashboard según rol                 | Role-based UI          |
-| **4** | Admin Panel → Usuarios        | Click "Gestión Usuarios"      | Lista paginada + filtros            | TENANT_ADMIN required  |
-| **5** | Usuario → [⋮] → Revocar       | Click "Revocar TODAS"         | Modal 2-paso confirmación           | PLATFORM/TENANT_ADMIN  |
-| **6** | Confirmar → Motivo → Ejecutar | Click "REVOCAR AHORA"         | Toast "3 revocadas" + "Deshacer 5s" | Audit log + Event      |
-| **7** | Ver Auditoría                 | Click "Auditoría"             | Tabla filtrable + export            | AUDITOR/PLATFORM_ADMIN |
-
----
-
-### 2.2 Pantallas del Happy Path (Desktop + Mobile)
-
-#### **Pantalla 1: Login Form**
+**Pantalla 3 — Cerrar una sesión (confirmación) [Implementado]**
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Desktop (1024px+)                                              │
+│  Cerrar sesión de Dra. Ana González                       [×]   │
 ├─────────────────────────────────────────────────────────────────┤
+│  Sesión: Chrome · Windows · iniciada 21/10/2026 08:30           │
 │                                                                 │
-│                    ┌─────────────────────────┐                  │
-│                    │  🔐 Iniciar Sesión      │                  │
-│                    │                         │                  │
-│                    │  Email institucional    │                  │
-│                    │  [____________________] │                  │
-│                    │                         │                  │
-│                    │  Contraseña        👁️ │                  │
-│                    │  [____________________] │                  │
-│                    │  [☐ Recordarme 30 días] │                  │
-│                    │                         │                  │
-│                    │  [ INICIAR SESIÓN ]     │  ← Primary btn   │
-│                    │                         │                  │
-│                    │  ¿Olvidó? | ¿Problemas MFA?               │
-│                    │                         │                  │
-│                    │  ℹ️ Tenant: Hospital Central (HCH-001)    │
-│                    └─────────────────────────┘                  │
+│  El dispositivo deberá volver a iniciar sesión. La acción no    │
+│  se puede deshacer y queda registrada.                          │
 │                                                                 │
+│                          [ Cancelar ]   [ CERRAR SESIÓN ]       │
 └─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│  Mobile (375px)                     │
-├─────────────────────────────────────┤
-│                                     │
-│   🔐 Iniciar Sesión                 │
-│                                     │
-│   Email institucional          👤   │
-│  [______________________________]   │
-│                                     │
-│  Contraseña                   👁️    │
-│  [______________________________]   │
-│                                     │
-│  [☐ Recordarme 30 días]             │
-│                                     │
-│  [ INICIAR SESIÓN ]  ← 100% width   │
-│                                     │
-│  ¿Olvidó? | ¿Problemas MFA?         │
-│                                     │
-│  ℹ️ Tenant: HCH-001                 │
-└─────────────────────────────────────┘
-```
-
-#### **Pantalla 2: MFA Challenge (TOTP + WebAuthn)**
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Desktop                                                         │
-├─────────────────────────────────────────────────────────────────┤
-│  🔐 Autenticación de Doble Factor Requerida                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  📱 Método: Aplicación Autenticadora (TOTP)                     │
-│                                                                 │
-│  1. Abra su app (Google Authenticator, Authy, etc.)            │
-│  2. Ingrese el código de 6 dígitos                              │
-│                                                                 │
-│  Código: [ 1 ][ 2 ][ 3 ][ 4 ][ 5 ][ 6 ]  ← Auto-advance        │
-│                                                                 │
-│  ⏱️ Código expira en: 25s  ████████████░░░░░░░░░░░░░░░░      │
-│                                                                 │
-│  [ VERIFICAR CÓDIGO ]          ← Primary btn                    │
-│                                                                 │
-│  ─────────────────────────────────────────────────────────────  │
-│                                                                 │
-│  🔑 ¿Prefiere Passkey?                                          │
-│  [ Usar FaceID / TouchID / Llave de seguridad ]                 │
-│                                                                 │
-│  ❓ ¿Problemas?  [ No tengo acceso a la app ]                   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **Pantalla 3: Dashboard Admin (Desktop 2-column Layout)**
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│  ☰ Admin Panel          Hospital Central (HCH-001)    👤 Carlos Ruiz [≡]  [🔔 3]           │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                             │
-│  ┌────────────┬──────────────────────────────────────────────────────────────────────────┐  │
-│  │  SIDEBAR   │  👥 Gestión Usuarios                              [+ Nuevo]              │  │
-│  │            │  ──────────────────────────────────────────────────────────────────────  │  │
-│  │ 👥         │  🔍 [________________________________________]  [▼ Filtros]            │  │
-│  │ 🏥         │  📅 [Exportar CSV] [Exportar PDF] [Columnas] [Densidad: Cómoda ▼]     │  │
-│  │ 🔐         │  ──────────────────────────────────────────────────────────────────────  │  │
-│  │ 🔐         │  ┌──┬─────────────────┬────────────────┬──────────────┬────────┬───────┐  │
-│  │ 🚪         │  │☑ │ Usuario          │ Email           │ Roles        │ Estado │ ⋮   │  │
-│  │           │  ├──┼─────────────────┼────────────────┼──────────────┼────────┼───────┤  │
-│  │           │  │☐ │ Dra. González    │ dra.g@hch.com   │ 🩺 MEDICO    │ 🟢 Act │ ⋮   │  │
-│  │           │  ├──┼─────────────────┼────────────────┼──────────────┼────────┼───────┤  │
-│  │           │  │☐ │ Lic. Ruiz        │ lic.r@hch.com   │ 💉 ENFERMERO │ 🟢 Act │ ⋮   │  │
-│  │           │  ├──┼─────────────────┼────────────────┼──────────────┼────────┼───────┤  │
-│  │           │  │☐ │ Dr. Silva        │ dr.s@hch.com    │ 🔍 AUDITOR   │ 🟡 MFA │ ⋮   │  │
-│  │           │  ├──┼─────────────────┼────────────────┼──────────────┼────────┼───────┤  │
-│  │           │  │☐ │ Dra. Torres      │ adm.t@hch.com   │ 👑 ADMIN     │ 🔴 Bloq│ ⋮   │  │
-│  │           │  └──┴─────────────────┴────────────────┴──────────────┴────────┴───────┘  │  │
-│  │           │                                                                             │  │
-│  │           │  ◄ Anterior  1  [2]  [3]  [4]  [5]  ...  [15]  Siguiente ►               │  │
-│  └────────────┴──────────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### **Pantalla 4: Modal Force-Revoke (2-Paso)**
-```
-Paso 1: Confirmar Intención
-┌─────────────────────────────────────────────────────────────────┐
-│  ⚠️ Confirmar Revocación                                  [×]  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ¿Revocar TODAS las sesiones de <strong>Dra. Torres</strong>?    │
-│                                                                 │
-│  Se cerrarán sesión en TODOS los dispositivos (3 activos):     │
-│    📱 iPhone 15 Pro (iOS) - Chrome 119  -  Hoy 08:30          │
-│    💻 MacBook Pro (macOS) - Safari 17  -  Ayer 14:22          │
-│    🔐 YubiKey 5C NFC (Passkey) -  Hace 2 horas                 │
-│                                                                 │
-│  El usuario deberá iniciar sesión nuevamente en todos los      │
-│  dispositivos. Los tokens de acceso serán invalidados          │
-│  inmediatamente y los refresh tokens eliminados.               │
-│                                                                 │
-│  [ Cancelar ]                    [ Continuar → ]               │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-
-Paso 2: Ejecutar con Motivo
-┌─────────────────────────────────────────────────────────────────┐
-│  🔴 Ejecutar Revocación                                   [×]  │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Motivo *:  ▼ [ Sospecha compromiso ▼ ]  [ Cambio de rol ]    │
-│                                                                 │
-│  Comentario (opcional):                                         │
-│  [ Credenciales filtradas en GitHub gist público_____________ ] │
-│                                                                 │
-│  ⚠️ Deshacer disponible 5 segundos tras ejecutar               │
-│                                                                 │
-│  [ ← Volver ]                    [ REVOCAR AHORA ]  ← .btn-danger│
-└─────────────────────────────────────────────────────────────────┘
-
-Toast Éxito (con Deshacer):
-┌─────────────────────────────────────────────────────────────────┐
-│  ✅ 3 sesiones revocadas para Dra. Torres                       │
-│  Motivo: Sospecha compromiso                                    │
-│  [ Ver en Auditoría ]  [ Deshacer (4s) ]                        │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### **Pantalla 5: Auditoría (Desktop Table + Expandible Row)**
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────────┐
-│  📋 Auditoría de Movimientos - Hospital Central                          [Exportar]         │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                             │
-│  🔍 Filtros:  📅 [2026-10-01] → [2026-10-18]  👤 [__________]  🏷️ [▼ Todos]  ⚠️ [▼ Todas] │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  ▶ 2026-10-18 10:45:00  │ sys          │ REFRESH_REUSE  │ Auth   │ 🔴 CRÍTICO  ▼         │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  ▼ DETALLE: 🔴 REFRESH_REUSE_DETECTED - CRÍTICO                                           │
-│  ──────────────────────────────────────────────────────────────────────────────────────   │
-│  • Event ID: evt_7f8a...  • User: sys (service)  • Tenant: HCH-001  • IP: 192.168.1.45  │
-│  • Refresh Token Reutilizado: rt_abc123...  • Trust Score: 15/100 (SOSPECHOSO)          │
-│  ✅ Acciones: Revocación TOTAL + Blocklist + Alerta SIEM + Jira SEC-2026-1018-0042      │
-│  ✅ Hash Chain: a1b2c3d4... → e5f6g7h8... (VERIFICADO ✅)                                │
-│  [ Ver en SIEM ]  [ Crear Jira ]  [ Exportar JSON ]  [ Cerrar ]                          │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│   2026-10-18 11:20:05  │ dra.gonzalez  │ MFA_SUCCEEDED │ Auth   │ 🟢 INFO                 │
-├─────────────────────────────────────────────────────────────────────────────────────────────┤
-│  🟠 REVOKE_SESSION  │ adm.torres  │ Admin  │ 🟠 WARN                                                                    │
-└─────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Critical Error Path: Reuse Detection → Total Revocation → Login
+## 3. Camino de error crítico: reutilización de refresh token
 
-### 3.1 Flujo de Error Crítico
+### 3.1 Comportamiento esperado
 
+| Paso | Qué ocurre | Estado en `develop` |
+|---|---|---|
+| 1 | El cliente envía `POST /api/v1/auth/refresh` con un refresh **ya consumido** (robado o repetido) | [Implementado] (`RefreshUserSession`) |
+| 2 | El backend lo reconoce como reutilización | [Implementado]: `consumed_at` ya definido |
+| 3 | Revoca toda la familia de refresh tokens y la sesión asociada | [Implementado]: `revokeReusedFamily()` |
+| 4 | Registra `auth.refresh_reuse_detected` con severidad `critical` | [Implementado] |
+| 5 | Responde 401 `REFRESH_TOKEN_REUSED`; el SPA limpia la sesión y vuelve a `/login` | [Implementado]: evento `auth:session-expired` en `app.js` |
+| 6 | Cerrar también las **demás** sesiones del usuario en el hospital | [Propuesto]: hoy solo cae la sesión de esa familia (el micro-HIS sem. 3 sí las cierra todas) |
+
+Se retiraron de la v1.0 las acciones que no existen y que no se pueden afirmar como automáticas:
+blocklist en Redis, ticket Jira, aviso por Slack, correo al equipo de seguridad y reenvío al SIEM.
+
+### 3.2 Respuesta del API (vigente)
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                        CRITICAL ERROR PATH: REFRESH REUSE DETECTED                      │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-
-PASO 1: Usuario hace POST /auth/refresh con refresh token REUTILIZADO
-         ↓
-PASO 2: Backend detecta REUSE (hash no coincide con stored hash)
-         ↓
-PASO 3: EJECUCIÓN AUTOMÁTICA DE SEGURIDAD:
-         ├─ Revocación TOTAL de TODAS las sesiones del usuario
-         ├─ Blocklist de TODOS los access tokens (JTI)
-         ├─ Eliminación de TODOS los refresh tokens
-         ├─ Alerta CRÍTICA a SIEM (Splunk/Elastic)
-         ├─ Ticket Jira auto-creado: SEC-2026-1018-XXXX
-         ├─ Notificación Slack #security-alerts
-         ├─ Email a Security Team
-         └─ Log en auditoría inmutable (REFRESH_REUSE_DETECTED, CRITICAL)
-         ↓
-PASO 4: Respuesta al cliente: 401 "Token Compromised - Actividad sospechosa"
-         ↓
-PASO 5: Cliente muestra MODAL CRÍTICO FULL-SCREEN:
-         ↓
-PASO 6: Usuario FORZADO a re-login completo (nuevo MFA si corresponde)
-         ↓
-PASO 7: Nuevo par de tokens generado con NUEVO refresh token
-         ↓
-PASO 8: Auditoría registra: REFRESH_REUSE_DETECTED + LOGIN_SUCCESS (nuevo)
-```
-
-### 3.2 Pantallas del Error Crítico
-
-#### **Pantalla E1: Refresh Request con Reuse Detection**
-```
-POST /auth/refresh
-{ "refresh_token": "rt_compromised_xyz" }
-
-Response: 401 Unauthorized
+HTTP/1.1 401 Unauthorized
 {
-  "success": false,
-  "error": {
-    "code": "REFRESH_REUSE_DETECTED",
-    "message": "Actividad sospechosa detectada. Por seguridad, TODAS sus sesiones han sido revocadas.",
-    "severity": "CRITICAL",
-    "action_required": "RELOGIN_REQUIRED",
-    "revoked_sessions": 3,
-    "blocked_access_tokens": 3
-  }
+  "error": "REFRESH_TOKEN_REUSED",
+  "message": "Refresh token reutilizado; la familia de sesiones fue revocada."
 }
 ```
+El SPA no debe mostrar este texto técnico: muestra el aviso E1. La v1.0 proponía devolver cuántas
+sesiones y tokens se revocaron; se descartó porque le sirve a un atacante y no al usuario.
 
-#### **Pantalla E2: Modal Crítico Full-Screen (Desktop + Mobile)**
+### 3.3 Pantallas del error crítico
 
-**Desktop:**
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│  🛑 ACTIVIDAD SOSPECHOSA DETECTADA                                                    [×] │
-├─────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                         │
-│  ⚠️ SE HA DETECTADO REUTILIZACIÓN DE TOKEN DE ACTUALIZACIÓN                          │
-│                                                                                         │
-│  Por seguridad, se han ejecutado AUTOMÁTICAMENTE las siguientes acciones:              │
-│                                                                                         │
-│  🔴 Revocación TOTAL de todas sus sesiones activas (3 sesiones)                       │
-│  🔴 Invalidación de todos los tokens de acceso (blocklist)                             │
-│  🔴 Eliminación de todos los tokens de actualización (refresh tokens)                 │
-│  🔴 Alerta CRÍTICA enviada al equipo de seguridad (SIEM)                              │
-│  🔴 Ticket de seguridad auto-creado: SEC-2026-1018-XXXX                               │
-│                                                                                         │
-│  Esta acción es IRREVERSIBLE y se ha registrado en la auditoría inmutable.            │
-│                                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────────────────┐  │
-│  │                          [ INICIAR SESIÓN DE NUEVO ]                            │  │
-│  │                         ← Primary, full-width, focus auto                       │  │
-│  └─────────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                         │
-│  [ Ver detalles de seguridad ]  ← Link a /security/incident/SEC-2026-1018-XXXX       │
-└─────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Mobile (Full-screen Modal):**
+**E1 — Aviso de seguridad (móvil y escritorio) [Propuesto]**
 ```
 ┌─────────────────────────────────────┐
-│  🛑 ACTIVIDAD SOSPECHOSA        [×] │
+│  Sesión cerrada por seguridad       │  ← role="alertdialog", foco inicial
 ├─────────────────────────────────────┤
+│  Detectamos un uso repetido de su   │
+│  credencial de sesión. Por          │
+│  seguridad cerramos esta sesión.    │
 │                                     │
-│  ⚠️ REUTILIZACIÓN DE TOKEN         │
-│  DETECTADA                         │
+│  [   INICIAR SESIÓN DE NUEVO   ]    │  ← 100 % ancho en móvil
 │                                     │
-│  Por seguridad, TODAS sus sesiones │
-│  han sido REVOCADAS automáticamente│
-│                                     │
-│  ✅ 3 sesiones cerradas             │
-│  ✅ Tokens invalidados              │
-│  ✅ Alerta enviada a seguridad     │
-│                                     │
-│  [ INICIAR SESIÓN DE NUEVO ]       │
-│  ← Full width, focus auto          │
-│                                     │
-│  [ Ver detalles ]                  │
+│  Si no fue usted, avise a la        │
+│  administración del hospital.       │
 └─────────────────────────────────────┘
 ```
 
-#### **Pantalla E3: Login Forzado Post-Revocación**
-┌─────────────────────────────────────────────────────────────────┐
-│  Desktop                                                         │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│                    ┌─────────────────────────┐                  │
-│                    │  🔐 Iniciar Sesión      │                  │
-│                    │                         │                  │
-│                    │  ⚠️ Sus sesiones previas │                  │
-│                    │     fueron revocadas    │                  │
-│                    │     por seguridad       │                  │
-│                    │                         │                  │
-│                    │  Email institucional    │                  │
-│                    │  [____________________] │                  │
-│                    │                         │                  │
-│                    │  Contraseña        👁️ │                  │
-│                    │  [____________________] │                  │
-│                    │                         │                  │
-│                    │  [ INICIAR SESIÓN ]     │                  │
-│                    │                         │                  │
-│                    │  ℹ️ Se requerirá MFA    │                  │
-│                    │     al iniciar sesión   │                  │
-│                    └─────────────────────────┘                  │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+**E2 — Inicio de sesión tras la revocación [Implementado: pantalla de login]**
+```
+┌─────────────────────────────────────┐
+│  Iniciar sesión                     │
+│  ┌───────────────────────────────┐  │
+│  │ ℹ Sus sesiones anteriores se  │  │  ← mensaje propuesto
+│  │ cerraron por seguridad.       │  │
+│  └───────────────────────────────┘  │
+│  ID del hospital  [26adadaf-…]      │
+│  Correo           [____________]    │
+│  Contraseña       [____________]    │
+│  [          ENTRAR          ]       │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 4. Trazabilidad con los demás archivos de Semana 11
+
+| Archivo | Relación |
+|---|---|
+| `prototype-navigation-map.mmd` | Diagrama del mapa de la sección 1 |
+| `prototype-happy-path.md` / `.mmd` | Detalle del camino feliz de la sección 2 |
+| `prototype-error-path.md` / `.mmd` | Detalle del error crítico de la sección 3 |
+| `prototype-screens-desktop*.md` | Pantallas de escritorio |
+| `prototype-screens-mobile*.md` | Pantallas móviles (v1.1, sin duplicados) |
+| `prototype-consistency-checklist.md` | Revisión de consistencia de diseño |
+
+Los documentos anteriores de esta carpeta (v1.0) todavía mencionan «Deshacer» y roles en
+mayúsculas. Ante cualquier diferencia prevalece esta especificación v1.1.
