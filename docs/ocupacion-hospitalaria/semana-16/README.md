@@ -20,8 +20,8 @@ integración de backend, interfaz y documentación en un solo PR:
   `cutoff_at` es opcional y debe ser ISO-8601 con zona horaria. Los errores usan el sobre del
   contrato: `error.code`, `error.message` y `meta.request_id`.
 - **Interfaz (este PR).** `OccupancyPage.vue` consume `GET /api/v1/occupancy` con el cliente axios
-  que ya envía el token y `X-Tenant-ID`. Las utilidades puras viven en `ocupacion.js` y se
-  verifican con `node`, sin navegador.
+  que ya envía el token y `X-Tenant-ID`. Las utilidades puras viven en el módulo JavaScript de
+  `resources/js/modules/ocupacion/` y se verifican con `node`, sin navegador.
 - **Corrección de dominio.** La tasa de ocupación se calcula sobre camas operativas
   (`inventario − mantenimiento − inactivas`), como define el contrato vigente; antes se usaba
   solo el denominador `ocupadas + disponibles`.
@@ -40,8 +40,9 @@ por lo que la autoridad permanece en el backend.
 ## Evidencia ejecutada
 
 ```bash
-# comando: node resources/js/modules/ocupacion/ocupacion.test.mjs
-# resultado: OK: 14 aserciones de la pantalla de ocupación aprobadas
+# comando: node --test "resources/js/modules/ocupacion/*.test.mjs"
+# resultado (21/10/2026, integradora): tests 1, pass 1, fail 0; el archivo de prueba, ejecutado
+#   directamente con node, imprime «OK: 14 aserciones de la pantalla de ocupación aprobadas»
 
 # comando: npm run build
 # resultado: ✓ 95 modules transformed; OccupancyPage-Bt9v-GoS.js 4.26 kB
