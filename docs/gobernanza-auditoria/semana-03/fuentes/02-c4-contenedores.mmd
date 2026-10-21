@@ -1,0 +1,22 @@
+%% C4 nivel 2 — Contenedores relevantes para Gobernanza y Auditoría.
+flowchart LR
+    subgraph Navegador
+        SPA["Contenedor: Vue 3 SPA<br/>(pantalla de bitácora: pendiente)<br/>Prototipo: public/prototipo"]
+    end
+    subgraph Servidor["Servidor PHP 8.2"]
+        LAR["Contenedor: Laravel 12 API<br/>middleware tenant → jwt.auth → rbac:auditoria.ver<br/>App\GobernanzaAuditoria (proveedor y controlador)"]
+        MHG["Componente PHP vanilla<br/>micro-his/gobernanza-auditoria<br/>Domain · Application · Persistence · Presentation"]
+        MHR["Componente PHP vanilla<br/>micro-his/rbac<br/>Authorize, DenialRecorder"]
+        DEMO["Servidor de demostración<br/>micro-his/gobernanza-auditoria/public/index.php<br/>(InMemory + datos ficticios)"]
+    end
+    CEN[("PostgreSQL CENTRAL<br/>audit_log (propuesto en rama Tenants)")]
+    LOG["Log de Laravel / error_log"]
+
+    SPA -- "JSON/HTTPS, Bearer + X-Tenant-ID" --> LAR
+    SPA -. "solo prototipo" .-> DEMO
+    LAR --> MHG
+    LAR --> MHR
+    MHR -- "RbacDenialRecorder" --> MHG
+    MHG -- "PDO (pgsql)" --> CEN
+    MHG -- "FailureReporter" --> LOG
+    DEMO --> MHG

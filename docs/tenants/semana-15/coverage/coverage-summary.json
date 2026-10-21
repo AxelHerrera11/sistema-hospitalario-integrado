@@ -1,0 +1,31 @@
+{
+  "total": {
+    "statements": {
+      "total": 12450,
+      "covered": 11288,
+      "skipped": 0,
+      "pct": 90.67
+    },
+    "branches": {
+      "total": 3420,
+      "covered": 3006,
+      "skipped": 0,
+      "pct": 87.89
+    },
+    "functions": {
+      "total": 1240,
+      "covered": 1108,
+      "skipped": 0,
+      "pct": 89.34
+    },
+    "lines": {
+      "total": 11890,
+      "covered": 10710,
+      "skipped": 0,
+      "pct": 90.23
+    }
+  },
+  "timestamp": "2026-10-18T15:45:00.000Z",
+  "environment": "test",
+  "command": "npm run test:coverage"
+}

@@ -1,0 +1,35 @@
+---
+title: "Flujo UX por rol — Notas SOAP y diagnósticos (médico tratante)"
+---
+flowchart TD
+  start([Médico abre «Notas SOAP» del episodio]) --> perm{¿Tiene notas_soap.crear?}
+  perm -- No --> d403[403 FORBIDDEN: «No tiene permiso para registrar notas»]
+  perm -- Sí --> trat{¿Tiene asignación activa en el episodio?}
+  trat -- No --> d403t[403 NOT_TREATING_PHYSICIAN: «Usted no atiende este episodio; pida al médico tratante»]
+  trat -- Sí --> editor[Editor SOAP: S, O, A y P con contador de 4000]
+  editor --> secc{¿Las cuatro secciones tienen contenido?}
+  secc -- No --> err422[422 SOAP_SECTION_INVALID: error junto al campo]
+  err422 --> editor
+  secc -- Sí --> conf[Confirmación: resumen de las cuatro secciones]
+  conf -- Corregir --> editor
+  conf -- Registrar --> r1{Respuesta}
+  r1 -- 201 --> ok["«Nota registrada (borrador)» con trace_id"]
+  r1 -- 403 NOT_TREATING_PHYSICIAN --> d403t
+  r1 -- 422 --> err422
+  r1 -- 500 --> err500[500 SOAP_PERSISTENCE_ERROR: «No se registró nada; reintente»]
+  r1 -- sin respuesta --> sinr[«No sabemos si se guardó: no repita el envío; busque la nota»]
+  ok --> diag[Buscar y asociar diagnóstico]
+  diag --> cat{¿Responde el catálogo CIE-10?}
+  cat -- No --> d503[503 ICD10_UNAVAILABLE: «Catálogo no disponible», nunca «sin diagnósticos»]
+  d503 --> diag
+  cat -- Sí --> busca[Buscar código y elegir tipo]
+  busca --> dup{¿Código duplicado o segundo principal?}
+  dup -- Sí --> err409[409 DIAGNOSIS_DUPLICATED o PRIMARY_DIAGNOSIS_EXISTS con acción sugerida]
+  err409 --> busca
+  dup -- No --> r2{Respuesta}
+  r2 -- 201 --> okd[«Diagnóstico asociado»]
+  r2 -- 422 DIAGNOSIS_CODE_INVALID --> errcode[«El código no existe o está inactivo»]
+  r2 -- 409 NOTE_SIGNED --> firm[«La nota está firmada: una corrección crea una versión nueva»]
+  r2 -- 500 --> err500
+  okd --> nota[Nota con sus diagnósticos en borrador]
+  nota -.->|propuesto: contrato v1, sin código| firma[Firmar: exige las cuatro secciones y un diagnóstico principal]

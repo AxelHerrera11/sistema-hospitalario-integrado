@@ -1,49 +1,39 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Presentation\Requests;
+use App\Modules\Tenants\Domain\ValueObjects\JwtClaims;
 use App\Modules\Tenants\Domain\ValueObjects\SessionId;
+use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 use App\Modules\Tenants\Domain\ValueObjects\UserId;
 use Psr\Http\Message\ServerRequestInterface;
+/**
+ * Sin {userId} en la ruta revoca la sesión del propio token (logout);
+ * con DELETE /admin/users/{userId}/sessions revoca todas las del usuario destino.
+ */
 final class RevokeSessionRequest
 {
-    private ?SessionId $sessionId;
-    private ?UserId $targetUserId;
-    private string $reason;
-    private ?UserId $requesterId;
     private function __construct(
-        ?SessionId $sessionId,
-        ?UserId $targetUserId,
-        string $reason,
-        ?UserId $requesterId
-    ) {
-        $this->sessionId = $sessionId;
-        $this->targetUserId = $targetUserId;
-        $this->reason = $reason;
-        $this->requesterId = $requesterId;
-    }
+        private TenantId $tenantId,
+        private UserId $requesterId,
+        private ?SessionId $sessionId,
+        private ?UserId $targetUserId,
+        private string $reason
+    ) {}
     public static function fromRequest(ServerRequestInterface $request): self
     {
-        $data = $request->getParsedBody();
-        $routeParams = $request->getAttributes();
-        $authUser = $request->getAttribute('auth_user');
-        $requesterId = $authUser ? new UserId($authUser['user_id']) : null;
-        $sessionId = null;
-        if (isset($data['session_id'])) {
-            $sessionId = new SessionId($data['session_id']);
-        }
-        $targetUserId = null;
-        if (isset($routeParams['user_id'])) {
-            $targetUserId = new UserId($routeParams['user_id']);
-        }
+        $auth = $request->getAttribute('auth');
+        if (!$auth instanceof JwtClaims) {
+            throw new \DomainException('Usuario no autenticado', 401);}
+        $data = (array) $request->getParsedBody();
+        $target = $request->getAttribute('userId');
         return new self(
-            $sessionId,
-            $targetUserId,
-            $data['reason'] ?? 'logout',
-            $requesterId
-        );
-    }
+            new TenantId($auth->tenantId()),
+            new UserId($auth->subject()),
+            $target === null ? new SessionId($auth->sessionId()) : null,
+            $target === null ? null : new UserId((string) $target),
+            (string) ($data['reason'] ?? ($target === null ? 'logout' : 'admin_revoke')));}
+    public function tenantId(): TenantId { return $this->tenantId; }
+    public function requesterId(): UserId { return $this->requesterId; }
     public function sessionId(): ?SessionId { return $this->sessionId; }
     public function targetUserId(): ?UserId { return $this->targetUserId; }
-    public function reason(): string { return $this->reason; }
-    public function requesterId(): ?UserId { return $this->requesterId; }
-}
+    public function reason(): string { return $this->reason; }}
