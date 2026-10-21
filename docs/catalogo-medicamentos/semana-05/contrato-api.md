@@ -18,10 +18,10 @@ Especificación normativa: [`openapi.yaml`](./openapi.yaml) (OpenAPI 3.1). Estad
 |---|---|---|---|---|
 | `GET /api/v1/medications?q=&limit=` | UC-MED-02 Buscar | `medicamentos.ver` | **Existe** (superadmin, admin_hospital, medico, enfermeria) | 200 |
 | `GET /api/v1/medications/{medication_id}` | UC-MED-03 Consultar | `medicamentos.ver` | **Existe** | 200 |
-| `POST /api/v1/medications` | UC-MED-01 Alta | `medicamentos.registrar` | **Propuesto**, no está en `config/rbac.php` | 201 |
-| `PATCH /api/v1/medications/{medication_id}/validity` | UC-MED-04 Cambiar vigencia | `medicamentos.cambiar_vigencia` | **Propuesto** | 200 |
+| `POST /api/v1/medications` | UC-MED-01 Alta | `medicamentos.registrar` | **Pendiente**: catalogado en `config/rbac.php` (`pending`), sin rol activo | 201 |
+| `PATCH /api/v1/medications/{medication_id}/validity` | UC-MED-04 Cambiar vigencia | `medicamentos.cambiar_vigencia` | **Pendiente**, igual que el alta | 200 |
 
-Para los dos permisos propuestos se sugiere el rol `admin_hospital`, como gestor del catálogo de Semana 1. Requiere aprobación del módulo RBAC; hasta entonces esas rutas deben responder 403 (denegación por defecto).
+Para los dos permisos se propone el rol `admin_hospital`, como gestor del catálogo de Semana 1. Desde #622 figuran en `rbac.catalog` y en `rbac.pending` con ese rol, pero ningún rol activo los recibe: activarlos requiere aprobación del módulo RBAC, y hasta entonces esas rutas deben responder 403 (denegación por defecto).
 
 ## Cuerpos
 
