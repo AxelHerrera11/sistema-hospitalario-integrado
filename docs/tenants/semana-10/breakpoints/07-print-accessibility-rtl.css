@@ -1,0 +1,237 @@
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+
+@media print {
+  .no-print,
+  .btn,
+  .nav,
+  .sidebar,
+  .bottom-nav,
+  .toast-container,
+  .modal-overlay,
+  .hamburger-btn,
+  .skip-link {
+    display: none !important;
+  }
+
+  .only-print {
+    display: block !important;
+  }
+
+  .modal-content {
+    box-shadow: none;
+    border: 1px solid #000;
+    max-width: none;
+    max-height: none;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    break-inside: avoid;
+  }
+
+  .data-table {
+    page-break-inside: auto;
+  }
+
+  .data-table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .data-table th,
+  .data-table td {
+    border: 1px solid #ccc;
+  }
+
+  a {
+    text-decoration: none;
+    color: #000;
+  }
+
+  .page-break-before { page-break-before: always; }
+  .page-break-after { page-break-after: always; }
+  .page-break-avoid { page-break-inside: avoid; }
+}
+
+/* ============================================================
+   ANIMATION REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .modal-content {
+    animation: none;
+  }
+
+  .toast {
+    animation: none;
+  }
+
+  .card {
+    transition: none;
+  }
+
+  .btn {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   HIGH CONTRAST MODE
+   ============================================================ */
+
+@media (prefers-contrast: high) {
+  :root {
+    --color-border-default: #000000;
+    --color-text-primary: #000000;
+    --color-text-secondary: #333333;
+    --focus-ring-color: #000000;
+    --focus-ring-width: 4px;
+  }
+
+  .btn {
+    border: 2px solid currentColor;
+  }
+
+  .card {
+    border: 2px solid #000;
+  }
+
+  .form-input,
+  .form-select {
+    border: 2px solid #000;
+  }
+
+  .modal-content {
+    border: 2px solid #000;
+  }
+
+  .card-item {
+    border: 2px solid #000;
+  }
+}
+
+/* ============================================================
+   FORCED COLORS MODE (Windows High Contrast)
+   ============================================================ */
+
+@media (forced-colors: active) {
+  :root {
+    --color-bg-primary: Canvas;
+    --color-bg-secondary: Canvas;
+    --color-text-primary: CanvasText;
+    --color-text-secondary: GrayText;
+    --color-border-default: ButtonBorder;
+    --color-border-focus: Highlight;
+    --color-border-error: #ff0000;
+    --color-primary-600: Highlight;
+    --color-danger-600: #ff0000;
+    --color-success-600: #00ff00;
+    --color-warning-600: #ffff00;
+  }
+
+  .btn-primary {
+    background: Highlight;
+    color: HighlightText;
+    border: 1px solid ButtonBorder;
+  }
+
+  .btn-secondary {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid ButtonBorder;
+  }
+
+  .btn-danger {
+    background: #ff0000;
+    color: white;
+  }
+
+  .form-input,
+  .form-select {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid ButtonBorder;
+  }
+
+  .form-input:focus,
+  .form-select:focus {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+
+  .modal-content {
+    background: Canvas;
+    border: 1px solid ButtonBorder;
+  }
+
+  .card {
+    background: Canvas;
+    border: 1px solid ButtonBorder;
+  }
+
+  .toast {
+    background: Canvas;
+    border: 1px solid ButtonBorder;
+  }
+
+  /* Ensure focus visible */
+  :focus {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
+/* ============================================================
+   RTL SUPPORT (if needed)
+   ============================================================ */
+
+[dir="rtl"] .form-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .nav-item {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .btn-group {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .modal-footer {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .pagination {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .sidebar {
+  border-right: none;
+  border-left: 1px solid var(--color-border-default);
+}
+
+[dir="rtl"] .hamburger-icon::before,
+[dir="rtl"] .hamburger-icon::after {
+  right: 0;
+  left: auto;
+}
+
+/* ============================================================
+   END OF BREAKPOINTS.CSS
+   ============================================================ */

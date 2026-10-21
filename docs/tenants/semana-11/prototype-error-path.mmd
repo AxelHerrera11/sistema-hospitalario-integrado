@@ -1,0 +1,101 @@
+flowchart TD
+    %% CRITICAL ERROR PATH: Refresh Reuse Detection → Total Revocation → Forced Re-login
+    
+    START((INICIO: POST /auth/refresh\ncon Refresh Token REUTILIZADO))
+    
+    %% DETECTION
+    EXTRACT[Extraer user_id + device_id\ndel Refresh Token\n(sin verificar firma)]
+    LOOKUP[Buscar en Redis\nrefresh:{user_id}:{device_id}]
+    LOOKUP_RESULT{Encontrado en Redis?}
+    
+    NOT_FOUND[❌ No existe\n→ Revocado/Expirado]
+    REFRESH_INVALID[401 Refresh Revoked\nLogin requerido]
+    
+    HASH_CHECK[Verificar Argon2id\nrefresh_token == stored_hash]
+    HASH_MATCH{Hash Coincide?}
+    
+    %% REUSE DETECTED - CRITICAL PATH
+    REUSE_DETECTED[🚨 REUSE DETECTED\n¡ATAQUE DETECTADO!]
+    CRITICAL_ALERT[🚨 ALERTA CRÍTICA\nREFRESH_REUSE_DETECTED]
+    
+    %% AUTOMATIC REVOCATION - TOTAL
+    REVOKE_ALL[REVOCACIÓN TOTAL AUTOMÁTICA]
+    BLOCKLIST_ALL[Blocklist TODOS Access Tokens\nJTI → Redis SET TTL=exp-now]
+    DELETE_REFRESH_ALL[DELETE TODOS Refresh Tokens\nKEYS refresh:{user_id}:* → DEL]
+    DELETE_SESSIONS_ALL[DELETE TODAS Sesiones\nKEYS session:{user_id}:* → DEL]
+    
+    %% AUDIT & ALERTS
+    AUDIT_CRITICAL[Auditoría: REFRESH_REUSE_DETECTED\nSeverity: CRITICAL + Hash Chain]
+    SIEM_ALERT[Alerta SIEM\nSplunk/Elastic + Slack #security-alerts]
+    JIRA_AUTO[Jira Auto-ticket\nSEC-2026-XXXX-XXXX]
+    EMAIL_ALERT[Email Security Team\n+ PagerDuty On-call]
+    
+    %% RESPONSE TO CLIENT
+    RESPONSE_401[HTTP 401 Unauthorized\n{error: "Token Compromised",\n severity: "CRITICAL",\n action: "RELOGIN_REQUIRED"}]
+    
+    %% CLIENT SIDE
+    MODAL_CRITICAL[🛑 MODAL CRÍTICO FULL-SCREEN\nFocus Auto + Focus Trap]
+    MODAL_CONTENT[⚠️ ACTIVIDAD SOSPECHOSA\nTODAS las sesiones REVOCADAS\nIniciar sesión de NUEVO]
+    MODAL_BUTTON[[ INICIAR SESIÓN DE NUEVO ]\nPrimary, Full-width, Auto-focus]
+    
+    %% FORCED RE-LOGIN
+    REDIRECT_LOGIN[Redirect → /auth/login\n+ Query: ?security=reuse_detected]
+    LOGIN_FORCED[Login Forzado\n+ MFA Obligatorio si Policy]
+    NEW_TOKENS[Nuevos Tokens Generados\nNuevo Refresh + Access]
+    
+    %% AUDIT TRAIL
+    AUDIT_TRAIL[Auditoría Inmutable:\n1. REFRESH_REUSE_DETECTED (CRITICAL)\n2. REVOKE_SESSION (force_revoke)\n3. LOGIN_SUCCESS (nuevo)\nHash Chain: SHA256 Verified ✅]
+    
+    %% CONNECTIONS
+    START --> EXTRACT
+    EXTRACT --> LOOKUP
+    LOOKUP --> LOOKUP_RESULT
+    LOOKUP_RESULT -->|No| NOT_FOUND
+    NOT_FOUND --> REFRESH_INVALID
+    REFRESH_INVALID --> END_FAIL((FIN: Re-login requerido))
+    
+    LOOKUP_RESULT -->|Sí| HASH_CHECK
+    HASH_CHECK --> HASH_MATCH
+    HASH_MATCH -->|No| REUSE_DETECTED
+    HASH_MATCH -->|Sí| ROTATION[Rotación Válida\nNuevos Tokens + Guardar]
+    
+    REUSE_DETECTED --> CRITICAL_ALERT
+    CRITICAL_ALERT --> REVOKE_ALL
+    REVOKE_ALL --> BLOCKLIST_ALL
+    REVOKE_ALL --> DELETE_REFRESH_ALL
+    REVOKE_ALL --> DELETE_SESSIONS_ALL
+    REVOKE_ALL --> AUDIT_CRITICAL
+    REVOKE_ALL --> SIEM_ALERT
+    REVOKE_ALL --> JIRA_AUTO
+    REVOKE_ALL --> EMAIL_ALERT
+    
+    AUDIT_CRITICAL --> RESPONSE_401
+    SIEM_ALERT --> RESPONSE_401
+    JIRA_AUTO --> RESPONSE_401
+    EMAIL_ALERT --> RESPONSE_401
+    
+    RESPONSE_401 --> MODAL_CRITICAL
+    MODAL_CRITICAL --> MODAL_CONTENT
+    MODAL_CONTENT --> MODAL_BUTTON
+    MODAL_BUTTON --> REDIRECT_LOGIN
+    REDIRECT_LOGIN --> LOGIN_FORCED
+    LOGIN_FORCED --> NEW_TOKENS
+    NEW_TOKENS --> AUDIT_TRAIL
+    
+    %% STYLES
+    classDef start fill:#e3f2fd,stroke:#1565c0,stroke-width:3px
+    classDef detection fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef critical fill:#ffebee,stroke:#c62828,stroke-width:3px
+    classDef action fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef response fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef client fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef recovery fill:#e8f5e9,stroke:#2e7d32
+    classDef audit fill:#fce4ec,stroke:#c62828
+    
+    class START start
+    class EXTRACT,LOOKUP,LOOKUP_RESULT,HASH_CHECK,HASH_MATCH detection
+    class REUSE_DETECTED,CRITICAL_ALERT critical
+    class REVOKE_ALL,BLOCKLIST_ALL,DELETE_REFRESH_ALL,DELETE_SESSIONS_ALL,AUDIT_CRITICAL,SIEM_ALERT,JIRA_AUTO,EMAIL_ALERT action
+    class RESPONSE_401,MODAL_CRITICAL,MODAL_CONTENT,MODAL_BUTTON,REDIRECT_LOGIN,LOGIN_FORCED,NEW_TOKENS client
+    class AUDIT_TRAIL audit
+    class REUSE_DETECTED,CRITICAL_ALERT,REVOKE_ALL,BLOCKLIST_ALL,DELETE_REFRESH_ALL,DELETE_SESSIONS_ALL,AUDIT_CRITICAL,SIEM_ALERT,JIRA_AUTO critical

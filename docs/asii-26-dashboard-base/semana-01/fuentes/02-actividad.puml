@@ -1,0 +1,42 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam activity {
+  BackgroundColor #E3F2FD; BorderColor #1565C0; FontColor #17212B;
+  DiamondBackgroundColor #FFF8E1; DiamondBorderColor #B8860B;
+}
+
+|Usuario autenticado|
+start
+:Ingresar al dashboard;
+|Router/Guard|
+if (¿Sesión válida y token presente?) then (No)
+  :Redirigir a login; <<#FFEBEE>>
+  stop
+else (Sí)
+  :Verificar permisos del ítem de menú;
+endif
+if (¿Autorizado para esta vista?) then (No)
+  :Redirigir a 403; <<#FFEBEE>>
+  stop
+else (Sí)
+  |Dashboard UI|
+  :Mostrar estado de carga;
+  |API|
+  :Solicitar resumen inicial;
+  if (¿Respuesta exitosa?) then (No)
+    :Mostrar estado de error con reintento; <<#FFEBEE>>
+    stop
+  else (Sí)
+    if (¿Hay datos para mostrar?) then (No)
+      :Mostrar estado vacío; <<#FFEBEE>>
+    else (Sí)
+      :Mostrar resumen inicial; <<#E8F5E9>>
+    endif
+  endif
+endif
+|Usuario autenticado|
+:Visualizar dashboard;
+stop
+@enduml
