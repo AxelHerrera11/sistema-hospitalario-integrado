@@ -94,4 +94,18 @@ check('actor revocado, inexistente o con id inválido → no autorizado', !$auto
 $r = (new AltaHospitalaria(new SolicitudAlta($estancia1), $revocado, $registro, $autorizador))->ejecutar();
 check('alta pedida por un actor revocado → NO_AUTORIZADO', $r instanceof RechazoConfirmado && $r->motivo === Rechazo::NoAutorizado);
 
+// El mismo contrato del Repository que cumple el adaptador InMemory, ahora contra PostgreSQL, con un escenario nuevo.
+require_once __DIR__ . '/contrato-registro.php';
+contratoRegistro('PDO', static function () use ($valor, $actor, $internar, $conectar): array {
+    $sala = $valor('INSERT INTO wards (code, name, location) VALUES (:c, :n, :l) RETURNING ward_id',
+        ['c' => 'C-' . bin2hex(random_bytes(4)), 'n' => 'Sala del contrato', 'l' => 'Piso 2']);
+    $cama = static fn (string $codigo, string $estado) => $valor('INSERT INTO beds (ward_id, code, type, status) VALUES (:w, :c, :t, :s) RETURNING bed_id',
+        ['w' => $sala, 'c' => $codigo, 't' => 'general', 's' => $estado]);
+    [$a, $b, $c, $d] = [$cama('A', 'available'), $cama('B', 'available'), $cama('C', 'maintenance'), $cama('D', 'available')];
+    [$episodio, $estancia] = $internar($a, 'K1-' . bin2hex(random_bytes(4)));
+    $internar($d, 'K2-' . bin2hex(random_bytes(4)));
+
+    return [new PdoRegistroInternacion($conectar()), ['estancia' => $estancia, 'episodio' => $episodio, 'a' => $a, 'b' => $b, 'c' => $c, 'd' => $d, 'actor' => $actor]];
+});
+
 finish();
