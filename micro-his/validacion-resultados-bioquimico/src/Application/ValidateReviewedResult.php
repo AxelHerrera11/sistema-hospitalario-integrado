@@ -18,14 +18,13 @@ final class ValidateReviewedResult
         $result = $this->results->getPending($command->tenantId, $command->resultId);
         $result->validate($command->role);
 
-        $this->results->save($result);
-        $this->audit->record([
+        $this->results->saveWithAudit($result, [
             'tenant_id' => $command->tenantId,
             'result_id' => $command->resultId,
             'action' => 'validate',
             'user_id' => $command->userId,
             'version' => $result->version,
-        ]);
+        ], $this->audit);
 
         return [
             'id' => $result->id,
