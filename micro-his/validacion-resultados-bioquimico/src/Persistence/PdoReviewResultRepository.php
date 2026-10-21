@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace MicroHis\ValidacionResultados\Persistence;
 
 use MicroHis\ValidacionResultados\Application\ReviewResultRepository;
+use MicroHis\ValidacionResultados\Application\ReviewAuditLogger;
+use MicroHis\ValidacionResultados\Application\ReviewResultNotFound;
 use MicroHis\ValidacionResultados\Domain\ReviewableLabResult;
 use MicroHis\ValidacionResultados\Domain\ReviewStatus;
 use PDO;
@@ -29,7 +31,7 @@ final class PdoReviewResultRepository implements ReviewResultRepository
 
         $row = $statement->fetch(PDO::FETCH_ASSOC);
         if (!$row) {
-            throw new \RuntimeException('Resultado en revision no encontrado.');
+            throw new ReviewResultNotFound('Resultado en revision no encontrado.');
         }
 
         return new ReviewableLabResult(
@@ -60,5 +62,30 @@ final class PdoReviewResultRepository implements ReviewResultRepository
             ':tenant_id' => $result->tenantId,
             ':id' => $result->id,
         ]);
+
+        if ($statement->rowCount() === 0) {
+            throw new ReviewResultNotFound('Resultado en revision no encontrado.');
+        }
+    }
+
+    public function saveWithAudit(ReviewableLabResult $result, array $event, ReviewAuditLogger $audit): void
+    {
+        $startedTransaction = !$this->pdo->inTransaction();
+        if ($startedTransaction) {
+            $this->pdo->beginTransaction();
+        }
+
+        try {
+            $this->save($result);
+            $audit->record($event);
+            if ($startedTransaction) {
+                $this->pdo->commit();
+            }
+        } catch (\Throwable $error) {
+            if ($startedTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $error;
+        }
     }
 }

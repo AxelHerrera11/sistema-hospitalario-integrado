@@ -9,6 +9,7 @@ use MicroHis\ValidacionResultados\Application\RejectResultCommand;
 use MicroHis\ValidacionResultados\Application\ValidateReviewedResult;
 use MicroHis\ValidacionResultados\Application\ValidateResultCommand;
 use MicroHis\ValidacionResultados\Domain\DomainRuleViolation;
+use MicroHis\ValidacionResultados\Application\ReviewResultNotFound;
 
 final class HttpReviewController
 {
@@ -35,6 +36,8 @@ final class HttpReviewController
             return ['status' => 200, 'body' => $response];
         } catch (DomainRuleViolation $error) {
             return ['status' => 422, 'body' => ['error' => $error->getMessage()]];
+        } catch (ReviewResultNotFound $error) {
+            return ['status' => 404, 'body' => ['error' => $error->getMessage()]];
         } catch (\Throwable) {
             return ['status' => 500, 'body' => ['error' => 'No fue posible validar el resultado.']];
         }
@@ -58,6 +61,8 @@ final class HttpReviewController
             return ['status' => 200, 'body' => $response];
         } catch (DomainRuleViolation $error) {
             return ['status' => 422, 'body' => ['error' => $error->getMessage()]];
+        } catch (ReviewResultNotFound $error) {
+            return ['status' => 404, 'body' => ['error' => $error->getMessage()]];
         } catch (\Throwable) {
             return ['status' => 500, 'body' => ['error' => 'No fue posible rechazar el resultado.']];
         }

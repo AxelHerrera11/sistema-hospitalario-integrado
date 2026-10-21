@@ -82,6 +82,11 @@ $failingRepository = new class implements ReviewResultRepository {
     {
         throw new RuntimeException('Falla simulada de persistencia.');
     }
+
+    public function saveWithAudit(ReviewableLabResult $result, array $event, ReviewAuditLogger $audit): void
+    {
+        throw new RuntimeException('Falla simulada de persistencia.');
+    }
 };
 $useCase = new ValidateReviewedResult($failingRepository, new class implements ReviewAuditLogger {
     public function record(array $event): void
