@@ -1,0 +1,8 @@
+PASS 1 Micro PDO: recepción aceptada
+PASS 2 Micro PDO: lectura persistida
+PASS 3 Micro PDO: aislamiento de lectura
+PASS 4 Micro PDO: rechazo de dominio
+PASS 5 Micro PDO: aviso durable
+PASS 6 Micro PDO: rollback de muestra al fallar persistencia
+PASS 7 Micro PDO: rollback de estado de orden
+OK 7 comprobaciones PostgreSQL del micro.
