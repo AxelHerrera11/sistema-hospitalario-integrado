@@ -58,17 +58,20 @@ class AuditLogQueryIndexTest extends TestCase
 
     public function test_the_result_constraint_rejects_values_outside_the_catalogue(): void
     {
+        // Con hashes válidos (#671), el único motivo de rechazo es la restricción de result.
         $this->expectException(QueryException::class);
+        $this->expectExceptionMessage('audit_log_result_check');
         $this->insertAudit('suceso', 'ok');
     }
 
     public function test_the_result_constraint_accepts_the_catalogue_and_null(): void
     {
-        foreach (['success', 'failure', 'denied', 'already_revoked', null] as $result) {
+        // unknown: lo escribe AuditOutcome::Unknown del módulo de Gobernanza y auditoría.
+        foreach (['success', 'failure', 'denied', 'already_revoked', 'unknown', null] as $result) {
             $this->insertAudit('evento.'.$result, $result);
         }
 
-        $this->assertSame(5, (int) DB::connection('central')->scalar('SELECT count(*) FROM audit_log'));
+        $this->assertSame(6, (int) DB::connection('central')->scalar('SELECT count(*) FROM audit_log'));
     }
 
     public function test_the_result_constraint_accepts_the_value_written_by_the_logout(): void
@@ -115,9 +118,10 @@ class AuditLogQueryIndexTest extends TestCase
     private function insertAudit(string $event, ?string $result): void
     {
         DB::connection('central')->insert(
-            "INSERT INTO audit_log (event, actor_id, hospital_id, detail, result)
-             VALUES (?, 'actor-1', 'hospital-1', '{}'::jsonb, ?)",
-            [$event, $result],
+            // previous_hash y event_hash son NOT NULL con formato hexadecimal de 64 desde #671.
+            "INSERT INTO audit_log (event, actor_id, hospital_id, detail, result, previous_hash, event_hash)
+             VALUES (?, 'actor-1', 'hospital-1', '{}'::jsonb, ?, ?, ?)",
+            [$event, $result, bin2hex(random_bytes(32)), bin2hex(random_bytes(32))],
         );
     }
 }

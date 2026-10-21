@@ -41,7 +41,7 @@ return new class extends Migration
 
             ALTER TABLE audit_log
                 ADD CONSTRAINT audit_log_result_check
-                CHECK (result IS NULL OR result IN ('success', 'failure', 'denied', 'already_revoked')) NOT VALID;
+                CHECK (result IS NULL OR result IN ('success', 'failure', 'denied', 'already_revoked', 'unknown')) NOT VALID;
             SQL);
 
         // La tabla es de solo insercion: una fila que incumpla la restriccion ya
@@ -54,7 +54,7 @@ return new class extends Migration
             BEGIN
                 IF NOT EXISTS (
                     SELECT 1 FROM audit_log
-                    WHERE result IS NOT NULL AND result NOT IN ('success', 'failure', 'denied', 'already_revoked')
+                    WHERE result IS NOT NULL AND result NOT IN ('success', 'failure', 'denied', 'already_revoked', 'unknown')
                 ) THEN
                     ALTER TABLE audit_log VALIDATE CONSTRAINT audit_log_result_check;
                 END IF;
