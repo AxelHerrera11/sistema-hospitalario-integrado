@@ -9,15 +9,14 @@ use Illuminate\Support\ServiceProvider;
 use MicroHis\Occupancy\Application\BedSnapshotReader;
 use MicroHis\Occupancy\Application\ConsultOccupancy;
 use MicroHis\Occupancy\Application\OccupancySummaryQuery;
+use MicroHis\Occupancy\Application\PersistenceFailure;
 use MicroHis\Occupancy\Domain\OccupancyCalculator;
 use MicroHis\Occupancy\Persistence\PdoBedSnapshotReader;
 
 /**
- * Conecta el Micro-HIS de ocupación (semanas 3 y 5) con Laravel.
- *
- * El dominio y la aplicación no dependen del framework; aquí solo se cablea
- * el adaptador real: la lectura de camas usa la conexión HOSPITAL configurada
- * para el hospital que atiende este proceso.
+ * Conecta el Micro-HIS de ocupación (semanas 3 y 5) con Laravel: el dominio
+ * no depende del framework; aquí solo se cablea el adaptador real, con
+ * conexión perezosa a la base HOSPITAL.
  */
 final class OcupacionServiceProvider extends ServiceProvider
 {
@@ -27,7 +26,7 @@ final class OcupacionServiceProvider extends ServiceProvider
 
         $this->app->bind(
             BedSnapshotReader::class,
-            fn () => new PdoBedSnapshotReader(DB::connection('hospital')->getPdo()),
+            fn () => new PdoBedSnapshotReader(fn () => $this->hospitalConnection()),
         );
 
         $this->app->bind(
@@ -37,5 +36,15 @@ final class OcupacionServiceProvider extends ServiceProvider
                 new OccupancyCalculator(),
             ),
         );
+    }
+
+    /** Conexión perezosa: si la base no responde, el endpoint responde 503 y no 500. */
+    private function hospitalConnection(): \PDO
+    {
+        try {
+            return DB::connection('hospital')->getPdo();
+        } catch (\Throwable $error) {
+            throw new PersistenceFailure('Hospital occupancy is unavailable.', previous: $error);
+        }
     }
 }
