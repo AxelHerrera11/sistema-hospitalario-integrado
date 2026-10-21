@@ -87,6 +87,20 @@ class MedicationCatalogPostgresTest extends TestCase
         $this->assertSame(0, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM medications'));
     }
 
+    public function test_audit_failure_rolls_back_the_hospital_write(): void
+    {
+        $id = $this->postJson('/api/v1/medications', self::AMOX)->assertStatus(201)->json('medication.medication_id');
+        $this->assertSame('medicamentos.registrado', CatalogTestIdentity::$audited[0]['event']);
+
+        // M6 falla cerrado: sin evento en CENTRAL, PostgreSQL revierte el alta y el cambio de vigencia.
+        CatalogTestIdentity::$auditDown = true;
+        $this->postJson('/api/v1/medications', ['code' => 'ibu-400'] + self::AMOX)->assertStatus(503)->assertJsonPath('error', 'AUDIT_UNAVAILABLE');
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertStatus(503);
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM medications'));
+        $this->assertSame('active', DB::connection('hospital')->scalar('SELECT validity FROM medications WHERE medication_id = ?', [$id]));
+        $this->assertFalse(DB::connection('hospital')->getPdo()->inTransaction());
+    }
+
     public function test_storage_failure_answers_503_and_writes_nothing(): void
     {
         DB::connection('hospital')->statement('ALTER TABLE medications RENAME TO medications_unavailable');

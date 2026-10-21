@@ -109,6 +109,32 @@ final class MedicationCatalogApiTest extends TestCase
         $this->getJson("/api/v1/medications/{$this->amoxicilina}")->assertJsonPath('medication.validity', 'active');
     }
 
+    public function test_confirmed_writes_are_audited_with_actor_hospital_and_trace(): void
+    {
+        CatalogTestIdentity::as('admin_hospital');
+        $draft = ['code' => 'ibu-400', 'name' => 'Ibuprofeno 400 mg', 'active_ingredient' => 'Ibuprofeno', 'pharmacological_group' => 'AINE'];
+        $id = $this->withHeaders(['X-Request-Id' => 'req-alta-0001'])->postJson('/api/v1/medications', $draft)->assertStatus(201)->json('medication.medication_id');
+        $this->postJson('/api/v1/medications', $draft)->assertStatus(409);
+        $this->withHeaders(['X-Request-Id' => 'req-vig-0001'])->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertOk();
+
+        // Solo las escrituras confirmadas dejan evento; el duplicado rechazado no.
+        $this->assertSame(['medicamentos.registrado', 'medicamentos.vigencia_cambiada'], array_column(CatalogTestIdentity::$audited, 'event'));
+        [$created, $changed] = array_column(CatalogTestIdentity::$audited, 'payload');
+        $this->assertSame(['user-admin_hospital', 'hospital-a', 'req-alta-0001', $id, 'IBU-400', 'active'],
+            [$created['user_id'], $created['hospital_id'], $created['trace_id'], $created['medication_id'], $created['code'], $created['validity']]);
+        $this->assertSame(['req-vig-0001', $id, 'inactive'], [$changed['trace_id'], $changed['medication_id'], $changed['validity']]);
+    }
+
+    public function test_writes_answer_503_when_the_audit_cannot_be_recorded(): void
+    {
+        CatalogTestIdentity::as('admin_hospital');
+        CatalogTestIdentity::$auditDown = true;
+        $this->postJson('/api/v1/medications', ['code' => 'IBU-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
+            'pharmacological_group' => 'AINE'])->assertStatus(503)->assertJsonPath('error', 'AUDIT_UNAVAILABLE')->assertJsonMissingPath('medication');
+        $this->patchJson("/api/v1/medications/{$this->amoxicilina}/validity", ['validity' => 'inactive'])->assertStatus(503);
+        $this->assertSame([], CatalogTestIdentity::$audited);
+    }
+
     public function test_unavailable_hospital_database_answers_503_without_details(): void
     {
         // Sin sustituir el Repository: se usa el enlace real del provider sobre la conexión 'hospital', apuntada a una base
