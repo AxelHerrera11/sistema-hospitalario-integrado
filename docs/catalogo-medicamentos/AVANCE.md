@@ -17,5 +17,5 @@
 | 13 | Plan de revisión, checklist de 14 ítems y autoverificación | `semana-13/` | Suites en verde; sondas: 5 hallazgos (AV3 mayor) | #598 | #667 | **No completa:** confirmar roles y realizar la revisión formal |
 | 14 | Plan SQA: 7 métricas, riesgos, controles y calendario | `semana-14/` | `metricas.php`: M1 101, M2 0, M3 2 (no cumple) | #599 | #667 | M6–M7 sin medir |
 | 15 | 17 casos (3 U, 9 W, 5 B), matriz y defectos | `semana-15/`, `tests/casos.php` | 17/17 sobre develop | #600 | #668 | — |
-| 16 | Integración en el API v1 de Laravel con autorización real | `semana-16/` | Feature 6/6; humo HTTP con `tenant`, `jwt.auth` y RBAC reales | #602, #603 | #669, #670 | **No completa:** staging u on-premise y tabla H5 |
-| 17 | Amenazas STRIDE, pruebas de seguridad y bitácora local | `semana-17/` | Feature 12/12; Unit+Feature 68 tests sobre develop | #604 | #670 | **No completa:** despliegue final; M6, M10 y M12 abiertos |
+| 16 | Integración en el API v1 de Laravel con autorización real | `semana-16/` | Feature 6/6; humo HTTP con `tenant`, `jwt.auth` y RBAC reales | #602, #603 | #669, #670 | **No completa:** staging u on-premise |
+| 17 | Amenazas STRIDE, seguridad, H5, adaptador PostgreSQL, interfaz y evidencia funcional | `semana-17/` | Suite completa 215 tests con PostgreSQL; E2E interfaz → PostgreSQL 11/11 y fallo 4/4 | #604, #683, #766, #774, #776 y esta entrega | #670, #765, #767, #775, #777 | **No completa:** despliegue en staging u on-premise; M6, M10 y M12 abiertos |
