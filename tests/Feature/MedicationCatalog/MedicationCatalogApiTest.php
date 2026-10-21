@@ -118,7 +118,7 @@ final class MedicationCatalogApiTest extends TestCase
         $this->withHeaders(['X-Request-Id' => 'req-vig-0001'])->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertOk();
 
         // Solo las escrituras confirmadas dejan evento; el duplicado rechazado no.
-        $this->assertSame(['medicamentos.registrado', 'medicamentos.vigencia_cambiada'], array_column(CatalogTestIdentity::$audited, 'event'));
+        $this->assertSame(['catalogo.medicamento_registrado', 'catalogo.vigencia_cambiada'], array_column(CatalogTestIdentity::$audited, 'event'));
         [$created, $changed] = array_column(CatalogTestIdentity::$audited, 'payload');
         $this->assertSame(['user-admin_hospital', 'hospital-a', 'req-alta-0001', $id, 'IBU-400', 'active'],
             [$created['user_id'], $created['hospital_id'], $created['trace_id'], $created['medication_id'], $created['code'], $created['validity']]);

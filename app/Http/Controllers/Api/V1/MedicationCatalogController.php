@@ -33,13 +33,13 @@ final class MedicationCatalogController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        return $this->json($request, $this->writes->run('medicamentos.registrado', $this->actor($request),
+        return $this->json($request, $this->writes->run('catalogo.medicamento_registrado', $this->actor($request),
             fn (): array => $this->dispatch($request, 'POST', '/medications')));
     }
 
     public function changeValidity(Request $request, string $medication): JsonResponse
     {
-        return $this->json($request, $this->writes->run('medicamentos.vigencia_cambiada', $this->actor($request),
+        return $this->json($request, $this->writes->run('catalogo.vigencia_cambiada', $this->actor($request),
             fn (): array => $this->dispatch($request, 'PATCH', '/medications/' . rawurlencode($medication) . '/validity')));
     }
 

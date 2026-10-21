@@ -90,7 +90,7 @@ class MedicationCatalogPostgresTest extends TestCase
     public function test_audit_failure_rolls_back_the_hospital_write(): void
     {
         $id = $this->postJson('/api/v1/medications', self::AMOX)->assertStatus(201)->json('medication.medication_id');
-        $this->assertSame('medicamentos.registrado', CatalogTestIdentity::$audited[0]['event']);
+        $this->assertSame('catalogo.medicamento_registrado', CatalogTestIdentity::$audited[0]['event']);
 
         // M6 falla cerrado: sin evento en CENTRAL, PostgreSQL revierte el alta y el cambio de vigencia.
         CatalogTestIdentity::$auditDown = true;

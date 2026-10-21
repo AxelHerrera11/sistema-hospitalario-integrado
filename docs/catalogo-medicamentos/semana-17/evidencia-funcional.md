@@ -62,7 +62,7 @@ Las denegaciones quedaron en `audit_log` de CENTRAL como `rbac.access_denied` co
 | `php vendor/bin/phpunit --testsuite Unit,Feature` | OK (107 tests) |
 | `MedicationCatalogPostgresTest` (base desechable `his_hospital_phpunit`) | OK (7 tests); con la auditoría caída, el alta y la vigencia se revierten |
 | `catalogo-e2e.mjs` contra una base HOSPITAL nueva | 11/11 |
-| `audit_log` de CENTRAL tras el E2E | Solo `medicamentos.registrado` y `medicamentos.vigencia_cambiada` de `ASA-100`, con hospital A, actor y `trace_id`; el duplicado no dejó evento |
+| `audit_log` de CENTRAL tras el E2E | Solo `catalogo.medicamento_registrado` y `catalogo.vigencia_cambiada` de `ASA-100`, con hospital A, actor y `trace_id`; el duplicado no dejó evento |
 | 61 `GET /medications` con el JWT real de médico | 60 × 200 y 1 × 429 con `Retry-After`; enfermería sigue con 200 |
 
 ## Revisión humana confirmada (21/10/2026)
