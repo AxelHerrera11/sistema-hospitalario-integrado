@@ -80,10 +80,9 @@ final class MedicationCatalogApiTest extends TestCase
         $this->getJson("/api/v1/medications/{$this->amoxicilina}")->assertJsonPath('medication.validity', 'active');
     }
 
-    public function test_write_flow_once_the_proposed_permissions_are_granted(): void
+    public function test_admin_hospital_writes_with_the_real_rbac_matrix(): void
     {
-        // Escenario con la propuesta de Semana 5 aprobada (solo en esta prueba): admin_hospital recibe los permisos de escritura.
-        config()->set('rbac.roles.admin_hospital', [...config('rbac.roles.admin_hospital'), 'medicamentos.registrar', 'medicamentos.cambiar_vigencia']);
+        // Matriz real de config/rbac.php, sin sustituir concesiones: admin_hospital registra y cambia la vigencia.
         CatalogTestIdentity::as('admin_hospital');
         $draft = ['code' => 'ibu-400', 'name' => 'Ibuprofeno 400 mg', 'active_ingredient' => 'Ibuprofeno', 'pharmacological_group' => 'AINE'];
         $id = $this->postJson('/api/v1/medications', $draft)->assertStatus(201)->assertJsonPath('medication.code', 'IBU-400')
@@ -94,6 +93,27 @@ final class MedicationCatalogApiTest extends TestCase
         $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertStatus(422);
         CatalogTestIdentity::as('enfermeria');
         $this->getJson('/api/v1/medications?q=ibu')->assertJsonPath('results.0.validity', 'inactive');
+    }
+
+    public function test_admin_hospital_membership_in_another_hospital_does_not_grant_writes(): void
+    {
+        // Contexto del hospital A con la membresía admin_hospital solo en B: el permiso no viaja entre hospitales.
+        CatalogTestIdentity::as('admin_hospital', 'hospital-a', 'hospital-b');
+        $this->postJson('/api/v1/medications', ['code' => 'IBU-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
+            'pharmacological_group' => 'AINE'])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        $this->patchJson("/api/v1/medications/{$this->amoxicilina}/validity", ['validity' => 'inactive'])->assertStatus(403);
+        $this->assertSame(['hospital-a', 'hospital-a'], array_column(CatalogTestIdentity::$denials, 'hospital_id'));
+    }
+
+    public function test_registering_does_not_authorize_changing_validity(): void
+    {
+        // Permisos literales: sin medicamentos.cambiar_vigencia, el alta sigue permitida y el cambio de vigencia no.
+        config()->set('rbac.roles.admin_hospital', array_values(array_diff(config('rbac.roles.admin_hospital'), ['medicamentos.cambiar_vigencia'])));
+        CatalogTestIdentity::as('admin_hospital');
+        $this->postJson('/api/v1/medications', ['code' => 'IBU-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
+            'pharmacological_group' => 'AINE'])->assertStatus(201);
+        $this->patchJson("/api/v1/medications/{$this->amoxicilina}/validity", ['validity' => 'inactive'])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        $this->getJson("/api/v1/medications/{$this->amoxicilina}")->assertJsonPath('medication.validity', 'active');
     }
 
     public function test_unavailable_hospital_database_answers_503_without_details(): void
