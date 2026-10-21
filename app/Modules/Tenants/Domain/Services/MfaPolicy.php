@@ -2,23 +2,14 @@
 declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\Services;
 use App\Modules\Tenants\Domain\ValueObjects\Role;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Entities\Tenant;
 final class MfaPolicy
 {
+    /** @param Role[] $userRoles */
     public function evaluate(array $userRoles, array $tenantPolicies, bool $userMfaRequired): MfaRequirement
     {
-        $required = false;
-        $type = 'TOTP';
-        if ($userMfaRequired) {
-            $required = true;
-        } elseif ($tenantPolicies['mfa_required'] ?? false) {
-            $required = true;
-        } else {
-            foreach ($userRoles as $role) {
-                if ($role->requiresMfa()) {
-                    $required = true;
-                    break;}}}
-        if ($required && ($tenantPolicies['mfa_webauthn_enabled'] ?? false)) {
-            $type = 'WEBAUTHN';
-        } return new MfaRequirement($required, $type);}}
+        if ($userMfaRequired || ($tenantPolicies['mfa_required'] ?? false)) {
+            return new MfaRequirement(true);}
+        foreach ($userRoles as $role) {
+            if ($role->requiresMfa()) {
+                return new MfaRequirement(true);}}
+        return new MfaRequirement(false);}}

@@ -1,0 +1,338 @@
+@startuml
+skinparam sequence {
+    MessageAlign center
+    ArrowThickness 2
+    ParticipantBackgroundColor #E3F2FD
+    ParticipantBorderColor #1565C0
+    ActorBackgroundColor #FFF3E0
+    ActorBorderColor #E65100
+    DatabaseBackgroundColor #FCE4EC
+    DatabaseBorderColor #C62828
+    GroupBackgroundColor #F5F5F5
+    GroupBorderColor #757575
+}
+title **Diagrama de Secuencia: Gestión Usuarios, Tenants y Autenticación Segura**\n(Código: GUT-001 | Flujos: Creación, Login+MFA, Refresh, Revocación, Monitoreo)
+actor "Admin Tenant /\nPlatform Admin" as Admin
+actor "Usuario Final" as Usuario
+participant "Client UI\n(Portal / App)" as ClientUI
+participant "API Gateway /\nAuth Controller" as Gateway
+participant "Tenant\nMiddleware" as TenantMW
+participant "User\nService" as UserSvc
+participant "AuthZ Service\n(JWT, MFA, Tokens)" as AuthZ
+participant "Token\nRepository (Redis)" as Redis
+database "User DB\n(PostgreSQL + RLS)" as UserDB
+participant "Audit\nLog Service" as AuditLog
+participant "Message\nBroker (Eventos)" as MsgBroker
+participant "Email /\nNotificaciones" as Notif
+group **1. Creación de Usuario por Tenant (Admin)**
+    Admin -> ClientUI : Formulario: email, nombre, roles[], mfa_required
+    ClientUI -> Gateway : POST /admin/users\nAuthorization: Bearer <admin_token>
+    Gateway -> TenantMW : Validar token + extraer tenant_id, roles
+    alt Token inválido / sin permisos
+        TenantMW --> Gateway : 401/403
+        Gateway --> ClientUI : 403 Forbidden
+        ClientUI --> Admin : "Sin permisos de administración"
+    else Token válido + TENANT_ADMIN
+        TenantMW --> Gateway : OK + {tenant_id, admin_user_id}
+        Gateway -> UserSvc : CrearUsuarioDTO{email, nombre, roles, tenant_id}
+        UserSvc -> TenantMW : Validar tenant activo y cupo
+        TenantMW -> UserDB : SELECT * FROM tenants WHERE id=? AND status=ACTIVE
+        alt Tenant inactivo
+            UserDB --> TenantMW : tenant.status != ACTIVE
+            TenantMW --> UserSvc : TENANT_INACTIVE
+            UserSvc --> Gateway : 403 Tenant Inactive
+            Gateway --> ClientUI : 403
+            ClientUI --> Admin : "Tenant inactivo/suspendido"
+        else Tenant activo
+            UserDB --> TenantMW : TenantDTO
+            TenantMW -> UserDB : SELECT COUNT(*) FROM users WHERE tenant_id=?
+            UserDB --> TenantMW : count
+            alt Cupo excedido
+                TenantMW --> UserSvc : QUOTA_EXCEEDED
+                UserSvc --> Gateway : 400 Quota Exceeded
+                Gateway --> ClientUI : 400
+                ClientUI --> Admin : "Límite de usuarios alcanzado"
+            else Cupo OK
+                TenantMW --> UserSvc : OK
+                UserSvc -> UserDB : SELECT id FROM users WHERE email=? AND tenant_id=?
+                alt Email ya existe
+                    UserDB --> UserSvc : EXISTS
+                    UserSvc --> Gateway : 409 Conflict
+                    Gateway --> ClientUI : 409
+                    ClientUI --> Admin : "Email ya registrado en tenant"
+                else Email disponible
+                    UserDB --> UserSvc : NOT FOUND
+                    UserSvc -> UserSvc : Validar password policy\n(min 12, complejidad, HIBP)
+                    alt Policy viola
+                        UserSvc --> Gateway : 400 Policy Violation
+                        Gateway --> ClientUI : 400
+                        ClientUI --> Admin : "Contraseña no cumple política"
+                    else Policy OK
+                        UserSvc -> UserSvc : Hash password (argon2id)\nGenerar temp_password + activation_token (24h)
+                        UserSvc -> UserDB : INSERT INTO users (...)\nRETURNING user_id
+                        UserDB --> UserSvc : user_id (UUID)
+                        UserSvc -> Notif : Enviar email activación\n(temp_password + link)
+                        Notif --> UserSvc : OK
+                        UserSvc -> AuditLog : USER_CREATED\n{user_id, admin_id, tenant_id, roles, timestamp}
+                        AuditLog -> UserDB : INSERT INTO audit_log (hash_chain...)
+                        UserSvc --> Gateway : 201 Created\n{user_id, email, temp_password}
+                        Gateway --> ClientUI : 201
+                        ClientUI --> Admin : "Usuario creado. Credenciales enviadas por email."
+                    end
+                end
+            end
+        end
+    end
+end
+group **2. Autenticación Segura: Login + MFA (Usuario)**
+    Usuario -> ClientUI : Email + Password + Device Info
+    ClientUI -> Gateway : POST /auth/login\n{email, password, device_fingerprint}
+    Gateway -> AuthZ : RateLimit(key=email+IP)
+    AuthZ -> Redis : INCR login_attempts:{email}:{IP}
+    Redis --> AuthZ : count
+    alt Rate limit excedido
+        AuthZ --> Gateway : 429 Too Many Requests
+        Gateway --> ClientUI : 429
+        ClientUI --> Usuario : "Demasiados intentos. Espere."
+    else OK
+        AuthZ -> UserSvc : Buscar usuario por email
+        UserSvc -> UserDB : SELECT * FROM users WHERE email=?\n  AND tenant_id=current_tenant()
+        alt Usuario no existe
+            UserDB --> UserSvc : 0 rows
+            UserSvc -> AuditLog : LOGIN_FAILED (user_not_found)
+            UserSvc --> AuthZ : NOT_FOUND
+            AuthZ --> Gateway : 401 Invalid Credentials (genérico)
+            Gateway --> ClientUI : 401
+            ClientUI --> Usuario : "Credenciales inválidas"
+        else Usuario existe
+            UserDB --> UserSvc : UserDTO{id, password_hash, is_active, mfa_required, roles, tenant_id}
+            UserSvc --> AuthZ : UserDTO
+            AuthZ -> AuthZ : Verificar is_active
+            alt Usuario desactivado
+                AuthZ -> AuditLog : ACCOUNT_DISABLED
+                AuthZ --> Gateway : 403 Account Disabled
+                Gateway --> ClientUI : 403
+                ClientUI --> Usuario : "Cuenta desactivada. Contacte admin."
+            else Activo
+                AuthZ -> AuthZ : Verificar password (argon2id)
+                alt Password inválido
+                    AuthZ -> Redis : INCR login_failures:{user_id}
+                    Redis --> AuthZ : failures_count
+                    AuthZ -> AuditLog : LOGIN_FAILED (bad_password)
+                    alt Failures >= 5
+                        AuthZ -> Redis : SETEX account_lock:{user_id} 900 "locked"
+                        AuthZ -> AuditLog : ACCOUNT_LOCKED (15min/1h/24h progresivo)
+                        AuthZ -> Notif : Alerta admin tenant: cuenta bloqueada
+                    end
+                    AuthZ --> Gateway : 401 Invalid Credentials
+                    Gateway --> ClientUI : 401
+                    ClientUI --> Usuario : "Credenciales inválidas"
+                else Password válido
+                    AuthZ -> Redis : DEL login_failures:{user_id}
+                    AuthZ -> AuthZ : Verificar password_expiry
+                    alt Password expirado
+                        AuthZ --> Gateway : 400 Password Expired
+                        Gateway --> ClientUI : 400
+                        ClientUI --> Usuario : "Contraseña expirada. Cambie ahora."
+                    else Password OK
+                        AuthZ -> AuthZ : Evaluar MFA requerido\n(rol, tenant_policy, user.mfa_required)
+                        alt MFA NO requerido
+                            AuthZ -> AuthZ : Generar tokens (saltar a 2.3)
+                        else MFA REQUERIDO
+                            AuthZ -> AuthZ : Generar challenge MFA\n- TOTP: base32 secret\n- WebAuthn: credential_id
+                            AuthZ --> Gateway : 200 MFA_CHALLENGE\n{method: TOTP/WebAuthn, challenge}
+                            Gateway --> ClientUI : 200 MFA_CHALLENGE
+                            ClientUI --> Usuario : Mostrar QR / solicitar código / touch passkey
+                            Usuario -> ClientUI : Ingresar código TOTP / tocar passkey
+                            ClientUI -> Gateway : POST /auth/mfa\n{code/credential, challenge_id}
+                            Gateway -> AuthZ : Verificar MFA
+                            AuthZ -> AuthZ : Validar TOTP (RFC 6238) / WebAuthn signature
+                            alt MFA Inválido
+                                AuthZ -> Redis : INCR mfa_failures:{user_id}
+                                alt MFA Failures >= 3
+                                    AuthZ -> Redis : SETEX mfa_lock:{user_id} 1800 "locked"
+                                    AuthZ -> AuditLog : MFA_LOCKED (30min)
+                                end
+                                AuthZ -> AuditLog : MFA_FAILED
+                                AuthZ --> Gateway : 401 MFA Invalid
+                                Gateway --> ClientUI : 401
+                                ClientUI --> Usuario : "Código inválido"
+                            else MFA Válido
+                                AuthZ -> Redis : DEL mfa_failures:{user_id}
+                                AuthZ -> AuthZ : Registrar device_fingerprint\n(trust_score, known_device)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+group **2.3 Generación de Tokens (Post-MFA / Sin MFA)**
+    AuthZ -> AuthZ : Generar Access Token JWT RS256\n{sub:user_id, roles[], tenant_id, session_id, jti, exp:15min, iat, device_id}
+    AuthZ -> AuthZ : Firmar con clave privada actual (kid rotativo)
+    AuthZ -> AuthZ : Generar Refresh Token opaco (32 bytes random)
+    AuthZ -> AuthZ : Hash refresh = argon2id(refresh_token)
+    AuthZ -> Redis : SET refresh:{user_id}:{device_id}\n  {hash, jti_access, exp:7d, created_at}\n  EXPIRE 7d
+    alt Single Session Policy habilitado
+        AuthZ -> Redis : KEYS session:{user_id}:*\n  (buscar sesiones previas)
+        Redis --> AuthZ : session_keys[]
+        loop Por cada sesión previa
+            AuthZ -> Redis : GET session:{session_id} → {jti_old}
+            AuthZ -> Redis : SET blocklist:{jti_old} TTL=exp-now
+            AuthZ -> Redis : DEL refresh:{user_id}:{old_device}
+            AuthZ -> Redis : DEL session:{session_id}
+            AuthZ -> AuditLog : SESSION_REVOKED_SINGLE
+        end
+    end
+    AuthZ -> Redis : SET session:{session_id}\n  {user_id, tenant_id, device_id, created:now, last_activity:now}\n  EXPIRE 7d
+    AuthZ -> AuditLog : LOGIN_SUCCESS\n{user_id, tenant_id, roles, mfa_used, device_id, ip, session_id, timestamp}
+    AuditLog -> UserDB : INSERT INTO audit_log (hash_chain...)
+    AuthZ --> Gateway : 200 OK\n{access_token, refresh_token, expires_in:900, token_type:Bearer}
+    Gateway --> ClientUI : 200 OK + Tokens
+    ClientUI --> Usuario : Login exitoso. Redirigir a dashboard.
+end
+group **3. Renovación de Access Token (Refresh + Rotation)**
+    ClientUI -> Gateway : POST /auth/refresh\n{refresh_token}
+    Gateway -> AuthZ : Procesar refresh
+    AuthZ -> AuthZ : Decodificar refresh_token\n(extraer user_id, device_id sin verificar)
+    AuthZ -> Redis : GET refresh:{user_id}:{device_id}
+    alt No existe en Redis
+        AuthZ -> AuditLog : REFRESH_INVALID (revocado/expirado)
+        AuthZ --> Gateway : 401 Refresh Revoked
+        Gateway --> ClientUI : 401
+        ClientUI --> Usuario : "Sesión expirada. Inicie sesión."
+    else Existe
+        Redis --> AuthZ : {hash, jti_old_access, exp, created_at}
+        AuthZ -> AuthZ : Verificar argon2id(refresh_token) == hash
+        alt Hash NO coincide (REUSE DETECTED)
+            AuthZ -> Redis : KEYS refresh:{user_id}:*\n  (revocar TODO)
+            loop Todas las sesiones
+                AuthZ -> Redis : GET refresh:{user_id}:{dev} → {jti_acc}
+                AuthZ -> Redis : SET blocklist:{jti_acc} TTL=exp-now
+                AuthZ -> Redis : DEL refresh:{user_id}:{dev}
+                AuthZ -> Redis : DEL session:{session_id}
+            end
+            AuthZ -> AuditLog : REFRESH_REUSE_ATTACK (CRÍTICO)
+            AuthZ -> Notif : ALERTA SEGURIDAD: Refresh token reuse detectado\nuser_id, IP, device_info
+            AuthZ --> Gateway : 401 Token Compromised
+            Gateway --> ClientUI : 401
+            ClientUI --> Usuario : "Actividad sospechosa. Inicie sesión de nuevo."
+        else Hash coincide (ROTACIÓN VÁLIDA)
+            AuthZ -> Redis : DEL refresh:{user_id}:{device_id}
+            AuthZ -> AuthZ : Generar NUEVO Access Token (nuevo jti, exp+15min)
+            AuthZ -> AuthZ : Generar NUEVO Refresh Token
+            AuthZ -> AuthZ : Hash nuevo refresh
+            AuthZ -> Redis : SET refresh:{user_id}:{device_id}\n  {new_hash, new_jti_access, exp:7d}\n  EXPIRE 7d
+            AuthZ -> Redis : SET session:{session_id}\n  {last_activity:now}\n  EXPIRE 7d
+            AuthZ -> AuditLog : TOKEN_REFRESHED\n{user_id, old_jti, new_jti, device_id, timestamp}
+            AuthZ --> Gateway : 200 OK\n{access_token, refresh_token, expires_in:900}
+            Gateway --> ClientUI : 200 OK + Nuevos tokens
+            ClientUI -> ClientUI : Reemplazar tokens en memoria/secure storage
+        end
+    end
+end
+group **4. Revocación de Sesión (Usuario / Admin)**
+    alt Usuario: Logout propio
+        Usuario -> ClientUI : Click "Cerrar sesión"
+        ClientUI -> Gateway : POST /auth/logout\nAuthorization: Bearer <access_token>
+    else Admin: Force-revoke usuario
+        Admin -> ClientUI : Seleccionar usuario → "Revocar sesiones"
+        ClientUI -> Gateway : DELETE /admin/users/{user_id}/sessions\nAuthorization: Bearer <admin_token>
+    end
+    Gateway -> TenantMW : Validar permisos
+    alt Usuario: validar ownership del token
+        TenantMW -> AuthZ : Extraer user_id del JWT
+        AuthZ --> TenantMW : user_id (del token)
+        TenantMW --> Gateway : OK (own session)
+    else Admin: validar TENANT_ADMIN/PLATFORM_ADMIN
+        TenantMW -> AuthZ : Verificar roles admin + mismo tenant
+        AuthZ --> TenantMW : OK / DENIED
+        alt Denegado
+            TenantMW --> Gateway : 403
+            Gateway --> ClientUI : 403
+            ClientUI --> Admin : "Sin permisos para revocar este usuario"
+        else OK
+            TenantMW --> Gateway : OK + target_user_id
+        end
+    end
+    Gateway -> AuthZ : RevocarSesiones(target_user_id, reason)
+    AuthZ -> Redis : KEYS refresh:{target_user_id}:*
+    Redis --> AuthZ : refresh_keys[]
+    loop Por cada refresh key
+        AuthZ -> Redis : GET refresh_key → {jti_access}
+        AuthZ -> Redis : SET blocklist:{jti_access} TTL=exp-now
+        AuthZ -> Redis : DEL refresh_key
+    end
+    AuthZ -> Redis : KEYS session:{target_user_id}:* (o por session_id)
+    Redis --> AuthZ : session_keys[]
+    loop Por cada session key
+        AuthZ -> Redis : DEL session_key
+    end
+    AuthZ -> AuditLog : REVOKE_SESSION\n{target_user_id, requester_id, reason, revoked_count, timestamp}
+    AuditLog -> UserDB : INSERT INTO audit_log (hash_chain...)
+    AuthZ -> MsgBroker : PUBLICAR SessionRevokedEvent\n{user_id, tenant_id, reason, timestamp}
+    MsgBroker --> AuthZ : OK
+    AuthZ --> Gateway : 200 OK\n{revoked_sessions: N}
+    Gateway --> ClientUI : 200 OK
+    alt Usuario
+        ClientUI --> Usuario : "Sesión cerrada." → Redirigir login
+    else Admin
+        ClientUI --> Admin : "N sesiones revocadas para usuario."
+    end
+end
+group **5. Validación de Access Token (Middleware - Cada Request)**
+    ClientUI -> Gateway : GET /api/recursos\nAuthorization: Bearer <access_token>
+    Gateway -> TenantMW : Validar token
+    TenantMW -> TenantMW : Verificar firma JWT (JWKS cache)
+    alt Firma inválida / alg none
+        TenantMW --> Gateway : 401 Invalid Signature
+    else Firma OK
+        TenantMW -> TenantMW : Verificar exp, nbf, iss, aud
+        alt Token expirado
+            TenantMW --> Gateway : 401 Token Expired
+        else Válido temporalmente
+            TenantMW -> Redis : EXISTS blocklist:{jti}
+            alt En blocklist
+                Redis --> TenantMW : EXISTS
+                TenantMW -> AuditLog : TOKEN_REVOKED
+                TenantMW --> Gateway : 401 Token Revoked
+            else No en blocklist
+                Redis --> TenantMW : NOT EXISTS
+                TenantMW -> TenantMW : Extraer claims: user_id, tenant_id, roles, session_id
+                TenantMW -> TenantMW : Verificar tenant_id == current_tenant (header/claim)
+                alt Cross-tenant
+                    TenantMW -> AuditLog : CROSS_TENANT_ATTEMPT (WARN)
+                    TenantMW --> Gateway : 403 Cross-Tenant Access Denied
+                else Tenant OK
+                    TenantMW -> Redis : GET session:{session_id}
+                    alt Sesión no existe
+                        Redis --> TenantMW : NOT FOUND
+                        TenantMW --> Gateway : 401 Session Invalid
+                    else Sesión existe
+                        Redis --> TenantMW : {last_activity, device_id}
+                        TenantMW -> Redis : UPDATE session:{session_id} last_activity=now
+                        TenantMW --> Gateway : OK + Claims (inyectar en request context)
+                    end
+                end
+            end
+        end
+    end
+    Gateway -> Gateway : Continuar a controller con user context
+end
+group **6. Monitoreo Idle Timeout (Job Background c/5min)**
+    AuthZ -> AuthZ : Job programado (cron 5min)
+    AuthZ -> Redis : SCAN session:* MATCH * COUNT 1000
+    Redis --> AuthZ : session_keys[]
+    loop Por cada session_key
+        AuthZ -> Redis : GET session_key → {last_activity, user_id, tenant_id}
+        alt (now - last_activity) > 15min (900s)
+            AuthZ -> Redis : GET session_key → {jti_access}
+            AuthZ -> Redis : SET blocklist:{jti_access} TTL=exp-now
+            AuthZ -> Redis : DEL refresh:{user_id}:{device_id}
+            AuthZ -> Redis : DEL session_key
+            AuthZ -> AuditLog : SESSION_IDLE_TIMEOUT\n{user_id, session_id, idle_minutes, timestamp}
+        end
+    end
+end
+@enduml

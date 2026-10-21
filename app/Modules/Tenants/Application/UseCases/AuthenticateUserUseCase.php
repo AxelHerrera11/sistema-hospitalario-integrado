@@ -4,221 +4,163 @@ namespace App\Modules\Tenants\Application\UseCases;
 use App\Modules\Tenants\Application\Commands\AuthenticateCommand;
 use App\Modules\Tenants\Application\Commands\MfaVerificationCommand;
 use App\Modules\Tenants\Application\Results\AuthResult;
-use App\Modules\Tenants\Domain\Entities\User;
+use App\Modules\Tenants\Domain\Entities\MfaChallenge;
+use App\Modules\Tenants\Domain\Entities\Session;
 use App\Modules\Tenants\Domain\Entities\Tenant;
-use App\Modules\Tenants\Domain\Events\LoginSuccess;
-use App\Modules\Tenants\Domain\Events\LoginFailed;
-use App\Modules\Tenants\Domain\Events\MfaChallenged;
-use App\Modules\Tenants\Domain\Events\MfaSucceeded;
-use App\Modules\Tenants\Domain\Events\MfaFailed;
-use App\Modules\Tenants\Domain\Events\AccountLocked;
+use App\Modules\Tenants\Domain\Entities\User;
+use App\Modules\Tenants\Domain\Events\DomainEvent;
 use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
+use App\Modules\Tenants\Domain\Repositories\MfaChallengeRepositoryInterface;
 use App\Modules\Tenants\Domain\Repositories\RefreshTokenRepositoryInterface;
 use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\Tenants\Domain\Repositories\TenantRepositoryInterface;
+use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
 use App\Modules\Tenants\Domain\Services\Argon2idHasher;
 use App\Modules\Tenants\Domain\Services\MfaPolicy;
 use App\Modules\Tenants\Domain\Services\MfaRequirement;
-use App\Modules\Tenants\Domain\Services\TokenFactory;
+use App\Modules\Tenants\Domain\Services\OneTimePasswordVerifier;
 use App\Modules\Tenants\Domain\Services\RefreshTokenRotator;
-use App\Modules\Tenants\Domain\Services\DeviceTrustService;
-use App\Modules\Tenants\Domain\Services\TotpVerifier;
-use App\Modules\Tenants\Domain\Services\WebAuthnVerifier;
-use App\Modules\Tenants\Domain\Services\BlocklistService;
+use App\Modules\Tenants\Domain\Services\TokenFactory;
 use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
-use App\Modules\Tenants\Domain\ValueObjects\Email;
 use App\Modules\Tenants\Domain\ValueObjects\SessionId;
-use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Infrastructure\External\EventPublisher;
+use DomainException;
+/** Login con contraseña, bloqueo progresivo por hospital y segundo factor TOTP de un solo uso. */
 final class AuthenticateUserUseCase
 {
-    private UserRepositoryInterface $userRepository;
-    private TenantRepositoryInterface $tenantRepository;
-    private RefreshTokenRepositoryInterface $refreshRepository;
-    private SessionRepositoryInterface $sessionRepository;
-    private AuditLogRepositoryInterface $auditLog;
-    private EventPublisher $eventPublisher;
-    private Argon2idHasher $hasher;
-    private MfaPolicy $mfaPolicy;
-    private TokenFactory $tokenFactory;
-    private RefreshTokenRotator $refreshRotator;
-    private DeviceTrustService $deviceTrust;
-    private TotpVerifier $totpVerifier;
-    private WebAuthnVerifier $webAuthnVerifier;
-    private BlocklistService $blocklist;
-    private const MAX_LOGIN_ATTEMPTS = 5;
     private const MAX_MFA_ATTEMPTS = 3;
-    private const LOCKOUT_DURATION_1 = 900;
-    private const LOCKOUT_DURATION_2 = 3600;
-    private const LOCKOUT_DURATION_3 = 86400;
     private const MFA_LOCKOUT_DURATION = 1800;
     public function __construct(
-        UserRepositoryInterface $userRepository,
-        TenantRepositoryInterface $tenantRepository,
-        RefreshTokenRepositoryInterface $refreshRepository,
-        SessionRepositoryInterface $sessionRepository,
-        AuditLogRepositoryInterface $auditLog,
-        EventPublisher $eventPublisher,
-        Argon2idHasher $hasher,
-        MfaPolicy $mfaPolicy,
-        TokenFactory $tokenFactory,
-        RefreshTokenRotator $refreshRotator,
-        DeviceTrustService $deviceTrust,
-        TotpVerifier $totpVerifier,
-        WebAuthnVerifier $webAuthnVerifier,
-        BlocklistService $blocklist
-    ) {
-        $this->userRepository = $userRepository;
-        $this->tenantRepository = $tenantRepository;
-        $this->refreshRepository = $refreshRepository;
-        $this->sessionRepository = $sessionRepository;
-        $this->auditLog = $auditLog;
-        $this->eventPublisher = $eventPublisher;
-        $this->hasher = $hasher;
-        $this->mfaPolicy = $mfaPolicy;
-        $this->tokenFactory = $tokenFactory;
-        $this->refreshRotator = $refreshRotator;
-        $this->deviceTrust = $deviceTrust;
-        $this->totpVerifier = $totpVerifier;
-        $this->webAuthnVerifier = $webAuthnVerifier;
-        $this->blocklist = $blocklist;
-    }
+        private UserRepositoryInterface $userRepository,
+        private TenantRepositoryInterface $tenantRepository,
+        private SessionRepositoryInterface $sessionRepository,
+        private RefreshTokenRepositoryInterface $refreshRepository,
+        private MfaChallengeRepositoryInterface $challengeRepository,
+        private AuditLogRepositoryInterface $auditLog,
+        private Argon2idHasher $hasher,
+        private MfaPolicy $mfaPolicy,
+        private OneTimePasswordVerifier $otpVerifier,
+        private TokenFactory $tokenFactory,
+        private RefreshTokenRotator $refreshRotator
+    ) {}
     public function execute(AuthenticateCommand $command): AuthResult
     {
-        $user = $this->userRepository->findByEmailAndTenant($command->email(), $command->tenantId());
-        if ($user === null) {
-            $this->auditLog->log(new LoginFailed(
-                $command->email()->value(),
-                $command->tenantId(),
-                'user_not_found',
-                $command->ip() ));
-            throw new \DomainException('Credenciales inválidas');}
+        $tenantId = $command->tenantId();
+        $tenant = $this->tenantRepository->findById($tenantId);
+        $user = $tenant === null ? null : $this->userRepository->findByEmailAndTenant($command->email(), $tenantId);
+        if ($tenant === null || $user === null) {
+            $this->fail($command, 'user_not_found');
+            throw new DomainException('Credenciales inválidas', 401);}
+        if (!$tenant->isActive()) {
+            $this->auditLog->log(new DomainEvent(DomainEvent::TENANT_INACTIVE, ['tenant_id' => $tenantId->value(), 'user_id' => $user->id()->value(), 'ip' => $command->ip()]));
+            throw new DomainException('Hospital inactivo', 403);}
         if (!$user->isActive()) {
-            throw new \DomainException('Cuenta desactivada');}
+            $this->fail($command, 'user_inactive');
+            throw new DomainException('Cuenta desactivada', 403);}
+        if ($user->isLocked()) {
+            $this->fail($command, 'account_locked');
+            throw new DomainException('Cuenta bloqueada temporalmente', 423);}
         if (!$this->hasher->verify($command->rawPassword(), $user->password()->hash())) {
-            $this->handleFailedLogin($user, $command);
-            throw new \DomainException('Credenciales inválidas');}
-        $this->clearLoginFailures($user);
-        $tenant = $this->tenantRepository->findById($command->tenantId());
-        if ($tenant === null || !$tenant->isActive()) {
-            throw new \DomainException('Tenant inactivo');}
-        $mfaRequirement = $this->mfaPolicy->evaluate(
-            $user->roles(),
-            $tenant->policies(),
-            $user->mfaRequired());
-        if ($mfaRequirement->required()) {
-            return $this->handleMfaChallenge($user, $tenant, $command, $mfaRequirement);}
-        return $this->generateTokens($user, $tenant, $command->device(), $command->ip());}
-    public function verifyMfa(MfaVerificationCommand $command, User $user, Tenant $tenant, DeviceFingerprint $device, string $ip): AuthResult
-    { $valid = false;
-        if ($command->method() === 'TOTP') {
-            $valid = $this->totpVerifier->verify($user->totpSecret(), $command->code());
-        } elseif ($command->method() === 'WEBAUTHN') {
-            $valid = $this->webAuthnVerifier->verify($user->id()->value(), $command->code());}
-        if (!$valid) {
-            $this->handleFailedMfa($user);
-            $this->auditLog->log(new MfaFailed($user->id(), $tenant->id(), $command->method()));
-            throw new \DomainException('Código MFA inválido');}
-        $this->clearMfaFailures($user);
-        $this->auditLog->log(new MfaSucceeded($user->id(), $tenant->id(), $command->method()));
-        return $this->generateTokens($user, $tenant, $device, $ip); }
-    private function handleMfaChallenge(User $user, Tenant $tenant, AuthenticateCommand $command, MfaRequirement $requirement): AuthResult
-    { $challengeId = \Ramsey\Uuid\Uuid::uuid4()->toString();
-        $this->auditLog->log(new MfaChallenged(
-            $user->id(),
-            $tenant->id(),
-            $requirement->type(),
-            $challengeId ));
-        return new AuthResult(
-            accessToken: null,
-            refreshToken: '',
-            expiresIn: 0,
-            user: $user,
-            sessionId: null,
-            mfaRequired: true,
-            challengeId: $challengeId,
-            mfaMethod: $requirement->type() );}
-    private function generateTokens(User $user, Tenant $tenant, DeviceFingerprint $device, string $ip): AuthResult
-    { $sessionId = SessionId::generate();
-        $accessToken = $this->tokenFactory->createAccessToken($user, $tenant, $sessionId, $device);
-        $refreshResult = $this->refreshRotator->generateAndStore($user, $tenant, $device, $sessionId, $accessToken->jti());
-        $this->handleSingleSessionPolicy($user, $tenant, $device, $sessionId);
-        $session = \App\Modules\Tenants\Domain\Entities\Session::create($user->id(), $tenant->id(), $device);
-        $this->sessionRepository->save($session);
-        $user->recordLogin($device);
+            $this->handleFailedLogin($user, $tenant, $command);
+            throw new DomainException('Credenciales inválidas', 401);}
+        $user->clearFailedLogins();
         $this->userRepository->save($user);
-        $this->auditLog->log(new LoginSuccess(
-            $user->id(),
-            $tenant->id(),
-            $user->roleValues(),
-            true,
-            $device,
-            $ip,
-            $sessionId->value() ));
-        $this->eventPublisher->publish(new LoginSuccess(
-            $user->id(),
-            $tenant->id(),
-            $user->roleValues(),
-            true,
-            $device,
-            $ip,
-            $sessionId->value() ));
-        return new AuthResult(
-            $accessToken,
-            $refreshResult->token(),
-            $refreshResult->expiresAt() - time(),
-            $user,
-            $sessionId,
-            false  );}
-    private function handleSingleSessionPolicy(User $user, Tenant $tenant, DeviceFingerprint $device, SessionId $newSessionId): void
-    { if (!$tenant->policy('single_session', false)) { return;}
-        $existingSessions = $this->sessionRepository->findByUserId($user->id());
-        foreach ($existingSessions as $session) {
-            if (!$session->isRevoked()) {
-                $this->blocklist->add($session->id()->value(), $session->createdAt()->getTimestamp() + 900);
-                $this->refreshRepository->deleteAllByUserId($user->id());
-                $this->sessionRepository->delete($session->id());
-                $this->auditLog->log(new \App\Modules\Tenants\Domain\Events\SessionRevoked(
-                    $user->id(),
-                    $tenant->id(),
-                    'single_session_policy', 1 ));}}}
-    private function handleFailedLogin(User $user, AuthenticateCommand $command): void
-    { $attempts = $this->incrementLoginFailures($user);
-        $this->auditLog->log(new LoginFailed(
-            $command->email()->value(),
-            $command->tenantId(),
-            'bad_password',
-            $command->ip() ));
-        if ($attempts >= self::MAX_LOGIN_ATTEMPTS) {
-            $duration = $this->calculateLockoutDuration($attempts);
-            $user->lock();
-            $this->userRepository->save($user);
-            $this->auditLog->log(new AccountLocked(
-                $user->id(),
-                $command->tenantId(),
-                'login',
-                $duration,
-                $attempts )); } }
-    private function handleFailedMfa(User $user): void
-    { $attempts = $this->incrementMfaFailures($user);
-        if ($attempts >= self::MAX_MFA_ATTEMPTS) {
-            $this->auditLog->log(new AccountLocked(
-                $user->id(),
-                $user->tenantId(),
-                'mfa',
-                self::MFA_LOCKOUT_DURATION,
-                $attempts)); }}
-    private function incrementLoginFailures(User $user): int
-    { return 1; }
-    private function clearLoginFailures(User $user): void
-    {    }
-    private function incrementMfaFailures(User $user): int
-    { return 1; }
-    private function clearMfaFailures(User $user): void
-    {    }
-    private function calculateLockoutDuration(int $attempts): int
+        $mfaRequirement = $this->mfaPolicy->evaluate($user->roles(), $tenant->policies(), $user->mfaRequired());
+        if ($mfaRequirement->required()) {
+            return $this->openMfaChallenge($user, $command, $mfaRequirement);}
+        return $this->startSession($user, $tenant, $command->device(), $command->ip(), false);}
+    public function verifyMfa(MfaVerificationCommand $command): AuthResult
     {
-        if ($attempts >= 20) return self::LOCKOUT_DURATION_3;
-        if ($attempts >= 10) return self::LOCKOUT_DURATION_2;
-        return self::LOCKOUT_DURATION_1;}}
+        $challenge = $this->challengeRepository->findById($command->challengeId());
+        if ($challenge === null || $challenge->isExpired()) {
+            if ($challenge !== null) {
+                $this->challengeRepository->delete($challenge->id());}
+            throw new DomainException('Desafío MFA inválido o vencido', 401);}
+        $user = $this->userRepository->findByIdAndTenant($challenge->userId(), $challenge->tenantId());
+        $tenant = $this->tenantRepository->findById($challenge->tenantId());
+        if ($user === null || $tenant === null || !$user->isActive() || !$tenant->isActive() || $user->isLocked()) {
+            $this->challengeRepository->delete($challenge->id());
+            throw new DomainException('Desafío MFA inválido o vencido', 401);}
+        $context = ['tenant_id' => $tenant->id()->value(), 'user_id' => $user->id()->value(), 'method' => MfaRequirement::TOTP];
+        if (!$this->otpVerifier->verify((string) $user->totpSecret(), $command->code())) {
+            $this->auditLog->log(new DomainEvent(DomainEvent::MFA_FAILED, $context));
+            $attempts = $challenge->registerFailure();
+            if ($attempts >= self::MAX_MFA_ATTEMPTS) {
+                $this->challengeRepository->delete($challenge->id());
+                $user->lockFor(self::MFA_LOCKOUT_DURATION);
+                $this->userRepository->save($user);
+                $this->auditLog->log(new DomainEvent(DomainEvent::ACCOUNT_LOCKED, $context + ['lock_type' => 'mfa', 'duration_seconds' => self::MFA_LOCKOUT_DURATION, 'failed_attempts' => $attempts]));
+            } else {
+                $this->challengeRepository->save($challenge);}
+            throw new DomainException('Código MFA inválido', 401);}
+        // Consumo único: el mismo challenge_id no puede volver a usarse.
+        $this->challengeRepository->delete($challenge->id());
+        $this->auditLog->log(new DomainEvent(DomainEvent::MFA_SUCCEEDED, $context));
+        return $this->startSession($user, $tenant, $challenge->device(), $challenge->ip(), true);}
+    private function openMfaChallenge(User $user, AuthenticateCommand $command, MfaRequirement $requirement): AuthResult
+    {
+        if ($user->totpSecret() === null) {
+            throw new DomainException('El usuario requiere MFA pero no tiene TOTP enrolado', 403);}
+        $challenge = MfaChallenge::open($user->tenantId(), $user->id(), $command->device(), $command->ip());
+        $this->challengeRepository->save($challenge);
+        $this->auditLog->log(new DomainEvent(DomainEvent::MFA_CHALLENGED, [
+            'tenant_id' => $user->tenantId()->value(),
+            'user_id' => $user->id()->value(),
+            'method' => $requirement->type(),
+            'challenge_id' => $challenge->id(),]));
+        return AuthResult::mfaChallenge($user, $challenge->id(), $requirement->type());}
+    private function startSession(User $user, Tenant $tenant, DeviceFingerprint $device, string $ip, bool $mfaUsed): AuthResult
+    {
+        if ($tenant->policy('single_session', false)) {
+            $this->revokeOpenSessions($user, $tenant);}
+        // El mismo SessionId va en el JWT y en la sesión persistida.
+        $sessionId = SessionId::generate();
+        $this->sessionRepository->save(Session::start($sessionId, $user->id(), $tenant->id(), $device));
+        $accessToken = $this->tokenFactory->createAccessToken($user, $tenant, $sessionId, $device);
+        $refresh = $this->refreshRotator->issue($tenant->id(), $user->id(), $sessionId, $device);
+        $user->recordLogin();
+        $this->userRepository->save($user);
+        $this->auditLog->log(new DomainEvent(DomainEvent::LOGIN_SUCCESS, [
+            'tenant_id' => $tenant->id()->value(),
+            'user_id' => $user->id()->value(),
+            'roles' => $user->roleValues(),
+            'mfa_used' => $mfaUsed,
+            'device_id' => $device->deviceId(),
+            'ip' => $ip,
+            'session_id' => $sessionId->value(),]));
+        return AuthResult::authenticated($user, $accessToken, $refresh->token(), $this->tokenFactory->accessTokenTtl(), $sessionId);}
+    private function revokeOpenSessions(User $user, Tenant $tenant): void
+    {
+        $revoked = 0;
+        foreach ($this->sessionRepository->findByUser($tenant->id(), $user->id()) as $session) {
+            if (!$session->isRevoked()) {
+                $session->revoke();
+                $this->sessionRepository->save($session);
+                $this->refreshRepository->revokeBySession($session->id());
+                $revoked++;}}
+        if ($revoked > 0) {
+            $this->auditLog->log(new DomainEvent(DomainEvent::SESSION_REVOKED, [
+                'tenant_id' => $tenant->id()->value(),
+                'user_id' => $user->id()->value(),
+                'reason' => 'single_session_policy',
+                'revoked_count' => $revoked,]));}}
+    private function handleFailedLogin(User $user, Tenant $tenant, AuthenticateCommand $command): void
+    {
+        $attempts = $user->registerFailedLogin();
+        $this->fail($command, 'bad_password');
+        if ($attempts >= (int) $tenant->policy('max_login_attempts', 5)) {
+            $duration = $tenant->lockoutDuration($attempts);
+            $user->lockFor($duration);
+            $this->auditLog->log(new DomainEvent(DomainEvent::ACCOUNT_LOCKED, [
+                'tenant_id' => $tenant->id()->value(),
+                'user_id' => $user->id()->value(),
+                'lock_type' => 'login',
+                'duration_seconds' => $duration,
+                'failed_attempts' => $attempts,]));}
+        $this->userRepository->save($user);}
+    private function fail(AuthenticateCommand $command, string $reason): void
+    {
+        $this->auditLog->log(new DomainEvent(DomainEvent::LOGIN_FAILED, [
+            'tenant_id' => $command->tenantId()->value(),
+            'email' => $command->email()->value(),
+            'reason' => $reason,
+            'ip' => $command->ip(),]));}}

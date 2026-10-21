@@ -7,5 +7,4 @@ interface TenantRepositoryInterface
 {
     public function save(Tenant $tenant): void;
     public function findById(TenantId $id): ?Tenant;
-    public function findAll(int $limit = 50, int $offset = 0): array;
-    public function count(): int;}
+    public function findAll(int $limit = 50, int $offset = 0): array;}

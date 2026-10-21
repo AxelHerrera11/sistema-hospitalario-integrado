@@ -1,0 +1,31 @@
+flowchart TD
+  Client[Cliente / API documentada<br/>sin adaptador HTTP conectado]
+  Tenant[TenantMiddleware]
+  JWT[JwtAuth<br/>jwt.auth]
+  RBAC[RequirePermission<br/>rbac]
+  Controller[Presentation<br/>PatientController]
+  Presenter[Presentation<br/>PatientResponsePresenter]
+  View[Presentation<br/>PatientView]
+  Service[Application<br/>PatientService]
+  RepoContract[Application<br/>PatientRepository]
+  Domain[Domain<br/>Patient y reglas]
+  PDORepo[Persistence<br/>PdoPatientRepository]
+  MemoryRepo[Persistence<br/>InMemoryPatientRepository]
+  PDO[(PDO / PostgreSQL)]
+  InMemory[(Memoria / pruebas)]
+
+  Client -. "frontera prevista" .-> Tenant
+  Tenant -. "tenant" .-> JWT
+  JWT -. "jwt.auth" .-> RBAC
+  RBAC -. "permiso pacientes.*" .-> Controller
+  Controller --> Service
+  Controller --> Presenter
+  Presenter --> View
+  Service --> Domain
+  Service --> RepoContract
+  PDORepo -. "implementa" .-> RepoContract
+  MemoryRepo -. "implementa" .-> RepoContract
+  PDORepo --> Domain
+  MemoryRepo --> Domain
+  PDORepo --> PDO
+  MemoryRepo --> InMemory
