@@ -1,0 +1,85 @@
+@startuml
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+title **C4 Deployment Diagram: Infraestructura Tenants & Auth**\n(Semana 03 | Versión 1.0)
+node "Kubernetes Cluster (Production)" as k8s_prod {
+    node "Namespace: tenants-auth" as ns {
+        container "Auth API Pods (x3+)" as api_pod [PHP 8.2+, Slim, FastRoute] {
+            [Presentation Layer]
+            [Application Layer]
+            [Domain Layer]
+        }
+        container "Sidecar: Envoy Proxy" as envoy [mTLS, Rate Limit, AuthZ]
+        container "Sidecar: OpenTelemetry Collector" as otel [Traces, Metrics, Logs]
+    }
+    node "Namespace: monitoring" as mon {
+        container "Prometheus" as prom
+        container "Grafana" as grafana
+        container "Alertmanager" as alertmgr
+        container "Loki" as loki
+    }
+    node "Namespace: ingress" as ing {
+        container "NGINX Ingress Controller" as ingress [TLS 1.3, WAF, Rate Limit]
+    }
+}
+node "Kubernetes Cluster (Staging)" as k8s_staging {
+    node "Namespace: tenants-auth" as ns_stg {
+        container "Auth API Pods (x2)" as api_pod_stg [PHP 8.2+, Slim, FastRoute]
+        container "Sidecar: Envoy Proxy" as envoy_stg
+        container "Sidecar: OpenTelemetry Collector" as otel_stg
+    }
+}
+node "PostgreSQL Primary (Central)" as pg_primary {
+    database "his_central" as db_central [PostgreSQL 15+, Patroni HA]
+}
+node "PostgreSQL Replica (Central)" as pg_replica {
+    database "his_central (read replica)" as db_replica
+}
+node "PostgreSQL Hospital (Multi-tenant)" as pg_hospital {
+    database "his_hospital (sharded by tenant)" as db_hospital [RLS enforzado]
+}
+node "Redis Cluster" as redis_cluster {
+    database "Redis 7+ (3 masters + 3 replicas)" as redis [TLS, ACL, Persistence AOF]
+}
+node "HashiCorp Vault" as vault {
+    [JWT Private Keys (rotated 24h)]
+    [JWT Public Keys (JWKS)]
+    [DB Credentials]
+    [Redis Credentials]
+    [External API Keys (HIBP, Email)]
+}
+node "External Services" as ext {
+    [HaveIBeenPwned API]
+    [Email Provider (SendGrid/Mailgun)]
+    [SIEM (Splunk/Elastic)]
+    [SSO Providers (Azure AD, Keycloak)]
+}
+node "CI/CD" as cicd {
+    [GitHub Actions / GitLab CI]
+    [ArgoCD (GitOps)]
+    [Container Registry (GHCR/ECR)]
+    [Cosign/Sigstore (SLSA L2)]
+}
+' Relationships
+api_pod --> envoy : localhost:15001 (mTLS)
+api_pod --> otel : localhost:4317 (OTLP)
+envoy --> ingress : upstream
+ingress --> api_pod : load balance
+api_pod --> db_central : PostgreSQL Wire (TLS, read/write)
+api_pod --> db_replica : PostgreSQL Wire (TLS, read only)
+api_pod --> db_hospital : PostgreSQL Wire (TLS, RLS)
+api_pod --> redis : Redis Protocol (TLS)
+api_pod --> vault : Vault Agent Injector (secrets)
+api_pod --> ext : HTTPS/REST (HIBP, Email, SIEM, SSO)
+api_pod_stg --> db_central : staging connection
+api_pod_stg --> redis : staging connection
+prom --> api_pod : scrape /metrics
+prom --> redis : scrape exporter
+prom --> db_central : scrape exporter
+grafana --> prom : query
+alertmgr --> prom : alerts
+loki --> api_pod : collect logs (sidecar)
+cicd --> api_pod : deploy (ArgoCD sync)
+cicd --> vault : inject secrets
+cicd --> container_registry : push/pull images
+@enduml
