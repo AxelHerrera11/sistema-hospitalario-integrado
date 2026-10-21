@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MicroHis\NativePhpPrototype\Persistence;
 
 use MicroHis\NativePhpPrototype\Application\LocalActionRepository;
+use MicroHis\NativePhpPrototype\Application\LocalActionNotFound;
 use MicroHis\NativePhpPrototype\Domain\LocalHisAction;
 use MicroHis\NativePhpPrototype\Domain\SyncStatus;
 use PDO;
@@ -59,5 +60,24 @@ final class PdoLocalActionRepository implements LocalActionRepository
             ),
             $statement->fetchAll(PDO::FETCH_ASSOC)
         );
+    }
+
+    public function update(LocalHisAction $action): void
+    {
+        $statement = $this->pdo->prepare(
+            'update nativephp_local_actions
+             set status = :status, failure_reason = :failure_reason
+             where id = :id and tenant_id = :tenant_id'
+        );
+        $statement->execute([
+            ':id' => $action->id,
+            ':tenant_id' => $action->tenantId,
+            ':status' => $action->status->value,
+            ':failure_reason' => $action->failureReason,
+        ]);
+
+        if ($statement->rowCount() === 0) {
+            throw new LocalActionNotFound('Accion local no encontrada.');
+        }
     }
 }

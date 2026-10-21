@@ -65,6 +65,11 @@ $failingRepository = new class implements LocalActionRepository {
         throw new RuntimeException('Falla simulada de persistencia local.');
     }
 
+    public function update(LocalHisAction $action): void
+    {
+        throw new RuntimeException('Falla simulada de persistencia local.');
+    }
+
     public function pendingForTenant(string $tenantId): array
     {
         return [];
