@@ -5,30 +5,26 @@ use App\Modules\Tenants\Domain\ValueObjects\Password;
 final class PasswordPolicy
 {
     private Argon2idHasher $hasher;
-    private HaveIBeenPwnedClient $hibpClient;
+    private ?CompromisedPasswordChecker $compromisedChecker;
     private int $minLength;
     private bool $requireComplexity;
-    private bool $checkHibp;
     private int $historySize;
     public function __construct(
         Argon2idHasher $hasher,
-        HaveIBeenPwnedClient $hibpClient,
+        ?CompromisedPasswordChecker $compromisedChecker = null,
         int $minLength = 12,
         bool $requireComplexity = true,
-        bool $checkHibp = true,
         int $historySize = 5
     ) {
         $this->hasher = $hasher;
-        $this->hibpClient = $hibpClient;
+        $this->compromisedChecker = $compromisedChecker;
         $this->minLength = $minLength;
         $this->requireComplexity = $requireComplexity;
-        $this->checkHibp = $checkHibp;
-        $this->historySize = $historySize;
-    }
+        $this->historySize = $historySize;}
     public function validate(string $rawPassword, array $history = []): ValidationResult
     {
         $errors = [];
-        if (strlen($rawPassword) < $this->minLength) {
+        if (mb_strlen($rawPassword) < $this->minLength) {
             $errors[] = "Contraseña debe tener al menos {$this->minLength} caracteres";}
         if ($this->requireComplexity) {
             if (!preg_match('/[A-Z]/', $rawPassword)) {
@@ -39,14 +35,12 @@ final class PasswordPolicy
                 $errors[] = 'Contraseña debe contener al menos un número';}
             if (!preg_match('/[^A-Za-z0-9]/', $rawPassword)) {
                 $errors[] = 'Contraseña debe contener al menos un símbolo';}}
-        foreach ($history as $oldHash) {
+        foreach (array_slice($history, -$this->historySize) as $oldHash) {
             if ($this->hasher->verify($rawPassword, $oldHash)) {
                 $errors[] = 'Contraseña no puede coincidir con las últimas ' . $this->historySize . ' contraseñas';
                 break;}}
-        if ($this->checkHibp && empty($errors)) {
-            $hibpResult = $this->hibpClient->check($rawPassword);
-            if ($hibpResult->compromised()) {
-                $errors[] = 'Contraseña ha sido comprometida en filtraciones de datos. Elija otra.';}}
+        if ($this->compromisedChecker !== null && empty($errors) && $this->compromisedChecker->isCompromised($rawPassword)) {
+            $errors[] = 'Contraseña ha sido comprometida en filtraciones de datos. Elija otra.';}
         return new ValidationResult(empty($errors), $errors);}
     public function hash(string $rawPassword): Password
     {
