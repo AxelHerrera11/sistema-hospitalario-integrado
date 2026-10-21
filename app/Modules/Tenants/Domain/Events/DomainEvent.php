@@ -1,164 +1,51 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Domain\Events;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\ValueObjects\UserId;
-use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
 use DateTimeImmutable;
-abstract class DomainEvent
+use InvalidArgumentException;
+use Ramsey\Uuid\Uuid;
+/**
+ * Evento de seguridad del módulo. Una sola clase (un archivo, autocargable por PSR-4)
+ * con el nombre del evento como dato; el payload nunca debe llevar secretos.
+ */
+final class DomainEvent
 {
+    public const USER_CREATED = 'USER_CREATED';
+    public const TENANT_CREATED = 'TENANT_CREATED';
+    public const LOGIN_SUCCESS = 'LOGIN_SUCCESS';
+    public const LOGIN_FAILED = 'LOGIN_FAILED';
+    public const MFA_CHALLENGED = 'MFA_CHALLENGED';
+    public const MFA_SUCCEEDED = 'MFA_SUCCEEDED';
+    public const MFA_FAILED = 'MFA_FAILED';
+    public const ACCOUNT_LOCKED = 'ACCOUNT_LOCKED';
+    public const SESSION_REVOKED = 'SESSION_REVOKED';
+    public const TOKEN_REFRESHED = 'TOKEN_REFRESHED';
+    public const REFRESH_REUSE_DETECTED = 'REFRESH_REUSE_DETECTED';
+    public const CROSS_TENANT_ATTEMPT = 'CROSS_TENANT_ATTEMPT';
+    public const TENANT_QUOTA_EXCEEDED = 'TENANT_QUOTA_EXCEEDED';
+    public const TENANT_INACTIVE = 'TENANT_INACTIVE';
+    private const SEVERITY = [
+        self::ACCOUNT_LOCKED => 'HIGH',
+        self::CROSS_TENANT_ATTEMPT => 'HIGH',
+        self::REFRESH_REUSE_DETECTED => 'CRITICAL',];
+    private const FORBIDDEN_KEYS = ['password', 'token', 'access_token', 'refresh_token', 'secret', 'totp_secret', 'code'];
     private string $eventId;
     private DateTimeImmutable $occurredAt;
-    public function __construct()
+    private string $eventName;
+    private array $payload;
+    public function __construct(string $eventName, array $payload)
     {
-        $this->eventId = \Ramsey\Uuid\Uuid::uuid4()->toString();
-        $this->occurredAt = new DateTimeImmutable();}
+        if (!defined(self::class . '::' . $eventName)) {
+            throw new InvalidArgumentException('Evento desconocido: ' . $eventName);}
+        if (array_intersect(array_keys($payload), self::FORBIDDEN_KEYS) !== []) {
+            throw new InvalidArgumentException('El payload de auditoría no puede contener secretos');}
+        $this->eventId = Uuid::uuid4()->toString();
+        $this->occurredAt = new DateTimeImmutable();
+        $this->eventName = $eventName;
+        $this->payload = $payload;}
     public function eventId(): string { return $this->eventId; }
     public function occurredAt(): DateTimeImmutable { return $this->occurredAt; }
-    abstract public function eventName(): string;
-    abstract public function payload(): array;}
-class UserCreated extends DomainEvent
-{
-    private UserId $userId;
-    private TenantId $tenantId;
-    private string $email;
-    private array $roles;
-    private UserId $createdBy;
-    public function __construct(
-        UserId $userId,
-        TenantId $tenantId,
-        string $email,
-        array $roles,
-        UserId $createdBy
-    ) {
-        parent::__construct();
-        $this->userId = $userId;
-        $this->tenantId = $tenantId;
-        $this->email = $email;
-        $this->roles = $roles;
-        $this->createdBy = $createdBy;}
-    public function eventName(): string { return 'USER_CREATED'; }
-    public function payload(): array
-    {
-        return [
-            'user_id' => $this->userId->value(),
-            'tenant_id' => $this->tenantId->value(),
-            'email' => $this->email,
-            'roles' => $this->roles,
-            'created_by' => $this->createdBy->value(),];}}
-class UserLoggedIn extends DomainEvent
-{
-    private UserId $userId;
-    private TenantId $tenantId;
-    private array $roles;
-    private bool $mfaUsed;
-    private DeviceFingerprint $device;
-    private string $ip;
-    private string $sessionId;
-    public function __construct(
-        UserId $userId,
-        TenantId $tenantId,
-        array $roles,
-        bool $mfaUsed,
-        DeviceFingerprint $device,
-        string $ip,
-        string $sessionId
-    ) {
-        parent::__construct();
-        $this->userId = $userId;
-        $this->tenantId = $tenantId;
-        $this->roles = $roles;
-        $this->mfaUsed = $mfaUsed;
-        $this->device = $device;
-        $this->ip = $ip;
-        $this->sessionId = $sessionId;}
-    public function eventName(): string { return 'LOGIN_SUCCESS'; }
-    public function payload(): array
-    {
-        return [
-            'user_id' => $this->userId->value(),
-            'tenant_id' => $this->tenantId->value(),
-            'roles' => $this->roles,
-            'mfa_used' => $this->mfaUsed,
-            'device' => $this->device->toArray(),
-            'ip' => $this->ip,
-            'session_id' => $this->sessionId,];}}
-class UserLoginFailed extends DomainEvent
-{
-    private string $email;
-    private TenantId $tenantId;
-    private string $reason;
-    private string $ip;
-    public function __construct(string $email, TenantId $tenantId, string $reason, string $ip)
-    {
-        parent::__construct();
-        $this->email = $email;
-        $this->tenantId = $tenantId;
-        $this->reason = $reason;
-        $this->ip = $ip;}
-    public function eventName(): string { return 'LOGIN_FAILED'; }
-    public function payload(): array
-    {
-        return [
-            'email' => $this->email,
-            'tenant_id' => $this->tenantId->value(),
-            'reason' => $this->reason,
-            'ip' => $this->ip,];}}
-class MfaChallenged extends DomainEvent
-{
-    private UserId $userId;
-    private TenantId $tenantId;
-    private string $method;
-    private string $challengeId;
-    public function __construct(UserId $userId, TenantId $tenantId, string $method, string $challengeId)
-    {
-        parent::__construct();
-        $this->userId = $userId;
-        $this->tenantId = $tenantId;
-        $this->method = $method;
-        $this->challengeId = $challengeId;}
-    public function eventName(): string { return 'MFA_CHALLENGED'; }
-    public function payload(): array
-    {
-        return [
-            'user_id' => $this->userId->value(),
-            'tenant_id' => $this->tenantId->value(),
-            'method' => $this->method,
-            'challenge_id' => $this->challengeId,];}}
-class MfaSucceeded extends DomainEvent
-{
-    private UserId $userId;
-    private TenantId $tenantId;
-    private string $method;
-    public function __construct(UserId $userId, TenantId $tenantId, string $method)
-    {
-        parent::__construct();
-        $this->userId = $userId;
-        $this->tenantId = $tenantId;
-        $this->method = $method;}
-    public function eventName(): string { return 'MFA_SUCCEEDED'; }
-    public function payload(): array
-    {
-        return [
-            'user_id' => $this->userId->value(),
-            'tenant_id' => $this->tenantId->value(),
-            'method' => $this->method,];}}
-class MfaFailed extends DomainEvent
-{
-    private UserId $userId;
-    private TenantId $tenantId;
-    private string $method;
-    public function __construct(UserId $userId, TenantId $tenantId, string $method)
-    {
-        parent::__construct();
-        $this->userId = $userId;
-        $this->tenantId = $tenantId;
-        $this->method = $method;}
-    public function eventName(): string { return 'MFA_FAILED'; }
-    public function payload(): array
-    {
-        return [
-            'user_id' => $this->userId->value(),
-            'tenant_id' => $this->tenantId->value(),
-            'method' => $this->method,];}}
+    public function eventName(): string { return $this->eventName; }
+    public function payload(): array { return $this->payload; }
+    public function tenantId(): ?string { return $this->payload['tenant_id'] ?? null; }
+    public function severity(): string { return self::SEVERITY[$this->eventName] ?? 'INFO'; }}
