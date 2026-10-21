@@ -29,6 +29,18 @@ const router = createRouter({
             component: () => import('@/modules/tenants/pages/HospitalUsersPage.vue'),
             meta: { requiresAuth: true },
         },
+        {
+            path: '/patients',
+            name: 'patients',
+            component: () => import('@/modules/patients/pages/PatientsPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        ...['new', 'detail', 'edit', 'restricted', 'saved'].map((view) => ({
+            path: `/patients/${view}`,
+            name: `patients-${view}`,
+            component: () => import('@/modules/patients/pages/PatientsPage.vue'),
+            meta: { requiresAuth: true },
+        })),
     ],
 });
 
