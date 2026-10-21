@@ -33,7 +33,7 @@
                 <dt>Código</dt><dd>{{ selected.code }}</dd>
                 <dt>Principio activo</dt><dd>{{ selected.active_ingredient }}</dd>
                 <dt>Grupo farmacológico</dt><dd>{{ selected.pharmacological_group }}</dd>
-                <dt>Vigencia</dt><dd>{{ validityLabel(selected.validity) }}</dd>
+                <dt>Vigencia</dt><dd><span :class="['meds__badge', `meds__badge--${selected.validity}`]">{{ validityLabel(selected.validity) }}</span></dd>
             </dl>
             <button v-if="canChange" type="button" class="meds__secondary" :disabled="changing" @click="toggleValidity">
                 {{ changing ? 'Guardando…' : (selected.validity === 'active' ? 'Marcar como no vigente' : 'Marcar como vigente') }}
@@ -194,17 +194,23 @@ async function register() {
 .meds__hint { color: #475569; font-size: 0.9rem; margin: 0.35rem 0 0; }
 .meds__list { list-style: none; padding: 0; margin: 0.75rem 0; display: grid; gap: 0.4rem; }
 .meds__pick { width: 100%; text-align: left; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; min-height: 2.75rem; }
-.meds__badge { border-radius: 999px; padding: 0 0.5rem; font-size: 0.85rem; }
-.meds__badge--active { background: #dcfce7; color: #166534; }
-.meds__badge--inactive { background: #f1f5f9; color: #334155; border: 1px solid #94a3b8; }
+/* La vigencia se distingue por texto, color y trazo (continuo o discontinuo), no solo por color. */
+.meds__badge { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.1rem 0.6rem;
+    font-size: 0.85rem; font-weight: 600; border: 1px solid; }
+.meds__badge::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.meds__badge--active { background: #dcfce7; color: #14532d; border-color: #16a34a; }
+.meds__badge--inactive { background: #f1f5f9; color: #334155; border: 1px dashed #64748b; }
+.meds__badge--inactive::before { background: transparent; border: 2px solid currentColor; }
 .meds__detail { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1.25rem; margin: 0 0 1rem; }
 .meds__detail dt { color: #475569; }
 .meds__detail dd { margin: 0; overflow-wrap: anywhere; }
-.meds__msg { padding: 0.5rem 0.75rem; border-radius: 6px; background: #f1f5f9; }
-.meds__msg--ok { background: #dcfce7; color: #14532d; }
-.meds__msg--warn { background: #fef9c3; color: #713f12; }
-.meds__msg--error, .meds__field-error { color: #991b1b; }
-.meds__msg--error { background: #fee2e2; }
+.meds__msg { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0.75rem 0 0; padding: 0.6rem 0.85rem;
+    border-radius: 6px; border-left: 4px solid #64748b; background: #f1f5f9; }
+.meds__msg--ok { background: #dcfce7; color: #14532d; border-left-color: #16a34a; }
+.meds__msg--warn { background: #fef9c3; color: #713f12; border-left-color: #ca8a04; }
+.meds__msg--error { background: #fee2e2; color: #7f1d1d; border-left-color: #dc2626; }
+.meds__field-error { margin: 0; color: #991b1b; font-size: 0.9rem; }
+.meds input[aria-invalid="true"] { border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
 button:focus-visible, input:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 @media (max-width: 600px) {
     .meds__row { flex-direction: column; }
