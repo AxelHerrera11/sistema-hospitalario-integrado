@@ -1,12 +1,12 @@
-# Cambio pr·ctico defendible
+# Cambio pr√°ctico defendible
 
-## SituaciÛn inicial
-Durante el diseÒo del contrato API de Pacientes se definieron permisos necesarios para registrar, consultar y editar pacientes.
+## Situaci√≥n inicial
+Durante el dise√±o del contrato API de Pacientes se definieron permisos necesarios para registrar, consultar y editar pacientes.
 
-En ese momento el mÛdulo todavÌa no estaba conectado al RBAC definitivo del sistema.
+En ese momento el m√≥dulo todav√≠a no estaba conectado al RBAC definitivo del sistema.
 
-## Cambio realizado en el diseÒo de integraciÛn
-DespuÈs de integrarse el mÛdulo RBAC del proyecto, se confirmÛ que el cat·logo com˙n contiene los permisos:
+## Cambio realizado en el dise√±o de integraci√≥n
+Despu√©s de integrarse el m√≥dulo RBAC del proyecto, se confirm√≥ que el cat√°logo com√∫n contiene los permisos:
 
 - pacientes.ver
 - pacientes.registrar
@@ -15,28 +15,28 @@ DespuÈs de integrarse el mÛdulo RBAC del proyecto, se confirmÛ que el cat·logo c
 Por lo tanto Pacientes no necesita implementar su propio sistema de roles o permisos.
 
 ## Flujo integrado
-La operaciÛn protegida debe atravesar:
+La operaci√≥n protegida debe atravesar:
 
-1. validaciÛn del tenant;
-2. autenticaciÛn JWT;
-3. autorizaciÛn RBAC;
-4. ejecuciÛn del controlador de Pacientes.
+1. validaci√≥n del tenant;
+2. autenticaci√≥n JWT;
+3. autorizaci√≥n RBAC;
+4. ejecuci√≥n del controlador de Pacientes.
 
-RepresentaciÛn:
+Representaci√≥n:
 
 tenant -> jwt.auth -> rbac:permiso -> PatientController
 
 ## Ejemplo
 Para registrar un paciente, la ruta POST /api/v1/patients requiere pacientes.registrar.
 
-Si el usuario no est· autenticado, la capa transversal rechaza la solicitud antes de ejecutar Pacientes.
+Si el usuario no est√° autenticado, la capa transversal rechaza la solicitud antes de ejecutar Pacientes.
 
-Si est· autenticado pero no posee el permiso, RBAC devuelve la denegaciÛn correspondiente.
+Si est√° autenticado pero no posee el permiso, RBAC devuelve la denegaci√≥n correspondiente.
 
 PatientController solamente ejecuta el caso de uso cuando las validaciones transversales ya fueron superadas.
 
 ## Beneficio
-La modificaciÛn elimina autorizaciÛn duplicada dentro de Pacientes y permite que todos los mÛdulos utilicen el mismo mecanismo de seguridad.
+La modificaci√≥n elimina autorizaci√≥n duplicada dentro de Pacientes y permite que todos los m√≥dulos utilicen el mismo mecanismo de seguridad.
 
 ## Alcance
-Este cambio corresponde a la integraciÛn arquitectÛnica. Semana 6 no agrega una implementaciÛn paralela de autenticaciÛn ni modifica el RBAC del equipo.
+Este cambio corresponde a la integraci√≥n arquitect√≥nica. Semana 6 no agrega una implementaci√≥n paralela de autenticaci√≥n ni modifica el RBAC del equipo.

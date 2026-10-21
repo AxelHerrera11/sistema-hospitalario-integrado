@@ -1,20 +1,20 @@
-# Presentación — ASII-03 Pacientes
+# PresentaciÃ³n â€” ASII-03 Pacientes
 
-## Diapositiva 1 — Problema y objetivo
+## Diapositiva 1 â€” Problema y objetivo
 - Registrar pacientes del hospital.
-- Consultar pacientes por código.
+- Consultar pacientes por cÃ³digo.
 - Actualizar datos permitidos de forma segura.
 - Evitar duplicados y modificaciones de identidad.
 
-## Diapositiva 2 — Requisitos principales
-- Registro con datos válidos.
-- Código único.
+## Diapositiva 2 â€” Requisitos principales
+- Registro con datos vÃ¡lidos.
+- CÃ³digo Ãºnico.
 - Fecha de nacimiento no futura.
 - Identificadores estables.
 - Persistencia segura.
 - Control de acceso por permisos.
 
-## Diapositiva 3 — Arquitectura
+## Diapositiva 3 â€” Arquitectura
 Presentation -> Application -> Domain
                      |
                      v
@@ -22,22 +22,22 @@ Presentation -> Application -> Domain
                      |
              PDO / InMemory
 
-La lógica de negocio no depende directamente de SQL ni del framework HTTP.
+La lÃ³gica de negocio no depende directamente de SQL ni del framework HTTP.
 
-## Diapositiva 4 — Repository y pruebas
+## Diapositiva 4 â€” Repository y pruebas
 - PatientRepository define el contrato de persistencia.
 - PdoPatientRepository implementa persistencia real.
 - InMemoryPatientRepository permite pruebas sin BD.
 - Se cubren camino feliz, duplicados, fecha futura y fallo de persistencia.
 
-## Diapositiva 5 — API REST
+## Diapositiva 5 â€” API REST
 - POST /api/v1/patients
 - GET /api/v1/patients/{code}
 - PATCH /api/v1/patients/{code}
 
 El API expone patient_id como identificador estable del paciente.
 
-## Diapositiva 6 — Seguridad e integración
+## Diapositiva 6 â€” Seguridad e integraciÃ³n
 Cadena esperada:
 tenant -> jwt.auth -> rbac -> Pacientes
 
@@ -48,16 +48,16 @@ Permisos:
 
 Pacientes no implementa su propio sistema de usuarios ni roles.
 
-## Diapositiva 7 — Decisiones defendidas
+## Diapositiva 7 â€” Decisiones defendidas
 - Separar dominio de persistencia.
 - Usar Repository para desacoplar almacenamiento.
-- Mantener código y global_id inmutables.
-- No convertir Pacientes en microservicio físico todavía.
-- Reutilizar autenticación, tenant y RBAC comunes del HIS.
+- Mantener cÃ³digo y global_id inmutables.
+- No convertir Pacientes en microservicio fÃ­sico todavÃ­a.
+- Reutilizar autenticaciÃ³n, tenant y RBAC comunes del HIS.
 
-## Diapositiva 8 — Cambio práctico
-El diseño inicial trataba los permisos únicamente como parte del contrato.
+## Diapositiva 8 â€” Cambio prÃ¡ctico
+El diseÃ±o inicial trataba los permisos Ãºnicamente como parte del contrato.
 
-Después de la integración del RBAC del equipo, el módulo se alineó con los permisos reales publicados en el sistema.
+DespuÃ©s de la integraciÃ³n del RBAC del equipo, el mÃ³dulo se alineÃ³ con los permisos reales publicados en el sistema.
 
-Resultado: el contrato del módulo puede integrarse sin implementar autorización duplicada.
+Resultado: el contrato del mÃ³dulo puede integrarse sin implementar autorizaciÃ³n duplicada.
