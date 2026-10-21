@@ -1,0 +1,16 @@
+flowchart LR
+  UI["Vue: consumidor propuesto"] -.-> H["permissions.js: can / canAny / hasPermissions"]
+  UI -.-> T["TenantMiddleware"]
+  T --> J["JwtAuth"]
+  J --> P["RequirePermission: rbac:modulo.accion"]
+  P --> A["Authorize"]
+  A --> R["RoleResolver: CentralRoles"]
+  R --> DB[(hospital_memberships)]
+  A --> C["PermissionProvider: ConfiguredPermissions"]
+  A --> L["DenialRecorder: LogDenials"]
+  classDef added fill:#e6ffed,stroke:#2da44e,color:#000
+  classDef existing fill:#e6f0ff,stroke:#0969da,color:#000
+  classDef proposed fill:#fff5e6,stroke:#d29922,color:#000
+  class H added
+  class T,J,P,A,R,DB,C,L existing
+  class UI proposed

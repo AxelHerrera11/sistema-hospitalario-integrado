@@ -1,0 +1,68 @@
+%% Modelo de dominio (micro-his/gobernanza-auditoria/src/Domain).
+classDiagram
+    class AuditEvent {
+        <<readonly>>
+        +string eventId
+        +DateTimeImmutable occurredAt
+        +string actorId
+        +string tenantId
+        +string module
+        +string action
+        +AuditOutcome outcome
+        +AuditCriticality criticality
+        +string resourceType
+        +string resourceId
+        +string correlationId
+        +string reason
+        +array context
+        +array redactedKeys
+        +record(...)$ AuditEvent
+        +rehydrate(...)$ AuditEvent
+        +eventName() string
+    }
+    class AuditOutcome {
+        <<enumeration>>
+        success
+        failure
+        denied
+        unknown (solo lectura)
+        +occurred() bool
+    }
+    class AuditCriticality {
+        <<enumeration>>
+        security
+        informational
+        +mandatory() bool
+    }
+    class AuditFilter {
+        <<readonly>>
+        +actorId, module, action
+        +from, until
+        +outcome, correlationId
+        +page, perPage
+        +matches(AuditEvent) bool
+    }
+    class AuditPage {
+        +list events
+        +int total
+        +totalPages() int
+    }
+    class ContextSanitizer {
+        +sanitize(array)$ array
+    }
+    class AuditLogger {
+        <<interface>>
+        +append(AuditEvent) void
+    }
+    class AuditEventReader {
+        <<interface>>
+        +search(tenantId, AuditFilter) AuditPage
+    }
+    AuditEvent --> AuditOutcome
+    AuditEvent --> AuditCriticality
+    AuditEvent ..> ContextSanitizer : filtra contexto
+    AuditFilter --> AuditOutcome
+    AuditPage o-- AuditEvent
+    AuditLogger ..> AuditEvent
+    AuditEventReader ..> AuditFilter
+    AuditEventReader ..> AuditPage
