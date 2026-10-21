@@ -15,7 +15,7 @@ final class RequirePermission
 
     public function handle(Request $request, Closure $next, string $permission = ''): Response
     {
-        if (!preg_match('/^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/D', $permission)) {
+        if (!preg_match('/^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/D', $permission)) {
             return $this->error(503, 'RBAC_PERMISSION_NOT_CONFIGURED');
         }
         // Debe ejecutarse después de tenant y jwt.auth. Los IDs proceden del servidor.
