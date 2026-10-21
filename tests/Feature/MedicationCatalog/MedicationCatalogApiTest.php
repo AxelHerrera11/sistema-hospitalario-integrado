@@ -7,8 +7,6 @@ namespace Tests\Feature\MedicationCatalog;
 use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Domain\Medication;
 use MicroHis\MedicationCatalog\Persistence\InMemoryMedicationRepository;
-use MicroHis\Rbac\Domain\DenialRecorder;
-use MicroHis\Rbac\Domain\RoleResolver;
 use Tests\TestCase;
 
 /** API v1 del catálogo con los middlewares y la matriz RBAC reales; repositorio InMemory salvo en la prueba de caída. */
@@ -20,12 +18,7 @@ final class MedicationCatalogApiTest extends TestCase
     {
         parent::setUp();
         // El kernel sincroniza sus alias al crearse; se resuelve antes para que la sustitución de identidad prevalezca.
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $this->app['router']->aliasMiddleware('tenant', CatalogTestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', CatalogTestIdentity::class);
-        $this->app->instance(RoleResolver::class, new CatalogTestIdentity());
-        $this->app->instance(DenialRecorder::class, new CatalogTestIdentity());
-        CatalogTestIdentity::$denials = [];
+        CatalogTestIdentity::install($this->app);
         $repository = new InMemoryMedicationRepository();
         $this->amoxicilina = (string) $repository->insert(Medication::register(['code' => 'amx-500', 'name' => 'Amoxicilina 500 mg',
             'active_ingredient' => 'Amoxicilina', 'pharmacological_group' => 'Antibiótico']))->id;
@@ -114,6 +107,45 @@ final class MedicationCatalogApiTest extends TestCase
             'pharmacological_group' => 'AINE'])->assertStatus(201);
         $this->patchJson("/api/v1/medications/{$this->amoxicilina}/validity", ['validity' => 'inactive'])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
         $this->getJson("/api/v1/medications/{$this->amoxicilina}")->assertJsonPath('medication.validity', 'active');
+    }
+
+    public function test_confirmed_writes_are_audited_with_actor_hospital_and_trace(): void
+    {
+        CatalogTestIdentity::as('admin_hospital');
+        $draft = ['code' => 'ibu-400', 'name' => 'Ibuprofeno 400 mg', 'active_ingredient' => 'Ibuprofeno', 'pharmacological_group' => 'AINE'];
+        $id = $this->withHeaders(['X-Request-Id' => 'req-alta-0001'])->postJson('/api/v1/medications', $draft)->assertStatus(201)->json('medication.medication_id');
+        $this->postJson('/api/v1/medications', $draft)->assertStatus(409);
+        $this->withHeaders(['X-Request-Id' => 'req-vig-0001'])->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertOk();
+
+        // Solo las escrituras confirmadas dejan evento; el duplicado rechazado no.
+        $this->assertSame(['catalogo.medicamento_registrado', 'catalogo.vigencia_cambiada'], array_column(CatalogTestIdentity::$audited, 'event'));
+        [$created, $changed] = array_column(CatalogTestIdentity::$audited, 'payload');
+        $this->assertSame(['user-admin_hospital', 'hospital-a', 'req-alta-0001', $id, 'IBU-400', 'active'],
+            [$created['user_id'], $created['hospital_id'], $created['trace_id'], $created['medication_id'], $created['code'], $created['validity']]);
+        $this->assertSame(['req-vig-0001', $id, 'inactive'], [$changed['trace_id'], $changed['medication_id'], $changed['validity']]);
+    }
+
+    public function test_writes_answer_503_when_the_audit_cannot_be_recorded(): void
+    {
+        CatalogTestIdentity::as('admin_hospital');
+        CatalogTestIdentity::$auditDown = true;
+        $this->postJson('/api/v1/medications', ['code' => 'IBU-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
+            'pharmacological_group' => 'AINE'])->assertStatus(503)->assertJsonPath('error', 'AUDIT_UNAVAILABLE')->assertJsonMissingPath('medication');
+        $this->patchJson("/api/v1/medications/{$this->amoxicilina}/validity", ['validity' => 'inactive'])->assertStatus(503);
+        $this->assertSame([], CatalogTestIdentity::$audited);
+    }
+
+    public function test_requests_are_rate_limited_per_user_and_hospital(): void
+    {
+        $limit = \App\MedicationCatalog\CatalogRateLimit::REQUESTS_PER_MINUTE;
+        for ($i = 0; $i < $limit; $i++) {
+            $this->getJson('/api/v1/medications?q=amox')->assertOk();
+        }
+        $this->getJson('/api/v1/medications?q=amox')->assertStatus(429)->assertJsonPath('error', 'CATALOG_RATE_LIMITED')
+            ->assertHeader('Retry-After')->assertHeader('Cache-Control', 'no-store, private');
+        // Otro usuario del mismo hospital conserva su cupo.
+        CatalogTestIdentity::as('enfermeria');
+        $this->getJson('/api/v1/medications?q=amox')->assertOk();
     }
 
     public function test_unavailable_hospital_database_answers_503_without_details(): void

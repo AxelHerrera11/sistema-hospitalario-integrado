@@ -41,12 +41,13 @@ export function failureMessage(status, body = {}) {
     if (status === 404) return 'El medicamento no existe en este hospital.';
     if (status === 401) return 'Su sesión no es válida. Inicie sesión de nuevo.';
     if (status === 403) return 'No tiene permiso para esta operación en el hospital activo.';
+    if (status === 429) return 'Hay demasiadas solicitudes al catálogo. Espere un minuto e intente de nuevo.';
     return 'El catálogo no está disponible. No se confirmó la operación; intente de nuevo.';
 }
 
-/** Solo los errores de disponibilidad o de red se pueden reintentar con los mismos datos. */
+/** Solo los errores de disponibilidad, de red o de límite de tasa se pueden reintentar con los mismos datos. */
 export function isRetryable(status) {
-    return status === 0 || status === undefined || status >= 500;
+    return status === 0 || status === undefined || status === 429 || status >= 500;
 }
 
 export function validityLabel(validity) {

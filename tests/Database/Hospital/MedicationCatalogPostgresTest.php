@@ -4,8 +4,6 @@ namespace Tests\Database\Hospital;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use MicroHis\Rbac\Domain\DenialRecorder;
-use MicroHis\Rbac\Domain\RoleResolver;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Feature\MedicationCatalog\CatalogTestIdentity;
 use Tests\TestCase;
@@ -24,12 +22,7 @@ class MedicationCatalogPostgresTest extends TestCase
         parent::setUp();
         $this->assertPostgreSqlIntegrityPrerequisites();
         Artisan::call('migrate:fresh', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--force' => true]);
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $this->app['router']->aliasMiddleware('tenant', CatalogTestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', CatalogTestIdentity::class);
-        $this->app->instance(RoleResolver::class, new CatalogTestIdentity());
-        $this->app->instance(DenialRecorder::class, new CatalogTestIdentity());
-        CatalogTestIdentity::$denials = [];
+        CatalogTestIdentity::install($this->app);
         CatalogTestIdentity::as('admin_hospital');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
@@ -92,6 +85,20 @@ class MedicationCatalogPostgresTest extends TestCase
         $this->withHeaders(['X-Tenant-ID' => 'hospital-b'])->postJson('/api/v1/medications', self::AMOX)->assertStatus(403)->assertJsonPath('code', 'TENANT_MISMATCH');
 
         $this->assertSame(0, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM medications'));
+    }
+
+    public function test_audit_failure_rolls_back_the_hospital_write(): void
+    {
+        $id = $this->postJson('/api/v1/medications', self::AMOX)->assertStatus(201)->json('medication.medication_id');
+        $this->assertSame('catalogo.medicamento_registrado', CatalogTestIdentity::$audited[0]['event']);
+
+        // M6 falla cerrado: sin evento en CENTRAL, PostgreSQL revierte el alta y el cambio de vigencia.
+        CatalogTestIdentity::$auditDown = true;
+        $this->postJson('/api/v1/medications', ['code' => 'ibu-400'] + self::AMOX)->assertStatus(503)->assertJsonPath('error', 'AUDIT_UNAVAILABLE');
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertStatus(503);
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM medications'));
+        $this->assertSame('active', DB::connection('hospital')->scalar('SELECT validity FROM medications WHERE medication_id = ?', [$id]));
+        $this->assertFalse(DB::connection('hospital')->getPdo()->inTransaction());
     }
 
     public function test_storage_failure_answers_503_and_writes_nothing(): void

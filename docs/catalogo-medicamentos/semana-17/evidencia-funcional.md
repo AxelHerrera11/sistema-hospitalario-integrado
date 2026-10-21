@@ -55,6 +55,16 @@ Las denegaciones quedaron en `audit_log` de CENTRAL como `rbac.access_denied` co
 | Un id que no es uuid daba 503 | Se trata como inexistente, 404 (#774) |
 | La prueba del 503 dependía de que la base HOSPITAL no tuviera la tabla | Apunta a una base inexistente (#774) |
 
+## Mitigación de M6, M10 y M12 (21/10/2026)
+
+| Comando o prueba | Resultado |
+|---|---|
+| `php vendor/bin/phpunit --testsuite Unit,Feature` | OK (107 tests) |
+| `MedicationCatalogPostgresTest` (base desechable `his_hospital_phpunit`) | OK (7 tests); con la auditoría caída, el alta y la vigencia se revierten |
+| `catalogo-e2e.mjs` contra una base HOSPITAL nueva | 11/11 |
+| `audit_log` de CENTRAL tras el E2E | Solo `catalogo.medicamento_registrado` y `catalogo.vigencia_cambiada` de `ASA-100`, con hospital A, actor y `trace_id`; el duplicado no dejó evento |
+| 61 `GET /medications` con el JWT real de médico | 60 × 200 y 1 × 429 con `Retry-After`; enfermería sigue con 200 |
+
 ## Revisión humana confirmada (21/10/2026)
 
 María Yamilet Lindo Pablo confirmó una prueba manual en el entorno local de verificación (`http://127.0.0.1:8770`, CENTRAL 55431 y HOSPITAL 55433), con la interfaz de #780 y el usuario ficticio `admin@prueba.local` (`admin_hospital`) del hospital A:
