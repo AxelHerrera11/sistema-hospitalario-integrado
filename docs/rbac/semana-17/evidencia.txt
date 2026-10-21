@@ -1,0 +1,125 @@
+﻿2026-10-19: validación local, auth/tenant simulados, sin staging ni JWT real.
+> php artisan test tests/Feature/Rbac --no-ansi
+
+   PASS  Tests\Feature\Rbac\IntegrationTest
+  ✓ catalog is registered and protected                                                                          0.22s
+  ✓ anonymous and other hospital cannot access                                                                   0.01s
+  ✓ dependency failure never runs protected action                                                               0.01s
+  ✓ spoofed identity headers are ignored                                                                         0.02s
+  ✓ pending permission is denied by the middleware                                                               0.01s
+  ✓ config matrix is enforced by the permission middleware                                                       0.01s
+
+   PASS  Tests\Feature\Rbac\RoleMatrixTest
+  ✓ catalog is unique literal and keeps both assignment operations                                               0.03s
+  ✓ membership and role permission operations are distinct                                                       0.01s
+  ✓ superadmin permissions are explicit and exclude pending grants                                               0.01s
+  ✓ role matrix matches the proposed grants                                                                      0.01s
+  ✓ roles are literal case sensitive and not inherited                                                           0.01s
+  ✓ pending grants are documented outside active roles and are denied                                            0.02s
+  ✓ published permissions without agreement are not granted                                                      0.01s
+
+   PASS  Tests\Feature\Rbac\SecurityTest
+  ✓ missing and mismatched tenant are rejected                                                                   0.02s
+  ✓ missing server context fails closed                                                                          0.01s
+  ✓ permission must be configured in middleware                                                                  0.01s
+  ✓ audit failure has no sensitive exception details                                                             0.01s
+  ✓ unknown roles and wildcards never grant access                                                               0.01s
+  ✓ policy is loaded without implicit roles or dot expansion                                                     0.01s
+
+  Tests:    19 passed (202 assertions)
+  Duration: 0.89s
+
+exit=0
+> php micro-his/rbac/tests/run.php
+OK: camino feliz: 201, membresía y auditoría guardadas
+OK: regla de dominio: rol que supera el privilegio -> 403 y denegación con trace_id
+OK: regla de dominio: sin permiso rbac.asignar -> 403 RBAC_DENIED
+OK: regla de dominio: rol ya asignado -> 409
+OK: validación: rol inexistente -> 422
+OK: validación: entradas inválidas (array/objeto/espacios en user_id, headers no string) -> 422 sin TypeError
+OK: validación: ninguna entrada inválida escribió membresía ni auditoría
+OK: error de persistencia: auditoría caída -> 500 y rollback
+OK: falla segura: bitácora caída -> sigue denegado (403)
+Todas las pruebas pasaron.
+exit=0
+> php micro-his/rbac/tests/inmemory.php
+OK: contratos: implementa PermissionProvider, DenialRecorder y RoleResolver
+OK: permisos: rol conocido -> sus permisos
+OK: permisos: rol desconocido -> lista vacía
+OK: permisos: código vacío -> lista vacía (sin excepción)
+OK: roles: usuario con rol asignado -> ese rol
+OK: roles: usuario sin asignaciones -> lista vacía
+OK: tenant: el mismo usuario en otro hospital -> lista vacía
+OK: roles: varias asignaciones en el mismo hospital -> se acumulan
+OK: tenant: cada hospital mantiene sus propios roles
+OK: denegaciones: sin registros -> lista vacía
+OK: denegaciones: guarda la denegación tal cual
+OK: paridad PDO/InMemory: permissionsFor coincide
+OK: paridad PDO/InMemory: rolesIn coincide por hospital
+OK: colisión: los roles de (a@b,c) no aparecen en (a,b@c)
+OK: colisión: los roles de (a,b@c) no aparecen en (a@b,c)
+OK: colisión: cada par conserva sus propios roles
+OK: colisión: usuario sin membresía -> lista vacía
+OK: colisión: paridad con PDO para (a@b,c)
+OK: colisión: paridad con PDO para (a,b@c)
+OK: colisión: paridad con PDO para usuario sin membresía
+Todas las pruebas del adaptador InMemory pasaron.
+exit=0
+> php micro-his/rbac/tests/authorization.php
+OK: permitido: rol con el permiso -> allowed true y trace_id
+OK: denegado: rol sin el permiso -> allowed false, motivo y trace_id
+OK: no autenticado: usuario sin roles -> allowed false
+OK: permiso desconocido -> allowed false
+OK: la denegación queda registrada en el DenialRecorder
+OK: falla segura: la bitácora falla -> sigue denegado con trace_id
+OK: handler: acción permitida -> 200 allowed true
+OK: handler: acción no cubierta -> 200 allowed false
+OK: handler: entradas inválidas -> 422 sin TypeError
+Todas las pruebas de autorización pasaron.
+exit=0
+> php micro-his/rbac/tests/authorization_errors.php
+OK: Authorize no se puede construir sin seguimiento de auditoria
+OK: RoleResolver lanza -> allowed false, resolucion_no_disponible, sin filtrar detalle
+OK: PermissionProvider lanza -> allowed false, resolucion_no_disponible
+OK: DenialRecorder lanza -> allowed false, registro_no_disponible, trace_id
+OK: Authorizer y caso de uso comparten el mismo registro (1 sola llamada)
+OK: denegacion ordinaria -> allowed false, permiso_faltante
+OK: handler: evalua al usuario del body -> 200 allowed true
+OK: handler: operacion evaluada y denegada -> 200 allowed false permiso_faltante
+OK: handler: sin autenticacion -> 401 con trace_id
+OK: handler: entrada invalida -> 422 con trace_id
+OK: handler: sin hospital -> 422 payload_invalido
+OK: handler: user_id=[] -> 422 con trace_id y sin invocar autorizacion
+OK: handler: user_id ausente -> fallback al solicitante
+OK: handler: user_id valido -> evalua el del body, no el solicitante
+OK: handler: user_id null/vacio/false/0/array/objeto -> 422 con trace_id
+OK: handler: solicitante sin permiso de endpoint -> 403 operacion_no_autorizada
+OK: handler: endpoint sin configurar -> 503 endpoint_no_configurado unificado
+OK: handler: auditoria caida -> 503 registro_no_disponible unificado
+OK: handler: RoleResolver lanza -> 503 resolucion_no_disponible unificado
+OK: handler: fallo transitorio -> 1er 503 unificado y luego 200 permiso_faltante
+OK: handler: 200 -> claves exactas allowed/reason/trace_id
+Todas las pruebas de errores de autorizacion pasaron.
+exit=0
+> php artisan config:cache --no-ansi
+   INFO  Configuration cached successfully.
+exit=0
+> php artisan route:cache --no-ansi
+   INFO  Routes cached successfully.
+exit=0
+> php artisan route:list --path=api/v1/permissions -v --no-ansi
+
+  GET|HEAD       api/v1/permissions ...................................................... generated::6iMYIuYN322AgmKy
+                 ⇂ api
+                 ⇂ tenant
+                 ⇂ Tymon\JWTAuth\Http\Middleware\Authenticate
+                 ⇂ App\Rbac\RequirePermission:rbac.permisos.ver
+
+                                                                                                     Showing [1] routes
+exit=0
+> php artisan route:clear --no-ansi
+   INFO  Route cache cleared successfully.
+exit=0
+> php artisan config:clear --no-ansi
+   INFO  Configuration cache cleared successfully.
+exit=0

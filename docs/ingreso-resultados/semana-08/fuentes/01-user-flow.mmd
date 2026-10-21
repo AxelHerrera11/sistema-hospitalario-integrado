@@ -1,0 +1,13 @@
+flowchart TD
+    A[Tecnico abre pendientes] --> B[Filtra paciente o prueba]
+    B --> C[Captura valor y unidad]
+    C --> D{Formato y rango validos?}
+    D -- No --> E[Mostrar error y ayuda]
+    E --> C
+    D -- Si --> F[Enviar a revision]
+    F --> G[Bioquimico revisa]
+    G --> H{Autoriza correccion?}
+    H -- No --> I[Mostrar motivo de rechazo]
+    I --> C
+    H -- Si --> J[Guardar y auditar]
+    J --> K[Mostrar confirmacion]

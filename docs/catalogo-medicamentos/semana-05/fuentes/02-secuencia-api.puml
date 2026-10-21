@@ -1,0 +1,41 @@
+@startuml
+title ASII-14 Semana 5 - Cambio de vigencia por API v1 (propuesta)
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+autonumber
+actor "Gestor" as G
+participant "SPA Vue" as SPA
+participant "API v1\n(tenant, jwt.auth)" as API
+participant "RBAC\nRequirePermission" as RBAC
+participant "ChangeMedicationValidity" as UC
+database "Base HOSPITAL" as DB
+
+G -> SPA : elige inactive y confirma
+SPA -> API : PATCH /api/v1/medications/{id}/validity\nBearer + X-Tenant-ID + X-Request-Id
+API -> API : token válido y hospital del token = X-Tenant-ID\n(trace_id = X-Request-Id o uno nuevo)
+alt token inválido o tenant distinto
+  API --> SPA : 401 UNAUTHENTICATED / 403 TENANT_MISMATCH + trace_id
+else identidad válida
+  API -> RBAC : medicamentos.cambiar_vigencia (propuesto)
+  alt sin permiso
+    RBAC --> API : denegado (se registra)
+    API --> SPA : 403 FORBIDDEN + trace_id
+  else permitido
+    API -> UC : changeValidity(id, inactive)
+    UC -> DB : SELECT ... WHERE medication_id = :id
+    alt no existe
+      UC --> API : MedicationNotFound
+      API --> SPA : 404 + trace_id
+    else existe y la regla se cumple
+      UC -> DB : UPDATE ... SET validity = :validity
+      alt fallo o 0 filas afectadas
+        DB --> UC : PersistenceFailure
+        API --> SPA : 503 CATALOG_UNAVAILABLE (sin "Vigencia actualizada")
+        note over SPA : la escritura NO se reintenta sola:\nse recarga el estado y el usuario decide
+      else confirmada
+        API --> SPA : 200 + medication + trace_id
+      end
+    end
+  end
+end
+@enduml
