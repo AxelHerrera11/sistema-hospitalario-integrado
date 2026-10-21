@@ -9,12 +9,12 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 **Incluido**
 
 - Localizar la orden y el ítem de laboratorio que esperan muestra (por escaneo o búsqueda).
-- Verificar la identidad con **dos identificadores**: nombre completo y fecha de nacimiento o código de paciente, comparados con el paciente de la orden.
+- Verificar la identidad con **dos identificadores implementados**: nombre completo y código de paciente, comparados con la orden confiable.
 - Validar los requisitos de la prueba: tipo de muestra, contenedor, volumen mínimo, tiempo máximo desde la toma (estabilidad) y temperatura de transporte.
 - Aceptar la muestra y generar el código identificador.
-  - Formato propuesto: `<hospital>-<AAMMDD>-<secuencia>-<dígito verificador>`, por ejemplo `H01-261009-00042-7`.
+  - Decisión implementada: 24 caracteres hexadecimales aleatorios (96 bits), guion y dígito decimal de comprobación.
   - El dígito verificador detecta errores de lectura o digitación.
-  - El código es único por hospital y **nunca se reutiliza**.
+  - El índice UNIQUE impide repetir el código; no hay edición ni reutilización de la muestra. El formato hospital-fecha-secuencia fue una propuesta inicial sustituida en semana 2.
 - Imprimir y reimprimir la etiqueta. La impresión ocurre **después** de que la API responde `201` con el código, y una reimpresión nunca genera otro código: si la impresora falla, la muestra ya quedó guardada (sin rollback) y se imprime de nuevo el mismo código.
 - Rechazar con un motivo del catálogo:
   - hemolizada
@@ -79,7 +79,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 
 ## Dependencias con otros módulos
 
-- **Depende de:** *Órdenes de laboratorio* (ítem y paciente), *Catálogo de pruebas* (requisitos), *Alertas críticas y notificaciones* (aviso de rechazo) y *RBAC*. Para avanzar sin esperar, se consumen a través de las interfaces `LabOrderGateway`, `LabTestRequirements` y `Notifier`, con implementación en memoria hasta la integración.
+- **Depende de:** órdenes (ítem/paciente), catálogo (requisitos), notificaciones (aviso) y RBAC. La implementación usa OrderProjection/importador confiable, Repository, outbox y DeliverRejections. LabOrderGateway/LabTestRequirements/Notifier fueron nombres propuestos, no interfaces que se afirme haber implementado.
 - **Dependen de este módulo:** *Ingreso de resultados* y *Validación por bioquímico*, que solo trabajan sobre muestras `accepted` identificadas por su código.
 
 ## Archivos relacionados

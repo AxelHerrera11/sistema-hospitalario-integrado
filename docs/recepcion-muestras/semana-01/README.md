@@ -6,6 +6,13 @@
 > La impresión ocurre en el navegador después de persistir; la entrega del aviso externo no se
 > declara confirmada hasta recibir acuse del consumidor. Los casos de uso y excepciones se mantienen.
 
+## Índice de la entrega
+
+1. Ficha y contexto del módulo.
+2. Casos de uso, actividad y secuencia.
+3. Narrativa de alcance y trazabilidad.
+4. Decisiones del diseño implementado y conclusión.
+
 ## Ficha de la asignación
 
 - **Estudiante:** López Fajardo, María de los Ángeles (`Mar-03`)
@@ -14,6 +21,12 @@
 - **Tarea individual:** Modele el proceso «recepción, identificación inequívoca y rechazo controlado de muestra». Casos de uso: delimitar actores y objetivo; el de actividad debe incluir decisiones, excepciones y resultado; el de secuencia debe mostrar participantes, mensajes, validaciones y respuesta. Mantenga trazabilidad entre los tres diagramas.
 - **Entregable / evidencia:** UML de casos de uso y narrativa de alcance.
 - **Estructura:** Sistema Hospitalario Integrado 2026 | Semanas 1–15.
+
+## Introducción
+
+La recepción verifica que una muestra corresponda a una orden y a un paciente antes de habilitar resultados.
+El problema incluye errores de identidad, conservación, disponibilidad y confirmación de persistencia.
+Los diagramas muestran decisiones y excepciones; la narrativa enlaza cada UC con esos pasos.
 
 ---
 
@@ -86,4 +99,25 @@ La narrativa completa y la tabla de trazabilidad están en [narrativa-alcance-tr
 
 ## Declaración de uso de IA
 
-Se usó Claude (Anthropic) para proponer la estructura de los diagramas, generar los SVG y redactar el primer borrador de este documento a partir del repositorio del proyecto y del enunciado de la tarea. La estudiante revisó los actores, las reglas de recepción y rechazo, el formato del código y la trazabilidad, y es responsable del contenido final.
+El documento original declaró Claude (Anthropic) para el borrador UML/SVG. Esta revisión con Codex
+se documenta en [DECLARACION_IA.md](../DECLARACION_IA.md); no certifica revisión humana no registrada.
+
+## Decisiones vigentes y correspondencia con el código
+
+| Abstracción de los diagramas iniciales | Implementación Laravel 12 |
+|---|---|
+| SpecimenController / ReceiveSpecimenService | ReceptionController / ReceiveSpecimen. |
+| Gateway de orden y requisitos | OrderProjection y consulta de pendientes del hospital. |
+| SpecimenRepository y generador | ReceptionRepository/PDO y SpecimenCode. |
+| Notifier | Outbox durable y DeliverRejections; acuse externo por verificar. |
+| Código hospital-fecha-secuencia propuesto | 96 bits hexadecimales y dígito, con índice UNIQUE. |
+| Rechazo sin etiqueta | sin_etiqueta registra rechazo sin inventar código/nombre de paciente. |
+
+Los nombres UML expresan responsabilidades; la tabla evita presentarlos como clases inexistentes.
+La selección de orden no copia la identidad observada; el técnico debe comprobarla contra la etiqueta.
+
+## Conclusión y fuentes
+
+El alcance identifica actores, decisiones, excepciones y resultados enlazados entre los tres diagramas.
+El diseño se contrasta con fuentes reales y pruebas, y conserva los límites con órdenes, catálogo y resultados.
+Fuente: [README original y matriz ASII-18](../../../README.md); [cumplimiento completo](../matriz-cumplimiento.md).

@@ -32,6 +32,10 @@ o rechazo sin perder trazabilidad. Cada semana conecta análisis, microproyecto 
 
 ## Límites de la entrega
 
+La [matriz de cumplimiento](matriz-cumplimiento.md) contrasta cada obligación del README original.
+La [declaración de IA](DECLARACION_IA.md) documenta herramienta, instrucciones y validación pendiente.
+Cada semana desarrolla su artefacto completo; las ramas complementarias evitan recortarlo para caber en 400 líneas.
+
 El micro vive en `micro-his/recepcion-muestras`. La implementación Laravel vive en
 `app/Modules/Reception`, `app/Http`, `routes`, `database` y `resources/js/modules/recepcion-muestras`.
 El código del HIS no carga ni ejecuta archivos del micro. Las pruebas de ambos son independientes.
