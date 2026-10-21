@@ -1,0 +1,285 @@
+@startuml
+' ============================================================
+' DIAGRAMA DE ACTIVIDADES - Gestión Usuarios, Tenants y Auth
+' Proceso: Alta de usuario por tenant, autenticación segura y revocación de sesión
+' ============================================================
+
+skinparam activityBackgroundColor #F5F5F5
+skinparam activityBorderColor #757575
+skinparam decisionBackgroundColor #FFF3E0
+skinparam decisionBorderColor #E65100
+skinparam startColor #2E7D32
+skinparam endColor #C62828
+skinparam swimlaneBackgroundColor #E8F5E9
+skinparam swimlaneBorderColor #2E7D32
+
+title **Diagrama de Actividades: Gestión Usuarios, Tenants y Autenticación**\n(Código: GUT-001 | Versión: 1.0)
+
+|Swimlanes|
+
+|#LightGreen| **Actor / Componente** |
+| **Admin Tenant / Platform Admin** |
+| **Usuario Final** |
+| **Client UI (Portal / App)** |
+| **Auth Controller / API Gateway** |
+| **Tenant Middleware** |
+| **User Service** |
+| **AuthZ Service (MFA, JWT, Tokens)** |
+| **Token Repository (Redis)** |
+| **User DB (PostgreSQL + RLS)** |
+| **Audit Log Service** |
+
+start
+
+:Iniciar proceso;
+
+fork
+    :[ADMIN] Iniciar creación usuario;
+    |#LightGreen| **Auth Controller** |
+    :Validar token admin\n+ rol TENANT_ADMIN/PLATFORM_ADMIN;
+    if (¿Permisos válidos?) then (no)
+        :Retornar 403 Forbidden;
+        :Auditar AUTHZ_DENIED;
+        stop
+    else (sí)
+        :Extraer tenant_id del token;
+    endif
+
+    |#LightGreen| **Tenant Middleware** |
+    :Validar tenant activo\n(y no suspendido);
+    if (¿Tenant inactivo?) then (sí)
+        :Retornar 403 Tenant Inactive;
+        :Auditar TENANT_INACTIVE;
+        stop
+    else (no)
+        :Verificar cupo usuarios\n(plan tenant);
+        if (¿Cupo excedido?) then (sí)
+            :Retornar 400 Quota Exceeded;
+            :Auditar TENANT_QUOTA_EXCEEDED;
+            stop
+        endif
+    endif
+
+    |#LightGreen| **User Service** |
+    :Validar email único\nen tenant_id;
+    if (¿Email existe?) then (sí)
+        :Retornar 409 Conflict;
+        stop
+    else (no)
+        :Validar password policy:\nmin 12, complejidad, historial,\nHaveIBeenPwned check;
+        if (¿Policy falla?) then (sí)
+            :Retornar 400 Policy Violation;
+            stop
+        endif
+    endif
+
+    :Crear usuario:\n- user_id (UUID)\n- email, nombre\n- roles[] (validar permitidos)\n- mfa_required (según rol)\n- tenant_id\n- is_active=true\n- password_hash (bcrypt/argon2);
+    :Generar password temporal\n+ token activación (24h);
+    :Enviar email activación;
+
+    |#LightGreen| **Audit Log Service** |
+    :Registrar USER_CREATED:\n{user_id, admin_id, tenant_id, roles, timestamp, hash_chain};
+
+    :[ADMIN] Fin creación usuario;
+
+fork again
+    :[USUARIO] Iniciar Login;
+    |#LightGreen| **Client UI** |
+    :Enviar credenciales\n(email, password, device_info);
+
+    |#LightGreen| **Auth Controller** |
+    :Rate limiting por IP/email;
+
+    |#LightGreen| **AuthZ Service** |
+    :Buscar usuario por email\n+ tenant_id (header/claim);
+    if (¿Usuario no existe?) then (sí)
+        :Retornar 401 (genérico);
+        :Auditar LOGIN_FAILED (user_not_found);
+        stop
+    else (no)
+        :Verificar is_active=true;
+        if (¿Desactivado?) then (sí)
+            :Retornar 403 Account Disabled;
+            :Auditar ACCOUNT_DISABLED;
+            stop
+        endif
+        :Verificar password_hash;
+        if (¿Inválido?) then (sí)
+            :Incrementar contador fallos\nlogin_redis;
+            :Auditar LOGIN_FAILED;
+            if (¿Fallos >= 5?) then (sí)
+                :Bloquear cuenta 15 min\n(progressivo: 15m, 1h, 24h);
+                :Auditar ACCOUNT_LOCKED;
+                :Notificar admin tenant;
+            endif
+            :Retornar 401 Invalid Credentials;
+            stop
+        else (válido)
+            :Resetear contador fallos;
+        endif
+    endif
+
+    :Verificar password expirado;
+    if (¿Expirado?) then (sí)
+        :Retornar 400 Password Expired;
+        :Forzar flujo cambio password;
+        stop
+    endif
+
+    |#LightGreen| **AuthZ Service** |
+    :Evaluar MFA requerido:\n- rol en [TENANT_ADMIN, AUDITOR]\n- tenant.policy.mfa_required\n- user.mfa_required;
+    if (¿MFA requerido?) then (sí)
+        :Enviar desafío MFA:\n- TOTP (authenticator app)\n- WebAuthn (passkey);
+        :Usuario ingresa código;
+        :Verificar código MFA;
+        if (¿Inválido?) then (sí)
+            :Incrementar contador MFA fallos;
+            :Auditar MFA_FAILED;
+            if (¿Fallos MFA >= 3?) then (sí)
+                :Bloquear MFA 30 min;
+                :Auditar MFA_LOCKED;
+            endif
+            :Retornar 401 MFA Invalid;
+            stop
+        else (válido)
+            :Resetear contador MFA;
+            :Registrar device_fingerprint\n(device_id, ip, ua, trust_level);
+        endif
+    else (no)
+        :Registrar device_fingerprint;
+    endif
+
+    |#LightGreen| **AuthZ Service** |
+    :Generar Access Token JWT:\n- alg: RS256\n- exp: now + 15min\n- claims: sub, roles, tenant_id, session_id, jti\n- Firmar con clave privada rotativa;
+    :Generar Refresh Token:\n- Opaco, 32 bytes random\n- exp: now + 7 días\n- Hash: argon2(refresh) → guardar en Redis\n  key: refresh:{user_id}:{device_id}\n  value: {hash, jti_access, exp, created_at};
+
+    |#LightGreen| **Token Repository (Redis)** |
+    :Guardar refresh token hash;
+    :Guardar session metadata:\n  session:{session_id} → {user_id, tenant_id, device_id, created, last_activity};
+
+    |#LightGreen| **AuthZ Service** |
+    :Verificar Single Session Policy;\nif (tenant.single_session && existe sesión previa) then
+    :Revocar sesión anterior\n(blocklist access + del refresh);
+    :Auditar SESSION_REVOKED_SINGLE;
+endif
+
+|#LightGreen| **Audit Log Service** |
+:Registrar LOGIN_SUCCESS:\n{user_id, tenant_id, roles, mfa_used, device_id, ip, session_id, timestamp, hash_chain};
+
+:Retornar tokens a cliente:\n{access_token, refresh_token, expires_in, token_type};
+
+:[USUARIO] Fin Login;
+
+fork again
+:[USUARIO/ADMIN] Solicitar revocación sesión;
+|#LightGreen| **Client UI / Admin UI** |
+:Enviar request:\n- Usuario: POST /auth/logout\n- Admin: DELETE /admin/users/{id}/sessions;
+
+|#LightGreen| **Auth Controller** |
+:Validar permisos:\n- Usuario: own session (token actual)\n- Admin: TENANT_ADMIN/PLATFORM_ADMIN;
+
+if (¿Permisos válidos?) then (no)
+    :Retornar 403;
+    stop
+endif
+
+|#LightGreen| **AuthZ Service** |
+:Identificar tokens a revocar:\n- Access: JTI del token actual / todos del usuario\n- Refresh: keys refresh:{user_id}:*;
+
+:Añadir JTI access a blocklist Redis:\n  blocklist:{jti} → exp_timestamp\n  TTL = exp - now;
+
+:Eliminar refresh tokens de Redis:\n  DEL refresh:{user_id}:*;
+
+:Invalidar session metadata:\n  DEL session:{session_id}*;
+
+|#LightGreen| **Audit Log Service** |
+:Registrar REVOKE_SESSION:\n{user_id, admin_id (si admin), reason: logout/force_revoke/security, revoked_tokens_count, timestamp, hash_chain};
+
+:[EVENTO] Publicar SessionRevokedEvent\n(vía message broker para microservicios);
+
+:[USUARIO/ADMIN] Fin revocación;
+
+fork again
+:[SISTEMA] Renovación de token (Refresh);
+|#LightGreen| **Client UI** |
+:POST /auth/refresh\n{refresh_token};
+
+|#LightGreen| **AuthZ Service** |
+:Extraer user_id/device_id\nde refresh token (sin verificar firma);
+:Buscar hash en Redis:\n  refresh:{user_id}:{device_id};
+if (¿No existe?) then (sí)
+    :Retornar 401 Refresh Revoked;
+    :Auditar REFRESH_INVALID;
+    stop
+endif
+
+:Verificar hash (argon2);
+if (¿No coincide?) then (sí)
+    :¡REUSE DETECTED!\n→ Revocar TODAS las sesiones usuario\n→ Alerta seguridad CRÍTICA;
+    :Auditar REFRESH_REUSE_ATTACK;
+    stop
+else (coincide)
+    :Eliminar refresh anterior (rotación);
+    :Generar nuevo Access + Refresh;
+    :Guardar nuevo refresh hash;
+    :Actualizar session last_activity;
+    endif
+
+    :Retornar nuevos tokens;
+
+    :[SISTEMA] Fin refresh;
+
+fork again
+    :[SISTEMA] Monitoreo Idle Timeout (background);
+    |#LightGreen| **AuthZ Service** |
+    :Cada request / heartbeat:\n  actualizar session.last_activity = now;
+    :Job cada 5 min:\n  SCAN session:* donde\n  (now - last_activity) > 15min;
+    :Para cada sesión expirada:\n  - Blocklist access token\n  - DEL refresh token\n  - DEL session metadata\n  - Auditar SESSION_IDLE_TIMEOUT;
+
+    :[SISTEMA] Fin monitoreo;
+
+end fork
+
+:Consolidar auditoría;
+
+stop
+
+|#LightPink| **Notas de Excepciones** |
+note right
+    : EXC-01: Credenciales inválidas → 401 + contador + lockout progresivo
+    note right
+        : EXC-02: Cuenta bloqueada → 423 + tiempo restante + notificación
+        note right
+            : EXC-03: Tenant inactivo → 403 + auditoría
+            note right
+                : EXC-04: Tenant sin cupo → 400 + auditoría
+                note right
+                    : EXC-05: MFA inválido → 401 + contador MFA + lockout 30min
+                    note right
+                        : EXC-06: MFA bloqueado → 423 + 30 min
+                        note right
+                            : EXC-07: Access token expirado → 401 + forzar refresh
+                            note right
+                                : EXC-08: Refresh inválido/expirado → 401 + forzar login
+                                note right
+                                    : EXC-09: Token en blocklist → 401 Token Revoked
+                                    note right
+                                        : EXC-10: Cross-tenant → 403 + alerta SIEM
+                                        note right
+                                            : EXC-11: Usuario desactivado → 403
+                                            note right
+                                                : EXC-12: Password expirado → 400 + forzar cambio
+                                                note right
+                                                    : RN-01: Aislamiento multi-tenant (tenant_id en todo)
+                                                    note right
+                                                        : RN-04: JWT RS256 + JWKS rotation 24h
+                                                        note right
+                                                            : RN-05: Refresh rotation + reuse detection
+                                                            note right
+                                                                : RN-06: Blocklist Redis con TTL automático
+                                                                note right
+                                                                    : RN-10: Auditoría inmutable hash chain
+                                                                    note right
+                                                                        : RN-14: JIT Provisioning SSO (extend UC-07)
+
+                                                                        @enduml

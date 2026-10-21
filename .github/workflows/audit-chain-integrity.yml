@@ -1,0 +1,39 @@
+name: Audit chain PostgreSQL 16
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'database/migrations/central/**'
+      - 'app/Modules/Tenants/Infrastructure/Audit/**'
+      - 'tests/Database/Central/AuditChainIntegrityTest.php'
+      - 'tests/Fixtures/audit-chain-writer.php'
+      - '.github/workflows/audit-chain-integrity.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_central_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['55431:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, pgsql, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: php vendor/phpunit/phpunit/phpunit tests/Database/Central/AuditChainIntegrityTest.php

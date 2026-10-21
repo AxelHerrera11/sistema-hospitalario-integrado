@@ -1,0 +1,10 @@
+flowchart TD
+    H[Inicio movil] --> A[Asignar rol]
+    H --> U[Autorizar operacion]
+    H --> D[Denegaciones]
+    A --> C{Validacion ok?}
+    C -- No --> E[Error junto al campo]
+    C -- Si --> CF[Hoja de confirmacion]
+    CF --> R[Resultado 201 / 403 + trace_id]
+    U --> R
+    R --> D
