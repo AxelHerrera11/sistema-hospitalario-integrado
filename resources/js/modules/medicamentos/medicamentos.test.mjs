@@ -22,6 +22,8 @@ assert.doesNotMatch(failureMessage(500, { message: 'PDOException' }), /PDO|SQLST
 assert.equal(isRetryable(0), true);
 assert.equal(isRetryable(503), true);
 assert.equal(isRetryable(409), false);
+assert.match(failureMessage(429, { error: 'CATALOG_RATE_LIMITED' }), /Espere un minuto/);
+assert.equal(isRetryable(429), true);
 assert.equal(isRetryable(422), false);
 
 assert.equal(validityLabel('active'), 'Vigente');

@@ -135,6 +135,19 @@ final class MedicationCatalogApiTest extends TestCase
         $this->assertSame([], CatalogTestIdentity::$audited);
     }
 
+    public function test_requests_are_rate_limited_per_user_and_hospital(): void
+    {
+        $limit = \App\MedicationCatalog\CatalogRateLimit::REQUESTS_PER_MINUTE;
+        for ($i = 0; $i < $limit; $i++) {
+            $this->getJson('/api/v1/medications?q=amox')->assertOk();
+        }
+        $this->getJson('/api/v1/medications?q=amox')->assertStatus(429)->assertJsonPath('error', 'CATALOG_RATE_LIMITED')
+            ->assertHeader('Retry-After')->assertHeader('Cache-Control', 'no-store, private');
+        // Otro usuario del mismo hospital conserva su cupo.
+        CatalogTestIdentity::as('enfermeria');
+        $this->getJson('/api/v1/medications?q=amox')->assertOk();
+    }
+
     public function test_unavailable_hospital_database_answers_503_without_details(): void
     {
         // Sin sustituir el Repository: se usa el enlace real del provider sobre la conexión 'hospital', apuntada a una base
