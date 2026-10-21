@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace MicroHis\IngresoResultados\Persistence;
 
 use MicroHis\IngresoResultados\Application\PendingResultRepository;
+use MicroHis\IngresoResultados\Application\AuditLogger;
+use MicroHis\IngresoResultados\Application\PendingResultNotFound;
 use MicroHis\IngresoResultados\Domain\PendingLabResult;
 use MicroHis\IngresoResultados\Domain\ResultStatus;
 use PDO;
@@ -29,7 +31,7 @@ final class PdoPendingResultRepository implements PendingResultRepository
 
         $row = $statement->fetch(PDO::FETCH_ASSOC);
         if (!$row) {
-            throw new \RuntimeException('Resultado pendiente no encontrado.');
+            throw new PendingResultNotFound('Resultado pendiente no encontrado.');
         }
 
         return new PendingLabResult(
@@ -62,5 +64,30 @@ final class PdoPendingResultRepository implements PendingResultRepository
             ':tenant_id' => $result->tenantId,
             ':id' => $result->id,
         ]);
+
+        if ($statement->rowCount() === 0) {
+            throw new PendingResultNotFound('Resultado pendiente no encontrado.');
+        }
+    }
+
+    public function saveWithAudit(PendingLabResult $result, array $event, AuditLogger $audit): void
+    {
+        $startedTransaction = !$this->pdo->inTransaction();
+        if ($startedTransaction) {
+            $this->pdo->beginTransaction();
+        }
+
+        try {
+            $this->save($result);
+            $audit->record($event);
+            if ($startedTransaction) {
+                $this->pdo->commit();
+            }
+        } catch (\Throwable $error) {
+            if ($startedTransaction && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $error;
+        }
     }
 }

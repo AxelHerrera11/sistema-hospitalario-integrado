@@ -7,6 +7,7 @@ namespace MicroHis\IngresoResultados\Presentation;
 use MicroHis\IngresoResultados\Application\CapturePendingResult;
 use MicroHis\IngresoResultados\Application\CaptureResultCommand;
 use MicroHis\IngresoResultados\Domain\DomainRuleViolation;
+use MicroHis\IngresoResultados\Application\PendingResultNotFound;
 
 final class HttpResultController
 {
@@ -33,6 +34,8 @@ final class HttpResultController
             return ['status' => 200, 'body' => $response];
         } catch (DomainRuleViolation $error) {
             return ['status' => 422, 'body' => ['error' => $error->getMessage()]];
+        } catch (PendingResultNotFound $error) {
+            return ['status' => 404, 'body' => ['error' => $error->getMessage()]];
         } catch (\Throwable) {
             return ['status' => 500, 'body' => ['error' => 'No fue posible guardar el resultado.']];
         }

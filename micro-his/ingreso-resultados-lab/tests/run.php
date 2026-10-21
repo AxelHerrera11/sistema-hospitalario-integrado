@@ -49,6 +49,7 @@ $response = $useCase->execute(new CaptureResultCommand(
 ));
 assertTrue($response['status'] === 'capturado', 'Camino feliz debe capturar resultado.');
 assertTrue(count($audit->events) === 1, 'Camino feliz debe auditar captura.');
+assertTrue($audit->events[0]['new_value'] === '95', 'La auditoria debe conservar el valor nuevo.');
 
 $repository = new InMemoryPendingResultRepository([
     new PendingLabResult('res-002', 'hospital-a', 'PAC-002', 'HB', 'g/dL'),
@@ -66,8 +67,8 @@ expectException(DomainRuleViolation::class, fn () => $useCase->execute(new Captu
 $captured = new PendingLabResult('res-003', 'hospital-a', 'PAC-003', 'GLU', 'mg/dL');
 $captured->capture('90', 'mg/dL', null);
 $correction = new CorrectCapturedResult(
-    new InMemoryPendingResultRepository([$captured]),
-    new ArrayAuditLogger(),
+    $correctionRepository = new InMemoryPendingResultRepository([$captured]),
+    $correctionAudit = new ArrayAuditLogger(),
 );
 expectException(DomainRuleViolation::class, fn () => $correction->execute(new CorrectionCommand(
     tenantId: 'hospital-a',
@@ -78,6 +79,25 @@ expectException(DomainRuleViolation::class, fn () => $correction->execute(new Co
     userId: 'tech-02',
 )));
 
+$correction->execute(new CorrectionCommand('hospital-a', 'res-003', '91', 'mg/dL', 'Ajuste validado', 'tech-02'));
+assertTrue($correctionAudit->events[0]['previous_value'] === '90', 'La auditoria debe conservar el valor anterior.');
+assertTrue($correctionAudit->events[0]['new_value'] === '91', 'La auditoria debe conservar el valor corregido.');
+
+$rollbackResult = new PendingLabResult('res-rollback', 'hospital-a', 'PAC-005', 'GLU', 'mg/dL');
+$rollbackResult->capture('90', 'mg/dL', null);
+$rollbackRepository = new InMemoryPendingResultRepository([$rollbackResult]);
+$failingAudit = new class implements AuditLogger {
+    public function record(array $event): void
+    {
+        throw new RuntimeException('Falla simulada de auditoria.');
+    }
+};
+expectException(RuntimeException::class, fn () => (new CorrectCapturedResult(
+    $rollbackRepository,
+    $failingAudit,
+))->execute(new CorrectionCommand('hospital-a', 'res-rollback', '91', 'mg/dL', 'Prueba atomica', 'tech-02')));
+assertTrue($rollbackRepository->getById('hospital-a', 'res-rollback')->value === '90', 'La auditoria fallida debe revertir el cambio.');
+
 $failingRepository = new class implements PendingResultRepository {
     public function getById(string $tenantId, string $resultId): PendingLabResult
     {
@@ -85,6 +105,11 @@ $failingRepository = new class implements PendingResultRepository {
     }
 
     public function save(PendingLabResult $result): void
+    {
+        throw new RuntimeException('Falla simulada de persistencia.');
+    }
+
+    public function saveWithAudit(PendingLabResult $result, array $event, AuditLogger $audit): void
     {
         throw new RuntimeException('Falla simulada de persistencia.');
     }
