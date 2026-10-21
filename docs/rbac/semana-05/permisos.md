@@ -1,4 +1,8 @@
-# Catálogo de permisos y roles
+# Catálogo histórico de permisos y roles (Semana 16)
+
+**Vigencia:** la conciliación transversal posterior está en
+[catálogo común de módulos](../catalogo-modulos.md), junto con `config/rbac.php`.
+Los conteos, exclusiones y matrices de esta página describen la entrega histórica.
 
 **Propuesta vigente en `config/rbac.php` desde Semana 16 (2026-10-19), pendiente de
 aprobación del equipo.** Cada permiso tiene un estado explícito:
