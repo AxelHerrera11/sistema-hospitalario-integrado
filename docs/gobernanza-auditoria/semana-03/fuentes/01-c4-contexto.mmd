@@ -1,0 +1,17 @@
+%% C4 nivel 1 — Contexto (flowchart: la sintaxis C4 de Mermaid es experimental).
+flowchart TB
+    ADM["Persona<br/><b>Administrador de gobernanza</b><br/>Consulta la bitácora de su hospital"]
+    USR["Persona<br/><b>Personal clínico/operativo</b><br/>Genera eventos al usar el HIS"]
+    HIS["Sistema<br/><b>Sistema Hospitalario Integrado</b><br/>Laravel 12 + micro-his"]
+    GOB["Sistema (este módulo)<br/><b>Gobernanza y Auditoría</b><br/>Registra y consulta eventos de auditoría"]
+    AUTH["Sistema externo<br/><b>Usuarios/Tenants + JWT</b><br/>Identidad y tenant del servidor"]
+    RBAC["Sistema externo<br/><b>RBAC</b><br/>Autoriza y reporta denegaciones"]
+    CEN[("Sistema externo<br/><b>PostgreSQL CENTRAL</b><br/>audit_log, audit_chain_state")]
+
+    USR -- "usa (HTTPS)" --> HIS
+    ADM -- "consulta GET /api/v1/audit-events" --> GOB
+    HIS -- "registra eventos (AuditLogger)" --> GOB
+    RBAC -- "denegaciones (DenialRecorder)" --> GOB
+    GOB -- "autoriza auditoria.ver (Authorize)" --> RBAC
+    GOB -- "identidad y tenant (guard api, atributo tenant)" --> AUTH
+    GOB -- "INSERT / SELECT parametrizados" --> CEN

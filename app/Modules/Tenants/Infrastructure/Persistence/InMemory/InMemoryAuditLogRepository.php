@@ -3,80 +3,40 @@ declare(strict_types=1);
 namespace App\Modules\Tenants\Infrastructure\Persistence\InMemory;
 use App\Modules\Tenants\Domain\Events\DomainEvent;
 use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
-use DateTimeImmutable;
+/** Bitácora de solo inserción con cadena de hashes verificable (cada entrada sella a la anterior). */
 final class InMemoryAuditLogRepository implements AuditLogRepositoryInterface
 {
     private array $logs = [];
-    private string $previousHash = '';
     public function log(DomainEvent $event): void
     {
-        $payload = $event->payload();
-        $payloadJson = json_encode($payload);
-        $currentHash = $this->calculateHash($payloadJson);
-        $this->logs[] = [
+        $entry = [
             'event_id' => $event->eventId(),
             'event_name' => $event->eventName(),
-            'payload' => $payload,
-            'severity' => $payload['severity'] ?? 'INFO',
-            'previous_hash' => $this->previousHash,
-            'hash_chain' => $currentHash,
-            'occurred_at' => $event->occurredAt(),];
-        $this->previousHash = $currentHash;}
-    public function logRaw(string $eventName, array $payload, ?string $severity = null): void
-    {
-        $payloadJson = json_encode($payload);
-        $currentHash = $this->calculateHash($payloadJson);
-        $this->logs[] = [
-            'event_id' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
-            'event_name' => $eventName,
-            'payload' => $payload,
-            'severity' => $severity ?? 'INFO',
-            'previous_hash' => $this->previousHash,
-            'hash_chain' => $currentHash,
-            'occurred_at' => new DateTimeImmutable(),];
-        $this->previousHash = $currentHash;}
-    public function findByUserId(string $userId, int $limit = 100, int $offset = 0): array
-    {
-        $filtered = array_filter(
-            $this->logs,
-            fn(array $log) => ($log['payload']['user_id'] ?? null) === $userId);
-        return array_slice(array_values($filtered), $offset, $limit);}
+            'tenant_id' => $event->tenantId(),
+            'payload' => $event->payload(),
+            'severity' => $event->severity(),
+            'occurred_at' => $event->occurredAt()->format('Y-m-d\TH:i:s.uP'),
+            'previous_hash' => $this->logs === [] ? '' : $this->logs[array_key_last($this->logs)]['hash'],];
+        $entry['hash'] = self::hashOf($entry);
+        $this->logs[] = $entry;}
     public function findByTenantId(string $tenantId, int $limit = 100, int $offset = 0): array
     {
-        $filtered = array_filter(
-            $this->logs,
-            fn(array $log) => ($log['payload']['tenant_id'] ?? null) === $tenantId);
-        return array_slice(array_values($filtered), $offset, $limit);}
+        return array_slice(array_values(array_filter($this->logs, fn(array $log) => $log['tenant_id'] === $tenantId)), $offset, $limit);}
     public function findByEventName(string $eventName, int $limit = 100, int $offset = 0): array
     {
-        $filtered = array_filter(
-            $this->logs,
-            fn(array $log) => $log['event_name'] === $eventName);
-        return array_slice(array_values($filtered), $offset, $limit);}
-    public function findByDateRange(DateTimeImmutable $from, DateTimeImmutable $to, int $limit = 100, int $offset = 0): array
-    {
-        $filtered = array_filter(
-            $this->logs,
-            fn(array $log) => $log['occurred_at'] >= $from && $log['occurred_at'] <= $to);
-        return array_slice(array_values($filtered), $offset, $limit);}
+        return array_slice(array_values(array_filter($this->logs, fn(array $log) => $log['event_name'] === $eventName)), $offset, $limit);}
     public function verifyHashChain(): bool
     {
-        $prevHash = '';
+        $previous = '';
         foreach ($this->logs as $log) {
-            if ($log['previous_hash'] !== $prevHash) {
+            if ($log['previous_hash'] !== $previous || !hash_equals(self::hashOf($log), $log['hash'])) {
                 return false;}
-            $prevHash = $log['hash_chain'];}
+            $previous = $log['hash'];}
         return true;}
-    public function getLogs(): array
+    public function all(): array
     {
         return $this->logs;}
-    public function clear(): void
+    private static function hashOf(array $entry): string
     {
-        $this->logs = [];
-        $this->previousHash = '';}
-    private function calculateHash(string $payload): string
-    {
-        $data = $this->previousHash . $payload . (new DateTimeImmutable())->format('Y-m-d H:i:s.u');
-        return hash('sha256', $data);
-    }
-}
+        unset($entry['hash']);
+        return hash('sha256', json_encode($entry, JSON_THROW_ON_ERROR));}}
