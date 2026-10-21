@@ -7,8 +7,6 @@ namespace Tests\Feature\MedicationCatalog;
 use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Domain\Medication;
 use MicroHis\MedicationCatalog\Persistence\InMemoryMedicationRepository;
-use MicroHis\Rbac\Domain\DenialRecorder;
-use MicroHis\Rbac\Domain\RoleResolver;
 use Tests\TestCase;
 
 /** API v1 del catálogo con los middlewares y la matriz RBAC reales; repositorio InMemory salvo en la prueba de caída. */
@@ -20,12 +18,7 @@ final class MedicationCatalogApiTest extends TestCase
     {
         parent::setUp();
         // El kernel sincroniza sus alias al crearse; se resuelve antes para que la sustitución de identidad prevalezca.
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $this->app['router']->aliasMiddleware('tenant', CatalogTestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', CatalogTestIdentity::class);
-        $this->app->instance(RoleResolver::class, new CatalogTestIdentity());
-        $this->app->instance(DenialRecorder::class, new CatalogTestIdentity());
-        CatalogTestIdentity::$denials = [];
+        CatalogTestIdentity::install($this->app);
         $repository = new InMemoryMedicationRepository();
         $this->amoxicilina = (string) $repository->insert(Medication::register(['code' => 'amx-500', 'name' => 'Amoxicilina 500 mg',
             'active_ingredient' => 'Amoxicilina', 'pharmacological_group' => 'Antibiótico']))->id;

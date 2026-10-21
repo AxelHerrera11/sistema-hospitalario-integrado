@@ -4,8 +4,6 @@ namespace Tests\Database\Hospital;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use MicroHis\Rbac\Domain\DenialRecorder;
-use MicroHis\Rbac\Domain\RoleResolver;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Feature\MedicationCatalog\CatalogTestIdentity;
 use Tests\TestCase;
@@ -24,12 +22,7 @@ class MedicationCatalogPostgresTest extends TestCase
         parent::setUp();
         $this->assertPostgreSqlIntegrityPrerequisites();
         Artisan::call('migrate:fresh', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--force' => true]);
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $this->app['router']->aliasMiddleware('tenant', CatalogTestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', CatalogTestIdentity::class);
-        $this->app->instance(RoleResolver::class, new CatalogTestIdentity());
-        $this->app->instance(DenialRecorder::class, new CatalogTestIdentity());
-        CatalogTestIdentity::$denials = [];
+        CatalogTestIdentity::install($this->app);
         CatalogTestIdentity::as('admin_hospital');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }

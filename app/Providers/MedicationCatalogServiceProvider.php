@@ -20,7 +20,8 @@ final class MedicationCatalogServiceProvider extends ServiceProvider
     public function register(): void
     {
         require_once base_path('micro-his/catalogo-medicamentos/app.php');
-        $this->app->bind(MedicationRepository::class, static fn (): MedicationRepository =>
+        // Una instancia por petición: la transacción de las escrituras auditadas y el Router usan la misma conexión.
+        $this->app->scoped(MedicationRepository::class, static fn (): MedicationRepository =>
             new HospitalMedicationRepository(static fn () => DB::connection('hospital')->getPdo()));
         $this->app->bind(MedicationLookup::class, static fn ($app): MedicationLookup => new ConsultMedications($app->make(MedicationRepository::class)));
         $this->app->bind(CatalogRouter::class, static fn ($app): CatalogRouter => catalog_router($app->make(MedicationRepository::class)));

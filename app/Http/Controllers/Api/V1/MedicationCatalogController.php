@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\MedicationCatalog\AuditedCatalogWrites;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use MicroHis\MedicationCatalog\Application\MedicationLookup;
@@ -20,7 +21,8 @@ use MicroHis\MedicationCatalog\Presentation\Router as CatalogRouter;
  */
 final class MedicationCatalogController extends Controller
 {
-    public function __construct(private readonly CatalogRouter $catalog, private readonly MedicationLookup $lookup)
+    public function __construct(private readonly CatalogRouter $catalog, private readonly MedicationLookup $lookup,
+        private readonly AuditedCatalogWrites $writes)
     {
     }
 
@@ -31,12 +33,14 @@ final class MedicationCatalogController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        return $this->forward($request, 'POST', '/medications');
+        return $this->json($request, $this->writes->run('medicamentos.registrado', $this->actor($request),
+            fn (): array => $this->dispatch($request, 'POST', '/medications')));
     }
 
     public function changeValidity(Request $request, string $medication): JsonResponse
     {
-        return $this->forward($request, 'PATCH', '/medications/' . rawurlencode($medication) . '/validity');
+        return $this->json($request, $this->writes->run('medicamentos.vigencia_cambiada', $this->actor($request),
+            fn (): array => $this->dispatch($request, 'PATCH', '/medications/' . rawurlencode($medication) . '/validity')));
     }
 
     public function show(Request $request, string $medication): JsonResponse
@@ -53,7 +57,32 @@ final class MedicationCatalogController extends Controller
 
     private function forward(Request $request, string $method, string $path): JsonResponse
     {
-        return $this->json($request, $this->catalog->dispatch(new CatalogRequest($method, $path, $request->query(), (string) $request->getContent())));
+        return $this->json($request, $this->dispatch($request, $method, $path));
+    }
+
+    /** @return array{status: int, body: array} */
+    private function dispatch(Request $request, string $method, string $path): array
+    {
+        return $this->catalog->dispatch(new CatalogRequest($method, $path, $request->query(), (string) $request->getContent()));
+    }
+
+    /** Actor y hospital salen de los middlewares (servidor), nunca del cuerpo; el trace_id es el de la respuesta. */
+    private function actor(Request $request): array
+    {
+        $tenant = $request->attributes->get('tenant');
+
+        return ['user_id' => $request->user('api')?->getAuthIdentifier(), 'trace_id' => $this->traceId($request),
+            'hospital_id' => is_object($tenant) && method_exists($tenant, 'getKey') ? $tenant->getKey() : null];
+    }
+
+    private function traceId(Request $request): string
+    {
+        if (!$request->attributes->has('catalog_trace_id')) {
+            $requested = (string) $request->header('X-Request-Id', '');
+            $request->attributes->set('catalog_trace_id', preg_match('/^[A-Za-z0-9._-]{8,64}$/', $requested) === 1 ? $requested : 'trace-' . bin2hex(random_bytes(6)));
+        }
+
+        return $request->attributes->get('catalog_trace_id');
     }
 
     /** @param array{status: int, body: array} $response */
@@ -66,8 +95,7 @@ final class MedicationCatalogController extends Controller
         if (isset($body['results'])) {
             $body['results'] = array_map(self::contractFields(...), $body['results']);
         }
-        $requested = (string) $request->header('X-Request-Id', '');
-        $body['trace_id'] = preg_match('/^[A-Za-z0-9._-]{8,64}$/', $requested) === 1 ? $requested : 'trace-' . bin2hex(random_bytes(6));
+        $body['trace_id'] = $this->traceId($request);
 
         return response()->json($body, $response['status'])->header('Cache-Control', 'no-store, private');
     }
