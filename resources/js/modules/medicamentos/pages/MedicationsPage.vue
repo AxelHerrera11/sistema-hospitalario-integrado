@@ -14,7 +14,7 @@
             <p id="meds-q-help" class="meds__hint">De 2 a 60 caracteres; no distingue mayúsculas.</p>
         </form>
         <p v-if="searchError" class="meds__msg meds__msg--error" role="alert">
-            {{ searchError }} <button v-if="searchRetry" type="button" @click="search">Reintentar</button>
+            {{ searchError }} <button v-if="searchRetry" type="button" class="meds__secondary" @click="search">Reintentar</button>
         </p>
         <p v-else-if="searched && !searching && results.length === 0" class="meds__msg" role="status">No hay medicamentos que coincidan.</p>
 
@@ -33,9 +33,9 @@
                 <dt>Código</dt><dd>{{ selected.code }}</dd>
                 <dt>Principio activo</dt><dd>{{ selected.active_ingredient }}</dd>
                 <dt>Grupo farmacológico</dt><dd>{{ selected.pharmacological_group }}</dd>
-                <dt>Vigencia</dt><dd>{{ validityLabel(selected.validity) }}</dd>
+                <dt>Vigencia</dt><dd><span :class="['meds__badge', `meds__badge--${selected.validity}`]">{{ validityLabel(selected.validity) }}</span></dd>
             </dl>
-            <button v-if="canChange" type="button" :disabled="changing" @click="toggleValidity">
+            <button v-if="canChange" type="button" class="meds__secondary" :disabled="changing" @click="toggleValidity">
                 {{ changing ? 'Guardando…' : (selected.validity === 'active' ? 'Marcar como no vigente' : 'Marcar como vigente') }}
             </button>
             <p v-if="validityMessage" :class="['meds__msg', validityOk ? 'meds__msg--ok' : 'meds__msg--error']" role="status">{{ validityMessage }}</p>
@@ -43,15 +43,17 @@
 
         <form v-if="canRegister" class="meds__card" novalidate @submit.prevent="register">
             <h2>Registrar medicamento</h2>
+            <div class="meds__grid">
             <div v-for="field in fields" :key="field.key" class="meds__field">
                 <label :for="`meds-${field.key}`">{{ field.label }}</label>
                 <input :id="`meds-${field.key}`" v-model="draft[field.key]" :maxlength="field.max" autocomplete="off"
                        :aria-invalid="Boolean(errors[field.key])" :aria-describedby="errors[field.key] ? `meds-${field.key}-err` : null">
                 <p v-if="errors[field.key]" :id="`meds-${field.key}-err`" class="meds__field-error">{{ errors[field.key] }}</p>
             </div>
+            </div>
             <button type="submit" :disabled="submitting">{{ submitting ? 'Registrando…' : 'Registrar' }}</button>
             <p v-if="registerMessage" :class="['meds__msg', registerOk ? 'meds__msg--ok' : 'meds__msg--error']" role="status">
-                {{ registerMessage }} <button v-if="registerRetry" type="button" @click="register">Reintentar</button>
+                {{ registerMessage }} <button v-if="registerRetry" type="button" class="meds__secondary" @click="register">Reintentar</button>
             </p>
         </form>
     </section>
@@ -170,26 +172,53 @@ async function register() {
 </script>
 
 <style scoped>
+/* El preflight de Tailwind quita bordes, fondos y tamaños a campos, botones y títulos; se restauran con los tokens de Pacientes. */
 .meds { max-width: 920px; margin: 0 auto; color: #0f172a; }
+.meds h1 { font-size: 1.6rem; font-weight: 700; margin: 0.5rem 0 1rem; }
+.meds h2 { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.75rem; }
+.meds label { font-weight: 600; }
 .meds__card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; margin: 1rem 0; background: #fff; }
 .meds__row { display: flex; gap: 0.5rem; }
-.meds__row input, .meds__field input { flex: 1; min-height: 2.5rem; padding: 0.4rem 0.6rem; font-size: 1rem; }
-.meds__field { display: grid; gap: 0.25rem; margin-bottom: 0.75rem; }
-.meds__hint { color: #475569; font-size: 0.9rem; }
-.meds__list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.meds input { min-height: 44px; padding: 0.5rem 0.65rem; border: 1px solid #64748b; border-radius: 6px; background: #fff; font: inherit; }
+.meds__row input, .meds__field input { flex: 1; width: 100%; }
+.meds button { min-height: 44px; padding: 0.55rem 1rem; border: 1px solid #1d4ed8; border-radius: 6px; background: #1d4ed8;
+    color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.meds button:disabled { opacity: 0.6; cursor: progress; }
+/* Jerarquía: el primario envía (Buscar, Registrar); las acciones secundarias van en contorno y los resultados como filas. */
+.meds .meds__secondary { background: #fff; color: #1e3a8a; }
+.meds .meds__pick { background: #fff; color: #0f172a; border-color: #cbd5e1; font-weight: 400; }
+.meds .meds__pick:hover { border-color: #1d4ed8; background: #eff6ff; }
+.meds .meds__pick[aria-pressed="true"] { border-color: #1d4ed8; background: #eff6ff; box-shadow: inset 4px 0 0 #1d4ed8; }
+.meds__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.meds__field { display: grid; gap: 0.25rem; margin-bottom: 0.75rem; align-content: start; }
+.meds__hint { color: #475569; font-size: 0.9rem; margin: 0.35rem 0 0; }
+.meds__list { list-style: none; padding: 0; margin: 0.75rem 0; display: grid; gap: 0.4rem; }
 .meds__pick { width: 100%; text-align: left; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; min-height: 2.75rem; }
-.meds__badge { border-radius: 999px; padding: 0 0.5rem; font-size: 0.85rem; }
-.meds__badge--active { background: #dcfce7; color: #166534; }
-.meds__badge--inactive { background: #f1f5f9; color: #334155; border: 1px solid #94a3b8; }
-.meds__detail { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
-.meds__msg { padding: 0.5rem 0.75rem; border-radius: 6px; background: #f1f5f9; }
-.meds__msg--ok { background: #dcfce7; color: #14532d; }
-.meds__msg--warn { background: #fef9c3; color: #713f12; }
-.meds__msg--error, .meds__field-error { color: #991b1b; }
-.meds__msg--error { background: #fee2e2; }
+/* La vigencia se distingue por texto, color y trazo (continuo o discontinuo), no solo por color. */
+.meds__badge { display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 999px; padding: 0.1rem 0.6rem;
+    font-size: 0.85rem; font-weight: 600; border: 1px solid; }
+.meds__badge::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.meds__badge--active { background: #dcfce7; color: #14532d; border-color: #16a34a; }
+.meds__badge--inactive { background: #f1f5f9; color: #334155; border: 1px dashed #64748b; }
+.meds__badge--inactive::before { background: transparent; border: 2px solid currentColor; }
+.meds__detail { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1.25rem; margin: 0 0 1rem; }
+.meds__detail dt { color: #475569; }
+.meds__detail dd { margin: 0; overflow-wrap: anywhere; }
+.meds__msg { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0.75rem 0 0; padding: 0.6rem 0.85rem;
+    border-radius: 6px; border-left: 4px solid #64748b; background: #f1f5f9; }
+.meds__msg--ok { background: #dcfce7; color: #14532d; border-left-color: #16a34a; }
+.meds__msg--warn { background: #fef9c3; color: #713f12; border-left-color: #ca8a04; }
+.meds__msg--error { background: #fee2e2; color: #7f1d1d; border-left-color: #dc2626; }
+.meds__field-error { margin: 0; color: #991b1b; font-size: 0.9rem; }
+.meds input[aria-invalid="true"] { border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
 button:focus-visible, input:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 @media (max-width: 600px) {
     .meds__row { flex-direction: column; }
-    .meds__detail { grid-template-columns: 1fr; }
+    .meds__grid { grid-template-columns: 1fr; }
+    .meds__card { padding: 0.85rem; }
+    .meds form > button, .meds article > button { width: 100%; }
+    .meds__detail { grid-template-columns: 1fr; gap: 0; }
+    .meds__detail dt { font-size: 0.85rem; }
+    .meds__detail dd { margin-bottom: 0.5rem; }
 }
 </style>
