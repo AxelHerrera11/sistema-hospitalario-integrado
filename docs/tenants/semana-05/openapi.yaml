@@ -1,0 +1,290 @@
+openapi: 3.1.0
+info:
+  title: HIS Tenants & Auth API
+  version: 1.0.0
+  description: |
+    API para Gestión de Usuarios, Tenants y Endurecimiento de Autenticación.
+    **Flujos:** alta de usuario por tenant, login + MFA (TOTP/WebAuthn), revocación de sesión
+    (logout / force-revoke) y renovación de tokens (refresh rotation + reuse detection).
+    **Seguridad:** JWT RS256 con JWKS rotation (24h), MFA adaptativo por rol/tenant, blocklist de
+    access tokens (revocación inmediata), rate limiting por IP/email, auditoría inmutable (hash chain SHA-256).
+  contact: {name: Equipo Arquitectura HIS, email: arquitectura@hospital.com}
+  license: {name: Propietario, identifier: PROPRIETARY}
+servers:
+  - {url: 'https://api.hospital.com/v1', description: Producción}
+  - {url: 'https://staging-api.hospital.com/v1', description: Staging}
+  - {url: 'http://localhost:8080/v1', description: Desarrollo local}
+# Por defecto: Bearer + X-Tenant-ID juntos (AND). Los endpoints públicos lo sobreescriben con security: []
+security:
+  - BearerAuth: []
+    TenantHeader: []
+tags:
+  - {name: Authentication, description: 'Autenticación (login, register, MFA, refresh, logout)'}
+  - {name: Admin Users, description: Gestión de usuarios (requiere TENANT_ADMIN)}
+  - {name: Admin Tenants, description: Gestión de tenants (requiere PLATFORM_ADMIN)}
+  - {name: System, description: Health checks y metadatos}
+
+# Los esquemas de seguridad deben vivir en el documento raíz; el resto está en components.yaml
+components:
+  securitySchemes:
+    BearerAuth:
+      {type: http, scheme: bearer, bearerFormat: JWT, description: 'JWT RS256 Access Token (15 min). Obtener vía POST /auth/login o /auth/refresh'}
+    TenantHeader:
+      {type: apiKey, in: header, name: X-Tenant-ID, description: UUID del tenant (hospital/organización)}
+
+paths:
+  # ===== AUTHENTICATION =====
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Registrar nuevo usuario (Admin Tenant)
+      description: |
+        Crea un usuario en el tenant del admin autenticado (TENANT_ADMIN o PLATFORM_ADMIN).
+        Valida tenant activo, cupo disponible, email único en tenant y password policy.
+        Genera contraseña temporal y envía email de activación.
+        403: sin permisos o tenant inactivo. 409: email duplicado. 422: cupo excedido.
+      parameters: [{$ref: './components.yaml#/components/parameters/XTenantId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RegisterUserRequest'}}}
+      responses:
+        '201': {description: Usuario creado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RegisterUserResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '409': {$ref: './components.yaml#/components/responses/Conflict'}
+        '422': {$ref: './components.yaml#/components/responses/QuotaExceeded'}
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Iniciar sesión (Login + MFA)
+      description: |
+        Autentica con email + password. Si se requiere MFA (rol TENANT_ADMIN/AUDITOR, política del
+        tenant o usuario.mfa_required) retorna un challenge (TOTP o WebAuthn). En éxito retorna
+        access_token (JWT RS256, 15 min) + refresh_token (opaco, 7 d, con rotación).
+        401: credenciales inválidas. 403: cuenta desactivada, tenant inactivo o intento cross-tenant.
+        423: cuenta bloqueada (lockout progresivo) o MFA bloqueado.
+      security: []
+      parameters: [{$ref: './components.yaml#/components/parameters/XTenantId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/LoginRequest'}}}
+      responses:
+        '200':
+          description: Login exitoso (o challenge MFA)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: './components.yaml#/components/schemas/AuthSuccessResponse'
+                  - $ref: './components.yaml#/components/schemas/MfaChallengeResponse'
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '423': {$ref: './components.yaml#/components/responses/Locked'}
+        '429': {$ref: './components.yaml#/components/responses/TooManyRequests'}
+
+  /auth/mfa:
+    post:
+      tags: [Authentication]
+      summary: Verificar código MFA (TOTP/WebAuthn)
+      description: |
+        Completa el flujo MFA tras recibir el challenge de /auth/login.
+        TOTP: código de 6 dígitos. WebAuthn: assertion base64 (credentialId + clientDataJSON + authenticatorData + signature).
+        401: código inválido. 403: challenge expirado o inválido. 423: MFA bloqueado (3 intentos fallidos → 30 min).
+      security: []
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/MfaVerificationRequest'}}}
+      responses:
+        '200': {description: MFA verificado, tokens generados, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/AuthSuccessResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '423': {$ref: './components.yaml#/components/responses/Locked'}
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Renovar access token (Refresh Rotation + Reuse Detection)
+      description: |
+        **Rotación:** invalida el refresh anterior y genera un nuevo par (access + refresh).
+        **Reuse detection:** si el mismo refresh se presenta 2 veces → revocación total + alerta CRÍTICA.
+        401: refresh revocado, expirado o reuse detected (ataque).
+      security: []
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RefreshRequest'}}}
+      responses:
+        '200': {description: Tokens renovados, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RefreshResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Cerrar sesión propia (Logout)
+      description: 'Revoca la sesión actual: access token → blocklist, refresh token → DELETE, session → DELETE.'
+      parameters: [{$ref: './components.yaml#/components/parameters/XTenantId'}]
+      requestBody:
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RevokeRequest'}}}
+      responses:
+        '200': {description: Sesión cerrada, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RevokeResponse'}}}}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+
+  # ===== ADMIN USERS =====
+  /admin/users:
+    get:
+      tags: [Admin Users]
+      summary: Listar usuarios del tenant (paginado)
+      description: Requiere TENANT_ADMIN o PLATFORM_ADMIN. Filtra por el tenant indicado en X-Tenant-ID.
+      parameters:
+        - {$ref: './components.yaml#/components/parameters/XTenantId'}
+        - {$ref: './components.yaml#/components/parameters/LimitParam'}
+        - {$ref: './components.yaml#/components/parameters/OffsetParam'}
+      responses:
+        '200': {description: Lista paginada de usuarios, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/UserListResponse'}}}}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+    post:
+      tags: [Admin Users]
+      summary: Crear usuario (alias de /auth/register en contexto admin)
+      description: Idéntico a POST /auth/register. 409 email duplicado, 422 cupo excedido.
+      parameters: [{$ref: './components.yaml#/components/parameters/XTenantId'}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/CreateUserRequest'}}}
+      responses:
+        '201': {description: Usuario creado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RegisterUserResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '409': {$ref: './components.yaml#/components/responses/Conflict'}
+        '422': {$ref: './components.yaml#/components/responses/QuotaExceeded'}
+
+  /admin/users/{id}:
+    parameters:
+      - {$ref: './components.yaml#/components/parameters/XTenantId'}
+      - {$ref: './components.yaml#/components/parameters/UserId'}
+    get:
+      tags: [Admin Users]
+      summary: Obtener usuario por ID
+      responses:
+        '200': {description: Usuario encontrado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/UserResponse'}}}}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+    patch:
+      tags: [Admin Users]
+      summary: Actualizar usuario (nombre, roles, status, mfa_required)
+      description: 400 si los roles no están permitidos en el tenant.
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/UpdateUserRequest'}}}
+      responses:
+        '200': {description: Usuario actualizado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/UserResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+    delete:
+      tags: [Admin Users]
+      summary: Desactivar usuario (soft delete)
+      description: Cambia status a 'inactive' y revoca todas sus sesiones. No elimina físicamente (auditoría).
+      responses:
+        '200': {description: Usuario desactivado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/SuccessResponse'}}}}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+
+  /admin/users/{userId}/sessions:
+    delete:
+      tags: [Admin Users]
+      summary: 'Force-revoke: revocar TODAS las sesiones de un usuario'
+      description: |
+        Revoca todos los access tokens (blocklist), refresh tokens (DELETE) y sessions (DELETE).
+        Publica el evento SessionRevokedEvent para los microservicios. Requiere TENANT_ADMIN o PLATFORM_ADMIN.
+      parameters:
+        - {$ref: './components.yaml#/components/parameters/XTenantId'}
+        - {$ref: './components.yaml#/components/parameters/SessionUserId'}
+      responses:
+        '200': {description: Sesiones revocadas, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/RevokeResponse'}}}}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+
+  # ===== ADMIN TENANTS (solo PLATFORM_ADMIN, sin X-Tenant-ID) =====
+  /admin/tenants:
+    get:
+      tags: [Admin Tenants]
+      summary: Listar tenants (solo PLATFORM_ADMIN)
+      security: [{BearerAuth: []}]
+      parameters:
+        - {$ref: './components.yaml#/components/parameters/LimitParam'}
+        - {$ref: './components.yaml#/components/parameters/OffsetParam'}
+      responses:
+        '200': {description: Lista paginada de tenants, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/TenantListResponse'}}}}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+    post:
+      tags: [Admin Tenants]
+      summary: Crear nuevo tenant (solo PLATFORM_ADMIN)
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/CreateTenantRequest'}}}
+      responses:
+        '201': {description: Tenant creado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/TenantResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+
+  /admin/tenants/{id}:
+    parameters: [{$ref: './components.yaml#/components/parameters/TenantId'}]
+    get:
+      tags: [Admin Tenants]
+      summary: Obtener tenant por ID (solo PLATFORM_ADMIN)
+      security: [{BearerAuth: []}]
+      responses:
+        '200': {description: Tenant encontrado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/TenantResponse'}}}}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+    patch:
+      tags: [Admin Tenants]
+      summary: Actualizar tenant (nombre, status, quota, policies) (solo PLATFORM_ADMIN)
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/UpdateTenantRequest'}}}
+      responses:
+        '200': {description: Tenant actualizado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/TenantResponse'}}}}
+        '400': {$ref: './components.yaml#/components/responses/BadRequest'}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+    delete:
+      tags: [Admin Tenants]
+      summary: Eliminar tenant (soft delete, status deleted) (solo PLATFORM_ADMIN)
+      security: [{BearerAuth: []}]
+      responses:
+        '200': {description: Tenant marcado como deleted, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/SuccessResponse'}}}}
+        '401': {$ref: './components.yaml#/components/responses/Unauthorized'}
+        '403': {$ref: './components.yaml#/components/responses/Forbidden'}
+        '404': {$ref: './components.yaml#/components/responses/NotFound'}
+
+  # ===== SYSTEM =====
+  /health:
+    get:
+      tags: [System]
+      summary: Health check del servicio
+      description: Verifica dependencias (DB, Redis, JWT keys). No requiere autenticación.
+      security: []
+      responses:
+        '200': {description: Servicio saludable, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/HealthResponse'}}}}
+        '503': {description: Servicio degradado, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/HealthResponse'}}}}
+
+  /.well-known/jwks.json:
+    get:
+      tags: [System]
+      summary: JWKS para validación JWT distribuida
+      description: Claves públicas RS256 para validar access tokens sin contactar al auth service. Rotación cada 24h; cachear por `kid` con TTL 1h.
+      security: []
+      responses:
+        '200': {description: Conjunto de claves públicas, content: {application/json: {schema: {$ref: './components.yaml#/components/schemas/JwksResponse'}}}}
+        '503': {$ref: './components.yaml#/components/responses/Unavailable'}
