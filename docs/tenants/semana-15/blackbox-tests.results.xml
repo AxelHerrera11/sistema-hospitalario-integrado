@@ -1,370 +1,51 @@
-# Semana 15 — Resultados Pruebas Caja Negra (Black Box)
-## Resumen de Pruebas Caja Negra (Black Box / Feature Tests)
-| Métrica | Valor |
-|---------|-------|
-| **Total Escenarios Ejecutados** | 18 |
-| **Escenarios Pasados** | 18 (100%) |
-| **Escenarios Fallidos** | 0 |
-| **Escenarios Omitidos** | 0 |
-| **Tiempo Total** | 22.93s |
-
-## Resultados por Suite de Pruebas (Feature Tests)
-### 1. RegisterUserFeatureTest.ts (5 escenarios) ✅
-| Escenario | Descripción | Estado | Duración |
-|-----------|-------------|--------|----------|
-| **FR-001** | Crear usuario exitosamente | ✅ Pass | 1.2s |
-| **FR-002** | Fallo - Tenant inactivo | ✅ Pass | 0.8s |
-| **FR-003** | Fallo - Cupo excedido | ✅ Pass | 0.7s |
-| **FR-004** | Fallo - Email duplicado en tenant | ✅ Pass | 0.6s |
-| **FR-005** | Fallo - Password policy violada | ✅ Pass | 1.1s |
-
-**Cobertura RF:** RF-01, RF-02, RF-03 | **Estado:** ✅ 5/5 Pass
-
----
-
-### 2. LoginMfaFeatureTest.ts (6 escenarios) ✅
-
-| Escenario | Descripción | Estado | Duración |
-|-----------|-------------|--------|----------|
-| **LG-001** | Login exitoso sin MFA (rol MEDICO) | ✅ Pass | 2.1s |
-| **LG-002** | Login exitoso CON MFA TOTP (TENANT_ADMIN) | ✅ Pass | 3.2s |
-| **LG-003** | Fallo credenciales inválidas | ✅ Pass | 0.5s |
-| **LG-004** | Fallo usuario inactivo | ✅ Pass | 0.6s |
-| **LG-005** | Login + MFA WebAuthn (opcional) | ✅ Pass | 2.8s |
-| **LG-006** | MFA bloqueo tras 3 fallos | ✅ Pass | 1.2s |
-
-**Cobertura RF:** RF-04, RF-05, RF-06 | **Estado:** ✅ 6/6 Pass
-
----
-
-### 3. RefreshTokenFeatureTest.ts (3 escenarios) ✅
-
-| Escenario | Descripción | Estado | Duración |
-|-----------|-------------|--------|----------|
-| **RT-001** | Refresh exitoso con rotación | ✅ Pass | 1.1s |
-| **RT-002** | Fallo - Refresh token inválido/revokado | ✅ Pass | 0.7s |
-| **RT-003** | Reuse Detection (ATAQUE) → Revocación total | ✅ Pass | 1.5s |
-
-**Cobertura RF:** RF-07, RF-08 | **Estado:** ✅ 3/3 Pass
-
----
-
-### 4. RevokeSessionFeatureTest.ts (3 escenarios) ✅
-
-| Escenario | Descripción | Estado | Duración |
-|-----------|-------------|--------|----------|
-| **RV-001** | Revocación propia (logout) | ✅ Pass | 0.9s |
-| **RV-002** | Force-revoke Admin (todas las sesiones) | ✅ Pass | 1.4s |
-| **RV-003** | Revocación sesión inexistente | ✅ Pass | 0.3s |
-
-**Cobertura RF:** RF-09 | **Estado:** ✅ 3/3 Pass
-
----
-
-### 5. MultiTenantIsolationFeatureTest.ts (3 escenarios) ✅
-
-| Escenario | Descripción | Estado | Duración |
-|-----------|-------------|--------|----------|
-| **MT-001** | Usuario Tenant A no puede acceder Tenant B | ✅ Pass | 0.9s |
-| **MT-002** | Tenant inactivo bloquea acceso | ✅ Pass | 0.6s |
-| **MT-003** | Roles scopeados por tenant | ✅ Pass | 0.7s |
-
-**Cobertura RF:** RF-10 | **Estado:** ✅ 3/3 Pass
-
----
-
-## Resumen de Ejecución Feature Tests
-
-| Suite | Tests | Passed | Failed | Skipped | Duration |
-|-------|-------|--------|--------|---------|----------|
-| RegisterUserFeatureTest | 5 | 5 | 0 | 0 | 4.4s |
-| LoginMfaFeatureTest | 6 | 6 | 0 | 0 | 10.4s |
-| RefreshTokenFeatureTest | 3 | 3 | 0 | 0 | 3.3s |
-| RevokeSessionFeatureTest | 3 | 3 | 0 | 0 | 2.6s |
-| MultiTenantIsolationFeatureTest | 3 | 3 | 0 | 0 | 2.2s |
-| **TOTAL** | **18** | **18** | **0** | **0** | **22.9s** |
-
----
-
-## Verificación de Cobertura RF (Feature Tests)
-
-| RF | Descripción | Casos Cubiertos | Estado |
-|----|-------------|-----------------|--------|
-| **RF-01** | Alta usuario por tenant | NB-001, NB-002, NB-003, NB-004 | ✅ |
-| **RF-02** | Password Policy | NB-003, NB-005 | ✅ |
-| **RF-03** | Roles por tenant | NB-004 | ✅ |
-| **RF-04** | Autenticación credenciales | NB-001, NB-002 | ✅ |
-| **RF-05** | MFA Adaptativo | NB-005, LG-002 | ✅ |
-| **RF-06** | JWT RS256 + Refresh | NB-006, RT-001 | ✅ |
-| **RF-07** | Refresh Rotation | RT-001 | ✅ |
-| **RF-07** | Reuse Detection | RT-003 | ✅ |
-| **RF-08** | Blocklist Access | RT-002, RV-001, RV-002 | ✅ |
-| **RF-09** | Revocación Sesión | RV-001, RV-002, RV-003 | ✅ |
-| **RF-10** | Multi-tenant Isolation | MT-001, MT-002, MT-003 | ✅ |
-| **RF-11** | Lockout Progresivo | LG-006 | ✅ |
-| **RF-12** | Single Session | LG-002 (implícito) | ✅ |
-| **RF-13** | Device Fingerprint | LG-002 (device) | ✅ |
-| **RF-14** | Auditoría Inmutable | AUDIT-001 a AUDIT-003 | ✅ |
-| **RF-15** | JIT Provisioning SSO | NB-011 (pendiente) | ⚠️ Parcial |
-
-**Cobertura RF Total:** 14/15 (93.3%) - RF-15 JIT pendiente implementación completa
-
----
-
-## Verificación de Criterios de Aceptación (Gherkin)
-
-### RF-01: Alta Usuario por Tenant
-| AC | Escenario | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Usuario creado exitosamente | NB-001 | ✅ |
-| AC-02 | Tenant inactivo → 403 | NB-002 | ✅ |
-| AC-03 | Cupo excedido → 422 | NB-003 | ✅ |
-| AC-04 | Email duplicado → 409 | NB-002 | ✅ |
-| AC-05 | Password policy violada → 400 | NB-005 | ✅ |
-
-### RF-04/05: Login + MFA
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Login sin MFA (MEDICO) | LG-001 | ✅ |
-| AC-02 | Login con MFA TOTP | LG-002 | ✅ |
-| AC-03 | MFA inválido → 401 + retry | LG-003 | ✅ |
-| AC-04 | MFA bloqueado 30min | LG-006 | ✅ |
-| AC-05 | Usuario inactivo → 403 | LG-004 | ✅ |
-
-### RF-07/08: Refresh + Blocklist
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Refresh exitoso rotación | RT-001 | ✅ |
-| AC-02 | Refresh inválido → 401 | RT-002 | ✅ |
-| AC-03 | Reuse Detection → Revocación | RT-003 | ✅ |
-| AC-04 | Blocklist valida access token | RT-002 implícito | ✅ |
-
-### RF-09: Revocación Sesión
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Logout propio | RV-001 | ✅ |
-| AC-02 | Force-revoke Admin | RV-002 | ✅ |
-| AC-03 | Sesión inexistente | RV-003 | ✅ |
-
-### RF-10: Multi-tenant
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Cross-tenant bloqueado | MT-001 | ✅ |
-| AC-02 | Tenant inactivo bloquea | MT-002 | ✅ |
-| AC-03 | Roles por tenant | MT-003 | ✅ |
-
-## Resumen de Ejecución Feature Tests
-| Suite | Tests | Passed | Failed | Skipped | Duration |
-|-------|-------|--------|--------|---------|----------|
-| RegisterUserFeatureTest | 5 | 5 | 0 | 0 | 4.4s |
-| LoginMfaFeatureTest | 6 | 6 | 0 | 0 | 10.4s |
-| RefreshTokenFeatureTest | 3 | 3 | 0 | 0 | 3.3s |
-| RevokeSessionFeatureTest | 3 | 3 | 0 | 0 | 2.6s |
-| MultiTenantIsolationFeatureTest | 3 | 3 | 0 | 0 | 2.2s |
-| **TOTAL** | **18** | **18** | **0** | **0** | **22.9s** |
-
-## Verificación de Cobertura RF (Feature Tests)
-| RF | Descripción | Casos Cubiertos | Estado |
-|----|-------------|-----------------|--------|
-| **RF-01** | Alta usuario por tenant | NB-001, NB-002, NB-003, NB-004 | ✅ |
-| **RF-02** | Password Policy | NB-003, NB-005 | ✅ |
-| **RF-03** | Roles por tenant | NB-004 | ✅ |
-| **RF-04** | Autenticación credenciales | NB-001, NB-002 | ✅ |
-| **RF-05** | MFA Adaptativo | NB-005, LG-002 | ✅ |
-| **RF-06** | JWT RS256 + Refresh | NB-006, RT-001 | ✅ |
-| **RF-07** | Refresh Rotation | RT-001 | ✅ |
-| **RF-07** | Reuse Detection | RT-003 | ✅ |
-| **RF-08** | Blocklist Access | RT-002, RV-001, RV-002 | ✅ |
-| **RF-09** | Revocación Sesión | RV-001, RV-002, RV-003 | ✅ |
-| **RF-10** | Multi-tenant Isolation | MT-001, MT-002, MT-003 | ✅ |
-| **RF-11** | Lockout Progresivo | LG-006 | ✅ |
-| **RF-12** | Single Session | LG-002 (implícito) | ✅ |
-| **RF-13** | Device Fingerprint | LG-002 (device) | ✅ |
-| **RF-14** | Auditoría Inmutable | AUDIT-001 a AUDIT-003 | ✅ |
-| **RF-15** | JIT Provisioning SSO | NB-011 (pendiente) | ⚠️ Parcial |
-**Cobertura RF Total:** 14/15 (93.3%) - RF-15 JIT pendiente implementación completa
-
-## Verificación de Criterios de Aceptación (Gherkin)
-### RF-01: Alta Usuario por Tenant
-| AC | Escenario | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Usuario creado exitosamente | NB-001 | ✅ |
-| AC-02 | Tenant inactivo → 403 | NB-002 | ✅ |
-| AC-03 | Cupo excedido → 422 | NB-003 | ✅ |
-| AC-04 | Email duplicado → 409 | NB-002 | ✅ |
-| AC-05 | Password policy violada → 400 | NB-005 | ✅ |
-
-### RF-04/05: Login + MFA
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Login sin MFA (MEDICO) | LG-001 | ✅ |
-| AC-02 | Login con MFA TOTP | LG-002 | ✅ |
-| AC-03 | MFA inválido → 401 + retry | LG-003 | ✅ |
-| AC-04 | MFA bloqueado 30min | LG-006 | ✅ |
-| AC-05 | Usuario inactivo → 403 | LG-004 | ✅ |
-
-### RF-07/08: Refresh + Blocklist
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Refresh exitoso rotación | RT-001 | ✅ |
-| AC-02 | Refresh inválido → 401 | RT-002 | ✅ |
-| AC-03 | Reuse Detection → Revocación | RT-003 | ✅ |
-| AC-04 | Blocklist valida access token | RT-002 implícito | ✅ |
-
-### RF-09: Revocación Sesión
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Logout propio | RV-001 | ✅ |
-| AC-02 | Force-revoke Admin | RV-002 | ✅ |
-| AC-03 | Sesión inexistente | RV-003 | ✅ |
-
-### RF-10: Multi-tenant
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Cross-tenant bloqueado | MT-001 | ✅ |
-| AC-02 | Tenant inactivo bloquea | MT-002 | ✅ |
-| AC-03 | Roles por tenant | MT-003 | ✅ |
-
-## Resumen de Ejecución Feature Tests
-| Suite | Tests | Passed | Failed | Skipped | Duration |
-|-------|-------|--------|--------|---------|----------|
-| RegisterUserFeatureTest | 5 | 5 | 0 | 0 | 4.4s |
-| LoginMfaFeatureTest | 6 | 6 | 0 | 0 | 10.4s |
-| RefreshTokenFeatureTest | 3 | 3 | 0 | 0 | 3.3s |
-| RevokeSessionFeatureTest | 3 | 3 | 0 | 0 | 2.6s |
-| MultiTenantIsolationFeatureTest | 3 | 3 | 0 | 0 | 2.2s |
-| **TOTAL** | **18** | **18** | **0** | **0** | **22.9s** |
-
-## Verificación de Cobertura RF (Feature Tests)
-| RF | Descripción | Casos Cubiertos | Estado |
-|----|-------------|-----------------|--------|
-| **RF-01** | Alta usuario por tenant | NB-001, NB-002, NB-003, NB-004 | ✅ |
-| **RF-02** | Password Policy | NB-003, NB-005 | ✅ |
-| **RF-03** | Roles por tenant | NB-004 | ✅ |
-| **RF-04** | Autenticación credenciales | NB-001, NB-002 | ✅ |
-| **RF-05** | MFA Adaptativo | NB-005, LG-002 | ✅ |
-| **RF-06** | JWT RS256 + Refresh | NB-006, RT-001 | ✅ |
-| **RF-07** | Refresh Rotation | RT-001 | ✅ |
-| **RF-07** | Reuse Detection | RT-003 | ✅ |
-| **RF-08** | Blocklist Access | RT-002, RV-001, RV-002 | ✅ |
-| **RF-09** | Revocación Sesión | RV-001, RV-002, RV-003 | ✅ |
-| **RF-10** | Multi-tenant Isolation | MT-001, MT-002, MT-003 | ✅ |
-| **RF-11** | Lockout Progresivo | LG-006 | ✅ |
-| **RF-12** | Single Session | LG-002 (implícito) | ✅ |
-| **RF-13** | Device Fingerprint | LG-002 (device) | ✅ |
-| **RF-14** | Auditoría Inmutable | AUDIT-001 a AUDIT-003 | ✅ |
-| **RF-15** | JIT Provisioning SSO | NB-011 (pendiente) | ⚠️ Parcial |
-**Cobertura RF Total:** 14/15 (93.3%) - RF-15 JIT pendiente implementación completa
-
-## Verificación de Criterios de Aceptación (Gherkin)
-### RF-01: Alta Usuario por Tenant
-| AC | Escenario | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Usuario creado exitosamente | NB-001 | ✅ |
-| AC-02 | Tenant inactivo → 403 | NB-002 | ✅ |
-| AC-03 | Cupo excedido → 422 | NB-003 | ✅ |
-| AC-04 | Email duplicado → 409 | NB-002 | ✅ |
-| AC-05 | Password policy violada → 400 | NB-005 | ✅ |
-
-### RF-04/05: Login + MFA
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Login sin MFA (MEDICO) | LG-001 | ✅ |
-| AC-02 | Login con MFA TOTP | LG-002 | ✅ |
-| AC-03 | MFA inválido → 401 + retry | LG-003 | ✅ |
-| AC-04 | MFA bloqueado 30min | LG-006 | ✅ |
-| AC-05 | Usuario inactivo → 403 | LG-004 | ✅ |
-
-### RF-07/08: Refresh + Blocklist
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Refresh exitoso rotación | RT-001 | ✅ |
-| AC-02 | Refresh inválido → 401 | RT-002 | ✅ |
-| AC-03 | Reuse Detection → Revocación | RT-003 | ✅ |
-| AC-04 | Blocklist valida access token | RT-002 implícito | ✅ |
-
-### RF-09: Revocación Sesión
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Logout propio | RV-001 | ✅ |
-| AC-02 | Force-revoke Admin | RV-002 | ✅ |
-| AC-03 | Sesión inexistente | RV-003 | ✅ |
-
-### RF-10: Multi-tenant
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Cross-tenant bloqueado | MT-001 | ✅ |
-| AC-02 | Tenant inactivo bloquea | MT-002 | ✅ |
-| AC-03 | Roles por tenant | MT-003 | ✅ |
-
-## Resumen de Ejecución Feature Tests
-| Suite | Tests | Passed | Failed | Skipped | Duration |
-|-------|-------|--------|--------|---------|----------|
-| RegisterUserFeatureTest | 5 | 5 | 0 | 0 | 4.4s |
-| LoginMfaFeatureTest | 6 | 6 | 0 | 0 | 10.4s |
-| RefreshTokenFeatureTest | 3 | 3 | 0 | 0 | 3.3s |
-| RevokeSessionFeatureTest | 3 | 3 | 0 | 0 | 2.6s |
-| MultiTenantIsolationFeatureTest | 3 | 3 | 0 | 0 | 2.2s |
-| **TOTAL** | **18** | **18** | **0** | **0** | **22.9s** |
-
-## Verificación de Cobertura RF (Feature Tests)
-| RF | Descripción | Casos Cubiertos | Estado |
-|----|-------------|-----------------|--------|
-| **RF-01** | Alta usuario por tenant | NB-001, NB-002, NB-003, NB-004 | ✅ |
-| **RF-02** | Password Policy | NB-003, NB-005 | ✅ |
-| **RF-03** | Roles por tenant | NB-004 | ✅ |
-| **RF-04** | Autenticación credenciales | NB-001, NB-002 | ✅ |
-| **RF-05** | MFA Adaptativo | NB-005, LG-002 | ✅ |
-| **RF-06** | JWT RS256 + Refresh | NB-006, RT-001 | ✅ |
-| **RF-07** | Refresh Rotation | RT-001 | ✅ |
-| **RF-07** | Reuse Detection | RT-003 | ✅ |
-| **RF-08** | Blocklist Access | RT-002, RV-001, RV-002 | ✅ |
-| **RF-09** | Revocación Sesión | RV-001, RV-002, RV-003 | ✅ |
-| **RF-10** | Multi-tenant Isolation | MT-001, MT-002, MT-003 | ✅ |
-| **RF-11** | Lockout Progresivo | LG-006 | ✅ |
-| **RF-12** | Single Session | LG-002 (implícito) | ✅ |
-| **RF-13** | Device Fingerprint | LG-002 (device) | ✅ |
-| **RF-14** | Auditoría Inmutable | AUDIT-001 a AUDIT-003 | ✅ |
-| **RF-15** | JIT Provisioning SSO | NB-011 (pendiente) | ⚠️ Parcial |
-**Cobertura RF Total:** 14/15 (93.3%) - RF-15 JIT pendiente implementación completa
-
-## Verificación de Criterios de Aceptación (Gherkin)
-### RF-01: Alta Usuario por Tenant
-| AC | Escenario | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Usuario creado exitosamente | NB-001 | ✅ |
-| AC-02 | Tenant inactivo → 403 | NB-002 | ✅ |
-| AC-03 | Cupo excedido → 422 | NB-003 | ✅ |
-| AC-04 | Email duplicado → 409 | NB-002 | ✅ |
-| AC-05 | Password policy violada → 400 | NB-005 | ✅ |
-
-### RF-04/05: Login + MFA
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Login sin MFA (MEDICO) | LG-001 | ✅ |
-| AC-02 | Login con MFA TOTP | LG-002 | ✅ |
-| AC-03 | MFA inválido → 401 + retry | LG-003 | ✅ |
-| AC-04 | MFA bloqueado 30min | LG-006 | ✅ |
-| AC-05 | Usuario inactivo → 403 | LG-004 | ✅ |
-
-### RF-07/08: Refresh + Blocklist
-| AC | Escenario | Test Case | Estado |
-|-----|-----------|-----------|--------|
-| AC-01 | Refresh exitoso rotación | RT-001 | ✅ |
-| AC-02 | Refresh inválido → 401 | RT-002 | ✅ |
-| AC-03 | Reuse Detection → Revocación | RT-003 | ✅ |
-| AC-04 | Blocklist valida access token | RT-002 implícito | ✅ |
-
-### RF-09: Revocación Sesión
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Logout propio | RV-001 | ✅ |
-| AC-02 | Force-revoke Admin | RV-002 | ✅ |
-| AC-03 | Sesión inexistente | RV-003 | ✅ |
-
-### RF-10: Multi-tenant
-| AC | Descripción | Test Case | Estado |
-|-----|-------------|-----------|--------|
-| AC-01 | Cross-tenant bloqueado | MT-001 | ✅ |
-| AC-02 | Tenant inactivo bloquea | MT-002 | ✅ |
-| AC-03 | Roles por tenant | MT-003 | ✅ |
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reporte generado por PHPUnit (formato JUnit), no editado a mano salvo esta cabecera
+  y las rutas, que se volvieron relativas a la raíz del repositorio.
+  Comando: vendor/bin/phpunit [group caja-negra] [log-junit docs/tenants/semana-15/blackbox-tests.results.xml]
+  Entorno: PHP 8.2.12 · PHPUnit 11.5.55 · Windows 11 · 2026-10-21T17:16Z
+  Base: micro-HIS de Semana 3 (16f68b0) + pruebas de Semana 15 (#344 a #348).
+-->
+<testsuites>
+  <testsuite name="phpunit.xml" tests="27" assertions="88" errors="0" failures="0" skipped="0" time="0.157865">
+    <testsuite name="Feature" tests="27" assertions="88" errors="0" failures="0" skipped="0" time="0.157865">
+      <testsuite name="Tests\Feature\Tenants\LoginMfaFeatureTest" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" tests="7" assertions="28" errors="0" failures="0" skipped="0" time="0.077293">
+        <testcase name="test_login_without_mfa_returns_tokens" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="28" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="5" time="0.054854"/>
+        <testcase name="test_login_with_totp_needs_a_valid_single_use_challenge" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="41" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="6" time="0.004174"/>
+        <testcase name="test_three_wrong_codes_lock_the_account" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="58" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="5" time="0.003952"/>
+        <testcase name="test_unknown_email_and_wrong_password_give_the_same_answer" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="71" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="3" time="0.003415"/>
+        <testcase name="test_inactive_user_cannot_log_in" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="83" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="1" time="0.002601"/>
+        <testcase name="test_five_failures_lock_and_a_correct_password_is_still_refused" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="91" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="7" time="0.006530"/>
+        <testcase name="test_login_requires_the_hospital_header" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="104" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="1" time="0.001767"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" tests="5" assertions="16" errors="0" failures="0" skipped="0" time="0.030416">
+        <testcase name="test_token_of_hospital_a_cannot_be_used_against_hospital_b" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="23" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="3" time="0.004535"/>
+        <testcase name="test_user_list_only_shows_the_admin_hospital" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="36" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="1" time="0.004284"/>
+        <testcase name="test_same_user_and_device_keep_roles_and_sessions_per_hospital" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="47" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="8" time="0.008881"/>
+        <testcase name="test_failed_logins_lock_only_the_membership_of_that_hospital" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="69" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="2" time="0.009619"/>
+        <testcase name="test_suspended_hospital_blocks_login" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="84" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="2" time="0.003097"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\RefreshTokenFeatureTest" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" tests="4" assertions="14" errors="0" failures="0" skipped="0" time="0.013931">
+        <testcase name="test_refresh_rotates_both_tokens_and_keeps_the_session" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="28" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="5" time="0.003500"/>
+        <testcase name="test_invalid_or_missing_refresh_token_is_rejected" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="40" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="2" time="0.003559"/>
+        <testcase name="test_reusing_a_rotated_refresh_token_revokes_the_session" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="46" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="6" time="0.003504"/>
+        <testcase name="test_access_token_stays_valid_only_while_its_session_is_alive" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="61" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="1" time="0.003369"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\RegisterUserFeatureTest" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" tests="7" assertions="16" errors="0" failures="0" skipped="0" time="0.020484">
+        <testcase name="test_admin_registers_a_user_in_its_own_hospital" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="23" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="5" time="0.003727"/>
+        <testcase name="test_privileged_role_gets_totp_enrollment_once" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="36" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="2" time="0.002840"/>
+        <testcase name="test_inactive_hospital_rejects_registration" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="46" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="1" time="0.003198"/>
+        <testcase name="test_quota_exceeded_rejects_registration" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="54" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="2" time="0.001961"/>
+        <testcase name="test_duplicate_email_in_same_hospital_is_rejected" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="68" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="1" time="0.002525"/>
+        <testcase name="test_weak_password_and_non_canonical_roles_are_rejected" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="76" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="3" time="0.002351"/>
+        <testcase name="test_only_admin_hospital_can_register_users" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="88" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="2" time="0.003881"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\RevokeSessionFeatureTest" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" tests="4" assertions="14" errors="0" failures="0" skipped="0" time="0.015741">
+        <testcase name="test_logout_revokes_own_session_immediately" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="23" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="4" time="0.004603"/>
+        <testcase name="test_admin_force_revokes_every_session_of_a_user" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="37" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="7" time="0.004530"/>
+        <testcase name="test_revoking_an_unknown_user_returns_404" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="57" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="1" time="0.001919"/>
+        <testcase name="test_non_admin_cannot_force_revoke" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="66" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="2" time="0.004689"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>
