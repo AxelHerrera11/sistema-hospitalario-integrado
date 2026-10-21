@@ -25,6 +25,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        DB::connection($this->connection)->unprepared('DROP TABLE audit_log;');
+        DB::connection($this->connection)->unprepared('DROP TABLE IF EXISTS audit_log;');
     }
 };

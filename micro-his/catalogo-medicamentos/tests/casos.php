@@ -78,8 +78,10 @@ $rbac = require dirname(__DIR__, 3) . '/config/rbac.php';
 $withVer = array_keys(array_filter($rbac['roles'], static fn (array $p): bool => in_array('medicamentos.ver', $p, true)));
 sort($withVer);
 $writers = array_filter($rbac['roles'], static fn (array $p): bool => array_intersect($p, ['medicamentos.registrar', 'medicamentos.cambiar_vigencia']) !== []);
-check('B3 permisos (matriz real de config/rbac.php): lectura solo para admin_hospital, enfermeria, medico y superadmin; ningún rol escribe; recepcion no lee (RF-07)',
-    $withVer === ['admin_hospital', 'enfermeria', 'medico', 'superadmin'] && $writers === [] && !in_array('medicamentos.ver', $rbac['roles']['recepcion'], true));
+check('B3 permisos (matriz real de config/rbac.php): lectura solo para admin_hospital, enfermeria, medico y superadmin; solo admin_hospital escribe, con ambos permisos (#627); recepcion no lee (RF-07)',
+    $withVer === ['admin_hospital', 'enfermeria', 'medico', 'superadmin'] && array_keys($writers) === ['admin_hospital']
+    && array_intersect(['medicamentos.registrar', 'medicamentos.cambiar_vigencia'], $writers['admin_hospital']) === ['medicamentos.registrar', 'medicamentos.cambiar_vigencia']
+    && !in_array('medicamentos.ver', $rbac['roles']['recepcion'], true));
 $broken = catalog_router(new PdoMedicationCatalog(new PDO('sqlite::memory:')));
 check('B4 errores: 409 duplicado, 404 inexistente, 405 método, 404 ruta y 503 sin éxito (RF-03, RF-05, RF-08, RNF-03)',
     $call('POST', '/medications', [], json_encode($draft()))['status'] === 409 && $call('GET', '/medications/999/validity')['status'] === 404
