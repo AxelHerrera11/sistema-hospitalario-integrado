@@ -72,26 +72,23 @@ El 20 de octubre de 2026, este era el bloqueo real del despliegue en un entorno 
 La causa no era de este módulo: el middleware `tenant` de `develop` resolvía `App\Models\Tenant`, y
 ese modelo no existía todavía. **Quedó resuelto** el 21 de octubre de 2026: el middleware ya usa
 `App\Modules\Tenants\Infrastructure\Persistence\Hospital` y los modelos de Tenants están
-integrados en `develop` (PR #657). La evidencia de despliegue real está en la sección siguiente.
-
-El módulo no deja migraciones aplicadas: la reversión es un `git revert` del PR y un
-`php artisan config:clear`. No hay cambios de esquema que revertir.
+integrados en `develop` (PR #657). La evidencia de despliegue real está en la sección siguiente. El
+módulo no deja migraciones aplicadas: la reversión es un `git revert` del PR y un
+`php artisan config:clear`.
 
 ## Evidencia de despliegue real (ejecutada el 21 de octubre de 2026)
 
-El bloqueo anterior (`Class "App\Models\Tenant" not found`) **quedó resuelto**: el middleware `tenant`
-de `develop` ya resuelve `App\Modules\Tenants\Infrastructure\Persistence\Hospital`, y los modelos de
-Tenants están integrados en `develop` (PR #657). Por eso la evidencia en *staging/on-premise* ya no
-está pendiente y se ejecutó de punta a punta contra las bases reales.
+El bloqueo anterior **quedó resuelto**: el middleware `tenant` de `develop` ya resuelve
+`App\Modules\Tenants\Infrastructure\Persistence\Hospital` y los modelos de Tenants están integrados
+en `develop` (PR #657). La evidencia en *staging/on-premise* ya no está pendiente y se ejecutó de
+punta a punta contra las bases reales.
 
 **Entorno:** PostgreSQL 16 en los contenedores `bd-central` (55431) y `bd-hospital` (55433), bases
 `his_central_staging` y `his_hospital_staging` migradas con `develop`, aplicación servida con
 `php artisan serve --host=127.0.0.1 --port=8099` en la imagen PHP 8.5 con `pdo_pgsql`, con
-`APP_DEBUG=false` y `JWT_SECRET` fuera del repositorio.
-
-**Datos del entorno:** red, hospital y superadmin de evidencia en CENTRAL; en HOSPITAL, una sala
-(`UCI`) con tres camas (`occupied`, `available`, `maintenance`), un paciente, su episodio de
-cuidado y una estancia vigente.
+`APP_DEBUG=false` y `JWT_SECRET` fuera del repositorio. Datos: red, hospital y superadmin de
+evidencia en CENTRAL; en HOSPITAL, una sala (`UCI`) con tres camas (`occupied`, `available`,
+`maintenance`), un paciente, su episodio de cuidado y una estancia vigente.
 
 ```bash
 # comando: php artisan migrate --database=central --path=database/migrations/central --realpath --force
@@ -104,8 +101,7 @@ cuidado y una estancia vigente.
 # resultado: Server running on [http://127.0.0.1:8099]
 
 # comando: curl -s -i -X POST http://127.0.0.1:8099/api/v1/auth/login \
-#   -H 'X-Tenant-ID: 11111111-1111-4111-8111-111111111111' \
-#   -H 'Content-Type: application/json' \
+#   -H 'X-Tenant-ID: 11111111-1111-4111-8111-111111111111' -H 'Content-Type: application/json' \
 #   -d '{"email":"evidencia@ejemplo.test","password":"..."}'
 # resultado: HTTP/1.1 200 OK
 #   {"access_token":"eyJ0eXAiOiJKV1Qi...","token_type":"bearer","expires_in":3600,
@@ -114,8 +110,7 @@ cuidado y una estancia vigente.
 #    "roles":["superadmin"],"roles_version":"186cf774c97b..."}
 
 # comando: curl -s -i "http://127.0.0.1:8099/api/v1/occupancy?cutoff_at=2026-10-21T04:00:00-06:00" \
-#   -H "Authorization: Bearer $TOKEN" \
-#   -H 'X-Tenant-ID: 11111111-1111-4111-8111-111111111111' \
+#   -H "Authorization: Bearer $TOKEN" -H 'X-Tenant-ID: 11111111-1111-4111-8111-111111111111' \
 #   -H 'X-Request-ID: evidencia-17-001'
 # resultado: HTTP/1.1 200 OK
 #   Cache-Control: no-store, private
@@ -131,7 +126,7 @@ cuidado y una estancia vigente.
 
 La tasa sale **50 %** porque el denominador son las camas operativas: tres camas menos una en
 mantenimiento. La cama con estancia vigente cuenta como ocupada y la de mantenimiento queda fuera
-del denominador, tal como define el contrato.
+del denominador, como define el contrato.
 
 **Casos de seguridad en el mismo entorno real:**
 
@@ -150,7 +145,6 @@ del denominador, tal como define el contrato.
 #   -H 'X-Tenant-ID: 11111111-1111-4111-8111-111111111111'   (rol medico, sin ocupacion.ver)
 # resultado: HTTP/1.1 403 Forbidden
 #   {"code":"RBAC_DENIED","trace_id":"trace-b103c8c8a742"}
-
 # comando: curl -s -i "http://127.0.0.1:8099/api/v1/occupancy" -H "Authorization: Bearer $TOKEN"
 #   (con HOSPITAL_DB_DATABASE apuntando a una base inexistente)
 # resultado: HTTP/1.1 503 Service Unavailable
@@ -171,7 +165,6 @@ occupancy.unavailable {"request_id":"req-2df23bcf24dca844","hospital_id":"111111
 
 Con esto quedan resueltos los tres pendientes de despliegue de la semana 17 (modelos de Tenants,
 evidencia en staging y respuesta sin trazas con `APP_DEBUG=false`).
-
 ## Reglas de despliegue
 
 1. `APP_DEBUG=false` y secretos fuera del repositorio.
