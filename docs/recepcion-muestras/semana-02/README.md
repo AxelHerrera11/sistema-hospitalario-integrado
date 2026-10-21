@@ -15,7 +15,8 @@
 Antes: un controlador con condiciones por tipo, SQL e impresión sería difícil de sustituir/probar.
 Después: RequirementsValidator retorna null/motivo para todos los tipos; SampleValidator parametrizado
 con blood/urine/swab mantiene el contrato. ReceiveSpecimen depende de ReceptionRepository.
-Pruebas: aceptación blood/urine/swab y rechazos en `tests/Unit/Reception` desde semana 6.
+Pruebas del HIS: aceptación, rechazos y reenvíos en `tests/Unit/Reception` desde semana 6.
+El runner independiente del micro verifica aceptación blood/urine/swab bajo el mismo contrato.
 No se implementaron las clases BloodSpecimenValidator descritas en los documentos históricos.
 Fuente obligatoria consultada: [MVP Cluster, SOLID](https://mvpcluster.com/diseno-de-software-2/).
 Aplicación propia: conservar entradas/salidas y semántica del contrato al sustituir un validador.
