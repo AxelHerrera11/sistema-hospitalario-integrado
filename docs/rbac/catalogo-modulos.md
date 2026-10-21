@@ -153,7 +153,7 @@ de auditoría, campos SQL, nombres de archivos y variables no se trataron como p
 La evidencia de los contratos pendientes queda fijada por PR, SHA y ruta en
 `tests/Fixtures/Rbac/pending-contracts.json`: 206 fuentes por PR, SHA y ruta,
 comprobadas contra el catálogo. El registro de las 200 referencias revisadas se
-entrega en un PR separado para respetar el límite de 400 líneas. Los tests comprueban
+entrega en el PR #687 para respetar el límite de 400 líneas. Los tests comprueban
 también que cada concesión activa o pendiente pertenezca al catálogo, que ningún
 par permiso/rol pendiente esté activo y que esta matriz coincida con la configuración.
 
