@@ -14,5 +14,6 @@ require __DIR__ . '/resultados.php';
 require __DIR__ . '/arquitectura.php';
 require __DIR__ . '/protocolo.php';
 require __DIR__ . '/traslado.php';
+require __DIR__ . '/alta.php';
 
 finish();
