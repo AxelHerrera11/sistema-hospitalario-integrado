@@ -109,3 +109,34 @@ Validación (`422`) agrega `errors`:
 - El sobre de una colección usa exactamente `current_page`, `per_page`, `total` y `last_page`.
 - El tenant **no** es un filtro: lo impone `X-Tenant-ID`.
 - Los filtros adicionales se documentan por recurso en su contrato.
+
+## 7. Cabeceras
+
+| Cabecera | Uso |
+|---|---|
+| `Authorization: Bearer <jwt>` | Obligatoria salvo `login` y `refresh`. |
+| `X-Tenant-ID` | Obligatoria en rutas de tenant; UUID del hospital activo. |
+| `X-Request-Id` | Opcional; si es válida se refleja en `trace_id`. |
+| `Accept` | `application/json`; `text/csv` en exportaciones. |
+| `Content-Type` | `application/json` en cuerpos con datos. |
+| `Retry-After` | Solo en `429` y `503`. |
+| `X-Report-Filters` | Solo en exportaciones: JSON de los filtros aplicados. |
+
+- Las respuestas con datos clínicos o personales llevan `Cache-Control: no-store, private`.
+- Los tokens no viajan en la URL ni se registran en logs.
+- `X-Request-Id` no se valida como identidad: es solo correlación.
+
+## 8. Reintentos e idempotencia
+
+- `GET` y `PUT` son idempotentes; un `POST` de creación **no** se reintenta a ciegas.
+- Se reintenta solo `429`, `502`, `503` y `504`, con espera exponencial y jitter, máximo 3 intentos.
+- Todo reintento tiene salida: mensaje visible y acción manual; nunca un bucle.
+- `409` y `422` no se reintentan: exigen corregir datos o resolver el conflicto.
+- Un `Idempotency-Key` para `POST` críticos queda como propuesta futura, fuera de este acuerdo.
+- Cada intento genera su propio `trace_id`; el cliente conserva el del último intento.
+
+## 9. Descargas (`/export`)
+
+- Éxito: `200` con `Content-Type: text/csv; charset=utf-8` y `Content-Disposition: attachment; filename="…"`.
+- Un error de exportación responde con el sobre JSON de `§3`, nunca con un CSV parcial.
+- Un formato no soportado responde `406` con `report_format_unsupported`; no se inventa un formato alternativo.
