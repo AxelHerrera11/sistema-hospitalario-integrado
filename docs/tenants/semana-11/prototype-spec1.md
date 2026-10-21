@@ -1,331 +1,183 @@
-### 3.3 Detalles Técnicos del Error Crítico
+# Semana 11 — Especificación del prototipo (parte 2: consistencia, stack y pruebas)
+**Versión:** 1.1 | **Fecha:** 2026-10-21
 
-| Aspecto                | Detalle                                                                 |
-|------------------------|-------------------------------------------------------------------------|
-| **Detección**          | Comparación hash Argon2id(refresh_token) vs stored_hash                 |
-| **Trigger**            | Mismatch = ataque de replay / token robado                              |
-| **Acción Inmediata**   | Revocación total (no configurable, obligatoria)                         |
-| **Alcance Revocación** | Todas las sesiones del usuario (todos los dispositivos)                 |
-| **Blocklist**          | JTI de todos los access tokens → Redis SET con TTL = exp-now            |
-| **Refresh Tokens**     | DELETE all de Redis (key pattern `refresh:{user_id}:*`)                 |
-| **Auditoría**          | Evento `REFRESH_REUSE_DETECTED` severity=CRITICAL + hash chain          |
-| **Notificaciones**     | SIEM (Splunk/Elastic) + Slack #security-alerts + Jira + Email security@ |
-| **Recuperación**       | Solo nuevo login completo con MFA (si policy lo requiere)               |
-| **Trazabilidad**       | Hash chain SHA-256 en auditoría + correlation ID en logs                |
+> Continúa [`prototype-spec.md`](prototype-spec.md). Mismas etiquetas: **[Implementado]** (existe en
+> `develop`) y **[Propuesto]** (diseño sin contrato). Nada de este documento afirma compilaciones,
+> mediciones ni entregables que no estén en el repositorio.
 
 ---
 
-## 4. Consistencia: Roles, Estados, Accesibilidad
+## 4. Consistencia
 
-### 4.1 Matriz de Roles vs Pantallas/Permisos
+### 4.1 Roles canónicos vs. pantallas
 
-| Pantalla/Función  | PACIENTE     | MEDICO         | ENFERMERO  | TENANT_ADMIN    | AUDITOR         | PLATFORM_ADMIN  |
-|-------------------|--------------|----------------|------------|-----------------|-----------------|-----------------|
-| **Login**         | ✅            | ✅              | ✅          | ✅               | ✅               | ✅               |
-| **MFA**           | Opcional     | No req.        | No req.    | **Obligatorio** | **Obligatorio** | **Obligatorio** |
-| **Dashboard**     | Resumen      | Completo       | Limitado   | Admin Panel     | Auditoría       | Platform Admin  |
-| **Pacientes**     | Solo suyo    | R/W            | R (signos) | Solo auditoría  | Solo auditoría  | R/W             |
-| **Usuarios CRUD** | ❌            | ❌              | ❌          | ✅ (tenant)      | ❌               | ✅ (global)      |
-| **Tenants CRUD**  | ❌            | ❌              | ❌          | ❌               | ❌               | ✅               |
-| **Force-Revoke**  | ❌            | ❌              | ❌          | ✅ (tenant)      | ❌               | ✅ (global)      |
-| **Auditoría**     | ❌            | ❌              | ❌          | ✅ (tenant)      | ✅ (global)      | ✅ (global)      |
-| **Break-Glass**   | ❌            | ✅ (emergencia) | ❌          | ❌               | ✅ (auditoría)   | ✅               |
-| **Config MFA**    | ✅ (opcional) | ✅              | ✅          | ✅ (forzado)     | ✅ (forzado)     | ✅               |
+Códigos literales de `config/rbac.php`. Lo que cada rol ve lo decide el catálogo de permisos del
+backend (`rbac:<permiso>` en `routes/api.php`), no esta tabla; aquí solo se resume el diseño.
 
-### 4.2 Estados de UI Consistentes
+| Pantalla / función | Permiso | Estado | Roles que la usan en el diseño |
+|---|---|---|---|
+| Inicio de sesión | — | [Implementado] | Todos |
+| MFA TOTP | — | [Propuesto] | Obligatorio para `superadmin` y `admin_hospital`; opcional para el resto |
+| Usuarios del hospital | `usuarios.ver` | [Implementado] | `admin_hospital` |
+| Asignar / quitar rol | `rbac.asignar` | [Implementado] | `admin_hospital` |
+| Desactivar usuario | `usuarios.desactivar` | [Implementado] | `admin_hospital` |
+| Cerrar una sesión ajena | `sesiones.revocar_ajenas` | [Implementado] | `admin_hospital` |
+| Alta de hospital | `tenants.crear` | [Implementado] | `superadmin` |
+| Alta de usuario | — | [Propuesto] | `admin_hospital` |
+| Cerrar todas las sesiones | — | [Propuesto] | `admin_hospital` |
+| Auditoría de seguridad | `auditoria.ver` | [Propuesto] (sin vista ni endpoint) | según catálogo RBAC |
 
-| Componente     | Estados Definidos                                | Clases CSS / Tokens                                                           |
-|----------------|--------------------------------------------------|-------------------------------------------------------------------------------|
-| **Button**     | default, hover, focus, active, disabled, loading | `.btn-primary`, `.btn-secondary`, `.btn-danger`, `.btn-ghost`, `.btn-loading` |
-| **Input**      | default, focused, error, disabled, success       | `.form-input`, `.has-error`, `.focused`, `.has-success`                       |
-| **Form Field** | default, focused, error, success, disabled       | `.form-field`, `.has-error`, `.has-success`                                   |
-| **Toast**      | success, error, warning, info, critical          | `.toast-success`, `.toast-error`, `.toast-critical`                           |
-| **Modal**      | open, closing, closed, error                     | `.modal-overlay`, `.modal-content`, `.modal-error`                            |
-| **Toast**      | visible, dismissing, dismissed                   | `.toast-enter`, `.toast-exit`, `.toast-persistent`                            |
-| **Table Row**  | default, hover, selected, expanded               | `.data-table tbody tr:hover`, `.selected`, `.expanded`                        |
-| **Card**       | default, hover, selected, loading                | `.card-item`, `.card-item:hover`, `.selected`                                 |
-| **Badge**      | default, success, warning, danger, info          | `.badge-success`, `.badge-warning`, `.badge-danger`                           |
-| **Avatar**     | default, online, offline, busy                   | `.avatar-online`, `.avatar-offline`, `.avatar-busy`                           |
-| **Input**      | default, focused, error, disabled, success       | `.form-input:focus`, `.has-error`, `.has-success`                             |
+Correspondencia con la v1.0: TENANT_ADMIN → `admin_hospital`; PLATFORM_ADMIN → `superadmin`;
+MEDICO → `medico`; ENFERMERO → `enfermeria`. AUDITOR y PACIENTE no existen en RBAC y se retiraron;
+«break-glass» no tiene contrato y quedó fuera.
 
-### 4.3 Checklist Accesibilidad (WCAG 2.1 AA) - Verificación por Pantalla
+### 4.2 Estados de componentes
 
-| Pantalla             | 1.1.1 | 1.3.1   | 1.4.3 | 2.1.1 | 2.1.2 | 2.4.3 | 2.4.7   | 3.3.1 | 3.3.2   | 4.1.2 | Estado   |
-|----------------------|-------|---------|-------|-------|-------|-------|---------|-------|---------|-------|----------|
-| Login                | ✅     | ✅       | ✅     | ✅     | ✅     | ✅     | ✅       | ✅     | ✅       | ✅     | ✅ Pass   |
-| MFA Challenge        | ✅     | ✅       | ✅     | ✅     | ✅     | ✅     | ✅       | ✅     | ✅       | ✅     | ✅ Pass   |
-| Admin Create User    | ✅     | ✅       | ✅     | ✅     | ✅     | ✅     | ✅       | ✅     | ✅       | ✅     | ✅ Pass   |
-| Admin User List      | ✅     | ❌ H-003 | ✅     | ✅     | ✅     | ✅     | ❌ H-004 | ✅     | ❌ H-005 | ✅     | **Fail** |
-| Force-Revoke Modal   | ✅     | ✅       | ✅     | ✅     | ✅     | ✅     | ✅       | ✅     | ✅       | ✅     | ✅ Pass   |
-| Audit Logs           | ✅     | ❌ H-003 | ✅     | ✅     | ✅     | ✅     | ❌ H-004 | ✅     | ✅       | ✅     | **Fail** |
-| Patient Portal       | ✅     | ✅       | ✅     | ✅     | ✅     | ✅     | ✅       | ✅     | ✅       | ✅     | ✅ Pass   |
-| Critical Error Modal | ✅     | ✅       | ✅     | ✅     | ✅     | ✅     | ✅       | ✅     | ✅       | ✅     | ✅ Pass   |
+Solo los componentes que existen en el SPA (Semana 10).
 
-**Gap: 4 violaciones WCAG AA pendientes (H-003, H-004, H-005, Sprint 2 fix)**
+| Componente | Archivo | Estados |
+|---|---|---|
+| Botón | `modules/tenants/responsive/BaseButton.vue` | normal, foco visible, deshabilitado, cargando (ignora clics) |
+| Campo | `modules/tenants/responsive/FormField.vue` | normal, foco, error (`aria-invalid`), deshabilitado, contraseña visible/oculta |
+| Medidor | `modules/tenants/responsive/PasswordStrengthMeter.vue` | 0–5 requisitos cumplidos |
+| Indicador offline | `modules/tenants/offline/OfflineIndicator.vue` | sin red, pendientes, fallidas |
+| Panel de cola | `modules/tenants/offline/PendingActionsPanel.vue` | vacía, pendientes, fallidas (solo metadatos) |
 
-### 4.4 Responsive Breakpoints Consistency
+Toasts, modales genéricos, tablas expandibles, avatares y badges de la v1.0 son **[Propuesto]**:
+no existen como componentes del proyecto.
 
-| Componente       | XS (320px)         | SM (375px)         | MD (430px)     | LG (768px)      | XL (1024px)     |
-|------------------|--------------------|--------------------|----------------|-----------------|-----------------|
-| **Login**        | Stack 100%         | Center 400px       | Center 400px   | Center 400px    | Center 400px    |
-| **MFA**          | Stack 100%         | Center 400px       | Center 400px   | Center 400px    | Center 400px    |
-| **Admin List**   | Cards stack        | Cards stack        | 2 cols sidebar | Sidebar + Table | Sidebar + Table |
-| **Force-Revoke** | Full-screen modal  | Full-screen modal  | Modal 480px    | Modal 480px     | Modal 480px     |
-| **Audit**        | Cards stack        | Cards stack        | Table scroll   | Full Table      | Full Table      |
-| **Admin Create** | Stepper 1-col      | Stepper 1-col      | Stepper 1-col  | Stepper 1-col   | Stepper 1-col   |
-| **Force-Revoke** | Full-screen 2-step | Full-screen 2-step | 2-step modal   | 2-step modal    | 2-step modal    |
+### 4.3 Accesibilidad (WCAG 2.1 AA)
+
+Revisión **manual del diseño**, no una medición automatizada. Los hallazgos H-003 a H-005 son los
+registrados en la tabla de Semana 9 (`docs/tenants/semana-09/README.md`).
+
+| Pantalla | Revisión del diseño | Hallazgos abiertos |
+|---|---|---|
+| Inicio de sesión | Etiquetas, errores con `role="alert"`, foco visible, 44 px | — |
+| MFA | Un solo campo con `autocomplete="one-time-code"` | — (pantalla propuesta) |
+| Usuarios del hospital | Pendiente de corregir | H-003 (1.3.1), H-004 (2.4.7), H-005 (3.3.2) |
+| Cerrar sesión ajena | Confirmación explícita y resultado con `role="status"` | — |
+| Auditoría | Severidad en texto, sin gestos ocultos | H-003, H-004 (pantalla propuesta) |
+
+No se ha corrido axe-core sobre estas pantallas. Queda como prueba pendiente en la sección 7.
+
+### 4.4 Puntos de quiebre
+
+Se toman del CSS real de Semana 10: hasta 480 px (botones a todo el ancho), 640 px (una columna) y
+1024 px (dos columnas); por encima, tres columnas. Para «Usuarios» y «Cerrar sesión» la tabla es
+diseño: esas pantallas todavía no aplican estos cortes.
+
+| Pantalla | ≤ 480 px | ≤ 640 px | ≤ 1024 px | > 1024 px |
+|---|---|---|---|---|
+| Inicio de sesión | Sin marco, 100 % ancho | Tarjeta de hasta 420 px | igual | igual |
+| Usuarios | Tarjetas apiladas | Tarjetas apiladas | Tabla | Tabla |
+| Cerrar sesión | Modal a pantalla completa | Modal a pantalla completa | Modal de 480 px | Modal de 480 px |
 
 ---
 
-## 5. Especificación Técnica del Prototipo
+## 5. Stack del prototipo
 
-### 5.1 Tech Stack del Prototipo
+### 5.1 Tecnología
 
-| Capa                  | Tecnología                     | Versión     |
-|-----------------------|--------------------------------|-------------|
-| **Framework**         | React 18 + TypeScript          | 18.2 / 5.3  |
-| **Styling**           | CSS Variables + CSS Modules    | Native CSS  |
-| **Routing**           | React Router v6                | 6.20        |
-| **State**             | React Context + useReducer     | Native      |
-| **Forms**             | React Hook Form + Zod          | 7.49 / 3.22 |
-| **Icons**             | Lucide React                   | 0.294       |
-| **Dates**             | date-fns                       | 2.30        |
-| **Testing**           | Vitest + React Testing Library | 1.0 / 14.0  |
-| **A11y Testing**      | axe-core + jest-axe            | 4.8 / 8.0   |
-| **Visual Regression** | Chromatic / Percy              | Latest      |
+El prototipo navegable usa el **mismo stack del proyecto** (`package.json`). La v1.0 proponía
+React 18 + Storybook; se descartó porque el proyecto no tiene ni declara dependencias de React.
 
-### 5.2 Estructura de Carpetas (Prototipo)
+| Capa | Tecnología | Estado |
+|---|---|---|
+| Framework | Vue 3 (`<script setup>`) | [Implementado] |
+| Build | Vite 7 + `laravel-vite-plugin` | [Implementado] |
+| Rutas | vue-router 4 | [Implementado] |
+| Estado de sesión | Pinia (`stores/auth.js`) | [Implementado] |
+| HTTP | axios (`plugins/axios.js`, base `/api/v1`) | [Implementado] |
+| Estilos | CSS con alcance (`<style scoped>`) y Tailwind 4 | [Implementado] |
+| Pruebas de lógica | `node` + `node:assert` (`*.test.mjs`) | [Implementado] |
+| Pruebas de componentes y axe | Vitest + Vue Test Utils + axe-core | [Propuesto] (no instalados) |
+
+### 5.2 Archivos del prototipo (existentes)
 
 ```
-prototype/
-├── public/
-│   ├── index.html
-│   ├── manifest.json
-│   └── sw.js (Service Worker)
-├── src/
-│   ├── components/
-│   │   ├── auth/
-│   │   │   ├── LoginForm.tsx
-│   │   │   ├── MFAChallenge.tsx
-│   │   │   └── ForgotPassword.tsx
-│   │   ├── admin/
-│   │   │   ├── UserList.tsx
-│   │   │   ├── CreateUserWizard.tsx
-│   │   │   ├── ForceRevokeModal.tsx
-│   │   │   └── TenantManager.tsx
-│   │   ├── audit/
-│   │   │   ├── AuditLogTable.tsx
-│   │   │   ├── AuditDetailModal.tsx
-│   │   │   └── ExportDialog.tsx
-│   │   ├── patient/
-│   │   │   ├── PatientDashboard.tsx
-│   │   │   ├── AppointmentCard.tsx
-│   │   │   └── MFASetupWizard.tsx
-│   │   ├── shared/
-│   │   │   ├── Button.tsx
-│   │   │   ├── FormField.tsx
-│   │   │   ├── Modal.tsx
-│   │   │   ├── Toast.tsx
-│   │   │   ├── DataTable.tsx
-│   │   │   ├── Card.tsx
-│   │   │   ├── Badge.tsx
-│   │   │   ├── Avatar.tsx
-│   │   │   ├── BottomNavigation.tsx
-│   │   │   ├── Sidebar.tsx
-│   │   │   ├── TabBar.tsx
-│   │   │   └── Breadcrumb.tsx
-│   │   ├── layout/
-│   │   │   ├── Header.tsx
-│   │   │   ├── Sidebar.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   └── MobileBottomNav.tsx
-│   │   └── feedback/
-│   │       ├── Toast.tsx
-│   │       ├── Modal.tsx
-│   │       ├── Tooltip.tsx
-│   │       └── Spinner.tsx
-│   ├── hooks/
-│   │   ├── useAuth.ts
-│   │   ├── useMediaQuery.ts
-│   │   ├── useOfflineQueue.ts
-│   │   ├── useFocusTrap.ts
-│   │   └── useLocalStorage.ts
-│   ├── contexts/
-│   │   ├── AuthContext.tsx
-│   │   ├── TenantContext.tsx
-│   │   └── ThemeContext.tsx
-│   ├── pages/
-│   │   ├── LoginPage.tsx
-│   │   ├── MFAChallengePage.tsx
-│   │   ├── DashboardPage.tsx
-│   │   ├── AdminUsersPage.tsx
-│   │   ├── AuditLogsPage.tsx
-│   │   ├── PatientDashboardPage.tsx
-│   │   ├── ForgotPasswordPage.tsx
-│   │   └── SecurityIncidentPage.tsx
-│   ├── styles/
-│   │   ├── breakpoints.css
-│   │   ├── globals.css
-│   │   ├── components.css
-│   │   └── utilities.css
-│   ├── utils/
-│   │   ├── api.ts
-│   │   ├── auth.ts
-│   │   ├── storage.ts
-│   │   └── validation.ts
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── vite-env.d.ts
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── vitest.config.ts
-├── .eslintrc.json
-├── .prettierrc
-└── README.md
+resources/js/
+├── router/index.js                         # ruta /prototipos/tenants-responsive
+└── modules/tenants/
+    ├── pages/
+    │   ├── HospitalUsersPage.vue           # usuarios del hospital
+    │   └── ResponsivePrototypePage.vue     # prototipo de Semana 10
+    ├── responsive/
+    │   ├── BaseButton.vue
+    │   ├── FormField.vue
+    │   ├── LoginForm.vue
+    │   ├── PasswordStrengthMeter.vue
+    │   ├── formRules.js
+    │   └── formRules.test.mjs
+    └── offline/
+        ├── offlineQueue.js
+        ├── offlineQueue.test.mjs
+        ├── useOfflineQueue.js
+        ├── OfflineIndicator.vue
+        └── PendingActionsPanel.vue
 ```
 
-### 5.3 Rutas de la Aplicación (React Router)
+### 5.3 Rutas del SPA relacionadas
 
-```typescript
-// routes.tsx
-const routes = [
-  // Public routes
-  { path: '/auth/login', element: <LoginPage />, layout: 'AuthLayout' },
-  { path: '/auth/mfa', element: <MFAChallengePage />, layout: 'AuthLayout' },
-  { path: '/auth/forgot-password', element: <ForgotPasswordPage />, layout: 'AuthLayout' },
-  { path: '/auth/mfa/recovery', element: <MFARecoveryPage />, layout: 'AuthLayout' },
-  
-  // Protected routes (require auth)
-  { path: '/', element: <DashboardPage />, layout: 'AppLayout', roles: ['all'] },
-  
-  // Patient routes
-  { path: '/patient/dashboard', element: <PatientDashboardPage />, layout: 'AppLayout', roles: ['PACIENTE'] },
-  { path: '/patient/appointments', element: <AppointmentsPage />, layout: 'AppLayout', roles: ['PACIENTE'] },
-  { path: '/patient/medications', element: <MedicationsPage />, layout: 'AppLayout', roles: ['PACIENTE'] },
-  { path: '/patient/records', element: <RecordsPage />, layout: 'AppLayout', roles: ['PACIENTE'] },
-  { path: '/patient/security', element: <SecuritySettingsPage />, layout: 'AppLayout', roles: ['PACIENTE'] },
-  
-  // Clinical routes
-  { path: '/clinical/patients', element: <PatientListPage />, layout: 'AppLayout', roles: ['MEDICO', 'ENFERMERO'] },
-  { path: '/clinical/patients/:id', element: <PatientRecordPage />, layout: 'AppLayout', roles: ['MEDICO', 'ENFERMERO'] },
-  { path: '/clinical/appointments', element: <ClinicalAppointmentsPage />, layout: 'AppLayout', roles: ['MEDICO', 'ENFERMERO'] },
-  
-  // Admin routes (TENANT_ADMIN)
-  { path: '/admin/users', element: <AdminUsersPage />, layout: 'AdminLayout', roles: ['TENANT_ADMIN', 'PLATFORM_ADMIN'] },
-  { path: '/admin/users/new', element: <CreateUserWizard />, layout: 'AdminLayout', roles: ['TENANT_ADMIN', 'PLATFORM_ADMIN'] },
-  { path: '/admin/users/:id', element: <UserDetailPage />, layout: 'AdminLayout', roles: ['TENANT_ADMIN', 'PLATFORM_ADMIN'] },
-  { path: '/admin/tenants', element: <TenantManagerPage />, layout: 'AdminLayout', roles: ['PLATFORM_ADMIN'] },
-  { path: '/admin/tenants/new', element: <CreateTenantWizard />, layout: 'AdminLayout', roles: ['PLATFORM_ADMIN'] },
-  
-  // Audit routes (AUDITOR, PLATFORM_ADMIN, TENANT_ADMIN)
-  { path: '/audit/logs', element: <AuditLogsPage />, layout: 'AppLayout', roles: ['AUDITOR', 'TENANT_ADMIN', 'PLATFORM_ADMIN'] },
-  { path: '/audit/logs/:eventId', element: <AuditDetailPage />, layout: 'AppLayout', roles: ['AUDITOR', 'TENANT_ADMIN', 'PLATFORM_ADMIN'] },
-  
-  // Security incident (public access for affected users)
-  { path: '/security/incident/:incidentId', element: <SecurityIncidentPage />, layout: 'AuthLayout' },
-  
-  // Settings
-  { path: '/settings/profile', element: <ProfileSettingsPage />, layout: 'AppLayout', roles: ['all'] },
-  { path: '/settings/security', element: <SecuritySettingsPage />, layout: 'AppLayout', roles: ['all'] },
-  { path: '/settings/mfa', element: <MFASetupWizard />, layout: 'AppLayout', roles: ['all'] },
-  
-  // 404
-  { path: '*', element: <NotFoundPage />, layout: 'AppLayout' },
-];
-```
+| Ruta | Componente | Protección | Estado |
+|---|---|---|---|
+| `/login` | `modules/auth/pages/LoginPage.vue` | invitado | [Implementado] |
+| `/` | `pages/HomePage.vue` | — | [Implementado] |
+| `/admin/users` | `modules/tenants/pages/HospitalUsersPage.vue` | sesión requerida | [Implementado] |
+| `/prototipos/tenants-responsive` | `modules/tenants/pages/ResponsivePrototypePage.vue` | pública | [Implementado] |
+| `/mfa` | — | invitado | [Propuesto] |
+| `/admin/users/nuevo` | — | sesión requerida | [Propuesto] |
+| `/auditoria` | — | sesión requerida | [Propuesto] |
 
 ---
 
-## 6. Entregables del Prototipo
+## 6. Entregables
 
-### 6.1 Archivos Generados (Listos para Handoff a Diseño/Desarrollo)
+### 6.1 Entregados en el repositorio
 
-| Archivo                              | Tipo     | Descripción                                  |
-|--------------------------------------|----------|----------------------------------------------|
-| `prototype-navigation-map.md`        | Markdown | Mapa de navegación completo (este documento) |
-| `prototype-happy-path.md`            | Markdown | Happy Path detallado paso a paso             |
-| `prototype-error-path.md`            | Markdown | Critical Error Path detallado                |
-| `prototype-screens-desktop.md`       | Markdown | Capturas/descripciones Desktop               |
-| `prototype-screens-mobile.md`        | Markdown | Capturas/descripciones Mobile                |
-| `prototype-consistency-checklist.md` | Markdown | Checklist roles/estados/accesibilidad        |
-| `prototype-tech-spec.md`             | Markdown | Especificación técnica completa              |
-| `prototype-navigation-map.mmd`       | Mermaid  | Diagrama navegación (renderizable)           |
-| `prototype-happy-path.mmd`           | Mermaid  | Diagrama Happy Path                          |
-| `prototype-error-path.mmd`           | Mermaid  | Diagrama Error Path                          |
+| Archivo | Tipo |
+|---|---|
+| `prototype-spec.md`, `prototype-spec1.md` | Especificación (v1.1) |
+| `prototype-screens-mobile.md`, `prototype-screens-mobile1.md` | Mockups móviles (v1.1) |
+| `prototype-screens-desktop*.md`, `prototype-happy-path*.md`, `prototype-error-path*.md` | Mockups y flujos (v1.0) |
+| `prototype-navigation-map.mmd`, `prototype-happy-path.mmd`, `prototype-error-path.mmd` | Diagramas Mermaid |
+| Prototipo Vue + capturas a 375/768/1280 px | `resources/js/modules/tenants/`, `docs/tenants/semana-10/evidencias/` |
 
-### 6.2 Assets para Diseño (Listos para Figma/Design System)
+### 6.2 No entregados
 
-| Asset             | Formato         | Descripción                                                           |
-|-------------------|-----------------|-----------------------------------------------------------------------|
-| Design Tokens     | JSON            | Colores, spacing, typography, shadows, radii                          |
-| Component Library | Figma/Storybook | Button, Input, Modal, Toast, Table, Card, Modal, Toast, Badge, Avatar |
-| Icon Set          | SVG             | Lucide icons subset (24px/24px grid)                                  |
-| Illustrations     | SVG             | Empty states, error states, onboarding                                |
-| Fonts             | WOFF2           | Inter (UI), JetBrains Mono (code)                                     |
-
-### 6.3 Prototipo Navegable (Opciones de Implementación)
-
-| Opción       | Herramienta              | Esfuerzo | Fidelidad                  |
-|--------------|--------------------------|----------|----------------------------|
-| **Opción A** | Figma Prototype          | 2 días   | Alta (clickable, animated) |
-| **Opción B** | React + Vite + Storybook | 3 días   | Muy alta (real code)       |
-| **Opción C** | HTML/CSS/JS vanilla      | 1 día    | Media (static screens)     |
-| **Opción D** | PowerPoint/Keynote       | 4 horas  | Baja (static slides)       |
-
-**Recomendación: Opción B (React + Storybook)** - Código real reutilizable, testing automatizado, documentación viva.
+No hay Figma, Storybook, tokens JSON, set de íconos ni ilustraciones en el repositorio. La v1.0
+los marcaba como «✅ Listo»; se corrigió a **No entregado**.
 
 ---
 
-## 7. Testing Plan para el Prototipo
+## 7. Plan de pruebas
 
-### 7.1 Test Cases Happy Path
+### 7.1 Casos del camino feliz
 
-| TC ID  | Flujo     | Paso | Acción                           | Resultado Esperado                    |
-|--------|-----------|------|----------------------------------|---------------------------------------|
-| HP-001 | Login     | 1    | Email válido + password correcta | Redirect a MFA o Dashboard            |
-| HP-002 | Login     | 2    | MFA TOTP código válido           | Tokens generados + redirect Dashboard |
-| HP-003 | Login     | 3    | Dashboard carga según rol        | UI role-based visible                 |
-| HP-004 | Admin     | 1    | Navegar a /admin/users           | Lista usuarios + filtros              |
-| HP-005 | Admin     | 2    | Click [⋮] → Revocar              | Modal 2-paso abre                     |
-| HP-006 | Admin     | 3    | Confirmar → Motivo → Ejecutar    | Toast éxito + "Deshacer 5s"           |
-| HP-007 | Admin     | 4    | Click "Deshacer" (5s)            | Sesiones restauradas + auditoría      |
-| HP-008 | Auditoría | 1    | Abrir /audit/logs                | Tabla + filtros + expand              |
-| HP-009 | Auditoría | 2    | Click fila → expandir            | Detalle + hash chain                  |
-| HP-010 | Paciente  | 1    | Login → Portal                   | Dashboard resumen visible             |
+| ID | Paso | Resultado esperado | Estado |
+|---|---|---|---|
+| HP-001 | Login con credenciales válidas | 200 y redirección a `/` | API cubierta en `tests/Feature/Tenants`; redirección pendiente |
+| HP-002 | MFA TOTP válido | Tokens emitidos | Probado en el micro-HIS sem. 3 (`MicroHisSmokeTest`) |
+| HP-003 | Abrir `/admin/users` con `usuarios.ver` | Lista del hospital | Pendiente (prueba de UI) |
+| HP-004 | Cerrar una sesión ajena | 200 y la sesión deja de servir | Pendiente (prueba de UI) |
+| HP-005 | Doble clic en «Entrar» | Una sola petición | Cubierto (`formRules.test.mjs`) |
 
-### 4.2 Test Cases Error Crítico
+### 7.2 Casos de error crítico
 
-| TC ID  | Flujo         | Paso | Acción                          | Resultado Esperado                     |
-|--------|---------------|------|---------------------------------|----------------------------------------|
-| CE-001 | Refresh Reuse | 1    | POST /refresh con token reusado | 401 + error CRITICAL                   |
-| CE-002 | Refresh Reuse | 2    | Modal crítico aparece           | Full-screen, focus auto                |
-| CE-003 | Refresh Reuse | 3    | Click "Iniciar sesión"          | Redirect a /auth/login                 |
-| CE-004 | Refresh Reuse | 3    | Login forzado + MFA             | Nuevos tokens generados                |
-| CE-004 | Refresh Reuse | 4    | Auditoría                       | Evento REFRESH_REUSE_DETECTED CRITICAL |
+| ID | Paso | Resultado esperado | Estado |
+|---|---|---|---|
+| CE-001 | Refresh ya consumido | 401 `REFRESH_TOKEN_REUSED` | Cubierto (`SessionLifecycleTest`) |
+| CE-002 | SPA recibe el 401 | Sesión limpia y vuelta a `/login` | Pendiente (prueba de UI) |
+| CE-003 | Auditoría | `auth.refresh_reuse_detected` crítico | Pendiente: el código lo registra, pero ninguna prueba lo verifica |
 
-### 4.3 Test Cases Accesibilidad
+### 7.3 Accesibilidad
 
-| TC ID  | Criterio           | Pantalla    | Verificación               |
-|--------|--------------------|-------------|----------------------------|
-| AC-001 | 1.4.3 Contraste    | Todas       | axe-core 0 violations AA   |
-| AC-002 | 2.1.1 Teclado      | Todas       | Tab navigation completa    |
-| AC-003 | 2.4.7 Foco visible | Todas       | Focus ring 3px visible     |
-| AC-004 | 3.3.1 Error ID     | Formularios | aria-invalid + describedby |
-| AC-005 | 4.1.2 ARIA         | Componentes | role/name/value correctos  |
+| ID | Criterio | Verificación | Estado |
+|---|---|---|---|
+| AC-001 | 1.4.3 Contraste | axe-core | Pendiente |
+| AC-002 | 2.1.1 Teclado | Recorrido con Tab | Pendiente |
+| AC-003 | 2.4.7 Foco visible | `:focus-visible` de 3 px | Implementado en los componentes de Semana 10 |
+| AC-004 | 3.3.1 Errores | `aria-invalid` + `aria-describedby` | Implementado en `FormField.vue` |
 
----
-
-## 8. Handoff Checklist (Designer → Developer)
-
-| Ítem              | Descripción                                                                                 | Estado  | Responsable       |
-|-------------------|---------------------------------------------------------------------------------------------|---------|-------------------|
-| Design Tokens     | JSON exportado (colores, spacing, typography, shadows)                                      | ✅ Listo | Design            |
-| Component Library | Storybook publicado (Button, Input, Modal, Toast, Table, Card, Modal, Toast, Badge, Avatar) | ✅ Listo | Design + Frontend |
-| Icon Set          | SVG optimizados (24x24 grid)                                                                | ✅ Listo | Design            |
-| Prototypes        | Figma links (Desktop + Mobile flows)                                                        | ✅ Listo | Design            |
-| Specs             | Zeroheight/Zeplin specs con redlines                                                        | ✅ Listo | Design            |
-| Copy              | Microcopy aprobado (errores, tooltips, labels)                                              | ✅ Listo | UX Writer         |
-| Accessibility     | Anotaciones a11y en diseños (ARIA labels, focus order)                                      | ✅ Listo | Design + A11y     |
-| Responsive        | Breakpoints definidos + container queries                                                   | ✅ Listo | Design + Frontend |
-| Animations        | Duraciones, easings, reduced-motion                                                         | ✅ Listo | Design + Frontend |
+Los casos de la v1.0 sobre «Deshacer» y «sesiones restauradas» (HP-006 y HP-007) se eliminaron:
+esa función no existe y contradice la revocación.
