@@ -1,0 +1,87 @@
+@startuml
+title ASII-14 - Actividad: alta, busqueda y vigencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontColor #172033
+skinparam ArrowColor #334155
+skinparam activity {
+  BackgroundColor #EAF4FF
+  BorderColor #2563EB
+  DiamondBackgroundColor #FEF3C7
+  DiamondBorderColor #D97706
+}
+skinparam note {
+  BackgroundColor #FEF3C7
+  BorderColor #D97706
+}
+start
+:Gestor o usuario clinico autorizado\nselecciona operacion;
+:Validar identidad, hospital y autorizacion\n(UC-MED-05);
+if (Acceso permitido?) then (No)
+  :Resultado: acceso rechazado; <<#FCE7F3>>
+  stop
+endif
+switch (Operacion?)
+case (Alta)
+  :Gestor captura codigo, nombre,\nprincipio activo y grupo;
+  :Validar datos e identidad (UC-MED-06);
+  if (Datos validos?) then (No)
+    :Resultado: alta rechazada\npor datos invalidos; <<#FCE7F3>>
+    stop
+  endif
+  :Consultar codigo normalizado;
+  if (Consulta disponible?) then (No)
+    :Resultado: fallo de consulta; <<#FCE7F3>>
+    stop
+  elseif (Codigo duplicado?) then (Si)
+    :Resultado: alta rechazada\npor duplicidad; <<#FCE7F3>>
+    stop
+  endif
+  :Persistir medicamento con estado active;
+  if (Escritura confirmada?) then (No)
+    :Resultado: fallo de persistencia; <<#FCE7F3>>
+  else (Si)
+    :Resultado: medicamento registrado;
+  endif
+case (Busqueda)
+  :Usuario clinico o gestor ingresa\ntexto o codigo (UC-MED-02);
+  if (Consulta valida?) then (No)
+    :Resultado: criterio invalido; <<#FCE7F3>>
+    stop
+  endif
+  :Buscar y recuperar vigencia;
+  if (Consulta disponible?) then (No)
+    :Resultado: fallo de consulta; <<#FCE7F3>>
+  elseif (Hay coincidencias?) then (No)
+    :Resultado: lista vacia;
+  else (Si)
+    :Resultado: coincidencias con\nestado active/inactive;
+  endif
+case (Vigencia)
+  :Ambos consultan; solo el gestor solicita\ncambiar vigencia (UC-MED-03/04);
+  :Localizar medicamento por identificador;
+  if (Consulta disponible?) then (No)
+    :Resultado: fallo de consulta; <<#FCE7F3>>
+    stop
+  elseif (Medicamento existe?) then (No)
+    :Resultado: medicamento no encontrado; <<#FCE7F3>>
+    stop
+  endif
+  if (Solo consultar?) then (Si)
+    :Resultado: vigencia active/inactive;
+  else (Cambiar)
+    if (Nuevo estado valido?) then (No)
+      :Resultado: estado invalido; <<#FCE7F3>>
+      stop
+    endif
+    :Persistir nuevo estado;
+    if (Escritura confirmada?) then (No)
+      :Resultado: fallo de persistencia; <<#FCE7F3>>
+    else (Si)
+      :Resultado: vigencia actualizada;
+    endif
+  endif
+endswitch
+stop
+note right: Vigencia es disponibilidad del registro,\nno vencimiento ni control de lotes.
+@enduml
