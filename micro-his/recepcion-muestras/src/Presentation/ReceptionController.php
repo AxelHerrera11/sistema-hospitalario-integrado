@@ -10,6 +10,9 @@ final class ReceptionController
 
     public function store(array $input, string $tenant, string $actor): array
     {
+        foreach (['hemolizada', 'coagulada', 'derramada'] as $flag) {
+            if (isset($input[$flag]) && !is_bool($input[$flag])) return ['status' => 422, 'message' => 'Condición inválida'];
+        }
         foreach (['item_id', 'patient_code', 'patient_name', 'type', 'container', 'collected_at'] as $key) {
             if (!isset($input[$key]) || !is_string($input[$key]) || trim($input[$key]) === '') {
                 return ['status' => 422, 'message' => 'Campo inválido: '.$key];
