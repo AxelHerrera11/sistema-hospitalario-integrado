@@ -1,0 +1,29 @@
+classDiagram
+  class HttpResultController
+  class CapturePendingResult
+  class CorrectCapturedResult
+  class PendingLabResult
+  class ResultRuleValidator
+  class PendingResultRepository {
+    <<interface>>
+    +getById(tenantId, resultId)
+    +save(result)
+  }
+  class AuditLogger {
+    <<interface>>
+    +record(event)
+  }
+  class PdoPendingResultRepository
+  class InMemoryPendingResultRepository
+  class ArrayAuditLogger
+
+  HttpResultController --> CapturePendingResult
+  CapturePendingResult --> PendingResultRepository
+  CapturePendingResult --> AuditLogger
+  CapturePendingResult --> PendingLabResult
+  CorrectCapturedResult --> PendingResultRepository
+  CorrectCapturedResult --> AuditLogger
+  PendingLabResult --> ResultRuleValidator
+  PdoPendingResultRepository ..|> PendingResultRepository
+  InMemoryPendingResultRepository ..|> PendingResultRepository
+  ArrayAuditLogger ..|> AuditLogger

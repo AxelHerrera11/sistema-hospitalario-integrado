@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">Casos de uso — Expediente Médico Electrónico Base</title>
+  <desc id="desc">Diagrama UML de casos de uso para buscar pacientes, abrir y consultar expedientes, validar permisos y registrar auditoría.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#3874bd"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9766a8"/>
+    </marker>
+    <style>
+      text{font-family:Arial,Helvetica,sans-serif;fill:#172b4d}
+      .title{font-size:26px;font-weight:700}
+      .subtitle{font-size:15px;fill:#52647a}
+      .boundary{fill:#f8fafc;stroke:#9aabc0;stroke-width:2}
+      .case{fill:#eaf2ff;stroke:#3874bd;stroke-width:2}
+      .actorbox{fill:#fff;stroke:#b7c4d3;stroke-width:1.5}
+      .label{font-size:16px;font-weight:600}
+      .small{font-size:13px}
+      .tiny{font-size:12px;font-weight:600}
+      .line{stroke:#53657a;stroke-width:1.5;fill:none}
+      .rel{stroke:#3874bd;stroke-width:1.8;stroke-dasharray:6 5;fill:none;marker-end:url(#arrow-blue)}
+      .extend{stroke:#9766a8;stroke-width:1.8;stroke-dasharray:6 5;fill:none;marker-end:url(#arrow-purple)}
+      .tag-bg{fill:#ffffff;opacity:0.9}
+    </style>
+  </defs>
+
+  <rect width="1400" height="900" fill="#fff"/>
+  <text x="48" y="52" class="title">Casos de uso — Expediente Médico Electrónico Base</text>
+  <text x="48" y="78" class="subtitle">Apertura y consulta autorizada del expediente longitudinal · Relaciones UML include / extend</text>
+
+  <!-- Límite del Sistema -->
+  <rect x="340" y="110" width="1010" height="710" rx="18" class="boundary"/>
+  <text x="370" y="142" class="label" fill="#34516f">Módulo: Expediente Médico Base</text>
+
+  <!-- Actores Izquierda -->
+  <g id="actores-izq">
+    <!-- Personal Médico -->
+    <rect x="40" y="180" width="230" height="75" rx="12" class="actorbox"/>
+    <circle cx="70" cy="207" r="9" fill="none" stroke="#34516f" stroke-width="2"/>
+    <path d="M70 216 V238 M58 224 H82 M70 238 L60 248 M70 238 L80 248" fill="none" stroke="#34516f" stroke-width="2"/>
+    <text x="96" y="214" class="label">Personal Médico /</text>
+    <text x="96" y="235" class="label">Clínico</text>
+
+    <!-- Middleware Auth / RBAC -->
+    <rect x="40" y="380" width="230" height="75" rx="12" class="actorbox"/>
+    <circle cx="70" cy="407" r="9" fill="none" stroke="#34516f" stroke-width="2"/>
+    <path d="M70 416 V438 M58 424 H82 M70 438 L60 448 M70 438 L80 448" fill="none" stroke="#34516f" stroke-width="2"/>
+    <text x="96" y="414" class="label">Middleware</text>
+    <text x="96" y="435" class="label">Auth / RBAC</text>
+
+    <!-- Sistema de Auditoría -->
+    <rect x="40" y="580" width="230" height="75" rx="12" class="actorbox"/>
+    <circle cx="70" cy="607" r="9" fill="none" stroke="#34516f" stroke-width="2"/>
+    <path d="M70 616 V638 M58 624 H82 M70 638 L60 648 M70 638 L80 648" fill="none" stroke="#34516f" stroke-width="2"/>
+    <text x="96" y="614" class="label">Sistema de</text>
+    <text x="96" y="635" class="label">Auditoría</text>
+  </g>
+
+  <!-- Actor Base de Datos (Estructurado correctamente dentro de la caja) -->
+  <g id="actor-db">
+    <rect x="980" y="730" width="340" height="65" rx="12" class="actorbox"/>
+    <ellipse cx="1015" cy="755" rx="16" ry="6" fill="none" stroke="#34516f" stroke-width="2"/>
+    <path d="M999 755 V770 C999 778 1031 778 1031 770 V755 M999 762 C999 770 1031 770 1031 762" fill="none" stroke="#34516f" stroke-width="2"/>
+    <text x="1045" y="756" class="label">PostgreSQL CENTRAL (MPI) /</text>
+    <text x="1045" y="777" class="label">HOSPITAL DB</text>
+  </g>
+
+  <!-- Casos de Uso (Ubicaciones limpias) -->
+  <g id="casos-uso">
+    <!-- UC-01 -->
+    <ellipse cx="510" cy="217" rx="125" ry="40" class="case"/>
+    <text x="510" y="212" text-anchor="middle" class="label">UC-01: Buscar Paciente</text>
+    <text x="510" y="231" text-anchor="middle" class="small">en MPI</text>
+
+    <!-- UC-02 -->
+    <ellipse cx="850" cy="217" rx="135" ry="40" class="case"/>
+    <text x="850" y="212" text-anchor="middle" class="label">UC-02: Abrir Expediente</text>
+    <text x="850" y="231" text-anchor="middle" class="small">Longitudinal</text>
+
+    <!-- UC-03 -->
+    <ellipse cx="1180" cy="217" rx="130" ry="40" class="case"/>
+    <text x="1180" y="212" text-anchor="middle" class="label">UC-03: Consultar</text>
+    <text x="1180" y="231" text-anchor="middle" class="small">Historial Clínico</text>
+
+    <!-- UC-04 -->
+    <ellipse cx="510" cy="417" rx="125" ry="40" class="case"/>
+    <text x="510" y="412" text-anchor="middle" class="label">UC-04: Validar</text>
+    <text x="510" y="431" text-anchor="middle" class="small">Permisos y Tenant</text>
+
+    <!-- UC-06 -->
+    <ellipse cx="1180" cy="417" rx="130" ry="40" class="case"/>
+    <text x="1180" y="412" text-anchor="middle" class="label">UC-06: Crear</text>
+    <text x="1180" y="431" text-anchor="middle" class="small">Expediente Longitudinal</text>
+
+    <!-- UC-05 -->
+    <ellipse cx="850" cy="617" rx="135" ry="40" class="case"/>
+    <text x="850" y="612" text-anchor="middle" class="label">UC-05: Registrar</text>
+    <text x="850" y="631" text-anchor="middle" class="small">Trazabilidad / Auditoría</text>
+  </g>
+
+  <!-- Asociaciones con Actores Principales -->
+  <path d="M270 217 H385" class="line"/>
+  <path d="M270 217 H320 V217 H385" class="line"/>
+  <path d="M270 217 H310 V217 M310 217 V217 H1050" style="display:none"/> <!-- spacer -->
+  <path d="M270 217 H300 V180 H715 V217" class="line"/> <!-- Med a UC02 -->
+  <path d="M270 217 H300 V165 H1050 V217" class="line"/> <!-- Med a UC03 -->
+
+  <path d="M270 417 H385" class="line"/> <!-- Auth a UC04 -->
+  <path d="M270 617 H715" class="line"/> <!-- Auditoria a UC05 -->
+
+  <!-- Conexiones a DB -->
+  <path d="M510 257 V762 H980" class="line"/>
+  <path d="M1180 257 V730" class="line"/>
+  <path d="M850 657 V762 H980" class="line"/>
+
+  <!-- Relaciones UML Include / Extend con trazado limpio -->
+  <!-- UC-02 incluye UC-01 -->
+  <path d="M715 217 H635" class="rel"/>
+  <rect x="650" y="205" width="60" height="18" class="tag-bg"/>
+  <text x="680" y="218" text-anchor="middle" class="tiny" fill="#3874bd">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- UC-02 incluye UC-04 -->
+  <path d="M780 250 L590 385" class="rel"/>
+  <rect x="660" y="305" width="60" height="18" class="tag-bg"/>
+  <text x="690" y="318" text-anchor="middle" class="tiny" fill="#3874bd">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- UC-03 incluye UC-01 -->
+  <path d="M1115 190 Q850 140 585 190" class="rel"/>
+  <rect x="820" y="150" width="60" height="18" class="tag-bg"/>
+  <text x="850" y="163" text-anchor="middle" class="tiny" fill="#3874bd">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- UC-03 incluye UC-04 -->
+  <path d="M1110 240 L590 395" class="rel"/>
+  <rect x="830" y="310" width="60" height="18" class="tag-bg"/>
+  <text x="860" y="323" text-anchor="middle" class="tiny" fill="#3874bd">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- UC-02 incluye UC-05 -->
+  <path d="M850 257 V577" class="rel"/>
+  <rect x="820" y="410" width="60" height="18" class="tag-bg"/>
+  <text x="850" y="423" text-anchor="middle" class="tiny" fill="#3874bd">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- UC-03 incluye UC-05 -->
+  <path d="M1120 250 L920 580" class="rel"/>
+  <rect x="1010" y="400" width="60" height="18" class="tag-bg"/>
+  <text x="1040" y="413" text-anchor="middle" class="tiny" fill="#3874bd">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- UC-06 extiende UC-02 -->
+  <path d="M1105 385 L940 250" class="extend"/>
+  <rect x="1010" y="300" width="60" height="18" class="tag-bg"/>
+  <text x="1040" y="313" text-anchor="middle" class="tiny" fill="#9766a8">&lt;&lt;extend&gt;&gt;</text>
+
+  <!-- Nota al pie y Leyenda -->
+  <text x="370" y="790" class="tiny" fill="#53657a">Nota: UC-06 extiende UC-02 únicamente cuando no existe expediente y la operación solicitada es de apertura/creación.</text>
+
+  <g id="leyenda">
+    <line x1="380" y1="850" x2="435" y2="850" class="rel"/>
+    <text x="445" y="854" class="tiny" fill="#172b4d">&lt;&lt;include&gt;&gt; Requisito obligatorio</text>
+
+    <line x1="700" y1="850" x2="755" y2="850" class="extend"/>
+    <text x="765" y="854" class="tiny" fill="#172b4d">&lt;&lt;extend&gt;&gt; Comportamiento condicional</text>
+  </g>
+</svg>

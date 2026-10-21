@@ -1,0 +1,36 @@
+classDiagram
+  class PrototypeController
+  class PrepareLocalAction
+  class SyncLocalActions
+  class LocalHisAction
+  class SyncPolicy
+  class LocalActionRepository {
+    <<interface>>
+    +save(action)
+    +pendingForTenant(tenantId)
+  }
+  class SyncGateway {
+    <<interface>>
+    +push(action)
+  }
+  class TelemetryRecorder {
+    <<interface>>
+    +record(event)
+  }
+  class PdoLocalActionRepository
+  class InMemoryLocalActionRepository
+  class FakeSyncGateway
+  class ArrayTelemetryRecorder
+
+  PrototypeController --> PrepareLocalAction
+  PrototypeController --> SyncLocalActions
+  PrepareLocalAction --> LocalActionRepository
+  PrepareLocalAction --> TelemetryRecorder
+  SyncLocalActions --> LocalActionRepository
+  SyncLocalActions --> SyncGateway
+  SyncLocalActions --> TelemetryRecorder
+  SyncLocalActions --> SyncPolicy
+  PdoLocalActionRepository ..|> LocalActionRepository
+  InMemoryLocalActionRepository ..|> LocalActionRepository
+  FakeSyncGateway ..|> SyncGateway
+  ArrayTelemetryRecorder ..|> TelemetryRecorder

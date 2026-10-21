@@ -1,0 +1,21 @@
+%% Flujo UX de consulta de la bitácora por rol (Semana 8). Estados = respuestas reales del contrato.
+flowchart TD
+    START([Usuario abre «Bitácora de auditoría»]) --> AUTH{"¿Sesión válida?"}
+    AUTH -- "No (401)" --> W6A["W6 · Sesión requerida<br/>Botón: Iniciar sesión"]
+    AUTH -- Sí --> PERM{"¿Rol con auditoria.ver<br/>en el hospital actual?"}
+    PERM -- "No (403 RBAC_DENIED)" --> W5["W5 · Acceso denegado<br/>Referencia trace_id · sin filtros ni datos"]
+    PERM -- "RBAC caído (503)" --> W6B["W6 · Servicio no disponible<br/>Reintentar"]
+    PERM -- Sí --> W1["W1 · Consulta<br/>Filtros + últimos 25 eventos"]
+    W1 --> EDIT["Combinar filtros: usuario, módulo, acción,<br/>desde/hasta, resultado, correlación"]
+    EDIT --> SUBMIT["Buscar"] --> LOAD["W2 · Cargando<br/>aria-busy, botón deshabilitado"]
+    LOAD --> RES{"Respuesta"}
+    RES -- "200 con datos" --> W2["W2 · Resultados paginados<br/>Página X de Y · total"]
+    RES -- "200 sin datos" --> W3["W3 · Sin resultados<br/>Sugerir ampliar fechas"]
+    RES -- "422" --> W4["W4 · Errores de filtro<br/>Resumen + error por campo"]
+    RES -- "503 AUDIT_UNAVAILABLE" --> W6B
+    W4 --> EDIT
+    W3 --> EDIT
+    W2 -- "Anterior / Siguiente" --> LOAD
+    W2 -- "Ver detalle" --> W7["W2-D · Detalle del evento (diálogo)<br/>sin hashes ni secretos"]
+    W7 -- "Cerrar / Esc" --> W2
+    W6B -- "Reintentar" --> LOAD

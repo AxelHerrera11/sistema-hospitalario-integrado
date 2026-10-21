@@ -1,0 +1,43 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam activity {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+  DiamondBackgroundColor #FFF8E1
+  DiamondBorderColor #B8860B
+}
+
+|Usuario de admisión|
+start
+:Solicitar cita (paciente, doctor,\nespecialidad, horario, motivo);
+|Servicio de citas|
+:Validar acceso y tenant;
+if (¿Autorizado?) then (No)
+  :Responder 403; <<#FFEBEE>>
+  stop
+else (Sí)
+  if (¿Datos y horario válidos?) then (No)
+    :Responder 422 con detalle; <<#FFEBEE>>
+    stop
+  else (Sí)
+    if (¿Doctor tiene especialidad activa?) then (No)
+      :Responder 422 (specialty trigger); <<#FFEBEE>>
+      stop
+    else (Sí)
+      :Comprobar disponibilidad (solape paciente/doctor);
+      if (¿Horario libre?) then (No)
+        :Responder 409 (appointments_overlap); <<#FFEBEE>>
+        stop
+      else (Sí)
+        :Registrar cita en estado scheduled; <<#E8F5E9>>
+      endif
+    endif
+  endif
+endif
+|Usuario de admisión|
+:Recibir cita registrada;
+stop
+@enduml

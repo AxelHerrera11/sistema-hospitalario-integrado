@@ -1,0 +1,14 @@
+@startsalt
+title W5 - Errores recuperables
+{+
+  <b>Búsqueda: catálogo no disponible (503)</b>
+  { <color:#B91C1C>El catálogo no está disponible. No se muestran datos parciales.</color> | [Reintentar] }
+  <i>Ref. de soporte: trace_id 7f3a…</i>
+  ---
+  <b>Cambio de vigencia no confirmado (503)</b>
+  { <color:#B91C1C>No se confirmó el cambio. Se muestra el estado actual: Activo.</color> | [Volver a intentar] }
+  ---
+  <b>Sin permiso (403)</b>
+  <i>No tiene permiso para esta acción. Solicítelo al administrador del hospital.</i>
+}
+@endsalt

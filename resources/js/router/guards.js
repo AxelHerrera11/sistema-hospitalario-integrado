@@ -1,17 +1,14 @@
-export function authGuard(to, from, next) {
-    const token = localStorage.getItem('auth_token');
+import { useAuthStore } from '@/stores/auth';
 
-    if (to.meta.requiresAuth && ! token) {
-        next({ name: 'login' });
+export async function authGuard(to) {
+    const auth = useAuthStore();
+    await auth.initialize();
 
-        return;
+    if (to.meta.requiresAuth && ! auth.token) {
+        return { name: 'login' };
     }
 
-    if (to.meta.guest && token) {
-        next({ name: 'home' });
-
-        return;
+    if (to.meta.guest && auth.token) {
+        return { name: 'home' };
     }
-
-    next();
 }
