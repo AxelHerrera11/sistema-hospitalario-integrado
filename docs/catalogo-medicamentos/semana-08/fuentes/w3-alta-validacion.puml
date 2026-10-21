@@ -1,0 +1,16 @@
+@startsalt
+title W3 - Alta con error de validación por campo (gestor)
+{+
+  <b>Dar de alta un medicamento</b>
+  ---
+  Código*            | "AMX-500       "
+  .                  | <color:#B91C1C>Este código ya está registrado (409)</color>
+  Nombre*            | "Amoxicilina 500 mg"
+  Principio activo*  | "              "
+  .                  | <color:#B91C1C>Obligatorio, de 2 a 120 caracteres (422)</color>
+  Grupo farmacológico* | "Antibiótico   "
+  ---
+  <i>Nace con vigencia Activo. Los datos escritos se conservan tras un error.</i>
+  [Cancelar] | [Registrar]
+}
+@endsalt
