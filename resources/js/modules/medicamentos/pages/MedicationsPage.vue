@@ -170,10 +170,18 @@ async function register() {
 </script>
 
 <style scoped>
+/* El preflight de Tailwind quita bordes, fondos y tamaños a campos, botones y títulos; se restauran con los tokens de Pacientes. */
 .meds { max-width: 920px; margin: 0 auto; color: #0f172a; }
+.meds h1 { font-size: 1.6rem; font-weight: 700; margin: 0.5rem 0 1rem; }
+.meds h2 { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.75rem; }
+.meds label { font-weight: 600; }
 .meds__card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; margin: 1rem 0; background: #fff; }
 .meds__row { display: flex; gap: 0.5rem; }
-.meds__row input, .meds__field input { flex: 1; min-height: 2.5rem; padding: 0.4rem 0.6rem; font-size: 1rem; }
+.meds input { min-height: 44px; padding: 0.5rem 0.65rem; border: 1px solid #64748b; border-radius: 6px; background: #fff; font: inherit; }
+.meds__row input, .meds__field input { flex: 1; width: 100%; }
+.meds button { min-height: 44px; padding: 0.55rem 1rem; border: 1px solid #1d4ed8; border-radius: 6px; background: #1d4ed8;
+    color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.meds button:disabled { opacity: 0.6; cursor: progress; }
 .meds__field { display: grid; gap: 0.25rem; margin-bottom: 0.75rem; }
 .meds__hint { color: #475569; font-size: 0.9rem; }
 .meds__list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
