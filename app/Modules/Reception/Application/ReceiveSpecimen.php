@@ -39,8 +39,9 @@ final class ReceiveSpecimen
             if (!in_array($order['status'], ['pending', 'pending_new_sample'], true)) {
                 throw new \DomainException('Ítem no disponible', 409);
             }
-            $reason = ($input['patient_code'] !== $order['patient_code']
-                || trim($input['patient_name']) !== $order['patient_name']) ? 'identificacion_discordante' : null;
+            $reason = ($input['sin_etiqueta'] ?? false) ? 'sin_etiqueta' :
+                (($input['patient_code'] !== $order['patient_code'] || trim($input['patient_name']) !== $order['patient_name'])
+                    ? 'identificacion_discordante' : null);
             $reason ??= (new SampleValidator($order['type']))->reason($input, $order, $now);
             $sample = [
                 'id' => bin2hex(random_bytes(16)), 'tenant_id' => $tenant,

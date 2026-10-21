@@ -1,28 +1,93 @@
-# Semana 2 — Requisitos y LSP
+# Semana 2 — Requisitos verificables y sustitución de Liskov
 
-| ID | Requisito y aceptación observable |
-|---|---|
-| RF01 | Aceptar solo si código y nombre coinciden con orden y requisitos cumplen. Responder accepted. |
-| RF02 | Aceptar cambia ítem a received en la misma transacción; un fallo no cambia estado. |
-| RF03 | Código único verificable; consulta y reimpresión devuelven el mismo código. |
-| RF04 | Ítem cancelado/recibido devuelve 409; ajeno/inexistente 404. |
-| RF05 | Rechazo guarda motivo controlado y code=null; límites exactos de volumen/tiempo/temperatura aceptan. |
-| RF06 | Rechazo cambia ítem a pending_new_sample y registra aviso en outbox atómicamente. |
-| RNF01 | JWT, permisos y tenant comprobados en servidor; consulta ajena no revela muestras. |
-| RNF02 | PDO preparado, rollback, sin SQL en controlador; fallo no deja aceptación parcial. |
-| RNF03 | Formulario por teclado, etiquetas, feedback y adaptación móvil; auditoría manual pendiente. |
+**Módulo:** ASII-18, recepción de muestras y códigos identificadores.
+**Autor de la entrega:** María de los Ángeles López Fajardo, Mar-03.
+**Issue:** [ASII-18 #6](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/issues/6).
+**Objetivo de la matriz:** RF/RNF, criterios de aceptación y diseño antes/después con LSP aplicado al flujo de recepción.
 
-Antes: un controlador con condiciones por tipo, SQL e impresión sería difícil de sustituir/probar.
-Después: RequirementsValidator retorna null/motivo para todos los tipos; SampleValidator parametrizado
-con blood/urine/swab mantiene el contrato. ReceiveSpecimen depende de ReceptionRepository.
-Pruebas del HIS: aceptación, rechazos y reenvíos en `tests/Unit/Reception` desde semana 6.
-El runner independiente del micro verifica aceptación blood/urine/swab bajo el mismo contrato.
-No se implementaron las clases BloodSpecimenValidator descritas en los documentos históricos.
-Fuente obligatoria consultada: [MVP Cluster, SOLID](https://mvpcluster.com/diseno-de-software-2/).
-Aplicación propia: conservar entradas/salidas y semántica del contrato al sustituir un validador.
+## Índice
 
-Código del HIS: `app/Modules/Reception/Domain` y `Application`, con autoload PSR-4 de Laravel.
-RF07: request_key conserva resultado ante reenvío idéntico; cambiar datos o actor con la misma clave da 409.
-RF08: colisión del identificador reintenta la transacción hasta tres veces; otros fallos no se reintentan.
-Decisión de código: 96 bits aleatorios y dígito decimal, sin secuencia por hospital; UNIQUE valida unicidad.
-Esta evolución sustituye el formato ilustrativo de semana 1 y evita coordinar secuencias entre hospitales.
+1. Introducción y alcance.
+2. Desarrollo del entregable y decisiones.
+3. Aplicación al microproyecto y al HIS.
+4. Verificación, límites y conclusión.
+5. Fuentes y evidencia Git.
+
+## Introducción y alcance
+
+Una muestra puede estar bien conservada y pertenecer al paciente equivocado. La aceptación requiere
+identidad, orden disponible y conformidad física simultáneamente. La prioridad del dominio es rechazar
+con una causa controlada y registrar una nueva toma, sin permitir que la UI omita esas reglas.
+
+## Requisitos funcionales y aceptación
+
+| ID | Regla | Criterio de aceptación |
+|---|---|---|
+| RF01 | Comparar código y nombre con la orden confiable | Si cualquiera difiere, devolver rejected e identificacion_discordante; nunca generar código. |
+| RF02 | Persistir muestra y estado de orden atómicamente | Un error de escritura deja cero muestras nuevas y conserva el estado previo. |
+| RF03 | Código único verificable y reimpresión | Una muestra accepted tiene código válido; consultar/imprimir devuelve exactamente ese código. |
+| RF04 | Solo recibir ítems disponibles | pending/pending_new_sample permiten recepción; received/cancelled dan 409; ítem ajeno da 404. |
+| RF05 | Aplicar requisitos físicos por tipo | Tipo, contenedor, volumen, estabilidad, temperatura y condiciones determinan causa de rechazo. |
+| RF06 | Conservar aviso de rechazo | La transacción crea outbox y pending_new_sample; un fallo de red posterior no elimina rechazo. |
+| RF07 | Recuperar respuesta perdida | Misma request_key, actor y payload devuelve el registro anterior; datos distintos dan 409. |
+| RF08 | Reintento selectivo por código | Reintentar como máximo tres veces por colisión del índice de código; no por otro fallo SQL. |
+| RF09 | Localizar orden pendiente | Buscar prefijo de ítem/código devuelve hasta 20 coincidencias del hospital actual y requisitos de referencia. |
+| RF10 | Autorizar etiqueta | GET de etiqueta requiere muestras.etiquetar y no modifica la muestra ni genera identificador. |
+
+## Requisitos no funcionales
+
+| ID | Condición | Verificación |
+|---|---|---|
+| RNF01 | JWT vigente, membresía, hospital y permiso se verifican en servidor | Pruebas HTTP con login real, rol lector y cabecera de otro hospital. |
+| RNF02 | SQL preparado, transacción y bloqueo PostgreSQL | Fallo de outbox revierte; dos conexiones compiten por el mismo ítem. |
+| RNF03 | UI usable con teclado y móvil | Etiquetas, foco de errores, cuatro tamaños de pantalla y revisión automática axe. |
+| RNF04 | Minimizar exposición | Respuestas no incluyen request_hash; consultas limitadas a tenant y etiquetas a tres campos. |
+
+## LSP: diseño antes y después
+
+Antes, un controlador que cambia sus excepciones/retornos según sangre, orina o hisopado obliga al
+consumidor a conocer cada variante. Por ejemplo, devolver true para sangre y lanzar una excepción
+por volumen insuficiente solo para orina rompe una expectativa uniforme del consumidor.
+
+Después, RequirementsValidator define reason(observed, requirements, now): ?string.
+SampleValidator cumple el mismo contrato para blood, urine y swab: null significa conformidad;
+una cadena del catálogo significa rechazo. No se agregan precondiciones particulares al consumidor.
+
+~~~mermaid
+classDiagram
+  class RequirementsValidator {
+    <<interface>>
+    +reason(observed, requirements, now) string_or_null
+  }
+  RequirementsValidator <|.. SampleValidator
+  ReceiveSpecimen --> SampleValidator
+  ReceiveSpecimen --> ReceptionRepository
+~~~
+
+La implementación parametrizada evita tres clases casi idénticas. ReceiveSpecimen conserva identidad,
+disponibilidad e idempotencia; SampleValidator concentra requisitos físicos; el repositorio escribe.
+El servicio todavía instancia SampleValidator: no se presenta como un contenedor de estrategias inyectables.
+
+## Aplicación y verificación
+
+HIS: [contrato del validador](../../../app/Modules/Reception/Domain/RequirementsValidator.php),
+[validador](../../../app/Modules/Reception/Domain/SampleValidator.php) y
+[servicio](../../../app/Modules/Reception/Application/ReceiveSpecimen.php).
+Micro: mismas responsabilidades didácticas con namespace Reception, sin dependencia de Laravel.
+Los tests del HIS sustituyen el tipo esperado por blood/urine/swab y repiten aceptación y replay.
+Los límites de temperatura/volumen/tiempo se prueban con valores justo dentro y fuera del rango.
+
+## Conclusión
+
+LSP se demuestra manteniendo significado, entradas y retorno del contrato al cambiar el tipo.
+Los RF/RNF se consideran verificados solo cuando existe un caso ejecutado vinculado en semana 15.
+La fuente SOLID obligatoria es [MVP Cluster](https://mvpcluster.com/diseno-de-software-2/).
+
+## Fuentes y evidencia Git
+
+- [README original: plan, matriz ASII-18 y Definition of Done](../../../README.md).
+- [Declaración de uso de IA y validación humana](../DECLARACION_IA.md).
+- [Índice de semanas y archivos](../README.md).
+- [Ramas, PR y destino develop](../semana-15/ramas-prs.md).
+- Rama de entrega: feature/asii-18-semana-02-recepcion-muestras-mar-03.
+- La referencia reunida y probada es la rama semana-15-recepcion-muestras-integracion-mar-03.
