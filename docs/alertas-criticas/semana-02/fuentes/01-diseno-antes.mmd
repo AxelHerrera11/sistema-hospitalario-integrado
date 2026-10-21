@@ -1,0 +1,16 @@
+---
+title: "Antes de SRP — CriticalAlertManager tiene cuatro razones para cambiar"
+---
+classDiagram
+  direction LR
+  class CriticalAlertManager {
+    +onResultValidated(evento, ahora)
+    +escalate(ahora)
+    -compararUmbrales() «política clínica»
+    -buscarMedicoTratante() «organigrama»
+    -guardarYAvisar() «persistencia y canal de TI»
+    -vencimiento15min() «calidad»
+  }
+  ResultValidatedConsumer --> CriticalAlertManager
+  EscalateCommand --> CriticalAlertManager
+  note for CriticalAlertManager "Laboratorio, dirección médica, TI y calidad<br>piden cambios distintos sobre la misma clase"
