@@ -12,5 +12,7 @@ require __DIR__ . '/destino.php';
 require __DIR__ . '/planes.php';
 require __DIR__ . '/resultados.php';
 require __DIR__ . '/arquitectura.php';
+require __DIR__ . '/protocolo.php';
+require __DIR__ . '/traslado.php';
 
 finish();
