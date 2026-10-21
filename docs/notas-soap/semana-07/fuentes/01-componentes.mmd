@@ -1,0 +1,23 @@
+---
+title: "Componentes backend/frontend — Notas SOAP y diagnósticos"
+---
+flowchart LR
+  subgraph FE[Frontend Vue 3]
+    pages[SoapNoteEditorPage.vue<br/>SoapNoteStatusBadge.vue] --> comps[SoapSectionsForm.vue<br/>DiagnosisPicker.vue · DiagnosisList.vue]
+    comps --> store[stores/notasSoap.js<br/>Pinia]
+    store --> api[api/notasSoapApi.js<br/>plugins/axios + X-Tenant-ID + JWT]
+  end
+  subgraph BE[Backend Laravel 12]
+    mw[Middlewares<br/>tenant · jwt.auth · permission:notas_soap.*] --> ctrl[Api/V1/SoapNoteController<br/>+ FormRequests]
+    ctrl --> app[Application<br/>RegisterSoapNote · AssociateDiagnosis · GetSoapNote]
+    app --> dom[Domain<br/>ClinicalNote · NoteAuthorship · NoteVersion<br/>CareEpisodeRef · SoapSections · DiagnosisPolicy]
+    app --> port{{ClinicalNoteReader · ClinicalNoteWriter<br/>CareEpisodeReader · CareAssignmentReader<br/>Icd10Catalog · PermissionChecker · AuditTrail}}
+    eloq[EloquentClinicalNoteWriter<br/>EloquentClinicalNoteReader] -. implementa .-> port
+    mem[InMemoryClinicalNoteReader<br/>InMemoryClinicalNoteWriter] -. implementa .-> port
+    ext[DbCareAssignmentReader<br/>DbCareEpisodeReader] -. implementa .-> port
+    app --> audit[AuditTrail<br/>auditoría H8 · misma transacción]
+  end
+  api --> mw
+  eloq --> db[(clinical_notes · diagnoses<br/>local_access_audits)]
+  ext -. solo lectura .-> db2[(care_assignments · doctor_profiles<br/>care_episodes · medical_records)]
+  cons[Expediente · Prescripciones · Órdenes] --> app

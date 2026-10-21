@@ -1,0 +1,78 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam sequence {
+  ParticipantBackgroundColor #E3F2FD
+  ParticipantBorderColor #1565C0
+  ParticipantFontColor #17212B
+  ActorBorderColor #263238
+  ActorFontColor #17212B
+  LifeLineBorderColor #263238
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+}
+autonumber
+
+actor "Usuario administrativo" as U
+boundary "Interfaz de reportes" as UI
+control "Módulo de reportes" as R
+participant "Servicio de autenticación\ny autorización" as Auth
+database "Base de datos" as DB
+
+U -> UI: Seleccionar reporte operativo
+UI -> R: Solicitar reporte
+R -> Auth: Validar autenticación, autorización y tenant
+alt Acceso denegado
+  Auth --> R: Rechazo
+  R --> UI: Error de acceso, sin consultar
+  hnote over UI #FFEBEE: Acceso denegado
+  UI --> U: Mostrar acceso rechazado
+else Acceso autorizado
+  Auth --> R: Acceso autorizado
+  U -> UI: Ingresar filtros administrativos
+  UI -> R: Enviar filtros
+  R -> R: Validar filtros
+  alt Filtros inválidos
+    R --> UI: Error de validación
+    hnote over UI #FFEBEE: Filtros inválidos
+    loop Mientras los filtros sean inválidos
+      UI --> U: Mostrar mensaje de error
+      U -> UI: Corregir filtros
+      UI -> R: Enviar filtros
+      R -> R: Validar filtros
+    end
+  else Filtros válidos
+    R -> DB: Consultar reporte con filtros
+    alt Error de consulta
+      DB -x R: Fallo
+      R --> UI: Error sin resultados ni archivo
+      hnote over UI #FFEBEE: Error de consulta
+      UI --> U: Mostrar error
+    else Consulta respondió
+      DB --> R: Resultados
+      alt Sin resultados
+        R --> UI: Resultado vacío
+        hnote over UI #FFEBEE: Sin resultados
+        UI --> U: Mostrar "Sin resultados"
+      else Resultados encontrados
+        R --> UI: Resultados filtrados
+        UI --> U: Mostrar resultados
+        U -> UI: Solicitar exportación
+        UI -> R: Generar exportación
+        R -> R: Generar archivo reproducible
+        alt Error durante la exportación
+          R --> UI: Error de exportación
+          hnote over UI #FFEBEE: Error de exportación
+          UI --> U: Mostrar mensaje de error
+        else Exportación exitosa
+          R --> UI: Archivo generado
+          UI --> U: Entregar archivo exportado
+        end
+      end
+    end
+  end
+end
+@enduml

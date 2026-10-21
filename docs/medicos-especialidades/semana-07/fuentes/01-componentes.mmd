@@ -1,0 +1,21 @@
+---
+title: "Componentes backend/frontend — Médicos, especialidades y disponibilidad"
+---
+flowchart LR
+  subgraph FE[Frontend Vue 3]
+    pages[DoctorsPage.vue · DoctorForm.vue<br/>SpecialtyLinkForm.vue · AvailabilityPage.vue] --> store[stores/doctors.js<br/>Pinia]
+    store --> api[api/doctorsApi.js<br/>plugins/axios + X-Tenant-ID + JWT]
+  end
+  subgraph BE[Backend Laravel 12]
+    mw[Middlewares<br/>tenant · jwt.auth · permission:medicos.*] --> ctrl[Api/V1/DoctorController<br/>+ FormRequests]
+    ctrl --> app[Application<br/>RegisterDoctor · AssociateSpecialty · QueryAvailability]
+    app --> dom[Domain<br/>Period · SpecialtyAssignmentPolicy · SlotPlanner]
+    app --> port{{DoctorRepository · AppointmentReader<br/>DoctorScheduleProvider «interfaces»}}
+    eloq[EloquentDoctorRepository<br/>DbAppointmentReader] -. implementa .-> port
+    mem[InMemoryDoctorRepository<br/>pruebas] -. implementa .-> port
+    sched[ConfigScheduleProvider<br/>luego tabla doctor_schedules] -. implementa .-> port
+    app --> audit[AuditLogger<br/>auditoría H8]
+  end
+  api --> mw
+  eloq --> db[(doctor_profiles · doctor_specialties · specialties<br/>appointments solo lectura · local_access_audits)]
+  cons[Citas · Admisión] --> app

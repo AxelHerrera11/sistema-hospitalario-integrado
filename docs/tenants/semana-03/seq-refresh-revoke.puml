@@ -7,140 +7,84 @@ skinparam sequenceActorBackgroundColor #E8F5E9
 skinparam sequenceActorBorderColor #2E7D32
 skinparam sequenceDatabaseBackgroundColor #FCE4EC
 skinparam sequenceDatabaseBorderColor #C62828
-title **Secuencia: Refresh Token Rotation, Reuse Detection y Revocación de Sesión (RF-07, RF-08, RF-09)**
+title **Micro-HIS Tenants (Semana 3): rotación de refresh, detección de reutilización y revocación (RF-07, RF-08, RF-09)**
+caption Implementación: app/Modules/Tenants (PHP vanilla, repositorios en memoria). Prueba: tests/Feature/Tenants/MicroHisSmokeTest.php
 actor "Cliente (App/Portal)" as Client
-participant "AuthController\n(Presentation)" as Ctrl
-participant "RefreshTokenUseCase\n(Application)" as UCRefresh
-participant "RevokeSessionUseCase\n(Application)" as UCRevoke
-participant "RefreshTokenRotator\n(Domain Service)" as Rotator
-participant "TokenFactory\n(Domain Service)" as TokenFactory
-participant "RedisRefreshTokenRepo\n(Infrastructure)" as RefreshRepo
-participant "RedisSessionRepo\n(Infrastructure)" as SessionRepo
-participant "RedisBlocklistRepo\n(Infrastructure)" as BlocklistRepo
-participant "JwtTokenService\n(Infrastructure)" as JwtSvc
-participant "Redis Cluster" as Redis
-participant "EventPublisher" as Events
-participant "AuditLogRepo" as AuditRepo
+participant "Router +\nJwtAuthMiddleware" as Mw
+participant "AuthController /\nAdminUserController" as Ctrl
+participant "RefreshTokenUseCase" as UCRefresh
+participant "RevokeSessionUseCase" as UCRevoke
+participant "RefreshTokenRotator" as Rotator
+participant "JwtTokenService\n(HS256, lcobucci/jwt 4.0)" as Jwt
+database "InMemoryRefreshTokenRepo\n(id → SHA-256 del secreto)" as RefreshRepo
+database "InMemorySessionRepo" as SessionRepo
+database "InMemoryAuditLogRepo\n(cadena de hashes)" as Audit
 
-' ============ REFRESH TOKEN ============
-group **Refresh Token Rotation (Happy Path)**
-    Client -> Ctrl : POST /auth/refresh\n{refresh_token}
-    Ctrl -> Ctrl : Validar RefreshRequest DTO
+' ============ ROTACIÓN ============
+group **Rotación de refresh token (camino feliz)**
+    Client -> Mw : POST /auth/refresh {refresh_token: "<id>.<secreto>"}
+    Mw -> Ctrl : ruta pública (sin Bearer)
     Ctrl -> UCRefresh : execute(RefreshCommand)
-    UCRefresh -> Rotator : rotate(refresh_token)
-    Rotator -> Rotator : Extraer user_id, device_id del token (sin verificar)
-    Rotator -> RefreshRepo : findByUserIdAndDevice(user_id, device_id)
-    RefreshRepo -> Redis : GET refresh:{user_id}:{device_id}
-    Redis --> RefreshRepo : {hash, jti_old_access, exp, created_at} | NULL
-    alt No existe en Redis (revocado/expirado)
-        Rotator -> AuditRepo : log(REFRESH_INVALID)
-        Rotator --> UCRefresh : Failure(RefreshRevoked)
-    else Existe
-        Rotator -> Rotator : Verificar Argon2id(refresh_token) == hash
-        alt Hash NO coincide → REUSE DETECTED (ATAQUE)
-            Rotator -> Redis : KEYS refresh:{user_id}:*
-            Redis --> Rotator : all_refresh_keys
-            loop Revocar TODAS las sesiones del usuario
-                Rotator -> Redis : GET key → {jti_access}
-                Rotator -> BlocklistRepo : add(jti_access, exp)
-                BlocklistRepo -> Redis : SET blocklist:{jti_access} TTL=exp-now
-                Rotator -> RefreshRepo : delete(key)
-                Rotator -> SessionRepo : delete(session_id)
-            end
-            Rotator -> AuditRepo : log(REFRESH_REUSE_ATTACK, severity: CRITICAL)
-                Rotator -> Events : publish(SecurityAlert{user_id, type: REFRESH_REUSE
-            }
-            )
-            Rotator --> UCRefresh : Failure(TokenCompromised)
-        else Hash coincide → ROTACIÓN VÁLIDA
-            Rotator -> RefreshRepo : delete(old_key)
-            Rotator -> TokenFactory : createAccessToken(user, tenant, new_session_id, device_id)
-            TokenFactory -> JwtSvc : sign(new_claims, RS256)
-            JwtSvc --> TokenFactory : new_access_token (new_jti)
-            TokenFactory --> Rotator : new_access_token
+    UCRefresh -> Rotator : rotate(raw)
+    Rotator -> RefreshRepo : findById(id)
+    RefreshRepo --> Rotator : RefreshToken | null
+    alt No existe, secreto no coincide, vencido o revocado
+        Rotator --> UCRefresh : failure
+        UCRefresh --> Client : 401 {message}
+    else Ya estaba rotado → REUTILIZACIÓN (posible robo)
+        Rotator --> UCRefresh : reuseDetected(token)
+        UCRefresh -> SessionRepo : findByUser(tenant, user) → revoke() de cada sesión
+        UCRefresh -> RefreshRepo : revokeAllByUser(tenant, user)
+        note right : solo el hospital del token;\nlas membresías en otros hospitales siguen activas
+        UCRefresh -> Audit : log(REFRESH_REUSE_DETECTED, severity CRITICAL)
+        UCRefresh --> Client : 401 {message}
+    else Válido y sin usar
+        Rotator -> RefreshRepo : markRotated() + save
+        Rotator -> RefreshRepo : save(nuevo RefreshToken, misma sesión)
+        UCRefresh -> SessionRepo : findById(session_id) → activa, updateActivity()
+        UCRefresh -> Jwt : createAccessToken(user, tenant, session_id, device)
+        UCRefresh -> Audit : log(TOKEN_REFRESHED, {session_id, new_jti})
+        UCRefresh --> Client : 200 {access_token, refresh_token, expires_in}
+    end
+end
 
-            Rotator -> Rotator : new_refresh = random(32 bytes)
-            Rotator -> Rotator : new_hash = Argon2id(new_refresh)
-            Rotator -> RefreshRepo : save(new_refresh_entity{user_id, device_id, new_hash, new_jti, exp: 7d
-        }
-        )
-        RefreshRepo -> Redis : SET refresh:{
-            user_id}:{
-                device_id
-            }
-            {new_hash, new_jti, exp
-        }
-        EX 7d
-        Redis --> RefreshRepo : OK
-        Rotator -> SessionRepo : updateLastActivity(session_id, now)
-        SessionRepo -> Redis : SET session:{
-            session_id} {
-                {last_activity: now
-            }
-            EX 7d
-            Rotator -> AuditRepo : log(TOKEN_REFRESHED, {
-                old_jti, new_jti, device_id})
-                Rotator --> UCRefresh : RefreshResult {
-                    new_access_token, new_refresh_token, new_expires_in}
-                end
-            end
-            UCRefresh --> Ctrl : Resultado
-            Ctrl -> Ctrl : Transformar a JSON
-            Ctrl --> Client : 200 OK\n{access_token, refresh_token, expires_in: 900}
-        end
-        ' ============ REVOCACIÓN DE SESIÓN ============
-        group **Revocación: Logout Propio**
-            Client -> Ctrl : POST /auth/logout\nAuthorization: Bearer <access_token>
-            Ctrl -> UCRevoke : execute(RevokeCommand{session_id, reason: "logout"
-        }
-        )
-        UCRevoke -> BlocklistRepo : add(jti_from_token, exp)
-        BlocklistRepo -> Redis : SET blocklist:{
-            jti
-        }
-        TTL=exp-now
-        UCRevoke -> RefreshRepo : deleteByUserIdAndDevice(user_id, device_id)
-        RefreshRepo -> Redis : DEL refresh:{
-            user_id}:{device_id
-        }
-        UCRevoke -> SessionRepo : delete(session_id)
-        SessionRepo -> Redis : DEL session:{
-            session_id}
-            UCRevoke -> AuditRepo : log(REVOKE_SESSION, {reason: "logout", revoked_count: 1})
-            UCRevoke -> Events : publish(SessionRevokedEvent{user_id, reason: "logout"})
-            UCRevoke --> Ctrl : RevokeResult {revoked_sessions: 1}
-            Ctrl --> Client : 200 OK {message: "Sesión cerrada correctamente"}
-        end
-        group **Revocación: Force-Revoke por Admin**
-            actor "Admin Tenant" as Admin
-            Admin -> Ctrl : DELETE /admin/users/{target_user_id}/sessions\nAuthorization: Bearer <admin_token>
-            Ctrl -> Ctrl : Validar permisos (TENANT_ADMIN + mismo tenant)
-            Ctrl -> UCRevoke : execute(RevokeCommand{target_user_id, reason: "force_revoke", requester_id: admin_id
-        }
-        )
-        UCRevoke -> RefreshRepo : findAllByUserId(target_user_id)
-        RefreshRepo -> Redis : KEYS refresh:{t
-            arget_user_id
-        }
-        :*
-        Redis --> RefreshRepo : refresh_keys[]
-        loop Por cada refresh key
-            UCRevoke -> RefreshRepo : get(key) → {jti_access}
-            UCRevoke -> BlocklistRepo : add(jti_access, exp)
-            BlocklistRepo -> Redis : SET blocklist:{jti_access} TTL=exp-now
-            UCRevoke -> RefreshRepo : delete(key)
-        end
-        UCRevoke -> SessionRepo : findAllByUserId(target_user_id)
-        SessionRepo -> Redis : KEYS session:{t
-            arget_user_id}:*
-            Redis --> SessionRepo : session_keys[]
-            loop Por cada session
-                UCRevoke -> SessionRepo : delete(session_id)
-            end
-            UCRevoke -> AuditRepo : log(REVOKE_SESSION, {reason: "force_revoke", requester_id: admin_id, revoked_count: N})
-            UCRevoke -> Events : publish(SessionRevokedEvent{user_id: target_user_id, reason: "force_revoke", requester_id: admin_id})
+' ============ VALIDACIÓN EN CADA PETICIÓN ============
+group **Cada petición autenticada**
+    Client -> Mw : GET /auth/me\nAuthorization: Bearer <access_token>
+    Mw -> Jwt : validateAccessToken (firma, iss, aud, nbf/exp)
+    Mw -> SessionRepo : findById(claims.session_id)
+    alt Sesión inexistente, revocada o de otro hospital
+        Mw --> Client : 401 Sesión revocada
+    else X-Tenant-ID distinto del tenant del token
+        Mw -> Audit : log(CROSS_TENANT_ATTEMPT)
+        Mw --> Client : 403
+    else Sesión activa
+        Mw -> Ctrl : request + atributo auth (JwtClaims)
+        Ctrl --> Client : 200
+    end
+end
 
-            UCRevoke --> Ctrl : RevokeResult {revoked_sessions: N}
-            Ctrl --> Admin : 200 OK {revoked_sessions: N}
-        end
-        @enduml
+' ============ LOGOUT ============
+group **Revocación: logout propio**
+    Client -> Mw : POST /auth/logout (Bearer)
+    Mw -> Ctrl : auth = claims del token
+    Ctrl -> UCRevoke : execute(RevokeCommand{tenant, requester, session_id})
+    UCRevoke -> SessionRepo : findById + belongsTo(tenant, user) → revoke()
+    UCRevoke -> RefreshRepo : revokeBySession(session_id)
+    UCRevoke -> Audit : log(SESSION_REVOKED, {reason: logout, revoked_count: 1})
+    UCRevoke --> Client : 200 {revoked_sessions: 1}
+    note over Client, Mw : el mismo access token recibe 401 desde la siguiente petición
+end
+
+' ============ FORCE-REVOKE ============
+group **Revocación: force-revoke por admin_hospital**
+    actor "admin_hospital" as Admin
+    Admin -> Mw : DELETE /admin/users/{userId}/sessions (Bearer)
+    Mw -> Ctrl : auth con rol admin_hospital (si no, 403)
+    Ctrl -> UCRevoke : execute(RevokeCommand{tenant del admin, target userId})
+    UCRevoke -> SessionRepo : findByUser(tenant, target) → revoke() de cada una
+    UCRevoke -> RefreshRepo : revokeAllByUser(tenant, target)
+    UCRevoke -> Audit : log(SESSION_REVOKED, {reason: admin_revoke, requester_id, revoked_count: N})
+    UCRevoke --> Admin : 200 {revoked_sessions: N}
+end
+@enduml
