@@ -5,15 +5,13 @@ declare(strict_types=1);
 namespace MicroHis\MedicationCatalog\Persistence;
 
 use MicroHis\MedicationCatalog\Application\DuplicateMedicationCode;
-use MicroHis\MedicationCatalog\Application\MedicationReader;
-use MicroHis\MedicationCatalog\Application\MedicationRegistry;
-use MicroHis\MedicationCatalog\Application\MedicationValidityStore;
+use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Application\PersistenceFailure;
 use MicroHis\MedicationCatalog\Domain\Medication;
 use MicroHis\MedicationCatalog\Domain\Validity;
 
-/** Adaptador PDO de los tres puertos; todo valor externo viaja como parámetro de una sentencia preparada. */
-final readonly class PdoMedicationCatalog implements MedicationRegistry, MedicationReader, MedicationValidityStore
+/** Adaptador PDO del Repository; todo valor externo viaja como parámetro de una sentencia preparada. */
+final readonly class PdoMedicationCatalog implements MedicationRepository
 {
     private const COLUMNS = 'medication_id, code, name, active_ingredient, pharmacological_group, validity';
 
@@ -21,6 +19,11 @@ final readonly class PdoMedicationCatalog implements MedicationRegistry, Medicat
     {
         // Los fallos deben llegar como excepción para no confundirlos con "sin resultados".
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // SQLite solo pasa a minúsculas los caracteres ASCII; se sustituye LOWER por una versión Unicode (defecto AV3).
+        // PostgreSQL ya aplica Unicode, así que solo se registra para SQLite.
+        if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+            $this->pdo->sqliteCreateFunction('LOWER', static fn (?string $value): ?string => $value === null ? null : mb_strtolower($value), 1);
+        }
     }
 
     public function findByCode(string $code): ?Medication
