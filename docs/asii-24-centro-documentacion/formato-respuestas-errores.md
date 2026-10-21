@@ -65,3 +65,47 @@ Validación (`422`) agrega `errors`:
 - `code`: `snake_case`, estable y documentado en el contrato del módulo.
 - `trace_id`: se reutiliza `X-Request-Id` si cumple `^[A-Za-z0-9._-]{8,64}$`; si no, se genera `trace-` + 12 hex.
 - `errors`: solo en `422`; mapa `campo → lista de mensajes`.
+
+## 4. Códigos HTTP y `code`
+
+| HTTP | `code` | Cuándo |
+|---|---|---|
+| 400 | `tenant_required` | Falta la cabecera `X-Tenant-ID`. |
+| 400 | `tenant_invalid` | `X-Tenant-ID` no es un UUID. |
+| 400 | `request_malformed` | Cuerpo JSON inválido o no interpretable. |
+| 401 | `unauthenticated` | Token ausente, inválido o expirado. |
+| 403 | `forbidden` | Autenticado, pero sin el permiso de la operación. |
+| 403 | `tenant_mismatch` | El token pertenece a otro hospital. |
+| 404 | `appointment_not_found`, `report_not_found` | Recurso inexistente **en el tenant**. |
+| 405 | `appointments_delete_protection` | Operación no permitida (borrado físico prohibido). |
+| 406 | `report_format_unsupported` | Formato de exportación no soportado. |
+| 409 | `appointments_overlap`, `appointments_finalized_immutable` | Conflicto de estado o de exclusión. |
+| 422 | `validation_failed` | Datos inválidos; incluye `errors`. |
+| 422 | `report_filter_invalid`, `report_range_too_long`, `appointments_specialty_trigger`, `appointments_status_time_check` | Regla de dominio incumplida. |
+| 429 | `rate_limited` | Límite de solicitudes; incluye `Retry-After`. |
+| 500 | `internal_error` | Fallo no controlado; no se revela el detalle. |
+| 503 | `service_unavailable` | Dependencia no disponible (base o RBAC); reintentable. |
+
+- El `code` va en `snake_case`; los códigos heredados en mayúsculas se migran al tocar el módulo (`TENANT_REQUIRED` → `tenant_required`, `RBAC_DENIED` → `forbidden`, `AUTH_REQUIRED` → `unauthenticated`).
+- Un recurso de otro tenant responde `404` con el mismo `code` que uno inexistente.
+- Un `503` nunca se usa para validaciones: esas son `422`.
+
+## 5. Validación (`422`)
+
+- Se conserva el validador del framework y se traduce al sobre común.
+- `message` resume el primer problema; `errors` enumera **todos** los campos.
+- Las reglas de negocio usan `422` con un `code` de dominio; nunca `400`.
+- Un filtro de paginación fuera de rango también es `422` (`validation_failed`).
+
+## 6. Paginación y filtros comunes
+
+| Parámetro | Regla |
+|---|---|
+| `page` | Entero ≥ 1; por defecto 1. |
+| `per_page` | Entero entre 1 y 100; por defecto 25. |
+| `order` | `asc` o `desc`; por defecto `asc` según el recurso. |
+| `date_from`, `date_to` | `Y-m-d`; al menos uno; rango máximo de 366 días. |
+
+- El sobre de una colección usa exactamente `current_page`, `per_page`, `total` y `last_page`.
+- El tenant **no** es un filtro: lo impone `X-Tenant-ID`.
+- Los filtros adicionales se documentan por recurso en su contrato.
