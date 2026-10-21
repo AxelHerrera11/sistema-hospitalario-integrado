@@ -22,9 +22,10 @@ final class RegistroFalso implements RegistroInternacion
     public array $camas = [];
     /** @var list<string> */
     public array $llamadas = [];
-    /** Punto donde simular la falla: iniciar, leer, escribir, confirmar o incierto. */
+    /** Punto donde simular la falla: iniciar, leer, escribir (primera escritura), escribir2 (segunda), confirmar o incierto. */
     public ?string $fallarEn = null;
     private ?array $instantanea = null;
+    private int $escrituras = 0;
 
     public function __construct(private readonly DateTimeImmutable $t)
     {
@@ -115,7 +116,8 @@ final class RegistroFalso implements RegistroInternacion
     private function paso(string $punto): void
     {
         $this->llamadas[] = $punto;
-        if ($this->fallarEn === $punto) {
+        $segunda = $punto === 'escribir' && ++$this->escrituras === 2 && $this->fallarEn === 'escribir2';
+        if ($this->fallarEn === $punto || $segunda) {
             throw new FalloPersistencia("falla simulada en {$punto}");
         }
     }
