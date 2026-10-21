@@ -42,6 +42,35 @@ CREATE TABLE doctor_schedules (
 );
 CREATE INDEX doctor_schedules_doctor_profile_id_index ON doctor_schedules (doctor_profile_id);
 CREATE INDEX doctor_schedules_specialty_id_index ON doctor_schedules (specialty_id);
+
+-- Regla de especialidad (opción B acordada con ASII-04).
+CREATE OR REPLACE FUNCTION doctor_schedules_require_specialty() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM doctor_profiles WHERE doctor_profile_id = NEW.doctor_profile_id)
+       AND EXISTS (SELECT 1 FROM specialties WHERE specialty_id = NEW.specialty_id)
+       AND NOT EXISTS (
+           SELECT 1
+           FROM doctor_specialties s
+           WHERE s.doctor_profile_id = NEW.doctor_profile_id
+             AND s.specialty_id = NEW.specialty_id
+             AND s.status = 'active'
+             AND s.valid_from < COALESCE(NEW.valid_to, 'infinity'::date)
+             AND NEW.valid_from < COALESCE(s.valid_to, 'infinity'::date)
+       )
+    THEN
+        RAISE EXCEPTION 'doctor_schedules_specialty_guard: el medico % no tiene vigente la especialidad %',
+            NEW.doctor_profile_id, NEW.specialty_id
+            USING ERRCODE = '23514';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER doctor_schedules_specialty_guard
+    BEFORE INSERT OR UPDATE ON doctor_schedules
+    FOR EACH ROW EXECUTE FUNCTION doctor_schedules_require_specialty();
 ```
 
 La definición es la que entrega el módulo de médicos, **conservada de forma literal**
@@ -68,6 +97,7 @@ simplifica el cálculo de disponibilidad.
 | Identificador | `doctor_schedule_id` UUID |
 | Médico | `doctor_profile_id` obligatorio, FK local, `ON DELETE RESTRICT` |
 | Especialidad | `specialty_id` obligatorio: la cita lleva `specialty_id`, por eso cada bloque declara la especialidad en que se atiende |
+| Regla de especialidad | Un horario solo existe si el médico tiene **vigente** esa especialidad en `doctor_specialties` durante la vigencia del horario. Lo garantiza el trigger `doctor_schedules_specialty_guard` (rechazo con SQLSTATE **23514**), no la aplicación |
 | Día | `weekday` ISO-8601, de 1 (lunes) a 7 (domingo) |
 | Bloque | `start_minute` a `end_minute` en minutos desde medianoche; el fin es exclusivo y siempre posterior al inicio |
 | Turnos | `slot_minutes` divide exactamente la duración del bloque: `(end_minute - start_minute) % slot_minutes = 0` |
@@ -83,12 +113,12 @@ simplifica el cálculo de disponibilidad.
 - **Número propuesto:** `000900`, elegido para no colisionar con los slices ya
   reservados: H5 (`000500`, medicamentos y prescripciones), H6 (`000600`, laboratorio)
   y H7 (`000700`, auditoría y sincronización).
-- **Reversión:** `DROP TABLE doctor_schedules;` — verificado en la prueba de rollback.
+- **Reversión:** `DROP TRIGGER`, `DROP FUNCTION` y `DROP TABLE doctor_schedules;` — verificado en la prueba de rollback.
 - **Conexión:** `hospital`, como el resto del esquema clínico.
 
 ## 5. Pruebas
 
-`tests/Database/Hospital/DoctorScheduleIntegrityTest.php` — 13 pruebas, 111
+`tests/Database/Hospital/DoctorScheduleIntegrityTest.php` — 16 pruebas, 135
 aserciones, ejecutadas sobre PostgreSQL 16:
 
 | Caso | Qué demuestra |
@@ -105,6 +135,9 @@ aserciones, ejecutadas sobre PostgreSQL 16:
 | `test_block_length_must_be_a_multiple_of_slot_minutes` | La duración es múltiplo del turno |
 | `test_invalid_validity_period_is_rejected` | `valid_to > valid_from` |
 | `test_invalid_weekday_and_slot_are_rejected` | Día entre 1 y 7 y turno entre 5 y 240 minutos |
+| `test_schedule_without_the_specialty_of_the_doctor_is_rejected` | El **trigger** rechaza un horario en una especialidad que el médico no tiene |
+| `test_schedule_outside_the_validity_of_the_specialty_is_rejected` | El horario se rechaza si cae fuera de la vigencia de la especialidad del médico |
+| `test_schedule_inside_the_validity_of_the_specialty_is_accepted` | El horario se acepta dentro de la vigencia de la especialidad |
 | `test_rollback_removes_the_table_and_keeps_the_previous_slices` | La reversión borra la tabla y **no** toca los slices anteriores |
 
 ## 6. Acuerdos pendientes
