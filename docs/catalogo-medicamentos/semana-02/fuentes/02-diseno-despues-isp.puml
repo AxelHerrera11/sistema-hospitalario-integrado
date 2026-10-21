@@ -1,0 +1,52 @@
+@startuml
+title ASII-14 - Diseño DESPUÉS de ISP: contratos según el cliente
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #334155
+skinparam class {
+  BackgroundColor #EAF4FF
+  BorderColor #2563EB
+}
+
+package "Clientes (dependen del contrato)" {
+  class AltaClient <<gestor>>
+  class BusquedaClient <<gestor o clínico>>
+  class VigenciaClient <<gestor>>
+}
+
+package "Contratos segregados" {
+  interface MedicationRegistration <<escritura: alta>> {
+    + register(draft): Medication
+  }
+  interface MedicationLookup <<solo lectura>> {
+    + search(term): Medication[]
+    + findById(id): Medication?
+  }
+  interface MedicationValidityControl <<escritura: vigencia>> {
+    + changeValidity(id, validity): Medication
+  }
+}
+
+package "Implementaciones (Semana 3)" {
+  class RegisterMedication
+  class ConsultMedications
+  class ChangeMedicationValidity
+}
+
+AltaClient --> MedicationRegistration : usa 1 de 1
+BusquedaClient --> MedicationLookup : usa 2 de 2
+VigenciaClient --> MedicationValidityControl : usa 1 de 1
+RegisterMedication ..|> MedicationRegistration
+ConsultMedications ..|> MedicationLookup
+ChangeMedicationValidity ..|> MedicationValidityControl
+
+note bottom of MedicationValidityControl #DCFCE7
+  Vigencia = active/inactive del registro.
+  Sin delete ni vencimiento de lotes.
+end note
+note bottom of MedicationLookup #DCFCE7
+  El cliente de lectura no puede
+  invocar escrituras: 0 métodos sin usar.
+end note
+@enduml

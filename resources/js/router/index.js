@@ -7,6 +7,12 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
+            path: '/rbac',
+            name: 'rbac',
+            component: () => import('@/modules/rbac/CatalogPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/',
             name: 'home',
             component: HomePage,
@@ -16,6 +22,12 @@ const router = createRouter({
             name: 'login',
             component: LoginPage,
             meta: { guest: true },
+        },
+        {
+            path: '/admin/users',
+            name: 'admin-users',
+            component: () => import('@/modules/tenants/pages/HospitalUsersPage.vue'),
+            meta: { requiresAuth: true },
         },
     ],
 });
