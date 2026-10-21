@@ -1,0 +1,18 @@
+@startsalt
+title M3 - Detalle y confirmación de vigencia (gestor)
+{+
+  { [<] | <b>AMX-500</b> }
+  Amoxicilina 500 mg
+  Principio activo: Amoxicilina
+  Grupo: Antibiótico
+  Vigencia: <b>Activo</b>
+  ---
+  [ Inactivar AMX-500 ]
+  ---
+  <b>Confirmar (hoja inferior)</b>
+  ¿Inactivar AMX-500, Amoxicilina 500 mg?
+  <i>No se borra ni afecta lotes o vencimientos.</i>
+  [ Cancelar (foco inicial) ]
+  [ Inactivar AMX-500 ]
+}
+@endsalt

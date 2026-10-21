@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: Notas SOAP y diagnósticos (ASII-11)
+  version: 1.0.0
+  description: Endpoints implementados del contrato v1 (contrato-api.md). Los propuestos se agregan al implementarse.
+servers:
+  - url: http://127.0.0.1:8011
+    description: micro-HIS (php -S)
+security:
+  - actor: []
+paths:
+  /api/v1/care-episodes/{care_episode_id}/soap-notes:
+    post:
+      summary: Registrar una nota SOAP en borrador (permiso notas_soap.crear)
+      parameters:
+        - { name: care_episode_id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SoapSections' }
+      responses:
+        '201':
+          description: Nota creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [clinical_note_id, status, trace_id]
+                properties:
+                  clinical_note_id: { type: string, format: uuid }
+                  status: { type: string, enum: [draft] }
+                  trace_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /api/v1/soap-notes/{clinical_note_id}/diagnoses:
+    post:
+      summary: Asociar un diagnóstico CIE-10 (permiso notas_soap.asociar_diagnostico)
+      parameters:
+        - { $ref: '#/components/parameters/NoteId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Diagnosis' }
+      responses:
+        '201':
+          description: Diagnóstico asociado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Diagnosis'
+                  - type: object
+                    required: [clinical_note_id, trace_id]
+                    properties:
+                      clinical_note_id: { type: string, format: uuid }
+                      trace_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /api/v1/soap-notes/{clinical_note_id}:
+    get:
+      summary: Leer una nota con secciones y diagnósticos activos (permiso notas_soap.ver y asignación activa)
+      parameters:
+        - { $ref: '#/components/parameters/NoteId' }
+      responses:
+        '200':
+          description: Nota
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [clinical_note_id, care_episode_id, author_user_ref_id, status, sections, diagnoses, trace_id]
+                properties:
+                  clinical_note_id: { type: string, format: uuid }
+                  care_episode_id: { type: string }
+                  author_user_ref_id: { type: string }
+                  status: { type: string, enum: [draft, signed] }
+                  sections: { $ref: '#/components/schemas/SoapSections' }
+                  diagnoses: { type: array, items: { $ref: '#/components/schemas/Diagnosis' } }
+                  trace_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    actor:
+      type: apiKey
+      in: header
+      name: X-User-ID
+      description: Simulación del actor autenticado en el micro-HIS; en Laravel sale del JWT y del middleware de tenant.
+  parameters:
+    NoteId: { name: clinical_note_id, in: path, required: true, schema: { type: string, format: uuid } }
+  schemas:
+    SoapSections:
+      type: object
+      required: [subjective, objective, assessment, plan]
+      properties:
+        subjective: { type: string, minLength: 1, maxLength: 4000 }
+        objective: { type: string, minLength: 1, maxLength: 4000 }
+        assessment: { type: string, minLength: 1, maxLength: 4000 }
+        plan: { type: string, minLength: 1, maxLength: 4000 }
+    Diagnosis:
+      type: object
+      required: [code, type]
+      properties:
+        code: { type: string, minLength: 1, example: J18.9 }
+        type: { type: string, enum: [primary, secondary, differential] }
+    Error:
+      type: object
+      required: [code, trace_id]
+      properties:
+        code:
+          type: string
+          enum: [UNAUTHENTICATED, FORBIDDEN, NOT_TREATING_PHYSICIAN, ROUTE_NOT_FOUND, NOTE_NOT_FOUND, DIAGNOSIS_DUPLICATED, PRIMARY_DIAGNOSIS_EXISTS, NOTE_SIGNED,
+            PAYLOAD_INVALID, SOAP_SECTION_INVALID, DIAGNOSIS_INVALID, DIAGNOSIS_CODE_INVALID, SOAP_PERSISTENCE_ERROR, ICD10_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE]
+        permission: { type: string, description: Solo en 403 FORBIDDEN, example: notas_soap.crear }
+        trace_id: { type: string, format: uuid }
+  responses:
+    Error:
+      description: Error con code estable del contrato y trace_id
+      headers:
+        X-Trace-Id: { schema: { type: string, format: uuid } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }

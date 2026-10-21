@@ -1,0 +1,48 @@
+@startuml
+!include <C4/C4_Component>
+title ASII-14 - C4 nivel 3: componentes por capa y dirección de dependencias
+LAYOUT_TOP_DOWN()
+AddRelTag("implementa", $lineStyle = DashedLine(), $legendText = "implementa un puerto")
+
+Container(cli, "bin/catalogo.php", "Composición", "Crea PDO, adaptador, casos de uso y controladores")
+ContainerDb(db, "SQLite medications", "PDO")
+
+Container_Boundary(presentation, "Presentation") {
+  Component(regc, "RegistrationController", "PHP", "Alta: 201 / 422 / 409 / 503")
+  Component(searchc, "SearchController", "PHP", "Búsqueda y consulta de vigencia: 200 / 404 / 422 / 503")
+  Component(validc, "ValidityController", "PHP", "Cambio de vigencia: 200 / 404 / 422 / 503")
+  Component(resp, "CatalogResponse", "PHP", "Usado por los 3 controladores: errores esperados -> {status, body}; sin éxito ante fallos")
+}
+
+Container_Boundary(application, "Application") {
+  Component(register, "RegisterMedication", "implementa MedicationRegistration", "Valida, rechaza duplicado e inserta")
+  Component(consult, "ConsultMedications", "implementa MedicationLookup", "Valida el término; límite de 50")
+  Component(change, "ChangeMedicationValidity", "implementa MedicationValidityControl", "Localiza, aplica la regla y persiste")
+  Component(ports, "Puertos", "interfaces", "MedicationRegistry, MedicationReader, MedicationValidityStore y PersistenceFailure")
+}
+
+Container_Boundary(domain, "Domain") {
+  Component(entity, "Medication, Validity, MedicationRuleViolation", "PHP", "Reglas de alta y vigencia active/inactive; sin borrado")
+}
+
+Container_Boundary(persistence, "Persistence") {
+  Component(pdo, "PdoMedicationCatalog", "PDO", "prepare/execute; UNIQUE -> duplicado; fallo -> PersistenceFailure")
+}
+
+Rel(cli, regc, "compone")
+Rel(cli, searchc, "compone")
+Rel(cli, validc, "compone")
+Rel(cli, pdo, "compone")
+Rel(regc, register, "MedicationRegistration")
+Rel(searchc, consult, "MedicationLookup")
+Rel(validc, change, "MedicationValidityControl")
+Rel_R(regc, resp, "usa")
+Rel(register, ports, "MedicationRegistry")
+Rel(consult, ports, "MedicationReader")
+Rel(change, ports, "MedicationValidityStore")
+Rel(ports, entity, "usa")
+Rel(pdo, ports, "implementa los 3 puertos", $tags = "implementa")
+Rel(pdo, db, "SQL preparado")
+
+SHOW_LEGEND()
+@enduml

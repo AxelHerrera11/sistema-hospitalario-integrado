@@ -14,7 +14,7 @@ flowchart TD
     a2 -- No --> a401["401 No autenticado"]:::err
     a2 -- Sí --> a3{"¿X-Tenant-ID coincide<br/>con una membresía<br/>activa suya?"}:::dec
     a3 -- No --> aden["Denegar (UC-RBAC-05)<br/>403 + registro de denegación"]:::err
-    a3 -- Sí --> a4{"¿Tiene el permiso<br/>rbac.roles.asignar o revocar<br/>y el rol no supera<br/>su privilegio?<br/>(UC-RBAC-07)"}:::dec
+    a3 -- Sí --> a4{"¿Tiene el permiso<br/>rbac.asignar o revocar<br/>y el rol no supera<br/>su privilegio?<br/>(UC-RBAC-07)"}:::dec
     a4 -- No --> aden
     a4 -- Sí --> a5{"¿Usuario destino existe<br/>y está activo?"}:::dec
     a5 -- No --> a422["422 Usuario inválido"]:::err
