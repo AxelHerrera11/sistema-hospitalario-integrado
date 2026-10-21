@@ -1,0 +1,13 @@
+flowchart LR
+  UI[UI técnico y corrección] --> C[HttpResultController]
+  C --> A[CapturePendingResult / CorrectCapturedResult]
+  A --> D[PendingLabResult]
+  A --> V[ResultRuleValidator]
+  A --> R[PendingResultRepository]
+  A --> L[AuditLogger]
+  R --> IM[InMemoryPendingResultRepository]
+  R --> PDO[PdoPendingResultRepository]
+  IM --> DB[(Pruebas)]
+  PDO --> P[(PostgreSQL)]
+  L --> AUD[(Auditoría)]
+

@@ -1,0 +1,48 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam actor {
+  BorderColor #263238
+  FontColor #263238
+}
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+actor "Usuario autenticado" as U
+actor "Servicio de autenticación\ny autorización (JWT)" as Auth
+rectangle "ASII-26 · Dashboard base UI/UX\ne implementación transversal" {
+  usecase "CU-D1\nEntrar al dashboard" as D1
+  usecase "CU-D2\nNavegar menú por rol" as D2
+  usecase "CU-D3\nVer estado de carga" as D3
+  usecase "CU-D4\nVer estado vacío" as D4
+  usecase "CU-D5\nVer estado de error\ncon reintento" as D5
+  usecase "CU-D6\nConsultar resumen inicial" as D6
+  usecase "CU-D7\nManejar 401/403\ny redirección" as D7
+  usecase "Validar sesión y permisos\n(Router guard)" as Guard
+}
+
+U --> D1
+U --> D2
+D1 .> Guard : <<include>>
+D2 .> Guard : <<include>>
+D6 .> D3 : <<include>>
+D6 .> D4 : <<extend>>\n[sin datos]
+D6 .> D5 : <<extend>>\n[error de consulta]
+D7 .> Guard : <<extend>>\n[sin sesión o sin autorización]
+
+note bottom of Guard
+  La navegación cubre estados de carga,
+  vacío, error con reintento y resumen
+  inicial, con control de sesión y permisos.
+end note
+@enduml
