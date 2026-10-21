@@ -1,151 +1,77 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Feature\Tenants;
-use App\Modules\Tenants\Application\Commands\RevokeCommand;
-use App\Modules\Tenants\Application\Results\RevokeResult;
-use App\Modules\Tenants\Application\UseCases\RevokeSessionUseCase;
-use App\Modules\Tenants\Domain\Entities\Session;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\RefreshTokenRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
-use App\Modules\Tenants\Domain\Services\BlocklistService;
-use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
-use App\Modules\Tenants\Domain\ValueObjects\Role;
-use App\Modules\Tenants\Domain\ValueObjects\SessionId;
-use App\Modules\Tenants\Domain\ValueObjects\TenantId;
-use App\Modules\Tenants\Domain\ValueObjects\UserId;
-use App\Modules\Tenants\Infrastructure\External\EventPublisher;
+
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class RevokeSessionFeatureTest extends TestCase
+use Tests\Feature\Tenants\Concerns\MicroHisHttp;
+
+/**
+ * Semana 15 · NB-003 (RF-09): logout propio y revocación forzada por admin_hospital.
+ * La revocación es inmediata e irreversible: no existe «Deshacer».
+ */
+#[Group('caja-negra')]
+class RevokeSessionFeatureTest extends TestCase
 {
-    private RevokeSessionUseCase $useCase;
-    private UserRepositoryInterface $userRepo;
-    private SessionRepositoryInterface $sessionRepo;
-    private RefreshTokenRepositoryInterface $refreshRepo;
-    private BlocklistService $blocklist;
-    private AuditLogRepositoryInterface $auditLog;
-    private EventPublisher $eventPublisher;
+    use MicroHisHttp;
+
     protected function setUp(): void
     {
-        $this->userRepo = $this->createMock(UserRepositoryInterface::class);
-        $this->sessionRepo = $this->createMock(SessionRepositoryInterface::class);
-        $this->refreshRepo = $this->createMock(RefreshTokenRepositoryInterface::class);
-        $this->blocklist = $this->createMock(BlocklistService::class);
-        $this->auditLog = $this->createMock(AuditLogRepositoryInterface::class);
-        $this->eventPublisher = $this->createMock(EventPublisher::class);
-        $this->useCase = new RevokeSessionUseCase(
-            $this->userRepo,
-            $this->sessionRepo,
-            $this->refreshRepo,
-            $this->blocklist,
-            $this->auditLog,
-            $this->eventPublisher
-        );
+        $this->bootMicroHis();
     }
-    public function testRevokeOwnSession(): void
+
+    public function test_logout_revokes_own_session_immediately(): void
     {
-        $sessionId = SessionId::generate();
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440000');
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $user = User::reconstitute(
-            $userId,
-            new \App\Modules\Tenants\Domain\ValueObjects\Email('test@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash('$argon2id$test'),
-            'Test User',
-            [Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            []
-        );
-        $session = Session::reconstitute(
-            $sessionId,
-            $userId,
-            $tenantId,
-            DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0'),
-            new \DateTimeImmutable('-1 hour'),
-            new \DateTimeImmutable(),
-            false
-        );
-        $this->sessionRepo->method('findById')->willReturn($session);
-        $this->userRepo->method('findById')->willReturn($user);
-        $this->blocklist->expects($this->once())->method('add');
-        $this->refreshRepo->expects($this->once())->method('deleteByUserIdAndDevice');
-        $this->sessionRepo->expects($this->once())->method('delete');
-        $this->auditLog->expects($this->once())->method('log');
-        $this->eventPublisher->expects($this->once())->method('publish');
-        $command = new RevokeCommand($sessionId, null, 'logout', null);
-        $result = $this->useCase->execute($command);
-        $this->assertInstanceOf(RevokeResult::class, $result);
-        $this->assertEquals(1, $result->revokedSessions());
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($admin['token'], 'medico@a.test', ['medico']);
+        $session = $this->login('medico@a.test', $admin['tenant'])['body'];
+
+        $logout = $this->call('POST', '/auth/logout', [], null, $session['access_token']);
+
+        $this->assertSame(200, $logout['status']);
+        $this->assertSame(1, $logout['body']['revoked_sessions']);
+        $this->assertSame(401, $this->call('GET', '/auth/me', [], null, $session['access_token'])['status']);
+        $this->assertSame(401, $this->call('POST', '/auth/refresh', ['refresh_token' => $session['refresh_token']])['status']);
     }
-    public function testForceRevokeAllSessions(): void
+
+    public function test_admin_force_revokes_every_session_of_a_user(): void
     {
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440000');
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $requesterId = new UserId('550e8400-e29b-41d4-a716-446655440001');
-        $user = User::reconstitute(
-            $userId,
-            new \App\Modules\Tenants\Domain\ValueObjects\Email('test@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash('$argon2id$test'),
-            'Test User',
-            [Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            []
-        );
-        $sessions = [
-            Session::reconstitute(
-                SessionId::generate(),
-                $userId,
-                $tenantId,
-                DeviceFingerprint::createNew('device-1', '192.168.1.1', 'Mozilla/5.0'),
-                new \DateTimeImmutable('-2 hours'),
-                new \DateTimeImmutable('-1 hour'),
-                false
-            ),
-            Session::reconstitute(
-                SessionId::generate(),
-                $userId,
-                $tenantId,
-                DeviceFingerprint::createNew('device-2', '192.168.1.2', 'Mozilla/5.0'),
-                new \DateTimeImmutable('-1 hour'),
-                new \DateTimeImmutable(),
-                false
-            ),
-        ];
-        $this->userRepo->method('findById')->willReturn($user);
-        $this->sessionRepo->method('findByUserId')->willReturn($sessions);
-        $this->blocklist->expects($this->exactly(2))->method('add');
-        $this->refreshRepo->expects($this->once())->method('deleteAllByUserId');
-        $this->sessionRepo->expects($this->exactly(2))->method('delete');
-        $this->auditLog->expects($this->once())->method('log');
-        $this->eventPublisher->expects($this->once())->method('publish');
-        $command = new RevokeCommand(null, $userId, 'force_revoke', $requesterId);
-        $result = $this->useCase->execute($command);
-        $this->assertInstanceOf(RevokeResult::class, $result);
-        $this->assertEquals(2, $result->revokedSessions());
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $userId = $this->createUser($admin['token'], 'medico@a.test', ['medico'])['body']['user_id'];
+        $phone = $this->login('medico@a.test', $admin['tenant'], device: 'telefono')['body'];
+        $laptop = $this->login('medico@a.test', $admin['tenant'], device: 'portatil')['body'];
+
+        $revoked = $this->call('DELETE', "/admin/users/{$userId}/sessions", [], null, $admin['token']);
+
+        $this->assertSame(200, $revoked['status']);
+        $this->assertSame(2, $revoked['body']['revoked_sessions']);
+        foreach ([$phone, $laptop] as $session) {
+            $this->assertSame(401, $this->call('GET', '/auth/me', [], null, $session['access_token'])['status']);
+        }
+        $event = $this->module->auditLog->findByEventName('SESSION_REVOKED')[0];
+        $this->assertSame('admin_revoke', $event['payload']['reason']);
+        $this->assertSame($admin['user'], $event['payload']['requester_id']);
+        $this->assertSame(200, $this->call('GET', '/auth/me', [], null, $admin['token'])['status'], 'el admin conserva su sesión');
     }
-    public function testRevokeNonExistentSession(): void
+
+    public function test_revoking_an_unknown_user_returns_404(): void
     {
-        $sessionId = SessionId::generate();
-        $this->sessionRepo->method('findById')->willReturn(null);
-        $command = new RevokeCommand($sessionId, null, 'logout', null);
-        $result = $this->useCase->execute($command);
-        $this->assertInstanceOf(RevokeResult::class, $result);
-        $this->assertEquals(0, $result->revokedSessions());
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+
+        $response = $this->call('DELETE', '/admin/users/9b2f6a2e-1c1d-4f5e-9a7b-3c2d1e0f4a5b/sessions', [], null, $admin['token']);
+
+        $this->assertSame(404, $response['status']);
+    }
+
+    public function test_non_admin_cannot_force_revoke(): void
+    {
+        $admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($admin['token'], 'medico@a.test', ['medico']);
+        $medico = $this->login('medico@a.test', $admin['tenant'])['body'];
+
+        $response = $this->call('DELETE', "/admin/users/{$admin['user']}/sessions", [], null, $medico['access_token']);
+
+        $this->assertSame(403, $response['status']);
+        $this->assertSame(200, $this->call('GET', '/auth/me', [], null, $admin['token'])['status']);
     }
 }

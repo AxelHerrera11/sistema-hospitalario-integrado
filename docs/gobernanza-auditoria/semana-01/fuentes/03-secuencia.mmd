@@ -1,0 +1,59 @@
+%% Secuencia — Gobernanza y Auditoría (Semana 1). Los nombres coinciden con las clases
+%% de micro-his/gobernanza-auditoria y con los mensajes del diagrama de actividad.
+sequenceDiagram
+    autonumber
+    actor ADM as Administrador de gobernanza
+    participant MW as Middleware tenant + jwt.auth + rbac
+    participant HTTP as AuditHttpHandler
+    participant UC as SearchAuditEvents
+    participant GATE as AccessGate (RbacAccessGate)
+    participant P as AuditFilterParser
+    participant R as AuditEventReader (PdoAuditLog)
+    participant REC as RecordAuditEvent
+    participant L as AuditLogger (PdoAuditLog)
+    participant DB as CENTRAL · audit_log
+
+    ADM->>MW: GET /api/v1/audit-events?usuario&modulo&desde&hasta (Bearer, X-Tenant-ID)
+    MW->>MW: Validar JWT y tenant (servidor)
+    alt Sin JWT válido
+        MW-->>ADM: 401
+    end
+    MW->>HTTP: search(server{user_id, tenant_id}, headers, query)
+    HTTP->>HTTP: ¿X-Tenant-ID = tenant del servidor? ¿tenant_id en query coincide?
+    alt Tenant ausente o distinto
+        HTTP-->>ADM: 400 TENANT_REQUIRED / 403 TENANT_MISMATCH
+    end
+    HTTP->>UC: execute(AccessContext, filtros)
+    UC->>GATE: decide(user, tenant, "auditoria.ver")
+    alt Sin permiso
+        GATE-->>UC: allowed=false, trace_id (RBAC registra la denegación vía RbacDenialRecorder)
+        UC-->>HTTP: AccessDenied
+        HTTP-->>ADM: 403 RBAC_DENIED + trace_id
+    else RBAC caído
+        GATE-->>UC: allowed=false, resolucion_no_disponible
+        HTTP-->>ADM: 503 RBAC_UNAVAILABLE
+    end
+    UC->>P: parse(filtros)
+    alt Filtros inválidos
+        P-->>UC: InvalidAuditFilter(errores)
+        HTTP-->>ADM: 422 AUDIT_FILTER_INVALID
+    end
+    UC->>R: search(tenant del servidor, AuditFilter)
+    R->>DB: SELECT COUNT(*) / SELECT … WHERE hospital_id = :tenant … LIMIT :limit OFFSET :offset
+    alt Base no disponible
+        DB-->>R: error
+        R-->>UC: AuditStorageFailure(audit_read_failed)
+        HTTP-->>ADM: 503 AUDIT_UNAVAILABLE (sin detalle interno)
+    end
+    DB-->>R: filas
+    R-->>UC: AuditPage
+    UC->>REC: record(gobernanza.auditoria_consultada, Security, filtros usados)
+    REC->>L: append(AuditEvent)
+    L->>DB: BEGIN · SELECT head_hash FOR UPDATE · INSERT audit_log · UPDATE audit_chain_state · COMMIT
+    alt No se pudo auditar la consulta
+        L-->>REC: AuditStorageFailure
+        REC-->>UC: relanza (Security)
+        HTTP-->>ADM: 503 AUDIT_UNAVAILABLE (falla cerrada, sin datos)
+    end
+    UC-->>HTTP: AuditPage
+    HTTP-->>ADM: 200 {data, meta, trace_id} · Cache-Control: no-store

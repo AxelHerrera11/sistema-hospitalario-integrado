@@ -1,302 +1,110 @@
 <?php
-declare(strict_types=1);
+
 namespace Tests\Feature\Tenants;
-use App\Modules\Tenants\Application\Commands\AuthenticateCommand;
-use App\Modules\Tenants\Application\Commands\MfaVerificationCommand;
-use App\Modules\Tenants\Application\Results\AuthResult;
-use App\Modules\Tenants\Application\UseCases\AuthenticateUserUseCase;
-use App\Modules\Tenants\Domain\Entities\Tenant;
-use App\Modules\Tenants\Domain\Entities\User;
-use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\RefreshTokenRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\TenantRepositoryInterface;
-use App\Modules\Tenants\Domain\Repositories\UserRepositoryInterface;
-use App\Modules\Tenants\Domain\Services\Argon2idHasher;
-use App\Modules\Tenants\Domain\Services\BlocklistService;
-use App\Modules\Tenants\Domain\Services\DeviceTrustService;
-use App\Modules\Tenants\Domain\Services\MfaPolicy;
-use App\Modules\Tenants\Domain\Services\MfaRequirement;
-use App\Modules\Tenants\Domain\Services\RefreshTokenRotator;
-use App\Modules\Tenants\Domain\Services\TokenFactory;
-use App\Modules\Tenants\Domain\Services\TotpVerifier;
-use App\Modules\Tenants\Domain\Services\WebAuthnVerifier;
-use App\Modules\Tenants\Domain\ValueObjects\DeviceFingerprint;
-use App\Modules\Tenants\Domain\ValueObjects\Email;
-use App\Modules\Tenants\Domain\ValueObjects\Role;
-use App\Modules\Tenants\Domain\ValueObjects\SessionId;
+
 use App\Modules\Tenants\Domain\ValueObjects\TenantId;
 use App\Modules\Tenants\Domain\ValueObjects\UserId;
-use App\Modules\Tenants\Infrastructure\External\EventPublisher;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
-final class LoginMfaFeatureTest extends TestCase
+use Tests\Feature\Tenants\Concerns\MicroHisHttp;
+
+/**
+ * Semana 15 · NB-002 (RF-04, RF-05, RF-11): login con y sin MFA TOTP, credenciales inválidas,
+ * cuenta inactiva y bloqueo progresivo.
+ */
+#[Group('caja-negra')]
+class LoginMfaFeatureTest extends TestCase
 {
-    private AuthenticateUserUseCase $useCase;
-    private UserRepositoryInterface $userRepo;
-    private TenantRepositoryInterface $tenantRepo;
-    private RefreshTokenRepositoryInterface $refreshRepo;
-    private SessionRepositoryInterface $sessionRepo;
-    private AuditLogRepositoryInterface $auditLog;
-    private EventPublisher $eventPublisher;
-    private Argon2idHasher $hasher;
-    private MfaPolicy $mfaPolicy;
-    private TokenFactory $tokenFactory;
-    private RefreshTokenRotator $refreshRotator;
-    private DeviceTrustService $deviceTrust;
-    private TotpVerifier $totpVerifier;
-    private WebAuthnVerifier $webAuthnVerifier;
-    private BlocklistService $blocklist;
+    use MicroHisHttp;
+
+    private array $admin;
+
     protected function setUp(): void
     {
-        $this->userRepo = $this->createMock(UserRepositoryInterface::class);
-        $this->tenantRepo = $this->createMock(TenantRepositoryInterface::class);
-        $this->refreshRepo = $this->createMock(RefreshTokenRepositoryInterface::class);
-        $this->sessionRepo = $this->createMock(SessionRepositoryInterface::class);
-        $this->auditLog = $this->createMock(AuditLogRepositoryInterface::class);
-        $this->eventPublisher = $this->createMock(EventPublisher::class);
-        $this->hasher = new Argon2idHasher();
-        $this->mfaPolicy = $this->createMock(MfaPolicy::class);
-        $this->tokenFactory = $this->createMock(TokenFactory::class);
-        $this->refreshRotator = $this->createMock(RefreshTokenRotator::class);
-        $this->deviceTrust = $this->createMock(DeviceTrustService::class);
-        $this->totpVerifier = $this->createMock(TotpVerifier::class);
-        $this->webAuthnVerifier = $this->createMock(WebAuthnVerifier::class);
-        $this->blocklist = $this->createMock(BlocklistService::class);
-        $this->useCase = new AuthenticateUserUseCase(
-            $this->userRepo,
-            $this->tenantRepo,
-            $this->refreshRepo,
-            $this->sessionRepo,
-            $this->auditLog,
-            $this->eventPublisher,
-            $this->hasher,
-            $this->mfaPolicy,
-            $this->tokenFactory,
-            $this->refreshRotator,
-            $this->deviceTrust,
-            $this->totpVerifier,
-            $this->webAuthnVerifier,
-            $this->blocklist
-        );
+        $this->bootMicroHis();
+        $this->admin = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
     }
-    public function testSuccessfulLoginWithoutMfa(): void
-    {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440001');
-        $passwordHash = $this->hasher->hash('CorrectPass123!');
-        $user = User::reconstitute(
-            $userId,
-            new Email('medico@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash($passwordHash),
-            'Dr. Medico',
-            [Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            [$passwordHash]
-        );
-        $tenant = Tenant::create($tenantId, 'Hospital Central');
-        $this->userRepo->method('findByEmailAndTenant')->willReturn($user);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
-        $this->mfaPolicy->method('evaluate')->willReturn(
-            new MfaRequirement(false)
-        );
-        $accessToken = new \App\Modules\Tenants\Domain\Services\AccessToken(
-            'access.token.jwt',
-            new \App\Modules\Tenants\Domain\ValueObjects\JwtClaims(
-                $userId->value(),
-                ['MEDICO'],
-                $tenantId->value(),
-                'session-123',
-                'jti-123',
-                'device-123',
-                time(),
-                time() + 900,
-                time()
-            )
-        );
-        $this->tokenFactory->method('createAccessToken')->willReturn($accessToken);
-        $this->refreshRotator->method('generateAndStore')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\RefreshTokenResult('refresh-token', time() + 604800)
-        );
-        $this->sessionRepo->expects($this->once())->method('save');
-        $this->auditLog->expects($this->once())->method('log');
-        $this->eventPublisher->expects($this->once())->method('publish');
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('medico@hospital.com'),
-            'CorrectPass123!',
-            $tenantId,
-            $device,
-            '192.168.1.1'
-        );
-        $result = $this->useCase->execute($command);
-        $this->assertInstanceOf(AuthResult::class, $result);
-        $this->assertFalse($result->isMfaRequired());
-        $this->assertEquals('access.token.jwt', $result->accessToken()->token());
-    }
-    public function testSuccessfulLoginWithMfaTotp(): void
-    {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440001');
-        $passwordHash = $this->hasher->hash('CorrectPass123!');
-        $user = User::reconstitute(
-            $userId,
-            new Email('admin@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash($passwordHash),
-            'Admin Hospital',
-            [Role::TENANT_ADMIN],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            'JBSWY3DPEHPK3PXP',
-            true,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            [$passwordHash]
-        );
-        $tenant = Tenant::create($tenantId, 'Hospital Central');
-        $this->userRepo->method('findByEmailAndTenant')->willReturn($user);
-        $this->tenantRepo->method('findById')->willReturn($tenant);
 
-        $this->mfaPolicy->method('evaluate')->willReturn(
-            new MfaRequirement(true, 'TOTP')
-        );
-        $challengeResult = new AuthResult(
-            null,
-            '',
-            0,
-            $user,
-            null,
-            true,
-            'challenge-123',
-            'TOTP'
-        );
-        $accessToken = new \App\Modules\Tenants\Domain\Services\AccessToken(
-            'access.token.jwt',
-            new \App\Modules\Tenants\Domain\ValueObjects\JwtClaims(
-                $userId->value(),
-                ['TENANT_ADMIN'],
-                $tenantId->value(),
-                'session-123',
-                'jti-123',
-                'device-123',
-                time(),
-                time() + 900,
-                time()
-            )
-        );
-        $this->tokenFactory->method('createAccessToken')->willReturn($accessToken);
-        $this->refreshRotator->method('generateAndStore')->willReturn(
-            new \App\Modules\Tenants\Domain\Services\RefreshTokenResult('refresh-token', time() + 604800)
-        );
-        $this->totpVerifier->method('verify')->willReturn(true);
-        $this->sessionRepo->expects($this->once())->method('save');
-        $this->auditLog->expects($this->exactly(2))->method('log'); // MFA_CHALLENGED + MFA_SUCCEEDED + LOGIN_SUCCESS
-        $this->eventPublisher->expects($this->once())->method('publish');
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('admin@hospital.com'),
-            'CorrectPass123!',
-            $tenantId,
-            $device,
-            '192.168.1.1'
-        );
-        $result = $this->useCase->execute($command);
-        $this->assertTrue($result->isMfaRequired());
-        $this->assertEquals('challenge-123', $result->challengeId());
-        $this->assertEquals('TOTP', $result->mfaMethod());
-    }
-    public function testFailsWithInvalidCredentials(): void
+    public function test_login_without_mfa_returns_tokens(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $this->userRepo->method('findByEmailAndTenant')->willReturn(null);
-        $this->auditLog->expects($this->once())->method('log');
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('inexistente@hospital.com'),
-            'WrongPass123!',
-            $tenantId,
-            $device,
-            '192.168.1.1'
-        );
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Credenciales inválidas');
-        $this->useCase->execute($command);
+        $this->createUser($this->admin['token'], 'medico@a.test', ['medico']);
+
+        $login = $this->login('medico@a.test', $this->admin['tenant']);
+
+        $this->assertSame(200, $login['status']);
+        $this->assertSame('Bearer', $login['body']['token_type']);
+        $this->assertSame(900, $login['body']['expires_in']);
+        $this->assertSame(['medico'], $login['body']['user']['roles']);
+        $this->assertArrayNotHasKey('mfa_required', $login['body']);
     }
-    public function testFailsWithWrongPassword(): void
+
+    public function test_login_with_totp_needs_a_valid_single_use_challenge(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440001');
-        $passwordHash = $this->hasher->hash('CorrectPass123!');
-        $user = User::reconstitute(
-            $userId,
-            new Email('medico@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash($passwordHash),
-            'Dr. Medico',
-            [Role::MEDICO],
-            $tenantId,
-            User::STATUS_ACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            [$passwordHash]
-        );
-        $this->userRepo->method('findByEmailAndTenant')->willReturn($user);
-        $this->auditLog->expects($this->once())->method('log');
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('medico@hospital.com'),
-            'WrongPass123!',
-            $tenantId,
-            $device,
-            '192.168.1.1'
-        );
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Credenciales inválidas');
-        $this->useCase->execute($command);
+        $secret = $this->createUser($this->admin['token'], 'admin2@a.test', ['admin_hospital'])['body']['totp_secret'];
+
+        $challenge = $this->login('admin2@a.test', $this->admin['tenant']);
+        $this->assertSame(202, $challenge['status']);
+        $this->assertSame('TOTP', $challenge['body']['method']);
+        $this->assertArrayNotHasKey('access_token', $challenge['body']);
+
+        $ok = $this->call('POST', '/auth/mfa', ['challenge_id' => $challenge['body']['challenge_id'], 'code' => $this->totp($secret)]);
+        $this->assertSame(200, $ok['status']);
+        $this->assertTrue($this->module->auditLog->findByEventName('LOGIN_SUCCESS')[1]['payload']['mfa_used']);
+
+        $replay = $this->call('POST', '/auth/mfa', ['challenge_id' => $challenge['body']['challenge_id'], 'code' => $this->totp($secret)]);
+        $this->assertSame(401, $replay['status']);
     }
-    public function testFailsWithInactiveUser(): void
+
+    public function test_three_wrong_codes_lock_the_account(): void
     {
-        $tenantId = new TenantId('550e8400-e29b-41d4-a716-446655440000');
-        $userId = new UserId('550e8400-e29b-41d4-a716-446655440001');
-        $passwordHash = $this->hasher->hash('CorrectPass123!');
-        $user = User::reconstitute(
-            $userId,
-            new Email('medico@hospital.com'),
-            \App\Modules\Tenants\Domain\ValueObjects\Password::fromHash($passwordHash),
-            'Dr. Medico',
-            [Role::MEDICO],
-            $tenantId,
-            User::STATUS_INACTIVE,
-            null,
-            false,
-            new \DateTimeImmutable(),
-            new \DateTimeImmutable(),
-            null,
-            new \DateTimeImmutable(),
-            [$passwordHash]
-        );
-        $this->userRepo->method('findByEmailAndTenant')->willReturn($user);
-        $device = DeviceFingerprint::createNew('device-123', '192.168.1.1', 'Mozilla/5.0');
-        $command = new AuthenticateCommand(
-            new Email('medico@hospital.com'),
-            'CorrectPass123!',
-            $tenantId,
-            $device,
-            '192.168.1.1'
-        );
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Cuenta desactivada');
-        $this->useCase->execute($command);
+        $this->createUser($this->admin['token'], 'admin2@a.test', ['admin_hospital']);
+        $challenge = $this->login('admin2@a.test', $this->admin['tenant'])['body']['challenge_id'];
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->assertSame(401, $this->call('POST', '/auth/mfa', ['challenge_id' => $challenge, 'code' => '000000'])['status']);
+        }
+
+        $this->assertSame(423, $this->login('admin2@a.test', $this->admin['tenant'])['status']);
+        $this->assertSame('mfa', $this->module->auditLog->findByEventName('ACCOUNT_LOCKED')[0]['payload']['lock_type']);
+    }
+
+    public function test_unknown_email_and_wrong_password_give_the_same_answer(): void
+    {
+        $this->createUser($this->admin['token'], 'medico@a.test', ['medico']);
+
+        $unknown = $this->login('nadie@a.test', $this->admin['tenant']);
+        $wrong = $this->login('medico@a.test', $this->admin['tenant'], 'incorrecta');
+
+        $this->assertSame(401, $unknown['status']);
+        $this->assertSame(401, $wrong['status']);
+        $this->assertSame($unknown['body']['message'], $wrong['body']['message'], 'no revela si el correo existe');
+    }
+
+    public function test_inactive_user_cannot_log_in(): void
+    {
+        $userId = $this->createUser($this->admin['token'], 'medico@a.test', ['medico'])['body']['user_id'];
+        $this->module->users->findByIdAndTenant(new UserId($userId), new TenantId($this->admin['tenant']))->deactivate();
+
+        $this->assertSame(403, $this->login('medico@a.test', $this->admin['tenant'])['status']);
+    }
+
+    public function test_five_failures_lock_and_a_correct_password_is_still_refused(): void
+    {
+        $this->createUser($this->admin['token'], 'recepcion@a.test', ['recepcion']);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->assertSame(401, $this->login('recepcion@a.test', $this->admin['tenant'], 'incorrecta')['status']);
+        }
+
+        $this->assertSame(423, $this->login('recepcion@a.test', $this->admin['tenant'])['status']);
+        $locked = $this->module->auditLog->findByEventName('ACCOUNT_LOCKED')[0]['payload'];
+        $this->assertSame(['login', 900, 5], [$locked['lock_type'], $locked['duration_seconds'], $locked['failed_attempts']]);
+    }
+
+    public function test_login_requires_the_hospital_header(): void
+    {
+        $response = $this->call('POST', '/auth/login', ['email' => 'medico@a.test', 'password' => self::PASSWORD]);
+
+        $this->assertSame(400, $response['status']);
     }
 }
