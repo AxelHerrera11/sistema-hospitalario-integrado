@@ -7,8 +7,6 @@ namespace Tests\Feature\MedicationCatalog;
 use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Domain\Medication;
 use MicroHis\MedicationCatalog\Persistence\PdoMedicationCatalog;
-use MicroHis\Rbac\Domain\DenialRecorder;
-use MicroHis\Rbac\Domain\RoleResolver;
 use PDO;
 use Tests\TestCase;
 
@@ -20,12 +18,7 @@ final class MedicationCatalogSecurityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $this->app['router']->aliasMiddleware('tenant', CatalogTestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', CatalogTestIdentity::class);
-        $this->app->instance(RoleResolver::class, new CatalogTestIdentity());
-        $this->app->instance(DenialRecorder::class, new CatalogTestIdentity());
-        CatalogTestIdentity::$denials = [];
+        CatalogTestIdentity::install($this->app);
         $this->pdo = new PDO('sqlite::memory:');
         $this->pdo->exec((string) file_get_contents(base_path('micro-his/catalogo-medicamentos/database/schema.sql')));
         $repository = new PdoMedicationCatalog($this->pdo);

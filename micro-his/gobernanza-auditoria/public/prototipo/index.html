@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bitácora de auditoría — prototipo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#resultados-titulo">Saltar a los resultados</a>
+
+  <div class="demo-banner" role="note">
+    <strong>PROTOTIPO DE DEMOSTRACIÓN.</strong>
+    Datos ficticios generados en el servidor de demostración; la sesión se simula
+    (no hay JWT ni base de datos real).
+  </div>
+
+  <header class="app-header">
+    <h1>Bitácora de auditoría</h1>
+    <form class="demo-controls" id="demo-form" aria-label="Controles de la demostración">
+      <label for="demo-session">Sesión simulada</label>
+      <select id="demo-session" name="session">
+        <option value="admin">Admin. hospital H1 (con auditoria.ver)</option>
+        <option value="medico">Médico H1 (sin permiso)</option>
+        <option value="admin_h2">Admin. sin membresía en H2</option>
+        <option value="">Sin sesión</option>
+      </select>
+      <label for="demo-failure">Simular</label>
+      <select id="demo-failure" name="failure">
+        <option value="">Funcionamiento normal</option>
+        <option value="almacen">Bitácora no disponible (503)</option>
+        <option value="rbac">RBAC no disponible (503)</option>
+        <option value="lento">Respuesta lenta (1,5 s)</option>
+      </select>
+    </form>
+  </header>
+
+  <main id="main">
+    <section class="filters" aria-labelledby="filtros-titulo">
+      <h2 id="filtros-titulo">Filtros</h2>
+      <div id="error-summary" class="error-summary" role="alert" tabindex="-1" hidden></div>
+      <form id="filter-form" novalidate>
+        <fieldset>
+          <legend>Quién y qué</legend>
+          <div class="field">
+            <label for="f-usuario">Usuario (identificador)</label>
+            <input id="f-usuario" name="usuario" autocomplete="off" aria-describedby="h-usuario e-usuario">
+            <p class="hint" id="h-usuario">Identificador exacto del usuario.</p>
+            <p class="field-error" id="e-usuario" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-modulo">Módulo</label>
+            <input id="f-modulo" name="modulo" list="modulos" autocomplete="off" aria-describedby="h-modulo e-modulo">
+            <datalist id="modulos">
+              <option value="rbac"><option value="usuarios"><option value="notas_soap">
+              <option value="prescripciones"><option value="sesiones"><option value="gobernanza">
+            </datalist>
+            <p class="hint" id="h-modulo">Minúsculas, por ejemplo <code>rbac</code>.</p>
+            <p class="field-error" id="e-modulo" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-accion">Acción</label>
+            <input id="f-accion" name="accion" autocomplete="off" aria-describedby="h-accion e-accion">
+            <p class="hint" id="h-accion">Por ejemplo <code>role_assigned</code> o <code>nota.firmada</code>.</p>
+            <p class="field-error" id="e-accion" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-resultado">Resultado</label>
+            <select id="f-resultado" name="resultado" aria-describedby="e-resultado">
+              <option value="">Todos</option>
+              <option value="success">Ocurrió (success)</option>
+              <option value="failure">Intento fallido (failure)</option>
+              <option value="denied">Intento denegado (denied)</option>
+            </select>
+            <p class="field-error" id="e-resultado" hidden></p>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Cuándo y correlación</legend>
+          <div class="field">
+            <label for="f-desde">Desde (incluido)</label>
+            <input id="f-desde" name="desde" type="date" aria-describedby="e-desde">
+            <p class="field-error" id="e-desde" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-hasta">Hasta (incluido)</label>
+            <input id="f-hasta" name="hasta" type="date" aria-describedby="e-hasta">
+            <p class="field-error" id="e-hasta" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-correlacion">Identificador de correlación</label>
+            <input id="f-correlacion" name="correlacion" autocomplete="off" aria-describedby="h-correlacion e-correlacion">
+            <p class="hint" id="h-correlacion">trace_id de RBAC o X-Request-ID.</p>
+            <p class="field-error" id="e-correlacion" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-por-pagina">Resultados por página</label>
+            <select id="f-por-pagina" name="por_pagina" aria-describedby="e-por_pagina">
+              <option>10</option><option selected>25</option><option>50</option><option>100</option>
+            </select>
+            <p class="field-error" id="e-por_pagina" hidden></p>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit" class="primary">Buscar</button>
+          <button type="reset">Limpiar filtros</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results" aria-labelledby="resultados-titulo">
+      <h2 id="resultados-titulo" tabindex="-1">Resultados</h2>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <div id="state" class="state" hidden></div>
+      <div class="table-wrap" id="table-wrap" hidden>
+        <table>
+          <caption class="sr-only">Eventos de auditoría, del más reciente al más antiguo</caption>
+          <thead>
+            <tr>
+              <th scope="col">Fecha y hora</th><th scope="col">Usuario</th><th scope="col">Evento</th>
+              <th scope="col">Recurso</th><th scope="col">Resultado</th><th scope="col"><span class="sr-only">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <nav class="pager" id="pager" aria-label="Paginación" hidden>
+        <button type="button" id="prev">Anterior</button>
+        <span id="page-label"></span>
+        <button type="button" id="next">Siguiente</button>
+      </nav>
+    </section>
+  </main>
+
+  <dialog id="detail" aria-labelledby="detail-title">
+    <div class="dialog-head">
+      <h2 id="detail-title">Detalle del evento</h2>
+      <button type="button" id="detail-close" aria-label="Cerrar detalle">×</button>
+    </div>
+    <dl id="detail-body"></dl>
+    <p class="hint">El detalle no incluye contraseñas, tokens ni texto clínico: el servidor los elimina antes de guardar y vuelve a filtrar al leer.</p>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

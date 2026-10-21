@@ -1,0 +1,186 @@
+# Comando: php micro-his/gobernanza-auditoria/tests/run.php
+# Fecha: 2026-10-20T17:02:58Z  PHP: 8.2.12  Rama: feature/asii-25-semana-01-tenants-cindyruano @ 3b63c95 (cambios del módulo sin commit)
+# Sin RBAC_DIR ni TENANTS_AUDIT_DIR: usa micro-his/rbac de esta rama (sin Application/Authorize).
+
+
+######## unit ########
+
+== Entidad AuditEvent ==
+OK    [TC-U-01] evento válido: nombre canónico modulo.accion y hora en UTC
+OK    [TC-U-02] sin actor o sin tenant -> InvalidAuditEvent (no se inventan datos)
+OK    [TC-U-03] módulo/acción fuera del formato modulo.accion -> InvalidAuditEvent
+OK    [TC-U-04] resultado Unknown no se acepta al registrar
+OK    [TC-U-05] resource_id sin resource_type -> InvalidAuditEvent
+OK    [TC-U-06] motivo de texto libre (posible dato sensible) -> InvalidAuditEvent
+OK    [TC-U-07] solo success cuenta como ocurrido; failure/denied son intentos
+
+== Regla ContextSanitizer ==
+OK    [TC-U-08] conserva solo escalares permitidos
+OK    [TC-U-09] elimina secretos, tokens y datos clínicos e informa solo los nombres de clave
+
+== AuditFilterParser ==
+OK    [TC-U-10] fechas de día completo en zona del servidor -> rango UTC [06:00, 06:00 del día siguiente)
+OK    [TC-U-11] fecha imposible y formato libre -> fecha_invalida
+OK    [TC-U-12] hasta anterior a desde -> anterior_a_desde
+OK    [TC-U-13] por_pagina > 100 y pagina 0 -> fuera_de_rango
+OK    [TC-U-14] parámetro desconocido (p. ej. "usuaro" mal escrito) -> 422, no consulta sin filtro
+OK    [TC-U-15] resultado fuera de success|failure|denied y arreglos -> error
+OK    [TC-U-22] regresión H-GOB-12: el nombre de un parámetro desconocido se devuelve saneado
+OK    [TC-U-16] inyección en filtros rechazada por formato
+
+== RecordAuditEvent (política de fallo) ==
+OK    [TC-U-17] Security + almacén caído -> lanza AuditStorageFailure y reporta
+OK    [TC-U-18] Informational + almacén caído -> devuelve false, no lanza, y reporta
+OK    [TC-U-19] almacén sano -> true y un evento con UUID v4 generado por el servidor
+OK    [TC-U-20] el reporte de fallo no contiene contexto del evento (solo códigos e ids)
+OK    [TC-U-21] regresión H-GOB-04: evento inválido se reporta (audit_event_invalid, campo) y se relanza
+
+[unit] 22 pruebas, 0 fallos.
+
+######## contract ########
+
+== Contrato AuditLogger/AuditEventReader — InMemory ==
+OK    [TC-C-01/InMemory] aislamiento: solo devuelve eventos del tenant pedido por el servidor
+OK    [TC-C-02/InMemory] orden: más reciente primero
+OK    [TC-C-03/InMemory] filtro usuario
+OK    [TC-C-04/InMemory] filtro módulo literal: "notas_soap" no coincide con "notasxsoap" (comodín _ escapado)
+OK    [TC-C-05/InMemory] filtro acción con punto interno ("nota.firmada")
+OK    [TC-C-06/InMemory] filtro resultado denied (intentos denegados)
+OK    [TC-C-07/InMemory] filtro correlación
+OK    [TC-C-08/InMemory] rango [desde, hasta): incluye el límite inferior y excluye el superior
+OK    [TC-C-09/InMemory] paginación: página 2 de 3 por página trae el resto y el total real
+OK    [TC-C-10/InMemory] contexto clínico no se persiste y queda listado en redacted_keys
+OK    [TC-C-11/InMemory] filtro combinado (usuario + módulo + resultado) sin coincidencias -> página vacía
+
+== Contrato AuditLogger/AuditEventReader — PDO ==
+OK    [TC-C-01/PDO] aislamiento: solo devuelve eventos del tenant pedido por el servidor
+OK    [TC-C-02/PDO] orden: más reciente primero
+OK    [TC-C-03/PDO] filtro usuario
+OK    [TC-C-04/PDO] filtro módulo literal: "notas_soap" no coincide con "notasxsoap" (comodín _ escapado)
+OK    [TC-C-05/PDO] filtro acción con punto interno ("nota.firmada")
+OK    [TC-C-06/PDO] filtro resultado denied (intentos denegados)
+OK    [TC-C-07/PDO] filtro correlación
+OK    [TC-C-08/PDO] rango [desde, hasta): incluye el límite inferior y excluye el superior
+OK    [TC-C-09/PDO] paginación: página 2 de 3 por página trae el resto y el total real
+OK    [TC-C-10/PDO] contexto clínico no se persiste y queda listado en redacted_keys
+OK    [TC-C-11/PDO] filtro combinado (usuario + módulo + resultado) sin coincidencias -> página vacía
+
+[contract] 22 pruebas, 0 fallos.
+
+######## whitebox ########
+
+== PdoAuditLog::append — rama "transacción propia" + cadena de hashes ==
+OK    [TC-W-01] cada fila enlaza con la anterior, el hash se puede recalcular y la cabeza avanza
+OK    [TC-W-02] una alteración del detalle rompe la verificación (evidencia de manipulación)
+
+== Inmutabilidad (trigger append-only del esquema) ==
+OK    [TC-W-03] UPDATE y DELETE sobre audit_log son rechazados por la base
+OK    [TC-W-04] el adaptador no ofrece métodos de modificación ni borrado
+
+== PdoAuditLog::append — rama "transacción del consumidor" ==
+OK    [TC-W-05] participa en la transacción abierta: no hace commit y el ROLLBACK del consumidor revierte el evento y la cabeza
+
+== PdoAuditLog::append — ramas de error ==
+OK    [TC-W-06] sin estado de cadena -> AuditStorageFailure("audit_chain_missing") y ninguna fila
+OK    [TC-W-07] tabla caída -> mensaje genérico "audit_write_failed" sin SQL ni detalle del driver, rollback y cabeza intacta
+OK    [TC-W-08] búsqueda con tabla caída -> AuditStorageFailure("audit_read_failed")
+OK    [TC-W-09] driver no soportado -> AuditStorageFailure en el constructor
+
+== PdoAuditLog::where — ramas de filtros y parametrización ==
+OK    [TC-W-10] el adaptador solo usa prepare(): no hay query()/exec() con texto dinámico
+OK    [TC-W-11] valor malicioso en filtro se trata como dato literal (0 filas, tabla intacta)
+OK    [TC-W-12] rama module: coincide por prefijo "rbac." y no por prefijo parcial "rba"
+
+== Lectura de filas de otro productor (logRaw de Tenants) ==
+OK    [TC-W-13] fila sin result -> outcome "unknown" (no se inventa "denied") y sin criticidad
+OK    [TC-W-14] el contexto de filas ajenas también se filtra al leer (password no se expone)
+OK    [TC-W-15] regresión H-GOB-09: campos ajenos con formato inválido no se exponen y se anotan en redacted_keys
+
+[whitebox] 15 pruebas, 0 fallos.
+
+######## blackbox ########
+
+== Contrato HTTP GET /api/v1/audit-events — InMemory ==
+OK    [TC-N-01/InMemory] positivo: 200 con data, meta de paginación, trace_id y no-store
+OK    [TC-N-02/InMemory] aislamiento: ningún evento del otro tenant aparece
+OK    [TC-N-03/InMemory] respuesta sin hashes de la cadena ni campos internos
+OK    [TC-N-04/InMemory] el intento denegado se distingue de lo ocurrido (outcome denied, occurred false)
+OK    [TC-N-05/InMemory] sin usuario autenticado -> 401 AUTH_REQUIRED
+OK    [TC-N-06/InMemory] sin cabecera X-Tenant-ID -> 400 TENANT_REQUIRED
+OK    [TC-N-07/InMemory] cabecera de otro tenant -> 403 TENANT_MISMATCH (no se confía en el cliente)
+OK    [TC-N-08/InMemory] parámetro tenant_id distinto del servidor -> 403 TENANT_MISMATCH
+OK    [TC-N-09/InMemory] parámetro tenant_id igual al del servidor se tolera -> 200
+OK    [TC-N-10/InMemory] usuario sin permiso auditoria.ver -> 403 RBAC_DENIED con el trace_id de RBAC
+OK    [TC-N-11/InMemory] sin permiso, un filtro inválido no revela validación: 403 antes que 422
+OK    [TC-N-12/InMemory] filtros inválidos -> 422 AUDIT_FILTER_INVALID con errores por parámetro
+OK    [TC-N-13/InMemory] paginación con límite: página 2 de tamaño 1
+OK    [TC-N-14/InMemory] solo las 3 consultas exitosas previas quedan auditadas (gobernanza.auditoria_consultada, Security); las rechazadas no
+OK    [TC-N-15/InMemory] X-Request-ID inseguro se reemplaza por uno generado
+
+== Contrato HTTP GET /api/v1/audit-events — PDO ==
+OK    [TC-N-01/PDO] positivo: 200 con data, meta de paginación, trace_id y no-store
+OK    [TC-N-02/PDO] aislamiento: ningún evento del otro tenant aparece
+OK    [TC-N-03/PDO] respuesta sin hashes de la cadena ni campos internos
+OK    [TC-N-04/PDO] el intento denegado se distingue de lo ocurrido (outcome denied, occurred false)
+OK    [TC-N-05/PDO] sin usuario autenticado -> 401 AUTH_REQUIRED
+OK    [TC-N-06/PDO] sin cabecera X-Tenant-ID -> 400 TENANT_REQUIRED
+OK    [TC-N-07/PDO] cabecera de otro tenant -> 403 TENANT_MISMATCH (no se confía en el cliente)
+OK    [TC-N-08/PDO] parámetro tenant_id distinto del servidor -> 403 TENANT_MISMATCH
+OK    [TC-N-09/PDO] parámetro tenant_id igual al del servidor se tolera -> 200
+OK    [TC-N-10/PDO] usuario sin permiso auditoria.ver -> 403 RBAC_DENIED con el trace_id de RBAC
+OK    [TC-N-11/PDO] sin permiso, un filtro inválido no revela validación: 403 antes que 422
+OK    [TC-N-12/PDO] filtros inválidos -> 422 AUDIT_FILTER_INVALID con errores por parámetro
+OK    [TC-N-13/PDO] paginación con límite: página 2 de tamaño 1
+OK    [TC-N-14/PDO] solo las 3 consultas exitosas previas quedan auditadas (gobernanza.auditoria_consultada, Security); las rechazadas no
+OK    [TC-N-15/PDO] X-Request-ID inseguro se reemplaza por uno generado
+
+== Fallos de dependencias y persistencia ==
+OK    [TC-N-16] almacén caído -> 503 AUDIT_UNAVAILABLE sin detalle interno y fallo reportado
+OK    [TC-N-17] lectura sana pero no se puede auditar la consulta -> 503 (falla cerrada, sin datos)
+OK    [TC-N-18] RBAC no disponible -> 503 RBAC_UNAVAILABLE (no 403 ni 200)
+OK    [TC-N-19] sin tenant resuelto por el servidor -> 503 TENANT_CONTEXT_UNAVAILABLE
+
+[blackbox] 34 pruebas, 0 fallos.
+
+######## rbac_integration ########
+RBAC usado: <repo>\micro-his\rbac
+
+== DenialRecorder de RBAC -> AuditLogger (Authorizer) ==
+OK    [TC-I-01] la denegación queda como rbac.access_denied, outcome denied, con el mismo trace_id
+OK    [TC-I-02] recurso = permiso solicitado y motivo = código de RBAC
+OK    [TC-I-03] bitácora caída: la denegación se mantiene (falla segura) y el fallo se reporta
+OK    [TC-I-07] regresión H-GOB-04: denegación sin user_id -> sigue denegada y queda reportada (audit_event_invalid)
+
+== AccessGate sobre Authorize (develop) ==
+OMITIDA: esta copia de micro-his/rbac no tiene Application\Authorize (existe en origin/develop). Ejecute con RBAC_DIR apuntando a develop.
+
+[rbac_integration] 4 pruebas, 0 fallos.
+
+######## hash_compat ########
+OMITIDA: defina TENANTS_AUDIT_DIR con AuditLogRepository.php de la rama de Tenants (ver encabezado).
+
+######## laravel_glue ########
+
+== AuditEventController (Laravel) ==
+OK    [TC-L-01] GET con identidad del guard y tenant del middleware -> 200 JSON y Cache-Control no-store
+OK    [TC-L-02] sin usuario en el guard -> 401 aunque el cliente envíe X-User-ID
+OK    [TC-L-03] X-Tenant-ID distinto al tenant del middleware -> 403
+OK    [TC-L-04] el proveedor carga y declara register/boot (no se registra en bootstrap/providers.php)
+
+== GobernanzaAuditoriaServiceProvider::register (contenedor Laravel real, sin base de datos) ==
+OK    [TC-L-05] el cableado del proveedor (GobernanzaModule) resuelve RecordAuditEvent y AuditHttpHandler sobre PdoAuditLog
+
+[laravel_glue] 5 pruebas, 0 fallos.
+
+######## architecture ########
+
+== Dependencias entre capas ==
+OK    [TC-A-01] Domain no depende de Application, Persistence, Presentation, Integration ni PDO
+OK    [TC-A-02] Application no depende de Persistence, Presentation, Integration ni PDO
+OK    [TC-A-03] Presentation no contiene SQL ni usa PDO ni adaptadores concretos
+OK    [TC-A-04] ningún archivo del módulo supera 400 líneas
+
+[architecture] 4 pruebas, 0 fallos.
+
+TODAS LAS SUITES APROBADAS
+# exit=0
