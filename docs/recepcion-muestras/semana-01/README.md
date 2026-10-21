@@ -1,5 +1,11 @@
 # Recepción de muestras y códigos identificadores — Semana 1
 
+> Entrega corregida: el diseño UML expresa el flujo objetivo. La implementación acumulada hasta
+> semana 15 y las decisiones de integración se consultan en el [índice](../README.md).
+> ASII-18 conserva la asignación oficial del README; Mar-03 identifica la autoría de esta entrega.
+> La impresión ocurre en el navegador después de persistir; la entrega del aviso externo no se
+> declara confirmada hasta recibir acuse del consumidor. Los casos de uso y excepciones se mantienen.
+
 ## Ficha de la asignación
 
 - **Estudiante:** López Fajardo, María de los Ángeles (`Mar-03`)
