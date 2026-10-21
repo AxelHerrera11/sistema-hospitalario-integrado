@@ -4,7 +4,7 @@
 
 **Tarea individual:** Defina el plan SQA de Médicos, especialidades y disponibilidad: calidad de «registro de médico, asociación de especialidad y consulta de disponibilidad», confiabilidad, seguridad, trazabilidad y riesgos de médicos, especialidades, horarios, disponibilidad y conflictos de agenda.
 
-> Este plan parte de la [revisión técnica de la Semana 13](../semana-13/README.md). Los valores de «Hoy» salen de su [autoverificación](../semana-13/hallazgos.md) (ejecutada el 2026-10-20 sobre la pila #126 → #355 → #356 → #372); lo que no se midió se marca **sin medir**. Los umbrales son propuestas del autor hasta que la revisora los confirme. Los responsables también son propuestos, no confirmados.
+> Este plan parte de la revisión técnica de la Semana 13 (#524, en revisión). Los valores de «Hoy» salen de su autoverificación (`hallazgos.md` de #524) (ejecutada el 2026-10-20 sobre la pila #126 → #355 → #356 → #372); lo que no se midió se marca **sin medir**. Los umbrales son propuestas del autor hasta que la revisora los confirme. Los responsables también son propuestos, no confirmados.
 
 ## 1. Objeto, alcance y política de calidad
 
@@ -73,7 +73,7 @@ Cada métrica indica quién responde por ella, a partir de qué valor se actúa,
 | ID | Métrica | Umbral | Fuente | Responsable | Acción si se incumple | Hoy |
 |---|---|---|---|---|---|---|
 | M16 | PR del módulo con menos de 400 líneas propias | 100 % | `gh pr view` / `git diff --stat origin/develop...HEAD` | Autor | Se parte el PR antes de abrirlo | 100 % (insertadas); #356 pasa de 400 con las borradas |
-| M17 | Hallazgos Mayores o Críticos abiertos | 0 al cerrar el ciclo; > 3 repite la revisión | [hallazgos.md](../semana-13/hallazgos.md) | Revisora SQA | No se aprueba la salida; cada uno recibe responsable y fecha | 4 Mayores (H-01 a H-04) |
+| M17 | Hallazgos Mayores o Críticos abiertos | 0 al cerrar el ciclo; > 3 repite la revisión | hallazgos.md (Semana 13, #524) | Revisora SQA | No se aprueba la salida; cada uno recibe responsable y fecha | 4 Mayores (H-01 a H-04) |
 | M18 | Hallazgos con corrección verificada por una prueba que antes fallaba | 100 % de los corregidos | Prueba + PR de la corrección | Revisora SQA | El hallazgo vuelve a Abierto | 0 corregidos |
 
 ## 4. Controles
@@ -95,8 +95,8 @@ Un control **preventivo** evita el defecto; uno **detectivo** lo encuentra a tie
 | K11 | Detectivo | Bitácora del kernel con `trace_id`, actor, permiso y resultado, sin cuerpo de la petición | 100 % de peticiones | Bitácora | María | Se agrega el campo faltante | ✔ salvo duración |
 | K12 | Detectivo | Consultas de control de integridad (M06 a M08) | 0 filas | SQL contra la base | Javier | Se abre incidente con el dato afectado | ✖ sin ejecutar |
 | K13 | Detectivo | Reconciliación de agenda: franjas ofrecidas frente a `appointments` | 0 choques | Consulta de control con Citas | Lis | Se revisa M04 y se avisa al autor | ✖ |
-| K14 | Detectivo | Sondas reproducibles de la Semana 13 (P1 a P10) en cada PR del módulo | Cada sonda cambia de «falla» a «pasa» al corregirse | [`sondas.php`](../semana-13/evidencia/sondas.php) | Autor | El hallazgo no se cierra | ✔ |
-| K15 | Detectivo | Revisión de la salida con la checklist de 15 ítems | 0 Mayores abiertos | [Checklist](../semana-13/README.md) | Revisora SQA | Resultado «Repetir revisión» | ✔ |
+| K14 | Detectivo | Sondas reproducibles de la Semana 13 (P1 a P10) en cada PR del módulo | Cada sonda cambia de «falla» a «pasa» al corregirse | `sondas.php` (Semana 13, #524) | Autor | El hallazgo no se cierra | ✔ |
+| K15 | Detectivo | Revisión de la salida con la checklist de 15 ítems | 0 Mayores abiertos | Checklist (Semana 13, #524) | Revisora SQA | Resultado «Repetir revisión» | ✔ |
 
 ## 5. Riesgos
 
