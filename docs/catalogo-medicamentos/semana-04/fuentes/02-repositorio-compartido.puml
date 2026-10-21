@@ -1,0 +1,47 @@
+@startuml
+title ASII-14 Semana 4 - Integración propuesta con un repositorio de datos compartido (HOSPITAL)
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam componentStyle rectangle
+top to bottom direction
+
+package "Micro-HIS Catálogo de medicamentos (ASII-14)" {
+  [Casos de uso\nRegister / Consult / ChangeValidity] as UC
+  interface "MedicationRepository" as MR
+  [PdoMedicationCatalog\n(SQLite local, Semana 3-4)] as Local
+  [PdoHospitalMedicationRepository\n(PROPUESTO)] as Hosp
+}
+
+package "Consumidores (otros módulos)" {
+  [Prescripciones\nMedicationCatalog (propuesto por ese módulo)] as Presc
+  [Alergias\ncomparación por principio activo] as Aler
+}
+
+database "Base HOSPITAL (PostgreSQL)\nuna por hospital" as HDB {
+  frame "medication (slice H5, PENDIENTE)" as Med
+  frame "prescription (slice H5, PENDIENTE)" as Rx
+}
+
+UC --> MR : puertos segregados
+Local ..|> MR
+Hosp ..|> MR
+Local --> [SQLite medications] : hoy
+Hosp --> Med : escritor único\n(alta y vigencia)
+Presc ..> Med : solo lectura\n(medication_id, estado)
+Aler ..> Med : solo lectura\n(principio activo)
+Rx --> Med : FK propuesta\nmedication_id
+MR -[hidden]down- HDB
+HDB -[hidden]down- Presc
+
+note bottom of HDB
+  Dueño de datos: ASII-14.
+  Otros módulos leen, no escriben.
+  Vigencia active/inactive; sin borrado.
+  Lotes y vencimientos: fuera de alcance.
+end note
+note bottom of Hosp
+  Cambiar de adaptador no toca Application ni Domain:
+  la suite tests/repository.php debe pasar igual.
+end note
+@enduml
