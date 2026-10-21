@@ -2,6 +2,7 @@
 
 use App\Providers\AppServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
+use App\Providers\PatientsServiceProvider;
 use App\Providers\RbacServiceProvider;
 use App\Providers\TenantsServiceProvider;
 
@@ -11,4 +12,5 @@ return [
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
     TenantsServiceProvider::class,
     MedicationCatalogServiceProvider::class,
+    PatientsServiceProvider::class,
 ];
