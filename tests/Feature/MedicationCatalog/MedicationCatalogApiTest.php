@@ -7,6 +7,7 @@ namespace Tests\Feature\MedicationCatalog;
 use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Domain\Medication;
 use MicroHis\MedicationCatalog\Persistence\InMemoryMedicationRepository;
+use MicroHis\Rbac\Domain\DenialRecorder;
 use MicroHis\Rbac\Domain\RoleResolver;
 use Tests\TestCase;
 
@@ -23,6 +24,8 @@ final class MedicationCatalogApiTest extends TestCase
         $this->app['router']->aliasMiddleware('tenant', CatalogTestIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', CatalogTestIdentity::class);
         $this->app->instance(RoleResolver::class, new CatalogTestIdentity());
+        $this->app->instance(DenialRecorder::class, new CatalogTestIdentity());
+        CatalogTestIdentity::$denials = [];
         $repository = new InMemoryMedicationRepository();
         $this->amoxicilina = (string) $repository->insert(Medication::register(['code' => 'amx-500', 'name' => 'Amoxicilina 500 mg',
             'active_ingredient' => 'Amoxicilina', 'pharmacological_group' => 'Antibiótico']))->id;
@@ -68,6 +71,10 @@ final class MedicationCatalogApiTest extends TestCase
                 'pharmacological_group' => 'AINE'])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
             $this->patchJson("/api/v1/medications/{$this->amoxicilina}/validity", ['validity' => 'inactive'])->assertStatus(403);
         }
+        // Cada escritura denegada queda registrada con su permiso, actor y hospital (sin registro no hay 403: falla cerrado con 503).
+        $denied = array_count_values(array_column(CatalogTestIdentity::$denials, 'permission'));
+        $this->assertSame(['medicamentos.registrar' => 3, 'medicamentos.cambiar_vigencia' => 3], $denied);
+        $this->assertSame(['user-medico', 'hospital-a'], [CatalogTestIdentity::$denials[0]['user_id'], CatalogTestIdentity::$denials[0]['hospital_id']]);
         CatalogTestIdentity::as('medico');
         $this->getJson("/api/v1/medications/{$this->amoxicilina}")->assertJsonPath('medication.validity', 'active');
     }

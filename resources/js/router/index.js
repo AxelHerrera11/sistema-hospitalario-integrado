@@ -23,6 +23,12 @@ const router = createRouter({
             component: LoginPage,
             meta: { guest: true },
         },
+        {
+            path: '/admin/users',
+            name: 'admin-users',
+            component: () => import('@/modules/tenants/pages/HospitalUsersPage.vue'),
+            meta: { requiresAuth: true },
+        },
     ],
 });
 

@@ -35,6 +35,8 @@ En OneDrive, Windows marca `bootstrap/cache` y `storage` como solo lectura; hubo
 | Misma suite | Rama apilada (base `b87bca1`) | Lecturas 403: esa base no tiene `medicamentos.ver` (llegó en `7d7c9b0`) |
 | Mutación: quitar `rbac:medicamentos.ver` de `GET /medications` | Merge de prueba | 2 fallos: la protección está probada |
 | `phpunit --testsuite Unit,Feature` | Merge de prueba | 32 tests, **1 fallo**: `Rbac\PublishedContractsTest` por los permisos propuestos sin catalogar (bloqueo de #586) |
+| `phpunit --testsuite Unit,Feature`, después de #622 y de Tenants (#657) | `develop` con #602 (`6d4e306`) | OK (68 tests, 1255 assertions). Las pruebas sustituyen el registro de denegaciones, porque `AuditDenials` escribe en CENTRAL |
+| `phpunit` completo (Unit, Feature y Database) | `develop` `63a2903`, PostgreSQL 17 desechable en 55431/55433 | OK (121 tests, 1918 assertions) |
 | Suites del micro-HIS y `tests/casos.php` | Merge de prueba | Todas exit 0; casos 17/17 |
 
 Casos cubiertos por la integración:
@@ -43,6 +45,16 @@ Casos cubiertos por la integración:
 - **Consulta:** forma del contrato y 404.
 - **Escritura:** denegada a todos los roles; con los permisos propuestos aprobados, en la prueba, alta 201, 409, 422, vigencia 200 y 422.
 - **Caída:** 503 sin detalles con la conexión `hospital` real ausente.
+
+Prueba de humo por HTTP real (20/10/2026, `php artisan serve` con `tenant`, `jwt.auth` y RBAC reales sobre una base CENTRAL desechable, con login de médico y de recepción en el hospital A):
+
+| Solicitud | Resultado |
+|---|---|
+| Sin token | 401 `TOKEN_MISSING` |
+| Token del hospital A con `X-Tenant-ID` de B | 403 `TENANT_MISMATCH` |
+| Recepción busca | 403 `RBAC_DENIED`; queda en `audit_log` (`rbac.access_denied`, `medicamentos.ver`) |
+| Médico registra un medicamento | 403 `RBAC_DENIED`; auditado con `medicamentos.registrar` |
+| Médico busca | 503 `CATALOG_UNAVAILABLE`: no existe la tabla `medication` (H5) |
 
 ## Errores corregidos durante la integración
 
@@ -57,8 +69,8 @@ Casos cubiertos por la integración:
 | Bloqueo | Dependencia | Efecto |
 |---|---|---|
 | No hay acceso a staging ni on-premise | Infraestructura del curso | No hay evidencia de despliegue real; solo ejecución local |
-| No existen los modelos `User` y `Tenant` (`app/Models`) | Tenants (ASII-25), PR #501–#515 abiertos | `tenant` y `jwt.auth` fallan; las pruebas sustituyen la identidad |
+| ~~No existen los modelos `User` y `Tenant`~~ **Resuelto** | Tenants (ASII-25), integrado en #657 | `tenant` y `jwt.auth` reales comprobados por HTTP. Las pruebas Feature siguen sustituyendo la identidad porque `jwt.auth` consulta la base CENTRAL |
 | No existe la tabla `medication` (slice H5) | Esquema HOSPITAL (`openspec/.../tasks.md` 3.5) | Sin migración ni semilla: el API responde 503 contra la base real |
-| Permisos de escritura no aprobados ni catalogados | RBAC (@Mar-03) | Escritura 403; `PublishedContractsTest` bloquea #586 |
+| Permisos de escritura catalogados como pendientes (#622), sin rol activo | Aprobación de RBAC (@Mar-03) | Escritura 403 auditada hasta que se aprueben |
 | `limit` del contrato no se aplica | Propio | La API siempre devuelve como máximo 50; se corregirá o se ajustará el contrato |
-| Sin PostgreSQL de prueba (55431/55433) | Entorno | Suite `Database` no ejecutada |
+| ~~Sin PostgreSQL de prueba~~ **Resuelto en local** | Entorno | PostgreSQL 17 desechable: suite `Database` OK. No sustituye a staging |
