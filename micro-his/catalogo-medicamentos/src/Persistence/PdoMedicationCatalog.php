@@ -14,9 +14,13 @@ use MicroHis\MedicationCatalog\Domain\Validity;
 final readonly class PdoMedicationCatalog implements MedicationRepository
 {
     private const COLUMNS = 'medication_id, code, name, active_ingredient, pharmacological_group, validity';
+    private const UUID = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
+
+    private bool $postgres;
 
     public function __construct(private \PDO $pdo)
     {
+        $this->postgres = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql';
         // Los fallos deben llegar como excepción para no confundirlos con "sin resultados".
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         // SQLite solo pasa a minúsculas los caracteres ASCII; se sustituye LOWER por una versión Unicode (defecto AV3).
@@ -33,13 +37,18 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
 
     public function findById(string $id): ?Medication
     {
+        // En PostgreSQL medication_id es uuid: un identificador con otro formato no existe (404), no es un fallo (503).
+        if ($this->postgres && preg_match(self::UUID, $id) !== 1) {
+            return null;
+        }
         return $this->one('SELECT ' . self::COLUMNS . ' FROM medications WHERE medication_id = :id', ['id' => $id]);
     }
 
     public function insert(Medication $medication): Medication
     {
         $sql = 'INSERT INTO medications (code, name, active_ingredient, pharmacological_group, validity)
-                VALUES (:code, :name, :active_ingredient, :pharmacological_group, :validity)';
+                VALUES (:code, :name, :active_ingredient, :pharmacological_group, :validity)'
+            . ($this->postgres ? ' RETURNING medication_id' : '');
         try {
             $statement = $this->pdo->prepare($sql);
             $statement->execute([
@@ -49,7 +58,8 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
                 'pharmacological_group' => $medication->pharmacologicalGroup,
                 'validity' => $medication->validity->value,
             ]);
-            $id = $this->pdo->lastInsertId();
+            // El uuid lo asigna PostgreSQL y lastInsertId() no lo devuelve; SQLite usa la clave autoincremental.
+            $id = $this->postgres ? $statement->fetchColumn() : $this->pdo->lastInsertId();
         } catch (\PDOException $error) {
             if (in_array($error->getCode(), ['23000', '23505'], true) && stripos($error->getMessage(), 'unique') !== false) {
                 throw new DuplicateMedicationCode("El código {$medication->code} ya está registrado.", previous: $error);
@@ -60,7 +70,7 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
             throw new PersistenceFailure('No se confirmó el alta del medicamento.');
         }
 
-        return Medication::restore($id, $medication->code, $medication->name, $medication->activeIngredient,
+        return Medication::restore((string) $id, $medication->code, $medication->name, $medication->activeIngredient,
             $medication->pharmacologicalGroup, $medication->validity);
     }
 
@@ -88,7 +98,8 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
     public function updateValidity(string $id, Validity $validity): void
     {
         try {
-            $statement = $this->pdo->prepare('UPDATE medications SET validity = :validity WHERE medication_id = :id');
+            $statement = $this->pdo->prepare('UPDATE medications SET validity = :validity'
+                . ($this->postgres ? ', updated_at = now()' : '') . ' WHERE medication_id = :id');
             $statement->execute(['validity' => $validity->value, 'id' => $id]);
         } catch (\PDOException $error) {
             throw new PersistenceFailure('No se confirmó el cambio de vigencia.', previous: $error);
