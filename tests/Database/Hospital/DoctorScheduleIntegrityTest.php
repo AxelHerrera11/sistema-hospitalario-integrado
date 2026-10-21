@@ -120,6 +120,28 @@ class DoctorScheduleIntegrityTest extends TestCase
         );
     }
 
+    public function test_schedule_without_the_specialty_of_the_doctor_is_rejected(): void
+    {
+        $this->assertRejected(
+            'doctor_schedules_specialty_guard',
+            fn () => $this->insertSchedule('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-000000000002', 1, 480, 720, 30, '2026-10-01', null, 'active', '00000000-0000-0000-0000-000000000002'),
+        );
+    }
+
+    public function test_schedule_outside_the_validity_of_the_specialty_is_rejected(): void
+    {
+        $this->assertRejected(
+            'doctor_schedules_specialty_guard',
+            fn () => $this->insertSchedule('00000000-0000-0000-0000-0000000000e2', '00000000-0000-0000-0000-000000000004', 1, 480, 720, 30),
+        );
+    }
+
+    public function test_schedule_inside_the_validity_of_the_specialty_is_accepted(): void
+    {
+        $this->insertSchedule('00000000-0000-0000-0000-0000000000e3', '00000000-0000-0000-0000-000000000004', 1, 480, 720, 30, '2026-09-01', '2026-09-30');
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM doctor_schedules'));
+    }
+
     public function test_rollback_removes_the_table_and_keeps_the_previous_slices(): void
     {
         $this->assertTrue($this->tableExists('doctor_schedules'));
@@ -172,8 +194,14 @@ class DoctorScheduleIntegrityTest extends TestCase
         $db = DB::connection('hospital');
         $db->insert("INSERT INTO local_user_refs (local_user_ref_id, central_user_id, membership_id, display_name, role_code, status, synced_at) VALUES ('00000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000000f2', '00000000-0000-0000-0000-0000000000f3', 'Medico de prueba', 'medico', 'active', now())");
         $db->insert("INSERT INTO local_user_refs (local_user_ref_id, central_user_id, membership_id, display_name, role_code, status, synced_at) VALUES ('00000000-0000-0000-0000-0000000000f4', '00000000-0000-0000-0000-0000000000f5', '00000000-0000-0000-0000-0000000000f6', 'Segundo medico de prueba', 'medico', 'active', now())");
+        $db->insert("INSERT INTO local_user_refs (local_user_ref_id, central_user_id, membership_id, display_name, role_code, status, synced_at) VALUES ('00000000-0000-0000-0000-0000000000f7', '00000000-0000-0000-0000-0000000000f8', '00000000-0000-0000-0000-0000000000f9', 'Medico con especialidad vencida', 'medico', 'active', now())");
         $db->insert("INSERT INTO specialties (specialty_id, code, name) VALUES ('00000000-0000-0000-0000-000000000001', 'MED-GEN', 'Medicina general')");
+        $db->insert("INSERT INTO specialties (specialty_id, code, name) VALUES ('00000000-0000-0000-0000-000000000002', 'MED-CARD', 'Cardiologia')");
         $db->insert("INSERT INTO doctor_profiles (doctor_profile_id, local_user_ref_id, license_number, valid_from) VALUES ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000f1', 'LIC-0001', '2026-01-01')");
         $db->insert("INSERT INTO doctor_profiles (doctor_profile_id, local_user_ref_id, license_number, valid_from) VALUES ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-0000000000f4', 'LIC-0002', '2026-01-01')");
+        $db->insert("INSERT INTO doctor_profiles (doctor_profile_id, local_user_ref_id, license_number, valid_from) VALUES ('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-0000000000f7', 'LIC-0003', '2026-01-01')");
+        $db->insert("INSERT INTO doctor_specialties (doctor_specialty_id, doctor_profile_id, specialty_id, is_primary, valid_from, valid_to, status) VALUES ('00000000-0000-0000-0000-0000000001a1', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', true, '2026-01-01', null, 'active')");
+        $db->insert("INSERT INTO doctor_specialties (doctor_specialty_id, doctor_profile_id, specialty_id, is_primary, valid_from, valid_to, status) VALUES ('00000000-0000-0000-0000-0000000001a2', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', true, '2026-01-01', null, 'active')");
+        $db->insert("INSERT INTO doctor_specialties (doctor_specialty_id, doctor_profile_id, specialty_id, is_primary, valid_from, valid_to, status) VALUES ('00000000-0000-0000-0000-0000000001a3', '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', true, '2026-01-01', '2026-09-30', 'active')");
     }
 }

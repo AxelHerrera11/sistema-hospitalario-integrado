@@ -3,6 +3,11 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Tabla `doctor_schedules` (entidad 28) con la regla de especialidad acordada
+ * con ASII-04: trigger de integridad que exige una `doctor_specialties` vigente
+ * para el medico, la especialidad y la vigencia del horario.
+ */
 return new class extends Migration
 {
     protected $connection = 'hospital';
@@ -33,11 +38,50 @@ return new class extends Migration
             );
             CREATE INDEX doctor_schedules_doctor_profile_id_index ON doctor_schedules (doctor_profile_id);
             CREATE INDEX doctor_schedules_specialty_id_index ON doctor_schedules (specialty_id);
+
+            -- Regla de especialidad acordada con ASII-04 (opcion B): un horario
+            -- solo puede existir si el medico tiene vigente esa especialidad en
+            -- `doctor_specialties` durante la vigencia del horario. Las dos
+            -- vigencias se comparan como intervalos semiabiertos [desde, hasta).
+            -- La FK compuesta no es implementable porque `doctor_specialties` no
+            -- tiene UNIQUE (doctor_profile_id, specialty_id): el modelo es por
+            -- vigencias (SQLSTATE 42830).
+            CREATE OR REPLACE FUNCTION doctor_schedules_require_specialty() RETURNS trigger
+            LANGUAGE plpgsql AS $$
+            BEGIN
+                IF EXISTS (SELECT 1 FROM doctor_profiles WHERE doctor_profile_id = NEW.doctor_profile_id)
+                   AND EXISTS (SELECT 1 FROM specialties WHERE specialty_id = NEW.specialty_id)
+                   AND NOT EXISTS (
+                       SELECT 1
+                       FROM doctor_specialties s
+                       WHERE s.doctor_profile_id = NEW.doctor_profile_id
+                         AND s.specialty_id = NEW.specialty_id
+                         AND s.status = 'active'
+                         AND s.valid_from < COALESCE(NEW.valid_to, 'infinity'::date)
+                         AND NEW.valid_from < COALESCE(s.valid_to, 'infinity'::date)
+                   )
+                THEN
+                    RAISE EXCEPTION 'doctor_schedules_specialty_guard: el medico % no tiene vigente la especialidad %',
+                        NEW.doctor_profile_id, NEW.specialty_id
+                        USING ERRCODE = '23514';
+                END IF;
+
+                RETURN NEW;
+            END;
+            $$;
+
+            CREATE TRIGGER doctor_schedules_specialty_guard
+                BEFORE INSERT OR UPDATE ON doctor_schedules
+                FOR EACH ROW EXECUTE FUNCTION doctor_schedules_require_specialty();
             SQL);
     }
 
     public function down(): void
     {
-        DB::connection($this->connection)->unprepared('DROP TABLE doctor_schedules;');
+        DB::connection($this->connection)->unprepared(<<<'SQL'
+            DROP TRIGGER IF EXISTS doctor_schedules_specialty_guard ON doctor_schedules;
+            DROP FUNCTION IF EXISTS doctor_schedules_require_specialty();
+            DROP TABLE doctor_schedules;
+            SQL);
     }
 };
