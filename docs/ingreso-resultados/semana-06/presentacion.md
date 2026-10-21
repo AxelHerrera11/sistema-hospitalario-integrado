@@ -33,3 +33,18 @@ Un resultado pendiente de 95 mg/dL se corrige a 105 mg/dL con motivo obligatorio
 ## Diapositiva 6: Cierre y pendientes
 
 La solución mantiene separación de responsabilidades y permite evolucionar hacia API y persistencia compartida. La auditoría productiva queda pendiente de integración.
+
+## Diapositiva 7: Integración acordada
+
+- ASII-19 consume la versión exacta del catálogo de ASII-17 mediante `lab_test_id`.
+- La validación usa unidad, rango y umbral crítico definidos por esa versión.
+- Un resultado crítico publica `POST /api/v1/internal/result-validated` para ASII-21.
+- El evento es idempotente por `result_version_id` y admite reintentos.
+
+## Diapositiva 8: Límites y seguridad
+
+- Todas las rutas usan `/api/v1`, `X-Tenant-ID` y `X-User-Ref`.
+- `X-Request-Id` se genera si falta y se devuelve en la respuesta.
+- Los errores siguen `application/problem+json` y códigos estables.
+- ASII-19 no crea ni administra `lab_tests` o `critical_alerts`; cada tabla
+  permanece bajo el módulo propietario.
