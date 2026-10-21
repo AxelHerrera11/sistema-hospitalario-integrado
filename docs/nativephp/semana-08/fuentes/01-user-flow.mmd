@@ -1,0 +1,15 @@
+flowchart TD
+    A[Tecnico abre bandeja local] --> B{Hay conexion?}
+    B -- Si --> C[Captura y valida resultado]
+    B -- No --> D[Captura y guarda en cola]
+    D --> E[Mostrar estado en cola]
+    E --> F[Detectar conexion]
+    F --> C
+    C --> G{Validacion local correcta?}
+    G -- No --> H[Mostrar ayuda y error]
+    H --> C
+    G -- Si --> I[Enviar con clave idempotente]
+    I --> J{HIS confirma?}
+    J -- No --> K[Mostrar error y reintentar]
+    K --> I
+    J -- Si --> L[Mostrar sincronizado]

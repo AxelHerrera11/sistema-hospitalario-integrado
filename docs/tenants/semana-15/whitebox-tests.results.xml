@@ -1,129 +1,41 @@
-# Semana 15 — Resultados Pruebas Caja Blanca (White Box)
-## Resumen de Pruebas Caja Blanca
-| Métrica | Valor |
-|---------|-------|
-| **Total Paths Ejecutados** | 11 |
-| **Paths Cubiertos** | 11 (100%) |
-| **Paths No Cubiertos** | 0 |
-| **Cobertura de Decisiones** | 100% |
-| **Cobertura de Condiciones** | 100% |
-| **Cobertura MCDC** | 100% |
-
-## Resultados por Componente
-### 1. PasswordPolicy - White Box Testing (7 paths)
-| Path ID | Descripción | Entrada | Resultado Esperado | Estado |
-|---------|-------------|---------|-------------------|--------|
-| **PP-WB-01** | Longitud insuficiente (< 12 chars) | `"Short1!"` | Rechazar: "al menos 12 caracteres" | ✅ Pass |
-| **PP-WB-02** | Falta mayúscula | `"lowercase123!"` | Rechazar: "falta mayúscula" | ✅ Pass |
-| **PP-WB-03** | Falta minúscula | `"UPPERCASE123!"` | Rechazar: "falta minúscula" | ✅ Pass |
-| **PP-WB-04** | Falta número | `"NoNumbers!"` | Rechazar: "falta número" | ✅ Pass |
-| **PP-WB-05** | Falta símbolo | `"NoSymbols123"` | Rechazar: "falta símbolo" | ✅ Pass |
-| **PP-WB-06** | Contraseña en historial (últimas 5) | `"OldPass123!"` (en historial) | Rechazar: "últimas 5" | ✅ Pass |
-| **PP-WB-07** | Contraseña comprometida (HIBP) | `"CompromisedPass123!"` (HIBP=true) | Rechazar: "comprometida" | ✅ Pass |
-| **PP-WB-08** | HIBP Fail (Fail-open) | Error red HIBP | Aceptar (fail-open) | ✅ Pass |
-| **PP-WB-09** | Contraseña válida completa | `"SecurePass123!"` | Aceptar + hash Argon2id | ✅ Pass |
-**Cobertura PasswordPolicy:** 9/9 paths (100%) | Decisiones: 100% | Condiciones: 100% | MCDC: 100%
-
-### 2. MfaPolicy - White Box Testing (3 paths)
-| Path ID | Descripción | Entrada | Resultado Esperado | Estado |
-|---------|-------------|---------|-------------------|--------|
-| **MP-WB-01** | TENANT_ADMIN requiere MFA | roles=[TENANT_ADMIN], policy.mfa=false, user.mfa=false | required=true, type=TOTP | ✅ Pass |
-| **MP-WB-02** | AUDITOR requiere MFA | roles=[AUDITOR], policy.mfa=false | required=true | ✅ Pass |
-| **MP-WB-03** | Policy tenant MFA anula rol | roles=[MEDICO], policy.mfa=true | required=true | ✅ Pass |
-| **MP-WB-04** | Usuario mfaRequired=true fuerza MFA | roles=[MEDICO], user.mfaRequired=true | required=true | ✅ Pass |
-| **MP-WB-05** | WebAuthn habilitado por tenant | tenant.policy.mfa_webauthn=true | type=WEBAUTHN | ✅ Pass |
-| **MP-WB-06** | MEDICO sin MFA por defecto | roles=[MEDICO], policy.mfa=false | required=false | ✅ Pass |
-**Cobertura MfaPolicy:** 6/6 paths (100%) | Decisiones: 100% | Condiciones: 100%
-
-### 3. TokenFactory / JwtTokenService - White Box (3 paths)
-| Path ID | Descripción | Entrada | Resultado Esperado | Estado |
-|---------|-------------|---------|-------------------|--------|
-| **TF-WB-01** | Crear Access Token válido | User + Tenant + SessionId + Device | JWT RS256 válido con claims correctos | ✅ Pass |
-| **TF-WB-02** | Validar token válido | JWT RS256 válido | JwtClaims parseados correctamente | ✅ Pass |
-| **TF-WB-03** | Rechazar token inválido | Token malformed/expirado | Throw InvalidArgumentException | ✅ Pass |
-| **TF-WB-04** | Validar firma RS256 | Clave pública correcta | Validación exitosa | ✅ Pass |
-| **TF-WB-05** - Validar claims requeridos | Token sin 'sub' | Throw InvalidArgumentException | ✅ Pass |
-| **TF-WB-06** - Validar expiración | Token expirado | Throw InvalidArgumentException | ✅ Pass |
-**Cobertura TokenFactory:** 6/6 paths (100%) | Decisiones: 100% | Condiciones: 100%
-
-### 4. RefreshTokenRotator - White Box (4 paths)
-| Path ID | Descripción | Entrada | Resultado Esperado | Estado |
-|---------|-------------|---------|-------------------|--------|
-| **RTR-WB-01** | Rotación exitosa (hash coincide) | Token válido, hash coincide | Nuevo access + refresh token | ✅ Pass |
-| **RTR-WB-01** - Delete old token | Rotación exitosa | Old token deleted from Redis | ✅ Pass |
-| **RTR-WB-02** - Reuse Detection | Hash NO coincide (ataque) | Failure + isReuseDetected=true | ✅ Pass |
-| **RTR-WB-02** - Revocación total en reuse | Reuse detected | All sessions revoked + alert CRITICAL | ✅ Pass |
-| **RTR-WB-03** - Token no encontrado | Token no en Redis | Failure: "Refresh token revocado" | ✅ Pass |
-| **RTR-WB-04** - Generate and Store | Nuevo refresh token | Token generado + hash stored | ✅ Pass |
-**Cobertura RefreshTokenRotator:** 6/6 paths (100%) | Decisiones: 100% | Condiciones: 100% | MCDC: 100%
-
-## Resumen Cobertura Caja Blanca
-| Componente | Paths Totales | Paths Cubiertos | % Cobertura | Decisiones | Condiciones | MCDC |
-|------------|---------------|-----------------|-------------|------------|-------------|------|
-| **PasswordPolicy** | 9 | 9 | 100% | 100% | 100% | 100% |
-| **MfaPolicy** | 6 | 6 | 100% | 100% | 100% | 100% |
-| **TokenFactory/JwtTokenService** | 6 | 6 | 100% | 100% | 100% | 100% |
-| **RefreshTokenRotator** | 6 | 6 | 100% | 100% | 100% | 100% |
-| **TOTAL** | **22** | **22** | **100%** | **100%** | **100%** | **100%** |
-
-## Verificación MCDC (Modified Condition/Decision Coverage)
-### PasswordPolicy - Decisiones Críticas
-| Decisión | Condiciones | Casos de Prueba | Estado |
-|----------|-------------|-----------------|--------|
-| `length >= 12` | length < 12 / length >= 12 | PP-WB-01, PP-WB-09 | ✅ |
-| `hasUppercase` | !hasUpper / hasUpper | PP-WB-02, PP-WB-09 | ✅ |
-| `hasLowercase` | !hasLower / hasLower | PP-WB-03, PP-WB-09 | ✅ |
-| `hasNumber` | !hasNumber / hasNumber | PP-WB-04, PP-WB-09 | ✅ |
-| `hasSymbol` | !hasSymbol / hasSymbol | PP-WB-05, PP-WB-09 | ✅ |
-| `inHistory` | inHistory / !inHistory | PP-WB-06, PP-WB-09 | ✅ |
-| `hibpCompromised` | compromised / !compromised | PP-WB-07, PP-WB-08 | ✅ |
-
-### RefreshTokenRotator - Decisiones Críticas
-| Decisión | Condiciones | Casos de Prueba | Estado |
-|----------|-------------|-----------------|--------|
-| `tokenExists` | exists / !exists | RTR-WB-01, RTR-WB-03 | ✅ |
-| `hashMatches` | match / !match | RTR-WB-01, RTR-WB-02 | ✅ |
-| `reuseDetected` | !match & exists | RTR-WB-02 | ✅ |
-
-## Métricas de Calidad White Box
-| Métrica | Valor | Objetivo | Estado |
-|---------|-------|----------|--------|
-| **Statement Coverage** | 100% | ≥ 95% | ✅ |
-| **Branch Coverage** | 100% | ≥ 90% | ✅ |
-| **Path Coverage** | 100% | ≥ 90% | ✅ |
-| **Decision Coverage** | 100% | ≥ 90% | ✅ |
-| **Condition Coverage** | 100% | ≥ 90% | ✅ |
-| **MCDC Coverage** | 100% | ≥ 80% | ✅ |
-| **Path Coverage** | 100% | ≥ 90% | ✅ |
-
-## Herramientas Utilizadas
-| Herramienta | Versión | Propósito |
-|-------------|---------|-----------|
-| **Vitest** | 1.0.0 | Test Runner |
-| **@vitest/coverage-v8** | 1.0.0 | Coverage Reporter |
-| **@vitest/coverage-c8** | 1.0.0 | Branch/Decision Coverage |
-| **@testing-library/react** | 14.0 | Component Testing |
-
-## Evidencia de Ejecución
-```bash
-# Comando ejecutado
-npm run test:whitebox -- --coverage
-
-# Resultado
-Test Suites: 4 passed, 4 total
-Tests:       11 passed, 11 total
-Snapshots:   0 total
-Time:        2.341s
-Coverage:    100% statements, 100% branches, 100% functions, 100% lines
-```
-## Conclusión White Box Testing
-✅ **TODOS LOS CRITERIOS CUMPLIDOS**
-- ✅ 100% Path Coverage
-- ✅ 100% Branch Coverage
-- ✅ 100% Decision Coverage
-- ✅ 100% Condition Coverage
-- ✅ 100% MCDC Coverage
-- ✅ 0 Paths no cubiertos
-- ✅ 0 Decisiones no cubiertas
-- ✅ 0 Condiciones no evaluadas
-**Estado Final: ✅ APROBADO - White Box Testing COMPLETO**
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reporte generado por PHPUnit (formato JUnit), no editado a mano salvo esta cabecera
+  y las rutas, que se volvieron relativas a la raíz del repositorio.
+  Comando: vendor/bin/phpunit [group caja-blanca] [log-junit docs/tenants/semana-15/whitebox-tests.results.xml]
+  Entorno: PHP 8.2.12 · PHPUnit 11.5.55 · Windows 11 · 2026-10-21T17:16Z
+  Base: micro-HIS de Semana 3 (16f68b0) + pruebas de Semana 15 (#344 a #348).
+-->
+<testsuites>
+  <testsuite name="phpunit.xml" tests="17" assertions="42" errors="0" failures="0" skipped="0" time="0.042404">
+    <testsuite name="Unit" tests="17" assertions="42" errors="0" failures="0" skipped="0" time="0.042404">
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" tests="3" assertions="3" errors="0" failures="0" skipped="0" time="0.006228">
+        <testcase name="test_hospital_policy_forces_mfa_for_any_role" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" line="40" class="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.MfaPolicyTest" assertions="1" time="0.006069"/>
+        <testcase name="test_user_flag_forces_mfa_for_any_role" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.MfaPolicyTest" assertions="1" time="0.000097"/>
+        <testcase name="test_one_privileged_role_among_several_is_enough" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" line="56" class="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.MfaPolicyTest" assertions="1" time="0.000063"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" tests="8" assertions="16" errors="0" failures="0" skipped="0" time="0.004070">
+        <testsuite name="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest::test_each_complexity_branch_reports_its_error" tests="5" assertions="10" errors="0" failures="0" skipped="0" time="0.001831">
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;menos de 12 caracteres&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.001499"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin mayúscula&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000102"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin minúscula&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000080"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin número&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000077"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin símbolo&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000072"/>
+        </testsuite>
+        <testcase name="test_password_from_history_is_rejected" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="57" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.001509"/>
+        <testcase name="test_compromised_password_is_rejected" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="68" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="3" time="0.000648"/>
+        <testcase name="test_breach_service_is_not_called_when_the_password_already_fails" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="80" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="1" time="0.000082"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" tests="5" assertions="17" errors="0" failures="0" skipped="0" time="0.018073">
+        <testcase name="test_path_valid_token_rotates_and_old_one_is_marked" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="45" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="4" time="0.017679"/>
+        <testcase name="test_path_rotated_token_presented_again_is_reuse" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="58" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="3" time="0.000141"/>
+        <testcase name="test_path_unknown_or_malformed_token_fails_without_reuse" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="71" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="6" time="0.000074"/>
+        <testcase name="test_path_wrong_secret_fails_without_revealing_reuse" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="81" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="2" time="0.000083"/>
+        <testcase name="test_path_revoked_and_expired_tokens_fail" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="92" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="2" time="0.000096"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\TokenFactoryTest" file="tests/Unit/Tenants/Domain/Services/TokenFactoryTest.php" tests="1" assertions="6" errors="0" failures="0" skipped="0" time="0.014033">
+        <testcase name="test_rejects_tampered_foreign_expired_and_malformed_tokens" file="tests/Unit/Tenants/Domain/Services/TokenFactoryTest.php" line="59" class="Tests\Unit\Tenants\Domain\Services\TokenFactoryTest" classname="Tests.Unit.Tenants.Domain.Services.TokenFactoryTest" assertions="6" time="0.014033"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

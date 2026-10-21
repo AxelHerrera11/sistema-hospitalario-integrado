@@ -1,0 +1,72 @@
+@startuml
+
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBackgroundColor #E8F5E9
+skinparam sequenceParticipantBorderColor #2E7D32
+skinparam sequenceActorBackgroundColor #BBDEFB
+skinparam sequenceActorBorderColor #1565C0
+
+title **Secuencia: Alta de Usuario por Tenant (RF-01, RF-02, RF-03)**
+
+actor "Admin Tenant" as Admin
+participant "AuthController\n(Presentation)" as Ctrl
+participant "RegisterUserUseCase\n(Application)" as UC
+participant "TenantRepository\n(Domain Interface)" as TenantRepo
+participant "UserRepository\n(Domain Interface)" as UserRepo
+participant "PasswordPolicy\n(Domain Service)" as PassPolicy
+participant "MfaPolicy\n(Domain Service)" as MfaPolicy
+participant "EventPublisher\n(Infrastructure)" as Events
+participant "PDOTenantRepository\n(Infrastructure)" as TenantRepoImpl
+participant "PDOUserRepository\n(Infrastructure)" as UserRepoImpl
+participant "PostgreSQL Central\n(his_central)" as DB
+participant "EmailService\n(Infrastructure)" as Email
+
+Admin -> Ctrl : POST /admin/users\n{email, name, roles[], mfa_required?}\nAuthorization: Bearer <admin_token>\nX-Tenant-ID: tenant-001
+
+Ctrl -> Ctrl : Validar Request DTO\n(RegisterUserRequest)
+Ctrl -> UC : execute(RegisterUserCommand)
+
+UC -> TenantRepo : findById(tenant-001)
+TenantRepo <|.. TenantRepoImpl
+TenantRepoImpl -> DB : SELECT * FROM hospitals WHERE hospital_id = ?
+DB --> TenantRepoImpl : TenantDTO {status: active, quota: 100, used: 50
+}
+TenantRepoImpl --> UC : Tenant Entity
+
+UC -> UC : Validar tenant.status == 'active'
+UC -> UC : Validar tenant.used < tenant.quota
+
+UC -> UserRepo : existsByEmailAndTenant(email, tenant-001)
+UserRepo <|.. UserRepoImpl
+UserRepoImpl -> DB : SELECT 1 FROM central_users WHERE lower(email) = ? AND hospital_memberships.hospital_id = ?
+DB --> UserRepoImpl : NOT FOUND
+UserRepoImpl --> UC : false
+
+UC -> PassPolicy : validate(rawPassword)
+PassPolicy -> PassPolicy : Longitud >= 12, complejidad, historial, HIBP check
+PassPolicy --> UC : ValidationResult {valid: true}
+
+UC -> MfaPolicy : evaluate(roles[], tenant.policies)
+MfaPolicy --> UC : MfaRequirement {required: true, type: TOTP}
+
+UC -> UC : Hash password (Argon2id)
+UC -> UC : Generar password_temporal + activation_token (24h)
+UC -> UserRepo : save(User Entity)
+UserRepoImpl -> DB : INSERT INTO central_users ...\nINSERT INTO hospital_memberships ...
+DB --> UserRepoImpl : user_id (UUID)
+UserRepoImpl --> UC : User Entity
+
+UC -> Events : publish(UserCreated)
+Events -> Email : sendActivationEmail(user, temp_password, token)
+Email --> Events : OK
+Events -> DB : INSERT INTO audit_log (USER_CREATED, hash_chain)
+DB --> Events : OK
+
+UC --> Ctrl : RegisterUserResult {
+user_id, email, temp_password}
+Ctrl -> transformer : toJson(result)
+transformer --> Ctrl : JSON Response
+Ctrl --> Admin : 201 Created\n{user_id, email, temp_password, message: "Credenciales enviadas por email"}
+
+@enduml
