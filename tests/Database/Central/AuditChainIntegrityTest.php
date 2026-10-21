@@ -45,6 +45,42 @@ class AuditChainIntegrityTest extends TestCase
         $this->assertSame(str_repeat('0', 64), DB::connection('central')->table('audit_log')->value('previous_hash'));
     }
 
+    public function test_timestamp_matches_the_hash_in_a_non_utc_session(): void
+    {
+        $db = DB::connection('central');
+        $originalTimezone = $db->scalar('SHOW TIME ZONE');
+        $instant = \Illuminate\Support\Carbon::parse('2026-10-20T04:39:59.123456Z');
+        $timestamp = $instant->format('Y-m-d\TH:i:s.u\Z');
+
+        try {
+            $db->statement("SET TIME ZONE 'America/Guatemala'");
+            $this->travelTo($instant);
+            (new AuditLogRepository)->logRaw('test.timezone', []);
+
+            $row = $db->table('audit_log')->first();
+            $storedTimestamp = \Illuminate\Support\Carbon::parse($row->occurred_at)
+                ->utc()->format('Y-m-d\TH:i:s.u\Z');
+            $this->assertSame($timestamp, $storedTimestamp);
+
+            $detail = json_decode($row->detail, true, 512, JSON_THROW_ON_ERROR);
+            ksort($detail);
+            $payload = json_encode([
+                'event_id' => $row->event_id,
+                'occurred_at' => $storedTimestamp,
+                'event' => $row->event,
+                'actor_id' => $row->actor_id,
+                'hospital_id' => $row->hospital_id,
+                'detail' => $detail,
+                'trace_id' => $row->trace_id,
+                'result' => $row->result,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
+            $this->assertSame($row->event_hash, hash('sha256', $row->previous_hash.'|'.$payload.'|'.$storedTimestamp));
+        } finally {
+            $this->travelBack();
+            $db->select("SELECT set_config('TimeZone', ?, false)", [$originalTimezone]);
+        }
+    }
+
     public function test_preflight_preserves_invalid_legacy_events_and_aborts(): void
     {
         $this->rollback(self::HASH_MIGRATION);
