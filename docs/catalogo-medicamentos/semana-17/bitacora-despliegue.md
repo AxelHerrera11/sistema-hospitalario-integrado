@@ -16,6 +16,8 @@ Solo un **entorno local de verificación**: Windows 11, PHP 8.2.12, Composer 2.1
 | 6 | Pruebas del catálogo | `php vendor/bin/phpunit tests/Feature/MedicationCatalog` (merge de prueba con `origin/develop`) | OK (12 tests, 81 assertions) |
 | 7 | Micro-HIS | `run.php`, `pdo.php`, `repository.php`, `http.php` y `casos.php` | Todas exit 0 |
 | 8 | Prototipo | `node docs/catalogo-medicamentos/semana-11/evidencia/verificar-prototipo.mjs` | 24/24 |
+| 9 | Base de prueba local | PostgreSQL 17 desechable (`initdb` en 55431/55433, `btree_gist` en HOSPITAL) y `php vendor/bin/phpunit` | OK (121 tests, Unit, Feature y Database) |
+| 10 | Identidad real | `php artisan serve` con CENTRAL desechable migrada y `JWT_SECRET` efímero | `tenant`, `jwt.auth` y RBAC reales: 401, 403 `TENANT_MISMATCH`, 403 `RBAC_DENIED` auditado y 503 sin tabla H5 ([detalle](../semana-16/integracion.md)) |
 
 ## Errores encontrados y corregidos en el proceso
 
@@ -24,12 +26,12 @@ Solo un **entorno local de verificación**: Windows 11, PHP 8.2.12, Composer 2.1
 | `bootstrap/cache must be present and writable` | `attrib -R` (paso 2) |
 | `MissingAppKeyException` | `php artisan key:generate` |
 | `ViteManifestNotFoundException` en `ExampleTest` | `npm run build` |
-| `Class "App\Models\Tenant" not found` al ejecutar el API | No corregible en el módulo: dependencia de Tenants; las pruebas sustituyen la identidad |
+| `Class "App\Models\Tenant" not found` al ejecutar el API | Resuelto al integrarse Tenants (#657). Sin la base CENTRAL las denegaciones dan 503; las pruebas sustituyen el registro de denegaciones |
+| `Secret is not set` al iniciar sesión | `JWT_SECRET` efímero en el entorno del proceso; no se guarda |
 
 ## Pendiente para un despliegue real
 
 1. Entorno staging u on-premise con PostgreSQL HOSPITAL y CENTRAL (credenciales fuera del repositorio).
 2. Migración de `medication` del slice H5 y semillas de prueba aprobadas.
-3. Modelos `User` y `Tenant` (Tenants) para que `tenant` y `jwt.auth` funcionen.
-4. Permisos de escritura aprobados y catalogados por RBAC.
-5. Repetir los pasos 5–7 contra ese entorno y registrar las salidas.
+3. Permisos de escritura aprobados por RBAC; ya están catalogados como pendientes (#622).
+4. Repetir los pasos 5–10 contra ese entorno y registrar las salidas.
