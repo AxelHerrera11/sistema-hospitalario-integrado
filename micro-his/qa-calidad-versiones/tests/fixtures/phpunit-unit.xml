@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="/repo/phpunit.xml" tests="5" assertions="16" errors="0" failures="0" skipped="0" time="0.021287">
+    <testsuite name="Unit" tests="5" assertions="16" errors="0" failures="0" skipped="0" time="0.021287">
+      <testsuite name="Tests/Unit/ExampleTest" file="/repo/tests/Unit/ExampleTest.php" tests="1" assertions="1" errors="0" failures="0" skipped="0" time="0.013667">
+        <testcase name="test_that_true_is_true" file="/repo/tests/Unit/ExampleTest.php" line="12" class="Tests\Unit\ExampleTest" classname="Tests.Unit.ExampleTest" assertions="1" time="0.013667"/>
+      </testsuite>
+      <testsuite name="Tests/Unit/Tenants/CanonicalRoleTest" file="/repo/tests/Unit/Tenants/CanonicalRoleTest.php" tests="4" assertions="15" errors="0" failures="0" skipped="0" time="0.007620">
+        <testcase name="test_laboratory_roles_are_explicit_and_not_legacy_aliases" file="/repo/tests/Unit/Tenants/CanonicalRoleTest.php" line="12" class="Tests\Unit\Tenants\CanonicalRoleTest" classname="Tests.Unit.Tenants.CanonicalRoleTest" assertions="8" time="0.007330"/>
+        <testcase name="test_only_exact_canonical_codes_survive_and_are_sorted" file="/repo/tests/Unit/Tenants/CanonicalRoleTest.php" line="26" class="Tests\Unit\Tenants\CanonicalRoleTest" classname="Tests.Unit.Tenants.CanonicalRoleTest" assertions="1" time="0.000169"/>
+        <testcase name="test_version_is_stable_and_order_independent_but_role_sensitive" file="/repo/tests/Unit/Tenants/CanonicalRoleTest.php" line="43" class="Tests\Unit\Tenants\CanonicalRoleTest" classname="Tests.Unit.Tenants.CanonicalRoleTest" assertions="3" time="0.000071"/>
+        <testcase name="test_legacy_codes_require_an_explicit_mapping" file="/repo/tests/Unit/Tenants/CanonicalRoleTest.php" line="53" class="Tests\Unit\Tenants\CanonicalRoleTest" classname="Tests.Unit.Tenants.CanonicalRoleTest" assertions="3" time="0.000052"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>
