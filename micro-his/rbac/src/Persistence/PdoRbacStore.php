@@ -7,10 +7,11 @@ namespace MicroHis\Rbac\Persistence;
 use MicroHis\Rbac\Domain\DenialRecorder;
 use MicroHis\Rbac\Domain\Membership;
 use MicroHis\Rbac\Domain\PermissionProvider;
+use MicroHis\Rbac\Domain\RoleResolver;
 use PDO;
 
 /** Persistencia con PDO y sentencias preparadas: ningún valor se concatena en el SQL. */
-final class PdoRbacStore implements PermissionProvider, DenialRecorder
+final class PdoRbacStore implements PermissionProvider, DenialRecorder, RoleResolver
 {
     public function __construct(private readonly PDO $pdo)
     {
