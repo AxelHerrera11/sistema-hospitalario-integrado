@@ -55,6 +55,20 @@ Las denegaciones quedaron en `audit_log` de CENTRAL como `rbac.access_denied` co
 | Un id que no es uuid daba 503 | Se trata como inexistente, 404 (#774) |
 | La prueba del 503 dependía de que la base HOSPITAL no tuviera la tabla | Apunta a una base inexistente (#774) |
 
+## Revisión humana confirmada (21/10/2026)
+
+María Yamilet Lindo Pablo confirmó una prueba manual en el entorno local de verificación (`http://127.0.0.1:8770`, CENTRAL 55431 y HOSPITAL 55433), con la interfaz de #780 y el usuario ficticio `admin@prueba.local` (`admin_hospital`) del hospital A:
+
+1. Registró `IBU-400`.
+2. Lo buscó.
+3. Consultó su detalle.
+4. Cambió su vigencia a «No vigente».
+5. Salió de la pantalla y volvió usando el menú, sin recargar con F5; al buscarlo de nuevo conservaba «No vigente».
+
+En la base HOSPITAL, `IBU-400` figura con `validity = inactive`, `created_at` 10:59:28 y `updated_at` 11:00:17 (UTC-6), lo que concuerda con esos pasos.
+
+**Alcance:** solo esos cinco pasos quedan revisados por una persona. El resto de esta evidencia proviene únicamente de ejecuciones automatizadas: duplicado, validación, búsqueda sin resultados, enfermería, médico, recepción, versión móvil, escrituras forzadas por API, tenant cruzado y caída de la base (503). No equivale a una revisión independiente de los PR ni a una aceptación del docente.
+
 ## Límites de esta evidencia
 
 - Las dos instancias de hospital comparten la misma base HOSPITAL desechable. El aislamiento probado es el de identidad y tenant (`TENANT_MISMATCH` y membresías por hospital), no el enrutamiento de una base física por hospital, que depende de la plataforma.
