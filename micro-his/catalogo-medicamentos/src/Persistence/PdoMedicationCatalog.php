@@ -77,10 +77,12 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
     public function search(string $term, int $limit): array
     {
         $sql = 'SELECT ' . self::COLUMNS . " FROM medications
-                WHERE LOWER(code) LIKE :by_code ESCAPE '\\' OR LOWER(name) LIKE :by_name ESCAPE '\\'
-                   OR LOWER(active_ingredient) LIKE :by_ingredient ESCAPE '\\'
+                WHERE LOWER(code) LIKE :by_code ESCAPE '!' OR LOWER(name) LIKE :by_name ESCAPE '!'
+                   OR LOWER(active_ingredient) LIKE :by_ingredient ESCAPE '!'
                 ORDER BY name, code LIMIT :limit";
-        $pattern = '%' . addcslashes(mb_strtolower($term), '%_\\') . '%';
+        // Escape con "!": con ESCAPE '\', PDO para PostgreSQL toma la barra como escape de la comilla y no enlaza los
+        // parámetros siguientes (SQLSTATE HY093). "!" es neutro en SQLite y PostgreSQL.
+        $pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($term)) . '%';
         try {
             $statement = $this->pdo->prepare($sql);
             foreach (['by_code', 'by_name', 'by_ingredient'] as $name) {
