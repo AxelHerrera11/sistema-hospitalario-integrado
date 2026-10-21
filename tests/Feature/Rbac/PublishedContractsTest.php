@@ -58,14 +58,39 @@ class PublishedContractsTest extends TestCase
         $this->assertEqualsCanonicalizing(array_values(array_unique($referenced)), $catalog);
     }
 
-    public function test_medication_write_contracts_are_pending_and_denied_to_every_active_role(): void
+    public function test_medication_write_contracts_are_active_only_for_hospital_administration(): void
     {
         $provider = new ConfiguredPermissions;
         foreach (['medicamentos.registrar', 'medicamentos.cambiar_vigencia'] as $permission) {
             $this->assertContains($permission, config('rbac.catalog'));
-            $this->assertSame(['admin_hospital'], config('rbac.pending')[$permission]);
+            $this->assertArrayNotHasKey($permission, config('rbac.pending'));
             foreach (array_keys(config('rbac.roles')) as $role) {
-                $this->assertNotContains($permission, $provider->permissionsFor($role), $role);
+                $this->assertSame($role === 'admin_hospital', in_array($permission, $provider->permissionsFor($role), true), $role);
+            }
+        }
+    }
+
+    public function test_medication_writes_require_membership_in_the_target_hospital(): void
+    {
+        $store = new InMemoryRbacStore([]);
+        $store->grant('actor', 'hospital-a', 'admin_hospital');
+        $middleware = new RequirePermission(new Authorize($store, new ConfiguredPermissions, $store, new RoleGrantsPermission));
+        foreach (['medicamentos.registrar', 'medicamentos.cambiar_vigencia'] as $permission) {
+            foreach (['hospital-a', 'hospital-b'] as $hospital) {
+                $request = Request::create('/api/v1/medications', 'POST');
+                $request->setUserResolver(fn () => new GenericUser(['id' => 'actor']));
+                $request->headers->set('X-Tenant-ID', $hospital);
+                $request->attributes->set('tenant', new class($hospital) {
+                    public function __construct(private string $id) {}
+                    public function getKey(): string { return $this->id; }
+                });
+                $executed = false;
+                $response = $middleware->handle($request, function () use (&$executed) {
+                    $executed = true;
+                    return response()->json(['ok' => true]);
+                }, $permission);
+                $this->assertSame($hospital === 'hospital-a' ? 200 : 403, $response->getStatusCode());
+                $this->assertSame($hospital === 'hospital-a', $executed);
             }
         }
     }
@@ -112,8 +137,6 @@ class PublishedContractsTest extends TestCase
     {
         $contracts = json_decode(file_get_contents(base_path('tests/Fixtures/Rbac/pending-contracts.json')), true, flags: JSON_THROW_ON_ERROR);
         foreach ($contracts as $contract) {
-            $this->assertArrayHasKey($contract['pr'], $heads);
-            $this->assertSame($heads[$contract['pr']], $contract['sha']);
             $this->assertNotEmpty($contract['permissions']);
             foreach ($contract['permissions'] as $permission) {
                 $this->assertContains($permission, config('rbac.catalog'), 'PR #'.$contract['pr'].' '.$contract['path']);

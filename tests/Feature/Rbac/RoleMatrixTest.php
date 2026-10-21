@@ -38,6 +38,7 @@ class RoleMatrixTest extends TestCase
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'admin_hospital' => [
+            'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
             'citas.ver', 'citas.crear', 'citas.confirmar',
             'citas.cancelar', 'reportes.ver', 'reportes.exportar',
             'documentacion.ver', 'medicamentos.ver', 'laboratorio.ver',
