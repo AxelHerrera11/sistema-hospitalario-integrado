@@ -1,0 +1,195 @@
+<template>
+    <section class="meds" aria-labelledby="meds-title">
+        <h1 id="meds-title">Catálogo de medicamentos</h1>
+        <p v-if="!canRead" class="meds__msg meds__msg--warn" role="alert">
+            Su sesión no tiene el permiso <code>medicamentos.ver</code> en el hospital activo.
+        </p>
+
+        <form v-if="canRead" class="meds__card" role="search" @submit.prevent="search">
+            <label for="meds-q">Buscar por código, nombre o principio activo</label>
+            <div class="meds__row">
+                <input id="meds-q" v-model="term" autocomplete="off" maxlength="60" :aria-invalid="Boolean(searchError)" aria-describedby="meds-q-help">
+                <button type="submit" :disabled="searching">{{ searching ? 'Buscando…' : 'Buscar' }}</button>
+            </div>
+            <p id="meds-q-help" class="meds__hint">De 2 a 60 caracteres; no distingue mayúsculas.</p>
+        </form>
+        <p v-if="searchError" class="meds__msg meds__msg--error" role="alert">
+            {{ searchError }} <button v-if="searchRetry" type="button" @click="search">Reintentar</button>
+        </p>
+        <p v-else-if="searched && !searching && results.length === 0" class="meds__msg" role="status">No hay medicamentos que coincidan.</p>
+
+        <ul v-if="results.length" class="meds__list" aria-label="Resultados">
+            <li v-for="item in results" :key="item.medication_id" class="meds__item">
+                <button type="button" class="meds__pick" :aria-pressed="selected?.medication_id === item.medication_id" @click="select(item)">
+                    <strong>{{ item.code }}</strong> · {{ item.name }}
+                    <span :class="['meds__badge', `meds__badge--${item.validity}`]">{{ validityLabel(item.validity) }}</span>
+                </button>
+            </li>
+        </ul>
+
+        <article v-if="selected" class="meds__card" aria-live="polite">
+            <h2>{{ selected.name }}</h2>
+            <dl class="meds__detail">
+                <dt>Código</dt><dd>{{ selected.code }}</dd>
+                <dt>Principio activo</dt><dd>{{ selected.active_ingredient }}</dd>
+                <dt>Grupo farmacológico</dt><dd>{{ selected.pharmacological_group }}</dd>
+                <dt>Vigencia</dt><dd>{{ validityLabel(selected.validity) }}</dd>
+            </dl>
+            <button v-if="canChange" type="button" :disabled="changing" @click="toggleValidity">
+                {{ changing ? 'Guardando…' : (selected.validity === 'active' ? 'Marcar como no vigente' : 'Marcar como vigente') }}
+            </button>
+            <p v-if="validityMessage" :class="['meds__msg', validityOk ? 'meds__msg--ok' : 'meds__msg--error']" role="status">{{ validityMessage }}</p>
+        </article>
+
+        <form v-if="canRegister" class="meds__card" novalidate @submit.prevent="register">
+            <h2>Registrar medicamento</h2>
+            <div v-for="field in fields" :key="field.key" class="meds__field">
+                <label :for="`meds-${field.key}`">{{ field.label }}</label>
+                <input :id="`meds-${field.key}`" v-model="draft[field.key]" :maxlength="field.max" autocomplete="off"
+                       :aria-invalid="Boolean(errors[field.key])" :aria-describedby="errors[field.key] ? `meds-${field.key}-err` : null">
+                <p v-if="errors[field.key]" :id="`meds-${field.key}-err`" class="meds__field-error">{{ errors[field.key] }}</p>
+            </div>
+            <button type="submit" :disabled="submitting">{{ submitting ? 'Registrando…' : 'Registrar' }}</button>
+            <p v-if="registerMessage" :class="['meds__msg', registerOk ? 'meds__msg--ok' : 'meds__msg--error']" role="status">
+                {{ registerMessage }} <button v-if="registerRetry" type="button" @click="register">Reintentar</button>
+            </p>
+        </form>
+    </section>
+</template>
+
+<script setup>
+import { computed, reactive, ref } from 'vue';
+import api from '@/plugins/axios';
+import { can } from '@/router/permissions';
+import { useAuthStore } from '@/stores/auth';
+import { failureMessage, isRetryable, nextValidity, PERMISSIONS, searchTermError, validateDraft, validityLabel } from '@/modules/medicamentos/medicamentos';
+
+const auth = useAuthStore();
+// Mostrar u ocultar acciones solo mejora la navegación: el servidor vuelve a exigir cada permiso.
+const canRead = computed(() => can(auth.user, PERMISSIONS.read));
+const canRegister = computed(() => can(auth.user, PERMISSIONS.register));
+const canChange = computed(() => can(auth.user, PERMISSIONS.changeValidity));
+
+const fields = [
+    { key: 'code', label: 'Código', max: 20 },
+    { key: 'name', label: 'Nombre', max: 120 },
+    { key: 'active_ingredient', label: 'Principio activo', max: 120 },
+    { key: 'pharmacological_group', label: 'Grupo farmacológico', max: 120 },
+];
+const term = ref('');
+const results = ref([]);
+const searched = ref(false);
+const searching = ref(false);
+const searchError = ref('');
+const searchRetry = ref(false);
+const selected = ref(null);
+const changing = ref(false);
+const validityMessage = ref('');
+const validityOk = ref(false);
+const draft = reactive({ code: '', name: '', active_ingredient: '', pharmacological_group: '' });
+const errors = reactive({});
+const submitting = ref(false);
+const registerMessage = ref('');
+const registerOk = ref(false);
+const registerRetry = ref(false);
+
+const statusOf = (error) => error.response?.status ?? 0;
+
+async function search() {
+    if (searching.value) return;
+    searchError.value = searchTermError(term.value) ?? '';
+    searchRetry.value = false;
+    if (searchError.value) return;
+    searching.value = true;
+    try {
+        const { data } = await api.get('/medications', { params: { q: term.value.trim() } });
+        results.value = data.results ?? [];
+        searched.value = true;
+    } catch (error) {
+        results.value = [];
+        searchError.value = failureMessage(statusOf(error), error.response?.data);
+        searchRetry.value = isRetryable(statusOf(error));
+    } finally {
+        searching.value = false;
+    }
+}
+
+async function select(item) {
+    validityMessage.value = '';
+    try {
+        const { data } = await api.get(`/medications/${item.medication_id}`);
+        selected.value = data.medication;
+    } catch (error) {
+        selected.value = null;
+        searchError.value = failureMessage(statusOf(error), error.response?.data);
+    }
+}
+
+async function toggleValidity() {
+    if (changing.value || !selected.value) return;
+    changing.value = true;
+    validityMessage.value = '';
+    try {
+        const { data } = await api.patch(`/medications/${selected.value.medication_id}/validity`, { validity: nextValidity(selected.value.validity) });
+        selected.value = data.medication;
+        results.value = results.value.map((item) => (item.medication_id === data.medication.medication_id ? data.medication : item));
+        validityOk.value = true;
+        validityMessage.value = `Vigencia actualizada: ${validityLabel(data.medication.validity)}.`;
+    } catch (error) {
+        validityOk.value = false;
+        validityMessage.value = failureMessage(statusOf(error), error.response?.data);
+    } finally {
+        changing.value = false;
+    }
+}
+
+async function register() {
+    if (submitting.value) return;
+    registerMessage.value = '';
+    registerRetry.value = false;
+    Object.keys(errors).forEach((key) => delete errors[key]);
+    Object.assign(errors, validateDraft(draft));
+    if (Object.keys(errors).length) return;
+    submitting.value = true;
+    try {
+        const { data } = await api.post('/medications', { ...draft });
+        registerOk.value = true;
+        registerMessage.value = `Registrado ${data.medication.code} (${validityLabel(data.medication.validity)}).`;
+        Object.keys(draft).forEach((key) => { draft[key] = ''; });
+    } catch (error) {
+        const status = statusOf(error);
+        registerOk.value = false;
+        registerMessage.value = failureMessage(status, error.response?.data);
+        registerRetry.value = isRetryable(status);
+        if (status === 409) errors.code = registerMessage.value;
+        if (status === 422 && error.response?.data?.field) errors[error.response.data.field] = registerMessage.value;
+    } finally {
+        submitting.value = false;
+    }
+}
+</script>
+
+<style scoped>
+.meds { max-width: 920px; margin: 0 auto; color: #0f172a; }
+.meds__card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; margin: 1rem 0; background: #fff; }
+.meds__row { display: flex; gap: 0.5rem; }
+.meds__row input, .meds__field input { flex: 1; min-height: 2.5rem; padding: 0.4rem 0.6rem; font-size: 1rem; }
+.meds__field { display: grid; gap: 0.25rem; margin-bottom: 0.75rem; }
+.meds__hint { color: #475569; font-size: 0.9rem; }
+.meds__list { list-style: none; padding: 0; display: grid; gap: 0.5rem; }
+.meds__pick { width: 100%; text-align: left; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; min-height: 2.75rem; }
+.meds__badge { border-radius: 999px; padding: 0 0.5rem; font-size: 0.85rem; }
+.meds__badge--active { background: #dcfce7; color: #166534; }
+.meds__badge--inactive { background: #f1f5f9; color: #334155; border: 1px solid #94a3b8; }
+.meds__detail { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+.meds__msg { padding: 0.5rem 0.75rem; border-radius: 6px; background: #f1f5f9; }
+.meds__msg--ok { background: #dcfce7; color: #14532d; }
+.meds__msg--warn { background: #fef9c3; color: #713f12; }
+.meds__msg--error, .meds__field-error { color: #991b1b; }
+.meds__msg--error { background: #fee2e2; }
+button:focus-visible, input:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+@media (max-width: 600px) {
+    .meds__row { flex-direction: column; }
+    .meds__detail { grid-template-columns: 1fr; }
+}
+</style>

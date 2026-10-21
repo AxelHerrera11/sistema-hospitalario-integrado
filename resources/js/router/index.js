@@ -13,6 +13,12 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
+            path: '/medicamentos',
+            name: 'medicamentos',
+            component: () => import('@/modules/medicamentos/pages/MedicationsPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),
