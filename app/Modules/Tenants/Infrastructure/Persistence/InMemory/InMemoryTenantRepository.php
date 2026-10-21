@@ -15,12 +15,4 @@ final class InMemoryTenantRepository implements TenantRepositoryInterface
         return $this->tenants[$id->value()] ?? null;}
     public function findAll(int $limit = 50, int $offset = 0): array
     {
-        return array_slice(array_values($this->tenants), $offset, $limit);}
-    public function count(): int
-    {
-        return count($this->tenants);}
-    public function clear(): void
-    {
-        $this->tenants = [];
-    }
-}
+        return array_slice(array_values($this->tenants), $offset, $limit);}}

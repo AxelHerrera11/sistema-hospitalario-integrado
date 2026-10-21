@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo — Admisión hospitalaria y asignación de cama</title>
+<style>
+:root{--ink:#1f2a44;--muted:#4a5266;--line:#c9cfdb;--bg:#f6f7fb;--ok:#1b5e20;--okbg:#e6f4ea;--warn:#6b4100;--warnbg:#fff3e0;--err:#8e1c1c;--errbg:#fdecea;--crit:#b71c1c;--grey:#303437;--greybg:#e3e5e8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+header{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:12px 16px;background:var(--ink);color:#fff}
+main{max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:0 0 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px}
+button{min-height:44px;min-width:44px;padding:10px 16px;border-radius:6px;border:1px solid var(--ink);background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+button.primary{background:var(--ink);color:#fff}
+button[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}
+label{display:block;font-weight:600;margin-top:12px}
+input,select{width:100%;min-height:44px;padding:8px;font:inherit;border:1px solid var(--muted);border-radius:6px;background:#fff}
+fieldset{border:1px solid var(--line);border-radius:6px;margin-top:12px}
+.msg{padding:12px;border-radius:6px;margin:12px 0;border-left:6px solid}
+.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.warn{background:var(--warnbg);border-color:#b26a00;color:var(--warn)}
+.err{background:var(--errbg);border-color:#c62828;color:var(--err)}
+.crit{background:var(--crit);border-color:#7f0000;color:#fff}
+.grey{background:var(--greybg);border-color:var(--grey);color:var(--grey)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.sim{font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:8px;margin-bottom:12px}
+.sim button{min-height:36px;padding:4px 10px;font-size:14px}
+.sim button[aria-pressed=true]{background:var(--ink);color:#fff}
+[role=radio][aria-checked=true]{background:var(--ink);color:#fff;outline:3px solid #ffbf47}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[hidden]{display:none!important}
+.sm-only{display:none}
+@media (max-width:639px){
+ .lg-only{display:none!important} .sm-only{display:block}
+ thead{display:none} tr{display:block;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px;background:#fff}
+ td{display:block;border:0;padding:2px 0}
+ .actions{position:sticky;bottom:0;background:var(--bg);padding:8px 0;margin:0} .actions button{flex:1}
+}
+</style>
+</head>
+<body>
+<header><strong>HIS · Admisión hospitalaria y asignación de cama</strong><span>HOSP-DEMO · admision1 · datos ficticios</span></header>
+<main>
+<div class="sim" role="group" aria-label="Simulador del prototipo">Respuesta simulada del servidor: <button type="button" data-sim="ok" aria-pressed="true">Correcta</button> <button type="button" data-sim="empty" aria-pressed="false">Sin camas</button> <button type="button" data-sim="taken" aria-pressed="false">409 cama tomada</button> <button type="button" data-sim="admitted" aria-pressed="false">409 ya admitido</button> <button type="button" data-sim="timeout" aria-pressed="false">Sin respuesta</button></div>
+<div id="live" class="sr" role="status" aria-live="polite"></div>
+<section id="datos" data-screen>
+  <h1>Admisión hospitalaria</h1>
+  <form id="f-datos" class="card" novalidate>
+    <label for="patient">Paciente *</label>
+    <select id="patient"><option value="P-DEMO">P-DEMO · Juan Pérez (ficticio)</option><option value="P-0002">P-0002 · Ana Gómez (ficticia)</option></select>
+    <label for="reason">Motivo *</label><input id="reason" value="Neumonía, requiere oxígeno" aria-describedby="datos-msg">
+    <label for="type">Tipo de cama *</label>
+    <select id="type"><option value="adult">Adulto</option><option value="pediatric">Pediátrica</option><option value="isolation">Aislamiento</option></select>
+    <div id="datos-msg" class="msg" hidden></div>
+    <div class="actions"><button type="submit" class="primary">Buscar camas disponibles</button></div>
+  </form>
+</section>
+<section id="camas" data-screen hidden>
+  <h1>Camas disponibles</h1>
+  <div id="camas-msg" class="msg" hidden></div>
+  <div id="tablero" class="card" role="radiogroup" aria-label="Camas disponibles"></div>
+  <div class="actions"><button type="button" data-go="datos">Volver</button><button type="button" class="primary" id="admitir" disabled>Admitir</button></div>
+</section>
+<section id="resultado" data-screen hidden>
+  <h1>Resultado de la admisión</h1>
+  <div id="res-msg" class="msg"></div>
+  <div class="actions"><button type="button" id="verificar" hidden>Verificar cama</button><button type="button" data-go="datos">Nueva admisión</button></div>
+</section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let sim = 'ok';
+document.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
+  sim = b.dataset.sim;
+  document.querySelectorAll('[data-sim]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+function show(id) {
+  document.querySelectorAll('section[data-screen]').forEach(s => { s.hidden = s.id !== id; });
+  const h = document.querySelector('#' + id + ' h1');
+  if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+  if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+}
+function say(el, cls, text) { el.className = 'msg ' + cls; el.textContent = text; el.hidden = false; }
+function announce(text) { $('#live').textContent = text; }
+document.addEventListener('click', e => { const go = e.target.closest('[data-go]'); if (go) { e.preventDefault(); show(go.dataset.go); } });
+const camas = [{id: 'B-101', code: 'MED-101', type: 'adult', status: 'available'}, {id: 'B-102', code: 'MED-102', type: 'adult', status: 'available'},
+  {id: 'B-103', code: 'MED-103', type: 'adult', status: 'occupied'}, {id: 'B-104', code: 'MED-104', type: 'adult', status: 'maintenance'}, {id: 'B-201', code: 'PED-201', type: 'pediatric', status: 'available'}];
+const estado = {available: 'libre', occupied: 'ocupada', maintenance: 'en mantenimiento'};
+let elegida = null;
+function pintarTablero() {
+  const t = $('#tablero'), msg = $('#camas-msg'), tipo = $('#type').value;
+  t.innerHTML = ''; msg.hidden = true; elegida = null; $('#admitir').disabled = true;
+  const delTipo = camas.filter(c => c.type === tipo && !(sim === 'empty' && c.status === 'available'));
+  if (!delTipo.some(c => c.status === 'available')) say(msg, 'warn', 'No hay camas de este tipo disponibles: registrar en lista de espera (UC-ADM-09, propuesto).');
+  delTipo.forEach(c => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false'); b.dataset.bed = c.id;
+    b.textContent = c.code + ' · ' + estado[c.status]; b.disabled = c.status !== 'available'; b.style.margin = '4px';
+    b.addEventListener('click', () => { elegida = c; t.querySelectorAll('[role=radio]').forEach(x => x.setAttribute('aria-checked', String(x === b))); $('#admitir').disabled = false; });
+    t.appendChild(b);
+  });
+}
+document.getElementById('f-datos').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!$('#reason').value.trim()) { say($('#datos-msg'), 'err', 'Indique el motivo de la hospitalización (REASON_REQUIRED).'); return $('#reason').focus(); }
+  $('#datos-msg').hidden = true; show('camas'); pintarTablero();
+});
+$('#admitir').addEventListener('click', () => {
+  const b = $('#admitir'); b.disabled = true; // evita el doble clic: el alta no es idempotente
+  const msg = $('#camas-msg');
+  if (sim === 'taken') { elegida.status = 'occupied'; pintarTablero(); return say(msg, 'warn', 'Otra admisión tomó esa cama hace un momento (BED_NOT_AVAILABLE). Elija otra del tablero actualizado.'); }
+  if (sim === 'admitted') return say(msg, 'warn', 'El paciente ya está hospitalizado (PATIENT_ALREADY_ADMITTED).');
+  show('resultado');
+  if (sim === 'timeout') { $('#verificar').hidden = false; return say($('#res-msg'), 'grey', 'No sabemos si se guardó: verifique la cama antes de repetir la admisión.'); }
+  $('#verificar').hidden = true; elegida.status = 'occupied';
+  say($('#res-msg'), 'ok', 'Paciente admitido en ' + elegida.code + '.'); announce('Paciente admitido');
+});
+$('#verificar').addEventListener('click', () => say($('#res-msg'), 'ok', 'Verificado: la admisión no se registró; puede repetirla.'));
+show(location.hash.slice(1) || 'datos');
+</script>
+</body>
+</html>
+

@@ -1,0 +1,14 @@
+@startsalt
+title M1 - Búsqueda (320-430 px)
+{+
+  { [≡] | <b>Medicamentos</b> }
+  Hospital Central
+  ---
+  Buscar (código, nombre o principio activo)
+  { "amox        " }
+  [        Buscar        ]
+  <i>Enter también busca. Mínimo 2 caracteres.</i>
+  ---
+  <i>role="status": Buscando…</i>
+}
+@endsalt

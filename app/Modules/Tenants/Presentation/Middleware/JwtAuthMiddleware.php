@@ -1,72 +1,47 @@
 <?php
 declare(strict_types=1);
 namespace App\Modules\Tenants\Presentation\Middleware;
-use App\Modules\Tenants\Domain\Services\JwtTokenService;
-use App\Modules\Tenants\Domain\Services\BlocklistService;
-use App\Modules\Tenants\Domain\ValueObjects\JwtClaims;
+use App\Modules\Tenants\Domain\Events\DomainEvent;
+use App\Modules\Tenants\Domain\Repositories\AuditLogRepositoryInterface;
+use App\Modules\Tenants\Domain\Repositories\SessionRepositoryInterface;
+use App\Modules\Tenants\Domain\Services\TokenFactory;
+use App\Modules\Tenants\Domain\ValueObjects\SessionId;
+use App\Modules\Tenants\Presentation\Transformers\AuthResponseTransformer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
-final class JwtAuthMiddleware implements MiddlewareInterface
+/**
+ * Valida el Bearer y además que su sesión siga viva: revocar la sesión invalida al instante
+ * todos los access tokens emitidos para ella, sin esperar a que expiren.
+ */
+final class JwtAuthMiddleware
 {
     public function __construct(
-        private JwtTokenService $jwtService,
-        private BlocklistService $blocklist
+        private TokenFactory $tokens,
+        private SessionRepositoryInterface $sessions,
+        private AuditLogRepositoryInterface $auditLog,
+        private AuthResponseTransformer $responses,
+        private array $publicPaths = ['/health', '/auth/login', '/auth/mfa', '/auth/refresh']
     ) {}
-    public function process(Request $request, RequestHandlerInterface $handler): Response
+    public function __invoke(Request $request, callable $next): Response
     {
-        $publicRoutes = ['/auth/login', '/auth/register', '/auth/refresh', '/auth/mfa'];
-        $path = $request->getUri()->getPath();
-        if (in_array($path, $publicRoutes, true)) {
-            return $handler->handle($request);
-        }
-        $authHeader = $request->getHeaderLine('Authorization');
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return $this->unauthorized('Token de autorización requerido');
-        }
-        $token = substr($authHeader, 7);
+        if (in_array($request->getUri()->getPath(), $this->publicPaths, true)) {
+            return $next($request);}
+        $header = $request->getHeaderLine('Authorization');
+        if (!str_starts_with($header, 'Bearer ')) {
+            return $this->responses->error('Token de autorización requerido', 401);}
         try {
-            $claims = $this->jwtService->validateAccessToken($token);
-            if ($this->blocklist->exists($claims->jti())) {
-                return $this->unauthorized('Token revocado');
-            }
-            $request = $request->withAttribute('auth_claims', $claims->toArray());
-            $request = $request->withAttribute('auth_user', [
-                'user_id' => $claims->subject(),
-                'roles' => $claims->roles(),
+            $claims = $this->tokens->validateAccessToken(substr($header, 7));
+        } catch (\InvalidArgumentException) {
+            return $this->responses->error('Token inválido o expirado', 401);}
+        $session = $this->sessions->findById(new SessionId($claims->sessionId()));
+        if ($session === null || $session->isRevoked() || $session->tenantId()->value() !== $claims->tenantId()) {
+            return $this->responses->error('Sesión revocada', 401);}
+        $tenantHeader = $request->getHeaderLine('X-Tenant-ID');
+        if ($tenantHeader !== '' && $tenantHeader !== $claims->tenantId()) {
+            $this->auditLog->log(new DomainEvent(DomainEvent::CROSS_TENANT_ATTEMPT, [
                 'tenant_id' => $claims->tenantId(),
-                'session_id' => $claims->sessionId(),
-                'device_id' => $claims->deviceId(),
-                'jti' => $claims->jti(),
-            ]);
-            $tenantHeader = $request->getHeaderLine('X-Tenant-ID');
-            if ($tenantHeader !== '' && $tenantHeader !== $claims->tenantId()) {
-                return $this->forbidden('El tenant indicado no coincide con el usuario del token');
-            }
-        } catch (\InvalidArgumentException $e) {
-            return $this->unauthorized('Token inválido o expirado: ' . $e->getMessage());
-        } catch (\Exception $e) {
-            return $this->unauthorized('Error de autenticación');
-        }
-        return $handler->handle($request);
-    }
-    private function unauthorized(string $message): Response
-    {
-        $response = new \Nyholm\Psr7\Response(401, ['Content-Type' => 'application/json']);
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => $message, 'code' => 401]
-        ]));
-        return $response;
-    }
-    private function forbidden(string $message): Response
-    {
-        $response = new \Nyholm\Psr7\Response(403, ['Content-Type' => 'application/json']);
-        $response->getBody()->write(json_encode([
-            'success' => false,
-            'error' => ['message' => $message, 'code' => 403]
-        ]));
-        return $response;
-    }
-}
+                'user_id' => $claims->subject(),
+                'target_tenant_id' => $tenantHeader,
+                'ip' => $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown',]));
+            return $this->responses->error('El hospital indicado no coincide con el del token', 403);}
+        return $next($request->withAttribute('auth', $claims));}}

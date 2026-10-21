@@ -1,0 +1,39 @@
+%% Componentes después de la refactorización de la Semana 7 (GobernanzaModule como raíz de composición).
+flowchart LR
+    subgraph Laravel["app/GobernanzaAuditoria"]
+        PROV[GobernanzaAuditoriaServiceProvider]
+        CTRL[AuditEventController]
+        LLOG[LaravelLogFailureReporter]
+    end
+    subgraph Nucleo["micro-his/gobernanza-auditoria/src"]
+        MODULE[["GobernanzaModule::compose()"]]
+        HTTP[Presentation\AuditHttpHandler]
+        SEARCH[Application\SearchAuditEvents]
+        REC[Application\RecordAuditEvent]
+        PDOA[Persistence\PdoAuditLog]
+        HASH[Persistence\AuditChainHasher]
+        RGATE[Integration\RbacAccessGate]
+        RDEN[Integration\RbacDenialRecorder]
+    end
+    subgraph Externos
+        AUTHZ["micro-his/rbac · Authorize"]
+        DENI["micro-his/rbac · DenialRecorder «interfaz»"]
+        TEN["Tenants · AuditLogRepository::logRaw (rama)"]
+        CEN[("CENTRAL · audit_log")]
+    end
+    TESTS["tests/fixtures.php · rbac_integration.php"]
+
+    PROV -- "compone" --> MODULE
+    TESTS -- "compone" --> MODULE
+    MODULE --> REC
+    MODULE --> SEARCH
+    MODULE --> HTTP
+    CTRL --> HTTP
+    HTTP --> SEARCH --> REC
+    SEARCH --> RGATE --> AUTHZ
+    REC --> PDOA --> HASH
+    PDOA --> CEN
+    TEN -. "misma cadena (TC-R-01..03)" .-> CEN
+    RDEN -. implementa .-> DENI
+    RDEN --> REC
+    PROV --> LLOG

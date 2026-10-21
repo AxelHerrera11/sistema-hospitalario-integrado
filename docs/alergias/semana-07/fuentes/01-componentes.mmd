@@ -1,0 +1,19 @@
+---
+title: "Componentes backend/frontend — Alergias clínicas y alerta visual en expediente"
+---
+flowchart LR
+  subgraph FE[Frontend Vue 3]
+    page[PatientAllergiesPage.vue<br/>AllergyBanner.vue · AllergyForm.vue] --> store[stores/allergies.js<br/>Pinia]
+    store --> api[api/allergiesApi.js<br/>plugins/axios + X-Tenant-ID + JWT]
+  end
+  subgraph BE[Backend Laravel 12]
+    mw[Middlewares<br/>tenant · jwt.auth · permission:modulo.accion] --> ctrl[Api/V1/AllergyController<br/>+ StoreAllergyRequest]
+    ctrl --> app[Application<br/>RegisterAllergy · GetAllergyAlert]
+    app --> dom[Domain<br/>Allergy · AllergyAlert]
+    app --> port{{AllergyRepository<br/>«interfaz»}}
+    eloq[EloquentAllergyRepository] -. implementa .-> port
+    mem[InMemoryAllergyRepository<br/>pruebas] -. implementa .-> port
+    app --> audit[AuditLogger<br/>ASII-22 / Cindy]
+  end
+  api --> mw
+  eloq --> db[(allergies · local_access_audits · local_patients solo lectura)]
