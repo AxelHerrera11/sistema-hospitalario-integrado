@@ -6,7 +6,7 @@ Gobernanza y Auditoría sobre `audit_log` (CENTRAL) y la convierte en una migrac
 | Elemento | Estado |
 |---|---|
 | Propuesta 001 | **Validada con ejecución real** y convertida en migración correctiva |
-| Migración | `database/migrations/central/2026_08_11_000900_add_audit_log_query_indexes.php` |
+| Migración | `database/migrations/central/2026_08_11_001100_add_audit_log_query_indexes.php` |
 | Pruebas | `tests/Database/Central/AuditLogQueryIndexTest.php` (7 pruebas) |
 
 ## 1. Método de medición
