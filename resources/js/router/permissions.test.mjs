@@ -61,14 +61,29 @@ assert.equal(allowsRoute(null, { permission: 'ocupacion.ver' }), false);
 assert.equal(allowsRoute(sessionUser, {}), true);
 
 // La navegacion solo ofrece lo que el usuario puede ver.
-assert.deepEqual(visibleNavigation(sessionUser).map((entry) => entry.to), ['/ocupacion', '/patients']);
-assert.deepEqual(visibleNavigation(legacyUser), []);
+// `/` es publica y sin permiso: aparece solo cuando el usuario tiene sesion
+// con permisos publicados (cualquier otro item sin ruta dice «proximamente»).
+assert.deepEqual(visibleNavigation(sessionUser).map((entry) => entry.to), ['/', '/ocupacion', '/patients']);
 assert.deepEqual(visibleNavigation(null), []);
 assert.deepEqual(visibleNavigation(sessionUser, []), []);
 
-// Cada entrada de navegacion declara un permiso del catalogo de rutas.
+// Regresion: entradas quedan sujetas al backend; los items «proximamente»
+// se muestran solo si el usuario tiene el permiso del modulo correspondiente.
+assert.equal(visibleNavigation(sessionUser).some((entry) => entry.to === null), false);
+const grantedSoon = visibleNavigation({ permissions: ['citas.ver'] }, NAVIGATION).filter((entry) => entry.to === null);
+assert.deepEqual(grantedSoon.map((entry) => entry.label), ['Citas']);
+assert.equal(visibleNavigation(null).filter((entry) => entry.to === null).length, 0);
+
+// Cada entrada de navegacion declara un permiso del catalogo del backend
+// o es una ruta publica sin permiso (con `to` definido).
+const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');
 NAVIGATION.forEach((entry) => {
-    assert.ok(Object.values(ROUTE_PERMISSIONS).includes(entry.permission), `entrada sin permiso conocido: ${entry.to}`);
+    if (entry.permission === null) {
+        assert.ok(entry.to, `entrada sin permiso debe declarar ruta: ${entry.label}`);
+        assert.equal(entry.to, '/', 'la unica entrada sin permiso es la ruta publica inicial');
+        return;
+    }
+    assert.ok(catalog.includes(`'${entry.permission}'`), `entrada fuera del catalogo del backend: ${entry.to}`);
 });
 
 // Las acciones de Pacientes usan el permiso de la accion, no el de lectura.
@@ -86,8 +101,8 @@ for (const action of ['patients-new', 'patients-edit']) {
 assert.equal(allowsRoute({ permissions: ['pacientes.registrar'] }, { permission: ROUTE_PERMISSIONS['patients-edit'] }), false);
 assert.equal(allowsRoute({ permissions: ['pacientes.editar'] }, { permission: ROUTE_PERMISSIONS['patients-new'] }), false);
 
-// Todo permiso de la interfaz existe en el catalogo del backend (config/rbac.php).
-const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');
+// Todo permiso de la interfaz existe en el catalogo del backend (config/rbac.php);
+// ya se leyo para la navegacion, aqui se reutiliza.
 Object.values(ROUTE_PERMISSIONS).forEach((permission) => {
     assert.ok(catalog.includes(`'${permission}'`), `permiso fuera del catalogo del backend: ${permission}`);
 });

@@ -23,7 +23,7 @@ const router = createRouter({
             path: '/traslados',
             name: 'traslados',
             component: () => import('@/modules/traslados/pages/TrasladosPage.vue'),
-            meta: { requiresAuth: true },
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.traslados },
         },
         {
             path: '/rbac',
