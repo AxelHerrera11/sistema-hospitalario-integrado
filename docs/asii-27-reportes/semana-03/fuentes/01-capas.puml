@@ -1,0 +1,37 @@
+@startuml
+title Micro-HIS Reportes operativos (ASII-27) - Vista de capas
+
+skinparam componentStyle rectangle
+
+package "Presentation" #Paleturquoise {
+  [bin/generar_reporte.php\n(front controller CLI)] as cli
+}
+
+package "Application" #LightBlue {
+  [GenerarReporte\n(caso de uso)] as uc
+}
+
+package "Domain" #LightYellow {
+  [Reporte\n(entidad + regla de fechas)] as ent
+  [ReporteRepository\n(puerto)] as rep
+  [Exportador\n(contrato)] as exp
+}
+
+package "Persistence" #LightGray {
+  [ReporteRepositoryEnMemoria] as mem
+  [ExportadorCsv] as csv
+  [ExportadorJson] as json
+}
+
+cli --> uc
+uc --> ent
+uc --> rep
+uc --> exp
+mem .up.|> rep
+csv .up.|> exp
+json .up.|> exp
+
+note right of exp
+  Formato nuevo = clase nueva que implementa Exportador (OCP).
+end note
+@enduml

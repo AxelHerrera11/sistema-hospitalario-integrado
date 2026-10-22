@@ -1,0 +1,38 @@
+@startuml
+title Micro-HIS Centro de Documentacion (ASII-24) - Vista de capas
+
+skinparam componentStyle rectangle
+
+package "Presentation" #Paleturquoise {
+  [bin/consultar_documentos.php\n(front controller CLI)] as cli
+}
+
+package "Application" #LightBlue {
+  [PublicarDocumento\n(caso de uso)] as pub
+  [ConsultarDocumentos\n(caso de uso)] as con
+}
+
+package "Domain" #LightYellow {
+  [Documento\n(entidad + regla de roles)] as ent
+  [DocumentoRepository\n(puerto)] as port
+}
+
+package "Persistence" #LightGray {
+  [DocumentoRepositoryPDO\n(adaptador)] as pdo
+  [DocumentoRepositoryEnMemoria\n(doble de prueba)] as mem
+}
+
+cli --> pub
+cli --> con
+pub --> ent
+con --> ent
+pub --> port
+con --> port
+pdo .up.|> port
+mem .up.|> port
+
+note right of port
+  La dependencia apunta al Dominio.
+  La Persistencia implementa el puerto.
+end note
+@enduml

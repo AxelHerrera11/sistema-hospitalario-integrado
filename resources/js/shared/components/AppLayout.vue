@@ -23,11 +23,11 @@
                 class="layout__nav"
                 aria-label="Navegación principal"
             >
-                <template v-for="item in visibleItems" :key="item.id">
+                <template v-for="item in navigation" :key="item.label">
                     <router-link
-                        v-if="item.route"
+                        v-if="item.to"
                         class="layout__link"
-                        :to="item.route"
+                        :to="item.to"
                         @click="closeSidebar"
                     >
                         {{ item.label }}
@@ -59,15 +59,14 @@
                         Hospital activo: {{ auth.hospital.name }} · {{ auth.hospital.hospital_id }}
                     </span>
                     <span class="layout__name">{{ userName }}</span>
-                    <button
-                        class="layout__logout"
-                        type="button"
-                        @click="handleLogout"
-                    >
+                    <button class="layout__logout" type="button" @click="logout">
                         Cerrar sesión
                     </button>
                 </div>
             </header>
+            <p v-if="auth.notice" class="layout__error" role="alert">
+                {{ auth.notice }}
+            </p>
             <p v-if="logoutError" class="layout__error" role="alert">
                 {{ logoutError }}
             </p>
@@ -82,8 +81,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { navigationItems } from '@/shared/navigation';
-import { can } from '@/router/permissions';
+import { visibleNavigation } from '@/router/permissions';
 
 const route = useRoute();
 const router = useRouter();
@@ -94,9 +92,10 @@ const logoutError = ref('');
 const isGuest = computed(() => route.name === 'login');
 const userName = computed(() => auth.user?.display_name ?? 'Usuario');
 
-const visibleItems = computed(() =>
-    navigationItems.filter((item) => item.permission === null || can(auth.user, item.permission)),
-);
+/* Gating por permisos efectivos: los permisos llegan de la API y el
+ * backend sigue siendo la autoridad final. Las entradas sin `to` se
+ * muestran como «próximamente» hasta que su módulo registre la ruta. */
+const navigation = computed(() => visibleNavigation(auth.user));
 
 watch(() => route.fullPath, () => {
     sidebarOpen.value = false;
@@ -106,7 +105,7 @@ function closeSidebar() {
     sidebarOpen.value = false;
 }
 
-async function handleLogout() {
+async function logout() {
     logoutError.value = '';
 
     try {
@@ -155,7 +154,7 @@ async function handleLogout() {
 }
 
 .layout__brand {
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.02em;
 }
 
@@ -216,28 +215,54 @@ async function handleLogout() {
     cursor: pointer;
 }
 
-.layout__menu:focus-visible,
-.layout__link:focus-visible,
-.layout__logout:focus-visible {
-    outline: 2px solid #2563eb;
-    outline-offset: 2px;
-}
-
 .layout__session {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    font-size: 0.9rem;
-}
-
-.layout__tenant {
-    color: #64748b;
+    gap: 0.75rem;
+    min-width: 0;
 }
 
 .layout__name {
-    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layout__tenant {
+    font-size: 0.85rem;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layout__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0.5rem 0.75rem;
+}
+
+.layout__link {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    color: #1e293b;
+    text-decoration: none;
+}
+
+.layout__link:hover {
+    background: #eef2ff;
+}
+
+.layout__link--soon {
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.layout__link--soon small {
+    font-size: 0.7rem;
 }
 
 .layout__logout {
@@ -245,89 +270,37 @@ async function handleLogout() {
     border-radius: 8px;
     background: #ffffff;
     padding: 0.4rem 0.8rem;
-    cursor: pointer;
-}
-
-.layout__nav {
-    display: flex;
-    flex-direction: column;
-    padding: 0.75rem 0.5rem;
-    gap: 0.15rem;
-}
-
-.layout__link {
-    display: block;
-    padding: 0.55rem 0.75rem;
-    border-radius: 8px;
-    color: #0f172a;
-    text-decoration: none;
-    font-size: 0.95rem;
-}
-
-.layout__link:hover {
-    background: #f1f5f9;
-}
-
-.layout__link--soon {
-    color: #94a3b8;
-    cursor: not-allowed;
-}
-
-.layout__link--soon:hover {
-    background: transparent;
-}
-
-.layout__link.router-link-exact-active {
-    background: #eff6ff;
-    color: #2563eb;
     font-weight: 600;
-}
-
-.layout__logout {
-    border: 0;
-    padding: 0;
-    background: transparent;
     cursor: pointer;
-    font: inherit;
-}
-
-.layout__error {
-    margin: 0;
-    padding: 0.5rem 1.5rem;
     color: #b91c1c;
-    background: #fef2f2;
 }
 
 .layout__main {
     flex: 1;
+    margin: 0;
     padding: 1.5rem;
 }
 
-@media (min-width: 768px) {
-    .layout {
-        flex-direction: row;
-    }
+.layout__error {
+    margin: 0 1.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+}
 
-    .layout__sidebar {
-        position: static;
-        transform: none;
-        width: 250px;
-        flex-shrink: 0;
-        transition: none;
-    }
-
-    .layout__overlay,
+@media (min-width: 1024px) {
     .layout__menu {
         display: none;
     }
 
-    .layout__brand--sidebar {
-        padding-top: 1rem;
+    .layout__sidebar {
+        transform: translateX(0);
     }
 
-    .layout__header {
-        padding-top: 0.85rem;
-        padding-bottom: 0.85rem;
+    .layout__body {
+        margin-left: 250px;
     }
 }
 </style>
