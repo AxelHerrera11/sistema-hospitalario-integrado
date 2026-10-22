@@ -76,6 +76,48 @@ class EloquentAppointmentRepositoryTest extends TestCase
         $this->repository->changeStatus($appointment, Appointment::STATUS_CONFIRMED);
     }
 
+    public function test_invalid_status_transition_is_rejected_with_422_and_keeps_data(): void
+    {
+        $appointment = $this->repository->create($this->attributes('10:00', '11:00'));
+        $before = $this->repository->find($appointment->getKey());
+
+        try {
+            $this->repository->changeStatus($appointment, Appointment::STATUS_COMPLETED);
+            $this->fail('Se esperaba que la transicion invalida fuera rechazada.');
+        } catch (AppointmentWriteException $exception) {
+            $this->assertSame(422, $exception->status);
+            $this->assertSame('appointments_status_time_check', $exception->errorCode);
+        }
+
+        $after = $this->repository->find($appointment->getKey());
+        $this->assertSame($before->getKey(), $after->getKey());
+        $this->assertSame(Appointment::STATUS_SCHEDULED, $after->status);
+        $persisted = DB::connection('hospital')->scalar(
+            'SELECT status FROM appointments WHERE appointment_id = ?',
+            [$appointment->getKey()],
+        );
+        $this->assertSame(Appointment::STATUS_SCHEDULED, $persisted);
+    }
+
+    public function test_update_preserves_appointment_id_and_status(): void
+    {
+        $appointment = $this->repository->create($this->attributes('10:00', '11:00'));
+        $originalId = $appointment->getKey();
+        $originalStatus = $appointment->status;
+
+        $updated = $this->repository->find($originalId);
+        $updated->reason = 'Reconsult';
+        $result = $this->repository->update($appointment, ['reason' => 'Reconsult']);
+
+        $this->assertSame($originalId, $result->getKey());
+        $this->assertSame($originalStatus, $result->status);
+        $persisted = DB::connection('hospital')->table('appointments')
+            ->where('appointment_id', $originalId)
+            ->first();
+        $this->assertSame('Reconsult', (string) $persisted->reason);
+        $this->assertSame($originalStatus, $persisted->status);
+    }
+
     /**
      * @return array<string, string>
      */
