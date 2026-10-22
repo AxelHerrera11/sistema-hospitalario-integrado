@@ -71,7 +71,7 @@ Resultados reales: [EVIDENCIA.md](./EVIDENCIA.md).
 - **Esquema:** `database/schema.sql` es local del micro-HIS (SQLite). No reemplaza el slice H5 de `medication`, pendiente en `openspec/.../tasks.md`. No se crearon migraciones ni semillas.
 - **Hospital:** una base equivale a un hospital (base HOSPITAL por hospital según el README), así que no hay columna de hospital.
 - **Unicidad:** código normalizado en mayúsculas, único por base. Es una identidad provisional de Semana 1.
-- **Permisos:** RBAC no define permisos de medicamentos, por lo que el micro-HIS no implementa autorización por rol (RF-07 y CA-09 quedan pendientes).
+- **Permisos:** el micro-HIS no implementa autorización por rol (RF-07 y CA-09 pendientes). RBAC concede hoy solo `medicamentos.ver`; los permisos de escritura están propuestos en [Semana 5](../semana-05/contrato-api.md).
 - **Vigencia:** `active/inactive` del registro. Inactivar no borra el medicamento ni representa el vencimiento de un lote; no hay operación de borrado.
 - **Límites propios:** código `[A-Z0-9][A-Z0-9-]{1,19}`, textos de 2 a 120 caracteres, término de 2 a 60 y máximo 50 resultados.
 

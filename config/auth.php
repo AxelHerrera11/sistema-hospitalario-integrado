@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Modules\Tenants\Infrastructure\Persistence\CentralUser;
 
 return [
 
@@ -69,7 +69,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => env('AUTH_MODEL', CentralUser::class),
         ],
 
         // 'users' => [

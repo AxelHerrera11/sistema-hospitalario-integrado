@@ -1,0 +1,42 @@
+%% Casos de uso — Gobernanza y Auditoría (Semana 1).
+%% Mermaid no tiene diagrama UML de casos de uso: se usa flowchart con
+%% actores (rectángulos «actor») y casos de uso (elipses). Editable y renderizable.
+flowchart LR
+    ADM["«actor»<br/>Administrador de gobernanza<br/>(rol con auditoria.ver)"]
+    USR["«actor»<br/>Usuario sin permiso<br/>(p. ej. médico)"]
+    MOD["«actor sistema»<br/>Módulo consumidor<br/>(RBAC, Tenants, Notas SOAP…)"]
+    AUTH["«sistema externo»<br/>Autenticación JWT +<br/>middleware de tenant"]
+    RBAC["«sistema externo»<br/>RBAC (Authorize)"]
+    DB[("«sistema externo»<br/>Base CENTRAL<br/>audit_log")]
+
+    subgraph SIS["Gobernanza y Auditoría de movimientos"]
+        UC01(["UC-GOB-01<br/>Registrar evento de auditoría"])
+        UC02(["UC-GOB-02<br/>Registrar denegación de acceso"])
+        UC03(["UC-GOB-03<br/>Consultar bitácora con filtros"])
+        UC04(["UC-GOB-04<br/>Ver detalle del evento"])
+        UC05(["UC-GOB-05<br/>Validar acceso<br/>(identidad, tenant, permiso)"])
+        UC06(["UC-GOB-06<br/>Validar filtros y paginación"])
+        UC07(["UC-GOB-07<br/>Auditar la consulta"])
+        UC08(["UC-GOB-08<br/>Manejar fallo de persistencia"])
+    end
+
+    MOD --- UC01
+    RBAC --- UC02
+    ADM --- UC03
+    ADM --- UC04
+    USR --- UC03
+
+    UC02 -. "«include»" .-> UC01
+    UC03 -. "«include»" .-> UC05
+    UC03 -. "«include»" .-> UC06
+    UC03 -. "«include»" .-> UC07
+    UC07 -. "«include»" .-> UC01
+    UC04 -. "«extend»<br/>(desde un resultado)" .-> UC03
+    UC08 -. "«extend»<br/>(almacén caído)" .-> UC01
+    UC08 -. "«extend»<br/>(almacén caído)" .-> UC03
+    UC05 -. "«include»" .-> UC02
+
+    UC05 --- AUTH
+    UC05 --- RBAC
+    UC01 --- DB
+    UC03 --- DB
