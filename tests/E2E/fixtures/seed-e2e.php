@@ -13,6 +13,11 @@ declare(strict_types=1);
  * E2E_ADMIN_EMAIL, E2E_MEDICO_EMAIL. Pendiente: reemplazar por el seeder común del grupo
  * (acuerdo "datos semilla comunes", Cindy y Madelin) cuando exista.
  */
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
 $guards = [
     'E2E_ALLOW_SEED=1' => getenv('E2E_ALLOW_SEED') === '1',
     'APP_ENV=e2e' => getenv('APP_ENV') === 'e2e',
@@ -34,11 +39,6 @@ if (strlen($password) < 16) {
 require __DIR__.'/../../../vendor/autoload.php';
 $app = require __DIR__.'/../../../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 $db = DB::connection('central');
 $network = (string) Str::uuid();
