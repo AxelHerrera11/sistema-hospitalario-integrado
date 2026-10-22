@@ -4,24 +4,20 @@ declare(strict_types=1);
 
 namespace MicroHis\NotasSoap\Persistence;
 
-use MicroHis\NotasSoap\Application\CareAssignmentReader;
+use MicroHis\NotasSoap\Application\AuditTrail;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapSections;
+use MicroHis\NotasSoap\Domain\Uuid;
 use PDO;
 
-/** Persistencia de notas, diagnósticos y asignaciones con PDO. Siempre con sentencias preparadas. */
-final class PdoClinicalNoteStore implements ClinicalNoteRepository, CareAssignmentReader
+/** Repository de notas y diagnósticos con PDO. Siempre con sentencias preparadas; la auditoría entra en la misma transacción. */
+final class PdoClinicalNoteStore implements ClinicalNoteRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private readonly PDO $pdo, private readonly AuditTrail $audit)
     {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    }
-
-    public function isTreating(string $userId, string $episodeId): bool
-    {
-        return $this->rows("SELECT 1 FROM care_assignments WHERE user_ref_id = ? AND care_episode_id = ? AND status = 'active'", [$userId, $episodeId]) !== [];
     }
 
     public function find(string $noteId): ?ClinicalNote
@@ -34,27 +30,23 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository, CareAssignme
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string
     {
-        $id = 'nota-' . bin2hex(random_bytes(4));
+        $id = Uuid::v4();
         $this->transaction(function () use ($id, $episodeId, $authorId, $sections): void {
             $this->pdo->prepare("INSERT INTO clinical_notes (clinical_note_id, care_episode_id, author_user_ref_id, note_type, content) VALUES (?, ?, ?, 'soap', ?)")
                 ->execute([$id, $episodeId, $authorId, $sections->toJson()]);
-            $this->audit('nota_soap_registrada', $authorId, $id);
+            $this->audit->record($authorId, 'nota_soap.registrada', 'clinical_note', $id, $episodeId, ['version_no' => 1]);
         });
         return $id;
     }
 
     public function addDiagnosis(ClinicalNote $note, Diagnosis $diagnosis, string $description): void
     {
-        $this->transaction(function () use ($note, $diagnosis, $description): void {
-            $this->pdo->prepare('INSERT INTO diagnoses (clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES (?, ?, ?, ?, ?, ?, ?)')
-                ->execute([$note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
-            $this->audit('diagnostico_asociado', $note->authorId, $note->id . ':' . $diagnosis->code);
+        $id = Uuid::v4();
+        $this->transaction(function () use ($id, $note, $diagnosis, $description): void {
+            $this->pdo->prepare('INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                ->execute([$id, $note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
+            $this->audit->record($note->authorId, 'diagnostico.asociado', 'diagnosis', $id, $note->episodeId, ['clinical_note_id' => $note->id, 'code' => $diagnosis->code, 'type' => $diagnosis->type]);
         });
-    }
-
-    private function audit(string $event, string $actorId, string $detail): void
-    {
-        $this->pdo->prepare('INSERT INTO local_access_audits (event, actor_id, detail) VALUES (?, ?, ?)')->execute([$event, $actorId, $detail]);
     }
 
     /** Todo o nada: si falla cualquier INSERT (incluida la auditoría) se revierte y se informa un error de persistencia. */
@@ -64,7 +56,7 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository, CareAssignme
             $this->pdo->beginTransaction();
             $work();
             $this->pdo->commit();
-        } catch (\PDOException $e) {
+        } catch (\RuntimeException $e) { // PDOException o la bitácora caída de cualquier adaptador
             $this->pdo->inTransaction() && $this->pdo->rollBack();
             throw new \RuntimeException('persistencia_no_disponible', 0, $e);
         }

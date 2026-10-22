@@ -8,8 +8,10 @@
 | Matriz de amenazas | **Hecho** | [amenazas.md](./amenazas.md): 16 amenazas, 3 abiertas |
 | Pruebas de permisos y datos sensibles | **Hecho** | `tests/Feature/MedicationCatalog/`: 12 pruebas (OK sobre `develop`) con autorización real e inyección contra PDO real |
 | Bitácora de despliegue | **Parcial** | [bitacora-despliegue.md](./bitacora-despliegue.md): despliegue **local** de verificación |
-| Despliegue final | **Bloqueado** | Sin staging u on-premise y sin tabla H5. La autenticación de Tenants ya está integrada (#657) |
+| Flujo funcional con PostgreSQL | **Hecho (local)** | Tabla H5 `medications` (#766), adaptador (#774) e interfaz (#776). Recorrido real interfaz → API → PostgreSQL 11/11 y fallo 4/4: [evidencia-funcional.md](./evidencia-funcional.md) |
+| Instalación reproducible | **Hecho (local)** | [instalacion-local.md](./instalacion-local.md) |
+| Despliegue final | **Bloqueado** | No hay entorno staging u on-premise autorizado |
 
-**La Semana 17 no se declara completa:** el despliegue final depende del entorno, del esquema H5 y de la aprobación RBAC de los permisos de escritura.
+**La Semana 17 no se declara completa:** el despliegue final depende de un entorno staging u on-premise autorizado. El esquema H5 (#766) y la aprobación RBAC de las escrituras (#627) ya están integrados.
 
 [Declaración de uso de IA](./DECLARACION_IA.md)

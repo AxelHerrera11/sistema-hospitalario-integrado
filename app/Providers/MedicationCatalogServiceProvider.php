@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\MedicationCatalogController;
+use App\MedicationCatalog\CatalogRateLimit;
 use App\MedicationCatalog\HospitalMedicationRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +21,8 @@ final class MedicationCatalogServiceProvider extends ServiceProvider
     public function register(): void
     {
         require_once base_path('micro-his/catalogo-medicamentos/app.php');
-        $this->app->bind(MedicationRepository::class, static fn (): MedicationRepository =>
+        // Una instancia por petición: la transacción de las escrituras auditadas y el Router usan la misma conexión.
+        $this->app->scoped(MedicationRepository::class, static fn (): MedicationRepository =>
             new HospitalMedicationRepository(static fn () => DB::connection('hospital')->getPdo()));
         $this->app->bind(MedicationLookup::class, static fn ($app): MedicationLookup => new ConsultMedications($app->make(MedicationRepository::class)));
         $this->app->bind(CatalogRouter::class, static fn ($app): CatalogRouter => catalog_router($app->make(MedicationRepository::class)));
@@ -30,7 +32,8 @@ final class MedicationCatalogServiceProvider extends ServiceProvider
     {
         // Mismo orden que RBAC: tenant y jwt.auth antes del permiso. Escritura con permisos PROPUESTOS que aún no
         // existen en config/rbac.php: RequirePermission los deniega (403) hasta que RBAC los apruebe.
-        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
+        // El límite va después de jwt.auth para contar por usuario y hospital autenticados, no por IP compartida.
+        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', CatalogRateLimit::class])->group(function (): void {
             Route::get('medications', [MedicationCatalogController::class, 'index'])->middleware('rbac:medicamentos.ver');
             Route::get('medications/{medication}', [MedicationCatalogController::class, 'show'])->middleware('rbac:medicamentos.ver');
             Route::post('medications', [MedicationCatalogController::class, 'store'])->middleware('rbac:medicamentos.registrar');
