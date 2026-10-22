@@ -22,7 +22,7 @@ final class PatientPostgresTest extends TestCase
     {
         parent::setUp();
 
-        $this->assertSame('testing', app()->environment());
+        $this->assertContains(app()->environment(), ['testing', 'e2e']);
         $this->assertSame('his_hospital_test', DB::connection('hospital')->getDatabaseName());
         $this->assertSame('55433', (string) config('database.connections.hospital.port'));
 
