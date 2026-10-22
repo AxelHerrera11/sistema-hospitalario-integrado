@@ -97,3 +97,10 @@ El micro aporta fuente ejecutable y pruebas; el diagrama explica dependencias qu
 - [Ramas, PR y destino develop](../semana-15/ramas-prs.md).
 - Rama de entrega: feature/asii-18-semana-03-recepcion-muestras-mar-03.
 - La referencia reunida y probada es la rama semana-15-recepcion-muestras-integracion-mar-03.
+
+## Corrección de integración — 21 de octubre de 2026
+
+El micro vanilla es un ejercicio académico aislado en un esquema temporal; Laravel usa su propio dominio y el esquema canónico HOSPITAL.
+La tabla propia del HIS es specimens (migración 000601, propuesta de Javier); lab_order_item_id es UUID lógico sin FK a Órdenes. Las FK locales son indexadas y RESTRICT. Se reutiliza outbox_events.
+El módulo finalizado de Gerson se conserva; esta entrega no cambia Resultados/Validación. El contrato de lectura con ASII-16 debe verificarse con su proveedor; si no está disponible se responde 503 sin guardar muestras.
+La evidencia vigente y sus límites están en [semana 15](../semana-15/README.md). Esta corrección sigue en local, sin push ni cambio de estado de PR.

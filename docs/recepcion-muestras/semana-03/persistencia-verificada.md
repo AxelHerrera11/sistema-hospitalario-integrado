@@ -8,7 +8,7 @@ tests/postgres.php complementa esa evidencia sin incorporar Laravel al micro.
 
 ## Preparación y ejecución
 
-Usar PostgreSQL en una base terminada en _test. El puerto de la revisión es 15438.
+Usar PostgreSQL en una base terminada en _test. El puerto de la revisión es 55433.
 Variables opcionales: RECEPTION_TEST_DATABASE, RECEPTION_TEST_PORT, RECEPTION_TEST_USERNAME y RECEPTION_TEST_PASSWORD.
 Ejecutar php micro-his/recepcion-muestras/tests/postgres.php desde la raíz.
 La prueba crea un esquema rx_micro_ aleatorio, carga el schema.sql del micro y prepara tres órdenes ficticias.

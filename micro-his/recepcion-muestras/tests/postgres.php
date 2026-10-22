@@ -4,9 +4,9 @@ require __DIR__.'/../bootstrap.php';
 use Reception\Application\ReceiveSpecimen;
 use Reception\Persistence\PdoReceptionRepository;
 
-$database = getenv('RECEPTION_TEST_DATABASE') ?: 'his_reception_test';
+$database = getenv('RECEPTION_TEST_DATABASE') ?: (getenv('HOSPITAL_DB_DATABASE') ?: 'his_hospital_test');
 if (!str_ends_with($database, '_test')) throw new RuntimeException('Use una base *_test');
-$dsn = 'pgsql:host=127.0.0.1;port='.(getenv('RECEPTION_TEST_PORT') ?: '15438').';dbname='.$database;
+$dsn = 'pgsql:host=127.0.0.1;port='.(getenv('RECEPTION_TEST_PORT') ?: (getenv('HOSPITAL_DB_PORT') ?: '55433')).';dbname='.$database;
 $pdo = new PDO($dsn, getenv('RECEPTION_TEST_USERNAME') ?: 'postgres', getenv('RECEPTION_TEST_PASSWORD') ?: 'postgres',
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $schema = 'rx_micro_'.bin2hex(random_bytes(6));
