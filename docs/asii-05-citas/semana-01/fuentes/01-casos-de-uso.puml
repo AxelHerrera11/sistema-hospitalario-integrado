@@ -1,0 +1,50 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam actor {
+  BorderColor #263238
+  FontColor #263238
+}
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+actor "Usuario de admisión" as U
+actor "Servicio de autenticación\ny autorización (JWT)" as Auth
+rectangle "ASII-05 · Gestión de citas" {
+  usecase "CU-01\nSolicitar cita" as C1
+  usecase "CU-02\nValidar disponibilidad\ny reglas del horario" as C2
+  usecase "CU-03\nRegistrar la cita\n(estado scheduled)" as C3
+  usecase "CU-04\nConfirmar cita" as C4
+  usecase "CU-05\nCancelar cita" as C5
+  usecase "CU-06\nConsultar citas\ny detalle" as C6
+  usecase "Validar acceso y tenant" as Guard
+}
+
+U --> C1
+U --> C4
+U --> C5
+U --> C6
+C1 .> C2 : <<include>>
+C2 .> C3 : <<include>>
+C2 .> Guard : <<include>>
+C4 .> Guard : <<include>>
+C5 .> Guard : <<include>>
+C1 .> C4 : <<extend>>\n[confirmar al crear]
+C3 .> C5 : <<extend>>\n[cancelar]
+
+note bottom of C2
+  Detecta solape de paciente o doctor,
+  especialidad activa y horario válido
+  antes de registrar la cita.
+end note
+@enduml

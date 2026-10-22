@@ -1,0 +1,19 @@
+%% ANTES (diseño que se descarta): un servicio concentra almacén, SQL y política de fallo.
+classDiagram
+    direction LR
+    class AuditController {
+        +index(Request) Response
+        -sqlConTenantDelCliente()
+    }
+    class AuditServiceAntes {
+        -string storage
+        -PDO pdo
+        +log(user, tenant, event, result, mandatory)
+        -switchPorAlmacen()
+        -ifObligatorioLanzar()
+    }
+    class PDO
+    AuditController --> AuditServiceAntes : new
+    AuditController ..> PDO : SQL en el controlador
+    AuditServiceAntes ..> PDO : SQL concatenado
+    note for AuditServiceAntes "Agregar un almacén o cambiar la política\nobliga a modificar la clase (viola OCP y SRP)"
