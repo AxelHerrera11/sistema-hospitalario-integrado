@@ -34,7 +34,7 @@ $evt = fn (array $change) => array_merge($evento, $change);
 $id = $body['alert']['id'] ?? '';
 check('glucosa 32 (crítico bajo 40) → 201 alerta low para la médica tratante, nivel 0', $status === 201 && $body['alert']['direction'] === 'low'
     && $body['alert']['recipient'] === 'dra.lopez' && $body['alert']['level'] === 0 && $body['alert']['dueAt'] === '2026-10-18T08:15:00-06:00');
-check('la alerta queda auditada en la misma transacción', $pdo->query('SELECT event FROM local_access_audits')->fetchColumn() === 'alerta.generada');
+check('la alerta queda auditada en la misma transacción', $pdo->query('SELECT action FROM local_access_audits')->fetchColumn() === 'alerta.generada');
 check('evento repetido → 200 duplicate, sin segunda alerta', $http->handle('POST', '/internal/result-validated', $evento, 'svc.validacion')[1]['outcome'] === 'duplicate');
 check('glucosa 95 o prueba sin umbrales → 200 not_critical', $http->handle('POST', '/internal/result-validated', $evt(['result_version_id' => 'RV-2', 'value' => 95]), 'svc.validacion')[1]['outcome'] === 'not_critical'
     && $http->handle('POST', '/internal/result-validated', $evt(['result_version_id' => 'RV-3', 'lab_test_id' => 'HB-v1']), 'svc.validacion')[1]['outcome'] === 'not_critical');

@@ -54,7 +54,8 @@ final class PdoAlertStore implements AlertStore
                 WHERE critical_alert_id = ? AND status = 'open'", [$a->acknowledgedBy, $a->id])->rowCount() !== 1) {
                 throw new PDOException('la alerta ya fue acusada', 23000); // otro usuario acusó antes
             }
-            $this->query('INSERT INTO local_access_audits (event, actor, subject_id, occurred_at) VALUES (?, ?, ?, ?)', [$event, $actor, $a->id, date(DATE_ATOM)]);
+            $this->query("INSERT INTO local_access_audits (correlation_id, actor_user_ref_id, module, action, resource_type, resource_id, local_patient_id, occurred_at)
+                VALUES (?, ?, 'alertas_criticas', ?, 'critical_alert', ?, ?, ?)", [bin2hex(random_bytes(16)), $actor, $event, $a->id, $a->patientId, date(DATE_ATOM)]);
             $this->pdo->commit();
         } catch (PDOException $error) {
             $this->pdo->inTransaction() && $this->pdo->rollBack();
