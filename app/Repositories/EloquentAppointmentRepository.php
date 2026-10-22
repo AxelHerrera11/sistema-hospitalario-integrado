@@ -72,7 +72,7 @@ class EloquentAppointmentRepository implements AppointmentRepositoryContract
         $this->assertNotFinalized($appointment);
 
         if (! in_array($status, self::ALLOWED_TRANSITIONS[$appointment->status] ?? [], true)) {
-            throw new AppointmentWriteException(
+            throw AppointmentWriteException::new(
                 'appointments_status_time_check',
                 422,
                 sprintf('La cita no puede pasar de "%s" a "%s".', $appointment->status, $status),
@@ -92,7 +92,7 @@ class EloquentAppointmentRepository implements AppointmentRepositoryContract
         $finalStatuses = [Appointment::STATUS_COMPLETED, Appointment::STATUS_CANCELLED];
 
         if (in_array($appointment->status, $finalStatuses, true)) {
-            throw new AppointmentWriteException(
+            throw AppointmentWriteException::new(
                 'appointments_finalized_immutable',
                 409,
                 'La cita finalizada ya no puede modificarse.',

@@ -7,12 +7,18 @@ use RuntimeException;
 
 class AppointmentWriteException extends RuntimeException
 {
-    private function __construct(
+    public function __construct(
         public readonly string $errorCode,
         public readonly int $status,
         string $message,
     ) {
         parent::__construct($message);
+    }
+
+    /** Fabrica explicita para lanzamientos directos del repositorio (no via QueryException). */
+    public static function new(string $errorCode, int $status, string $message): self
+    {
+        return new self($errorCode, $status, $message);
     }
 
     public static function fromQueryException(QueryException $exception): self
