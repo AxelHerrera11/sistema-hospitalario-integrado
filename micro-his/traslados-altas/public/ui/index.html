@@ -22,7 +22,7 @@
     </form>
 
     <section id="estado" hidden aria-labelledby="titulo-estado">
-        <h2 id="titulo-estado">2. Situación actual</h2>
+        <h2 id="titulo-estado" tabindex="-1">2. Situación actual</h2>
         <dl id="datos"></dl>
         <p id="vacio" class="ayuda" hidden>El episodio no tiene una cama asignada: no hay nada que trasladar ni dar de alta.</p>
         <div id="acciones">
@@ -34,13 +34,13 @@
     <form id="formulario" hidden novalidate>
         <h2 id="titulo-formulario">3. Datos</h2>
         <div id="campos-traslado">
-            <label for="cama">Cama destino</label>
-            <input id="cama" autocomplete="off" aria-describedby="error-cama">
-            <p id="error-cama" class="error" hidden>Indique una cama destino válida.</p>
-            <label for="motivo">Motivo del traslado</label>
-            <textarea id="motivo" maxlength="500" rows="3" aria-describedby="contador error-motivo"></textarea>
+            <label for="cama">Cama destino (obligatorio)</label>
+            <input id="cama" autocomplete="off" required aria-describedby="error-cama">
+            <p id="error-cama" class="error" role="alert" hidden>Indique una cama destino válida.</p>
+            <label for="motivo">Motivo del traslado (obligatorio)</label>
+            <textarea id="motivo" maxlength="500" rows="3" required aria-describedby="contador error-motivo"></textarea>
             <p id="contador" class="ayuda">0 / 500</p>
-            <p id="error-motivo" class="error" hidden>El motivo es obligatorio (máximo 500 caracteres).</p>
+            <p id="error-motivo" class="error" role="alert" hidden>El motivo es obligatorio (máximo 500 caracteres).</p>
         </div>
         <button type="submit">Revisar</button>
         <button type="button" id="cancelar" class="secundario">Cancelar</button>
@@ -55,6 +55,7 @@
 
     <div id="resultado" role="status" aria-live="polite"></div>
     <button type="button" id="reconsultar" hidden>Consultar estado</button>
+    <button type="button" id="seguir" class="secundario" hidden>Operar sobre la nueva estancia</button>
 </main>
 <script type="module" src="app.js"></script>
 </body>

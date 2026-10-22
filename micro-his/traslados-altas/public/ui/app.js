@@ -1,8 +1,10 @@
-// PROTOTIPO (Semana 8): flujo consultar → decidir → completar → confirmar → procesar → resultado contra la API real.
-import { interpretar, validarTraslado } from './mensajes.js';
+// PROTOTIPO (Semanas 8 y 10): flujo consultar → decidir → completar → confirmar → procesar → resultado contra la API real.
+import { interpretar, validarConsulta, validarTraslado } from './mensajes.js';
 
 const $ = (id) => document.getElementById(id);
+const ESPERA_MS = 15000; // conexión limitada: más allá de este tiempo se deja de esperar la respuesta
 let operacion = null; // 'traslado' | 'alta'
+let estanciaNueva = null;
 
 function mostrar(...visibles) {
     for (const id of ['estado', 'formulario', 'confirmacion']) $(id).hidden = !visibles.includes(id);
@@ -14,18 +16,35 @@ function anunciar({ tipo, texto, debeConsultar }) {
     $('reconsultar').hidden = !debeConsultar;
 }
 
+function marcar(campo, invalido) {
+    $(campo).setAttribute('aria-invalid', String(invalido));
+}
+
 async function llamar(metodo, ruta, cuerpo) {
+    if (!navigator.onLine) return { estado: 0, cuerpo: { motivo: 'sin_red' } }; // no se envía nada sin red
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), ESPERA_MS);
     try {
-        const respuesta = await fetch(ruta, { method: metodo, headers: { 'Content-Type': 'application/json', 'X-Actor-Ref': $('actor').value.trim() },
-            body: cuerpo ? JSON.stringify(cuerpo) : undefined });
+        const respuesta = await fetch(ruta, { method: metodo, signal: corte.signal,
+            headers: { 'Content-Type': 'application/json', 'X-Actor-Ref': $('actor').value.trim() }, body: cuerpo ? JSON.stringify(cuerpo) : undefined });
         return { estado: respuesta.status, cuerpo: await respuesta.json().catch(() => ({})) };
     } catch {
         // Sin respuesta: una lectura simplemente falló, pero un POST pudo haberse confirmado en el servidor → incierto.
-        return metodo === 'POST' ? { estado: 500, cuerpo: { resultado: 'incierto' } } : { estado: 503, cuerpo: {} };
+        return metodo === 'POST' ? { estado: 0, cuerpo: { motivo: 'tiempo_agotado' } } : { estado: 503, cuerpo: {} };
+    } finally {
+        clearTimeout(reloj);
     }
 }
 
 async function consultar() {
+    const invalido = validarConsulta({ actor: $('actor').value, estancia: $('estancia').value });
+    marcar('actor', invalido === 'actor');
+    marcar('estancia', invalido === 'estancia');
+    if (invalido) {
+        mostrar();
+        anunciar({ tipo: 'invalida', texto: invalido === 'actor' ? 'Indique una referencia de usuario válida.' : 'Indique una estancia válida.' });
+        return $(invalido).focus();
+    }
     anunciar({ tipo: '', texto: 'Consultando…' });
     const { estado, cuerpo } = await llamar('GET', `/estancias/${encodeURIComponent($('estancia').value.trim())}/internacion`);
     if (estado !== 200) {
@@ -37,16 +56,17 @@ async function consultar() {
         ['Estancia vigente', cuerpo.estancia_consultada_abierta ? 'sí' : 'no (los datos cambiaron)']]) {
         $('datos').append(Object.assign(document.createElement('dt'), { textContent: clave }), Object.assign(document.createElement('dd'), { textContent: valor }));
     }
-    const operable = cuerpo.estado === 'open' && cuerpo.estancia_consultada_abierta;
     $('vacio').hidden = cuerpo.estancia_abierta_id !== null;
-    $('acciones').hidden = !operable;
+    $('acciones').hidden = !(cuerpo.estado === 'open' && cuerpo.estancia_consultada_abierta);
     mostrar('estado');
-    anunciar({ tipo: '', texto: '' });
+    anunciar({ tipo: '', texto: 'Situación actualizada.' }); // H2: se anuncia y el foco va a la nueva sección
+    $('titulo-estado').focus();
 }
 
 function elegir(tipo) {
     operacion = tipo;
     $('campos-traslado').hidden = tipo !== 'traslado';
+    $('cama').required = $('motivo').required = tipo === 'traslado';
     $('titulo-formulario').textContent = tipo === 'traslado' ? '3. Datos del traslado' : '3. Alta hospitalaria';
     mostrar('estado', 'formulario');
 }
@@ -57,6 +77,8 @@ function revisar(evento) {
     const invalido = operacion === 'traslado' ? validarTraslado(datos) : null;
     $('error-cama').hidden = invalido !== 'cama_destino_id';
     $('error-motivo').hidden = invalido !== 'motivo';
+    marcar('cama', invalido === 'cama_destino_id'); // H3
+    marcar('motivo', invalido === 'motivo');
     if (invalido) return $(invalido === 'motivo' ? 'motivo' : 'cama').focus();
     $('resumen').textContent = operacion === 'traslado'
         ? `Trasladar la estancia ${$('estancia').value.trim()} a la cama ${datos.cama_destino_id.trim()}. Motivo: ${datos.motivo.trim()}`
@@ -68,12 +90,20 @@ function revisar(evento) {
 async function confirmar() {
     $('confirmar').disabled = true;
     $('confirmar').textContent = 'Procesando…';
+    anunciar({ tipo: '', texto: 'Procesando…' }); // el estado de carga también se anuncia, no solo se ve en el botón
     const cuerpo = { estancia_esperada_id: $('estancia').value.trim(), ...(operacion === 'traslado' ? { cama_destino_id: $('cama').value.trim(), motivo: $('motivo').value.trim() } : {}) };
     const { estado, cuerpo: respuesta } = await llamar('POST', operacion === 'traslado' ? '/traslados' : '/altas', cuerpo);
     $('confirmar').disabled = false;
     $('confirmar').textContent = 'Confirmar';
     mostrar();
-    anunciar(interpretar(estado, respuesta));
+    const mensaje = interpretar(estado, respuesta);
+    if (mensaje.tipo === 'exito') { // H7: nada queda cargado para la próxima operación
+        $('formulario').reset();
+        $('contador').textContent = '0 / 500';
+    }
+    estanciaNueva = mensaje.estanciaNueva ?? null;
+    $('seguir').hidden = estanciaNueva === null;
+    anunciar(mensaje);
 }
 
 $('consulta').addEventListener('submit', (e) => { e.preventDefault(); consultar(); });
@@ -84,4 +114,5 @@ $('cancelar').addEventListener('click', () => mostrar('estado'));
 $('volver').addEventListener('click', () => mostrar('estado', 'formulario'));
 $('confirmar').addEventListener('click', confirmar);
 $('reconsultar').addEventListener('click', consultar);
+$('seguir').addEventListener('click', () => { $('estancia').value = estanciaNueva; $('seguir').hidden = true; consultar(); });
 $('motivo').addEventListener('input', () => { $('contador').textContent = `${$('motivo').value.length} / 500`; });
