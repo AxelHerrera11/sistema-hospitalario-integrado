@@ -1,0 +1,19 @@
+---
+title: "Componentes backend/frontend — Admisión hospitalaria y asignación de cama"
+---
+flowchart LR
+  subgraph FE[Frontend Vue 3]
+    page[AdmissionPage.vue<br/>BedBoard.vue · AdmissionForm.vue] --> store[stores/admission.js<br/>Pinia]
+    store --> api[api/admissionApi.js<br/>plugins/axios + X-Tenant-ID + JWT]
+  end
+  subgraph BE[Backend Laravel 12]
+    mw[Middlewares<br/>tenant · jwt.auth · permission:modulo.accion] --> ctrl[Api/V1/AdmissionController<br/>+ StoreAdmissionRequest]
+    ctrl --> app[Application<br/>AdmitPatient · FindAvailableBeds]
+    app --> dom[Domain<br/>Admission · DomainRuleViolation]
+    app --> port{{AdmissionRepository<br/>«interfaz»}}
+    eloq[EloquentAdmissionRepository] -. implementa .-> port
+    mem[InMemoryAdmissionRepository<br/>pruebas] -. implementa .-> port
+    app --> audit[AuditLogger<br/>ASII-22 / Cindy]
+  end
+  api --> mw
+  eloq --> db[(care_episodes · bed_stays · beds · local_access_audits)]

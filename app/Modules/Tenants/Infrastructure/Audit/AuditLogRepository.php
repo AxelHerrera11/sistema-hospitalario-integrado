@@ -76,7 +76,7 @@ final class AuditLogRepository implements AuditLogRepositoryInterface
 
             $database->table('audit_log')->insert([
                 'event_id' => $eventId,
-                'occurred_at' => $occurredAt,
+                'occurred_at' => $timestamp,
                 'event' => $eventName,
                 'actor_id' => $actorId,
                 'hospital_id' => $hospitalId,

@@ -18,10 +18,10 @@ Especificación normativa: [`openapi.yaml`](./openapi.yaml) (OpenAPI 3.1). Estad
 |---|---|---|---|---|
 | `GET /api/v1/medications?q=&limit=` | UC-MED-02 Buscar | `medicamentos.ver` | **Existe** (superadmin, admin_hospital, medico, enfermeria) | 200 |
 | `GET /api/v1/medications/{medication_id}` | UC-MED-03 Consultar | `medicamentos.ver` | **Existe** | 200 |
-| `POST /api/v1/medications` | UC-MED-01 Alta | `medicamentos.registrar` | **Pendiente**: catalogado en `config/rbac.php` (`pending`), sin rol activo | 201 |
-| `PATCH /api/v1/medications/{medication_id}/validity` | UC-MED-04 Cambiar vigencia | `medicamentos.cambiar_vigencia` | **Pendiente**, igual que el alta | 200 |
+| `POST /api/v1/medications` | UC-MED-01 Alta | `medicamentos.registrar` | **Activo** solo para `admin_hospital` desde #627 | 201 |
+| `PATCH /api/v1/medications/{medication_id}/validity` | UC-MED-04 Cambiar vigencia | `medicamentos.cambiar_vigencia` | **Activo** solo para `admin_hospital` desde #627 | 200 |
 
-Para los dos permisos se propone el rol `admin_hospital`, como gestor del catálogo de Semana 1. Desde #622 figuran en `rbac.catalog` y en `rbac.pending` con ese rol, pero ningún rol activo los recibe: activarlos requiere aprobación del módulo RBAC, y hasta entonces esas rutas deben responder 403 (denegación por defecto).
+Los dos permisos se conceden solo al rol `admin_hospital`, gestor del catálogo de Semana 1. Los catalogó #622 como pendientes y los activó #627 (decisión de RBAC); los demás roles, incluido `superadmin`, siguen con 403. Registrar no autoriza cambiar la vigencia ni al revés, y la membresía vale solo para su hospital.
 
 ## Cuerpos
 

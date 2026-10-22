@@ -14,9 +14,10 @@ indexa el contrato vigente; las entregas semanales permanecen en
 
 | Elemento | Estado |
 |---|---|
-| Contrato API de ocupación | Publicado en este PR, pendiente de validación del equipo |
-| Endpoint en Laravel | No implementado; el módulo PHP de las semanas 3 y 5 aún no está integrado |
-| Permiso `ocupacion.ver` | Propuesto; no existe aún en el RBAC de `develop` |
+| Contrato API de ocupación | Publicado y validado en la semana 16 |
+| Endpoint en Laravel | Implementado en la semana 16 (`GET /api/v1/occupancy`, PR #574) |
+| Permiso `ocupacion.ver` | Activado en la matriz compartida; pendiente de ratificación de ASII-02 |
+| Pantalla Vue del dashboard | Entregada en la semana 16 (`resources/js/modules/ocupacion/`) |
 | Migraciones | No requiere tablas nuevas; usa `wards`, `beds`, `bed_stays` y `care_episodes` |
 
 ## Dependencias funcionales
@@ -25,6 +26,11 @@ indexa el contrato vigente; las entregas semanales permanecen en
 - ASII-07 (admisión): Apertura y cierre de episodes de cuidado.
 - ASII-08 (traslados y altas): Cierre y traslado de `bed_stays`.
 - Auth/RBAC/tenant: Validación de JWT, hospital y permiso antes del caso de uso.
+
+## Entregas publicadas
+
+- `semana-01/`, `semana-02/`, `semana-03/`: análisis, diseño ISP y Micro-HIS por capas.
+- `semana-16/`: integración en Laravel, pantalla Vue y evidencia de validación.
 
 ## Pendientes acordados con el equipo
 

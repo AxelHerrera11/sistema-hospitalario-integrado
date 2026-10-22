@@ -1,0 +1,51 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam activity {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+  DiamondBackgroundColor #FFF8E1
+  DiamondBorderColor #B8860B
+}
+
+|Usuario administrativo|
+start
+:Consultar reporte operativo;
+:Ingresar filtros administrativos;
+
+|Módulo de reportes|
+:Validar filtros;
+
+while (¿Filtros válidos?) is (No)
+  :Mostrar mensaje de error;
+  |Usuario administrativo|
+  :Corregir filtros;
+  |Módulo de reportes|
+  :Validar filtros;
+endwhile (Sí)
+
+:Ejecutar consulta del reporte;
+if (¿Existen resultados?) then (No)
+  :Mostrar mensaje "Sin resultados"; <<#FFEBEE>>
+  stop
+else (Sí)
+  :Generar resultados filtrados;
+  |Usuario administrativo|
+  :Visualizar resultados;
+  :Solicitar exportación;
+  |Módulo de reportes|
+  :Generar archivo del reporte;
+  if (¿Exportación exitosa?) then (Sí)
+    :Preparar archivo para descarga; <<#E8F5E9>>
+    |Usuario administrativo|
+    :Recibir archivo exportado;
+  else (No)
+    :Mostrar mensaje de error; <<#FFEBEE>>
+    stop
+  endif
+endif
+
+stop
+@enduml
