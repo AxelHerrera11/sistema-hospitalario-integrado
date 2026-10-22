@@ -36,3 +36,15 @@ Las guías `docs/weekly-plan.md` y `docs/worktree-guide.md` enlazadas por README
 Validación y salida real: ver `evidencia.txt`. Uso de IA: Codex para implementación, pruebas y documentación; requiere revisión y defensa humana.
 
 Actualización 2026-10-20: las ramas S16a/S16b/S16c incorporan adaptador, permisos y contrato actualizado sin código de Cindy. Ver [cierre de integración](../cierre-integracion-2026-10-20.md); los SHA de arriba son referencias históricas anteriores a esta actualización.
+
+## Corrección de integración (2026-10-21): contrato de auditoría de las denegaciones
+
+Defecto reproducible: `App\Rbac\AuditDenials` escribía el evento `rbac.access_denied` sin resultado, criticidad ni recurso. La fila quedaba con `audit_log.result` en NULL, de modo que el lector de gobernanza la reconstruye como `AuditOutcome::Unknown` y el filtro por resultado `denied` (`result = :outcome`) no la devuelve; tampoco existían `criticality` ni `resource`, que el contrato exige (`docs/gobernanza-auditoria/semana-05/contrato-api.md`: `outcome: denied`, `criticality: security`, `resource: {type: permission, id: <permiso>}`).
+
+Corrección: el mismo escritor (`AuditDenials` sobre `AuditLogRepositoryInterface::logRaw()`, cableado en `bootstrap/providers.php`) ahora envía `result: denied`, `criticality: security` y `resource: {type: permission, id: <permiso>}`. No se crea un segundo escritor ni se duplica la cadena de auditoría; `permission`, `reason` y `trace_id` se conservan igual. `LogDenials` sigue siendo solo el respaldo al log de Laravel y no escribe en `audit_log`.
+
+Pruebas: `tests/Feature/Rbac/AuditDenialsContractTest.php` fija el contrato del escritor y `tests/Database/Central/RbacDenialAuditTest.php` valida en PostgreSQL que la fila escrita se lee con resultado `denied`, criticidad `security` y recurso `permission`. Sin la corrección las tres aserciones principales fallan (resultado NULL); la reproducción queda en `evidencia.txt`.
+
+Límites: no se modifica el módulo de gobernanza ni su consulta, que sigue sin registrar en `bootstrap/providers.php`; no se amplían los resultados admitidos en `audit_log` (la restricción vigente es la del PR #679, abierto y ajeno a este módulo). `auth.logout` escribe `already_revoked`, valor que no pertenece a `AuditOutcome` y que queda anotado para el módulo de gobernanza. Pendiente: evidencia en staging/on-premise y confirmación del contrato por su responsable.
+
+Actualización 2026-10-21: rama `feature/asii-02-semana-16-rbac-cobertura-modulos-mar-03` desde `origin/develop` (`3afc782`). Corrige el contrato de auditoría de denegaciones y añade sus pruebas; no cambia rutas, permisos ni la matriz de roles.
