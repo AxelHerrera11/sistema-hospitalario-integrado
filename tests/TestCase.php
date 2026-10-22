@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\DB;
 
 abstract class TestCase extends BaseTestCase
 {
+    public function createApplication()
+    {
+        $basePath = dirname(__DIR__);
+        $_ENV['APP_BASE_PATH'] = $basePath;
+        $_SERVER['APP_BASE_PATH'] = $basePath;
+
+        return parent::createApplication();
+    }
+
     protected function assertPostgreSqlIntegrityPrerequisites(): void
     {
         $this->assertTrue(extension_loaded('pdo_pgsql'));

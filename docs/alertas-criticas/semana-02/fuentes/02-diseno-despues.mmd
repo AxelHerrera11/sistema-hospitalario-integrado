@@ -1,0 +1,40 @@
+---
+title: "Después de SRP — una responsabilidad (y un dueño del cambio) por clase"
+---
+classDiagram
+  direction LR
+  class CriticalAlertFlow {
+    «orquestador delgado»
+    +onResultValidated(evento, ahora)
+  }
+  class CriticalValueDetector {
+    «laboratorio»
+    +direction(valor, umbrales)
+  }
+  class RecipientResolver {
+    «dirección médica»
+    +initial(episodio)
+    +forLevel(nivel)
+  }
+  class EscalationPolicy {
+    «calidad»
+    +dueFrom(ahora)
+  }
+  class AlertNotifier {
+    <<interface>>
+    «TI»
+    +notify(destinatario, mensaje)
+  }
+  CriticalAlertFlow --> CriticalValueDetector
+  CriticalAlertFlow --> CriticalAlertRegistrar
+  CriticalAlertFlow --> AlertNotifier
+  CriticalAlertRegistrar --> AlertRepository
+  CriticalAlertRegistrar --> RecipientResolver
+  CriticalAlertRegistrar --> EscalationPolicy
+  CriticalAlertRegistrar --> AuditLogger
+  AlertEscalator --> AlertRepository
+  AlertEscalator --> RecipientResolver
+  AlertEscalator --> AlertNotifier
+  AlertEscalator --> EscalationPolicy
+  AlertNotifier <|.. InboxNotifier
+  AlertNotifier <|.. OutboxNotifier

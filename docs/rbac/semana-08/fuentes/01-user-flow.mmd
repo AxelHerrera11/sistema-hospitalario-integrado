@@ -1,0 +1,11 @@
+flowchart TD
+    A[Admin abre Asignar rol] --> B[Busca usuario en su tenant]
+    B --> C[Elige rol y valida permiso]
+    C --> D{Tipos, no vacios y permiso ok?}
+    D -- No --> E[Mostrar error y ayuda]
+    E --> C
+    D -- Si --> F{Supera el privilegio del asignador?}
+    F -- Si --> G[Denegacion trazable 403 + trace_id]
+    G --> C
+    F -- No --> H[Guardar membresia y auditar]
+    H --> I[Confirmacion 201 y enlace a auditoria]

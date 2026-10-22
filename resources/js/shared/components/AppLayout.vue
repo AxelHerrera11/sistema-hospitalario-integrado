@@ -8,10 +8,7 @@
         </main>
     </div>
     <div v-else class="layout">
-        <a
-            class="layout__skip"
-            href="#contenido"
-        >
+        <a class="layout__skip" href="#contenido">
             Saltar al contenido
         </a>
         <div
@@ -26,15 +23,23 @@
                 class="layout__nav"
                 aria-label="Navegación principal"
             >
-                <router-link
-                    v-for="item in visibleItems"
-                    :key="item.id"
-                    class="layout__link"
-                    :to="item.route"
-                    @click="closeSidebar"
-                >
-                    {{ item.label }}
-                </router-link>
+                <template v-for="item in visibleItems" :key="item.id">
+                    <router-link
+                        v-if="item.route"
+                        class="layout__link"
+                        :to="item.route"
+                        @click="closeSidebar"
+                    >
+                        {{ item.label }}
+                    </router-link>
+                    <span
+                        v-else
+                        class="layout__link layout__link--soon"
+                        aria-disabled="true"
+                    >
+                        {{ item.label }} <small>(próximamente)</small>
+                    </span>
+                </template>
             </nav>
         </aside>
         <div class="layout__body">
@@ -50,7 +55,9 @@
                     Menú
                 </button>
                 <div class="layout__session">
-                    <span class="layout__tenant">Tenant: {{ auth.tenantId ?? '—' }}</span>
+                    <span v-if="auth.hospital" class="layout__tenant">
+                        Hospital activo: {{ auth.hospital.name }} · {{ auth.hospital.hospital_id }}
+                    </span>
                     <span class="layout__name">{{ userName }}</span>
                     <button
                         class="layout__logout"
@@ -61,10 +68,10 @@
                     </button>
                 </div>
             </header>
-            <main
-                id="contenido"
-                class="layout__main"
-            >
+            <p v-if="logoutError" class="layout__error" role="alert">
+                {{ logoutError }}
+            </p>
+            <main id="contenido" class="layout__main">
                 <slot />
             </main>
         </div>
@@ -76,23 +83,20 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { navigationItems } from '@/shared/navigation';
-import { resolvePermissions } from '@/shared/permissions';
+import { can } from '@/router/permissions';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const sidebarOpen = ref(false);
+const logoutError = ref('');
 
 const isGuest = computed(() => route.name === 'login');
-const userName = computed(() => auth.user?.name ?? 'Usuario');
+const userName = computed(() => auth.user?.display_name ?? 'Usuario');
 
-const visibleItems = computed(() => {
-    const permissions = resolvePermissions(auth.user);
-
-    return navigationItems.filter(
-        (item) => item.permission === null || permissions.includes(item.permission),
-    );
-});
+const visibleItems = computed(() =>
+    navigationItems.filter((item) => item.permission === null || can(auth.user, item.permission)),
+);
 
 watch(() => route.fullPath, () => {
     sidebarOpen.value = false;
@@ -103,9 +107,16 @@ function closeSidebar() {
 }
 
 async function handleLogout() {
-    await auth.logout();
-    sidebarOpen.value = false;
-    await router.push({ name: 'login' });
+    logoutError.value = '';
+
+    try {
+        await auth.logout();
+    } catch {
+        logoutError.value = 'Se cerró la sesión local, pero el servidor no confirmó la revocación.';
+    } finally {
+        sidebarOpen.value = false;
+        await router.push({ name: 'login' });
+    }
 }
 </script>
 
@@ -257,10 +268,34 @@ async function handleLogout() {
     background: #f1f5f9;
 }
 
+.layout__link--soon {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.layout__link--soon:hover {
+    background: transparent;
+}
+
 .layout__link.router-link-exact-active {
     background: #eff6ff;
     color: #2563eb;
     font-weight: 600;
+}
+
+.layout__logout {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+}
+
+.layout__error {
+    margin: 0;
+    padding: 0.5rem 1.5rem;
+    color: #b91c1c;
+    background: #fef2f2;
 }
 
 .layout__main {

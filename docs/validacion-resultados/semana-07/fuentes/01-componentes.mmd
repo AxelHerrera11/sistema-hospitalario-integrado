@@ -1,0 +1,16 @@
+flowchart LR
+  UI[UI bandeja bioquímico] --> C[HttpReviewController]
+  C --> V[ValidateReviewedResult]
+  C --> X[RejectReviewedResult]
+  V --> D[ReviewableLabResult]
+  X --> D
+  D --> P[BiochemistReviewPolicy]
+  V --> R[ReviewResultRepository]
+  X --> R
+  R --> IM[InMemoryReviewResultRepository]
+  R --> PDO[PdoReviewResultRepository]
+  V --> L[ReviewAuditLogger]
+  X --> L
+  L --> AUD[(Auditoría)]
+  PDO --> DB[(PostgreSQL)]
+
