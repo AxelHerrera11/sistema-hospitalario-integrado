@@ -17,14 +17,29 @@ export const ROUTE_PERMISSIONS = {
     patients: 'pacientes.ver',
     'patients-new': 'pacientes.registrar',
     'patients-edit': 'pacientes.editar',
+    traslados: 'traslados.ver',
 };
 
-/** Entradas de navegación sujetas a permiso. */
+/** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
+ * muestran como «próximamente» hasta que su módulo registre la ruta. */
 export const NAVIGATION = [
+    { label: 'Inicio', to: '/', permission: null },
     { label: 'Ocupación', to: '/ocupacion', permission: ROUTE_PERMISSIONS.ocupacion },
     { label: 'Usuarios', to: '/admin/users', permission: ROUTE_PERMISSIONS['admin-users'] },
     { label: 'Pacientes', to: '/patients', permission: ROUTE_PERMISSIONS.patients },
     { label: 'Medicamentos', to: '/medicamentos', permission: ROUTE_PERMISSIONS.medicamentos },
+    { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
+    { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
+    { label: 'Admisión y camas', to: null, permission: 'admision.ver', soon: true },
+    { label: 'Expediente', to: null, permission: 'expediente.ver', soon: true },
+    { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
+    { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
+    { label: 'Alergias', to: null, permission: 'alergias.ver', soon: true },
+    { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
+    { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
+    { label: 'Reportes', to: null, permission: 'reportes.ver', soon: true },
+    { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
+    { label: 'Documentación', to: null, permission: 'documentacion.ver', soon: true },
 ];
 
 /** Detecta el formato; el consumidor debe obtener los permisos de la API. */
@@ -67,11 +82,24 @@ export function allowsRoute(user, meta) {
     return required.length === 0 || canAny(user, required);
 }
 
-/** Entradas de navegación que el usuario puede ver. */
+/** Entradas de navegación que el usuario puede ver.
+ * - Con `permission` declarado: solo si el usuario tiene el permiso.
+ * - Sin `permission` y con ruta: siempre (Inicio).
+ * - Sin `permission` y sin ruta (`soon` solo lectura): solo un usuario con
+ *   sesión; el item «próximamente» no enlaza a nada. */
 export function visibleNavigation(user, entries = NAVIGATION) {
     if (! Array.isArray(entries)) {
         return [];
     }
 
-    return entries.filter((entry) => can(user, entry.permission));
+    return entries.filter((entry) => {
+        if (typeof entry.permission === 'string') {
+            return can(user, entry.permission);
+        }
+
+        /* Rutas publicas sin permiso declarado se muestran solo cuando la
+         * sesion ya publico permisos; evita navs vacias o misleading del
+         * payload antiguo y no revela rutas protegidas por error. */
+        return Boolean(entry.to) && hasPermissions(user);
+    });
 }
