@@ -1,0 +1,57 @@
+@startuml
+title ASII-14 Semana 7 - Refactor conceptual de la taxonomía de errores (antes / después)
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam ArrowColor #334155
+
+package "ANTES (código actual)" #FCE7F3 {
+  class "RegistrationController" as RC0
+  class "SearchController" as SC0
+  class "ValidityController" as VC0
+  class "CatalogResponse::failure()\nmatch por clase" as CR0
+  class MedicationRuleViolation
+  class DuplicateMedicationCode
+  class MedicationNotFound
+  class PersistenceFailure
+  RC0 ..> MedicationRuleViolation : catch
+  RC0 ..> DuplicateMedicationCode : catch
+  RC0 ..> PersistenceFailure : catch
+  SC0 ..> MedicationRuleViolation : catch
+  SC0 ..> MedicationNotFound : catch
+  SC0 ..> PersistenceFailure : catch
+  VC0 ..> MedicationRuleViolation : catch
+  VC0 ..> MedicationNotFound : catch
+  VC0 ..> PersistenceFailure : catch
+  CR0 ..> MedicationRuleViolation
+  CR0 ..> DuplicateMedicationCode
+  CR0 ..> MedicationNotFound
+  CR0 ..> PersistenceFailure
+}
+
+package "DESPUÉS (propuesta)" #DCFCE7 {
+  interface "CatalogFailure (Domain)\n+ errorCode(): string\n+ category(): FailureCategory\n+ field(): ?string" as CF
+  enum "FailureCategory (Domain)" as FailureCategory {
+    INVALID
+    CONFLICT
+    NOT_FOUND
+    UNAVAILABLE
+  }
+  class "Controladores (3)\ncatch (CatalogFailure)" as Ctrl
+  class "CatalogResponse::failure()\ncategoría → estado HTTP" as CR1
+  class "Excepciones actuales\nimplementan CatalogFailure" as Ex
+  Ctrl ..> CF : catch
+  CR1 ..> CF
+  CR1 ..> FailureCategory
+  Ex ..|> CF
+}
+
+note bottom of CR0
+  Error nuevo (p. ej. presentación duplicada):
+  1 clase + CatalogResponse + catch en hasta 3 controladores
+end note
+note bottom of CR1
+  Error nuevo: 1 clase que implementa CatalogFailure;
+  Presentation no cambia
+end note
+@enduml

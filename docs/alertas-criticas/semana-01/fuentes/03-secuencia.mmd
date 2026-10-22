@@ -1,0 +1,84 @@
+---
+title: "Secuencia — Detección, envío, acuse y escalamiento de una alerta crítica"
+---
+sequenceDiagram
+  autonumber
+  participant SRC as Validación de resultados<br/>(ASII-20 · outbox)
+  participant S as CriticalAlertService
+  participant TH as ThresholdProvider «interfaz»<br/>(ASII-17)
+  participant RR as RecipientResolver «interfaz»
+  participant R as CriticalAlertRepository «interfaz»
+  participant N as AlertNotifier «interfaz»
+  participant AU as AuditLogger
+  participant C as CriticalAlertController
+  actor M as Médico / Jefatura
+  participant SCH as Planificador
+
+  rect rgb(238, 243, 251)
+  Note over SRC,SCH: A · Detectar, generar y notificar (UC-ALR-01, 02, 03, 09)
+  SRC->>S: «resultado validado» (result_version_id, lab_test_id, valor, paciente, episodio)
+  S->>TH: umbralesCriticos(lab_test_id)
+  TH-->>S: crítico bajo / alto (o ninguno)
+  alt Evento inválido, sin umbrales o valor normal
+    S-->>SRC: sin alerta (inbox = failed / processed)
+  else Valor crítico
+    break Ya existe alerta para el resultado (idempotencia)
+      S-->>SRC: Duplicate
+    end
+    S->>RR: destinatario(episodio)
+    RR-->>S: médico tratante (0) o jefatura (1)
+    S->>R: BEGIN · INSERT critical_alerts (open, due_at = +15 min)
+    S->>AU: registrar("alerta.generada") + outbox (misma transacción)
+    alt Falla de base o auditoría
+      S->>R: ROLLBACK
+      S-->>SRC: Retry (queda en inbox)
+    else Correcto
+      S->>R: COMMIT
+      S->>N: notificar(destinatario, alerta)
+      N-->>S: entregada (o reintento, el plazo sigue)
+      S->>R: UPDATE status = notified
+    end
+  end
+  end
+
+  rect rgb(255, 248, 225)
+  Note over SRC,SCH: B · Acusar recibo y cerrar (UC-ALR-04, 06, 07, 08, 09)
+  M->>C: POST /critical-alerts/{alert}/acknowledge + JWT + X-Tenant-ID + lectura
+  alt Sin JWT o permiso
+    C-->>M: 401 / 403
+  else Sin lectura de verificación
+    C-->>M: 422 READ_BACK_REQUIRED
+  else Acceso válido
+    C->>S: acusar(alertaId, usuario, lectura)
+    S->>R: obtenerParaActualizar(alertaId) FOR UPDATE
+    break No existe, sin relación de cuidado o ya acusada
+      C-->>M: 404 / 403 / 409 ALERT_ALREADY_ACKNOWLEDGED
+    end
+    S->>R: UPDATE status = acknowledged
+    S->>AU: registrar("alerta.acusada", demora)
+    alt Falla de auditoría
+      C-->>M: ROLLBACK + 500
+    else Correcto
+      C-->>M: 200 · escalamiento detenido
+      M->>C: POST /critical-alerts/{alert}/resolve { action_taken }
+      C->>S: cerrar → status = resolved + auditoría
+      C-->>M: 200
+    end
+  end
+  end
+
+  rect rgb(253, 236, 234)
+  Note over SRC,SCH: C · Escalar alerta vencida (UC-ALR-05, 03, 09)
+  SCH->>S: escalarVencidas() cada minuto
+  S->>R: pendientes con due_at ≤ ahora FOR UPDATE SKIP LOCKED
+  loop Por cada alerta vencida
+    alt Nivel #lt; 2
+      S->>R: nivel + 1, nuevo destinatario, due_at = +15 min, escalated
+      S->>AU: registrar("alerta.escalada")
+      S->>N: notificar(siguiente nivel)
+    else Nivel máximo
+      S->>AU: registrar("alerta.escalamiento_agotado")
+      S->>N: aviso a dirección médica · llamada registrada
+    end
+  end
+  end
