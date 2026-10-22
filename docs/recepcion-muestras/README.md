@@ -20,7 +20,7 @@ o rechazo sin perder trazabilidad. Cada semana conecta análisis, microproyecto 
 | 04 | [MVC y Repository](semana-04/README.md) | Controlador y prueba del micro |
 | 05 | [API e integración](semana-05/README.md) | Laravel, PostgreSQL y RBAC |
 | 06 | [Primera evaluación](semana-06/README.md) | Pruebas de reglas y errores |
-| 07 | [Componentes](semana-07/README.md) | Proyección de órdenes y outbox |
+| 07 | [Componentes](semana-07/README.md) | Lectura de órdenes y outbox compartido |
 | 08 | [UX por rol](semana-08/README.md) | Formulario Vue real |
 | 09 | [Usabilidad](semana-09/README.md) | Errores, teclado y reenvíos |
 | 10 | [Responsive](semana-10/README.md) | Escenarios móvil/escritorio |

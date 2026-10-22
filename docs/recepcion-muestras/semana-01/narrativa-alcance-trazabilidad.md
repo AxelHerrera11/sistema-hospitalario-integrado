@@ -79,7 +79,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 
 ## Dependencias con otros módulos
 
-- **Depende de:** órdenes (ítem/paciente), catálogo (requisitos), notificaciones (aviso) y RBAC. La implementación usa OrderProjection/importador confiable, Repository, outbox y DeliverRejections. LabOrderGateway/LabTestRequirements/Notifier fueron nombres propuestos, no interfaces que se afirme haber implementado.
+- **Depende de:** órdenes (ítem/paciente), catálogo (requisitos), notificaciones (aviso) y RBAC. La implementación usa OrdersGateway de solo lectura, Repository, outbox y DeliverRejections. LabOrderGateway/LabTestRequirements/Notifier fueron nombres propuestos, no interfaces que se afirme haber implementado.
 - **Dependen de este módulo:** *Ingreso de resultados* y *Validación por bioquímico*, que solo trabajan sobre muestras `accepted` identificadas por su código.
 
 ## Archivos relacionados
