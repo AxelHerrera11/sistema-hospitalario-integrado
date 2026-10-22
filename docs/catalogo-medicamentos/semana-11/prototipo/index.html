@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo - Catálogo de medicamentos (ASII-14)</title>
+<style>
+  :root { --texto: #172033; --fondo: #ffffff; --borde: #94a3b8; --primario: #1d4ed8; --error: #b91c1c; --ok: #166534; --tenue: #475569; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: var(--texto); background: var(--fondo); }
+  header, main { max-width: 1100px; margin: 0 auto; padding: 12px 16px; }
+  header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; border-bottom: 1px solid var(--borde); }
+  h1 { font-size: 1.3rem; margin: 0; flex: 1 1 auto; }
+  .aviso { background: #fef3c7; padding: 6px 16px; font-size: .9rem; margin: 0; }
+  button, input, select { font: inherit; }
+  button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--primario); border-radius: 6px; background: #fff; color: var(--primario); cursor: pointer; }
+  button.principal { background: var(--primario); color: #fff; }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  :focus-visible { outline: 3px solid #b45309; outline-offset: 2px; }
+  input { min-height: 44px; padding: 8px; border: 1px solid var(--borde); border-radius: 6px; width: 100%; }
+  label { display: block; font-weight: 600; margin-top: 10px; }
+  .fila { display: flex; gap: 8px; align-items: end; }
+  .fila > div { flex: 1; }
+  .error { color: var(--error); margin: 4px 0 0; }
+  .ok { color: var(--ok); }
+  .ayuda, .tenue { color: var(--tenue); font-size: .95rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  caption { text-align: left; font-weight: 600; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+  .estado-inactive { font-weight: 600; }
+  dialog { border: 1px solid var(--borde); border-radius: 8px; max-width: 520px; width: calc(100% - 32px); }
+  dialog::backdrop { background: rgba(15, 23, 42, .45); }
+  .acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  @media (max-width: 767px) {
+    table, thead, tbody, tr, td, caption { display: block; }
+    caption { width: 100%; }
+    thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    tr { border: 1px solid var(--borde); border-radius: 8px; padding: 8px; margin-top: 10px; }
+    td { border: 0; padding: 2px 0; }
+    td[data-col]::before { content: attr(data-col) ": "; color: var(--tenue); }
+    .fila { flex-direction: column; align-items: stretch; }
+    .acciones button, form button.principal { width: 100%; }
+    dialog { margin: auto 0 0; max-width: none; width: 100%; border-radius: 12px 12px 0 0; }
+  }
+</style>
+</head>
+<body>
+<p class="aviso" role="note">Prototipo con <strong>datos simulados</strong> en memoria: no consume backend ni guarda nada. El cambio de rol también es simulado.</p>
+<header>
+  <h1>Catálogo de medicamentos</h1>
+  <span class="tenue">Hospital Central (ficticio)</span>
+  <label for="rol" style="margin:0">Rol simulado</label>
+  <select id="rol"><option value="clinico">Usuario clínico (medicamentos.ver)</option><option value="gestor">Gestor (escritura propuesta)</option></select>
+  <label style="margin:0;font-weight:400"><input type="checkbox" id="caida" style="width:auto;min-height:0"> Simular catálogo no disponible</label>
+</header>
+<main>
+  <div class="acciones"><button type="button" id="abrir-alta" class="principal" hidden>Dar de alta un medicamento</button></div>
+  <form id="buscar" novalidate>
+    <div class="fila">
+      <div><label for="termino">Buscar por código, nombre o principio activo</label>
+        <input id="termino" name="q" inputmode="search" aria-describedby="ayuda-termino error-termino" autocomplete="off"></div>
+      <button type="submit" class="principal">Buscar</button>
+    </div>
+    <p id="ayuda-termino" class="ayuda">Escriba al menos 2 caracteres. Ej.: AMX-500 o amoxicilina. Enter también busca.</p>
+    <p id="error-termino" class="error" hidden></p>
+  </form>
+  <p id="estado" role="status" aria-live="polite"></p>
+  <p id="alerta" role="alert" class="error" hidden></p>
+  <section id="resultados" aria-busy="false"></section>
+</main>
+
+<dialog id="dlg-vigencia" aria-labelledby="dlg-vigencia-titulo">
+  <h2 id="dlg-vigencia-titulo"></h2>
+  <dl id="dlg-vigencia-datos"></dl>
+  <p class="tenue">No se borra el registro ni afecta lotes o vencimientos. Las prescripciones existentes se conservan.</p>
+  <div class="acciones"><button type="button" id="dlg-cancelar">Cancelar</button><button type="button" id="dlg-confirmar" class="principal"></button></div>
+</dialog>
+
+<dialog id="dlg-alta" aria-labelledby="dlg-alta-titulo">
+  <h2 id="dlg-alta-titulo">Dar de alta un medicamento</h2>
+  <form id="form-alta" novalidate>
+    <p class="tenue">* campo obligatorio. El medicamento nace Activo.</p>
+    <label for="f-code">Código *</label><input id="f-code" name="code" required autocapitalize="characters" aria-describedby="e-code"><p id="e-code" class="error"></p>
+    <label for="f-name">Nombre *</label><input id="f-name" name="name" required aria-describedby="e-name"><p id="e-name" class="error"></p>
+    <label for="f-active_ingredient">Principio activo *</label><input id="f-active_ingredient" name="active_ingredient" required aria-describedby="e-active_ingredient"><p id="e-active_ingredient" class="error"></p>
+    <label for="f-pharmacological_group">Grupo farmacológico *</label><input id="f-pharmacological_group" name="pharmacological_group" required aria-describedby="e-pharmacological_group"><p id="e-pharmacological_group" class="error"></p>
+    <div class="acciones"><button type="button" id="alta-cancelar">Cancelar</button><button type="submit" class="principal">Registrar</button></div>
+  </form>
+</dialog>
+
+<script>
+// Datos y reglas SIMULADAS que replican las del micro-HIS (Semanas 3-4): mismo formato de código, longitudes,
+// duplicado por código normalizado, término de 2 a 60 caracteres y rechazo de repetir la vigencia.
+const datos = [
+  { id: '1', code: 'AMX-500', name: 'Amoxicilina 500 mg', active_ingredient: 'Amoxicilina', pharmacological_group: 'Antibiótico', validity: 'active' },
+  { id: '2', code: 'AMX-250', name: 'Amoxicilina 250 mg', active_ingredient: 'Amoxicilina', pharmacological_group: 'Antibiótico', validity: 'inactive' },
+  { id: '3', code: 'IBU-400', name: 'Ibuprofeno 400 mg', active_ingredient: 'Ibuprofeno', pharmacological_group: 'AINE', validity: 'active' },
+];
+const $ = (id) => document.getElementById(id);
+const texto = { active: 'Activo', inactive: 'Inactivo' };
+let ultimoTermino = '', origenFoco = null, seleccionado = null;
+/** Crea un elemento con texto plano: los datos nunca se interpretan como HTML. */
+function el(tag, contenido, atributos = {}) {
+  const nodo = document.createElement(tag);
+  nodo.append(...[contenido].flat());
+  Object.entries(atributos).forEach(([k, v]) => nodo.setAttribute(k, v));
+  return nodo;
+}
+
+function catalogo() {
+  if ($('caida').checked) { throw new Error('CATALOG_UNAVAILABLE'); }
+  return datos;
+}
+function esGestor() { return $('rol').value === 'gestor'; }
+
+function buscar(termino) {
+  const t = termino.trim().toLowerCase();
+  return catalogo().filter((m) => `${m.code}\n${m.name}\n${m.active_ingredient}`.toLowerCase().includes(t))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.code.localeCompare(b.code)).slice(0, 50);
+}
+
+function pintar(lista) {
+  const zona = $('resultados');
+  zona.replaceChildren();
+  if (lista.length === 0) {
+    zona.innerHTML = '<p>No se encontraron medicamentos. Pruebe con otro término.</p>';
+    $('estado').textContent = 'Sin coincidencias.';
+    return;
+  }
+  const tabla = document.createElement('table');
+  tabla.innerHTML = '<caption>Resultados de la búsqueda</caption><thead><tr><th scope="col">Código</th><th scope="col">Nombre</th>'
+    + '<th scope="col">Principio activo</th><th scope="col">Vigencia</th>' + (esGestor() ? '<th scope="col">Acción</th>' : '') + '</tr></thead>';
+  const cuerpo = document.createElement('tbody');
+  for (const m of lista) {
+    const fila = document.createElement('tr');
+    const vigencia = m.validity === 'active' ? 'Activo' : 'Inactivo - no disponible para nuevas indicaciones';
+    fila.append(el('td', el('strong', m.code), { 'data-col': 'Código' }), el('td', m.name, { 'data-col': 'Nombre' }),
+      el('td', m.active_ingredient, { 'data-col': 'Principio activo' }), el('td', vigencia, { 'data-col': 'Vigencia', class: `estado-${m.validity}` }));
+    if (esGestor()) {
+      const celda = document.createElement('td');
+      const boton = document.createElement('button');
+      boton.type = 'button';
+      boton.textContent = m.validity === 'active' ? 'Inactivar' : 'Activar';
+      boton.setAttribute('aria-label', `${boton.textContent} ${m.code}`);
+      boton.dataset.id = m.id;
+      boton.addEventListener('click', () => abrirVigencia(m, boton));
+      celda.append(boton);
+      fila.append(celda);
+    }
+    cuerpo.append(fila);
+  }
+  tabla.append(cuerpo);
+  zona.append(tabla);
+  $('estado').textContent = `${lista.length} ${lista.length === 1 ? 'resultado' : 'resultados'}.`;
+}
+
+function ejecutarBusqueda(termino) {
+  $('alerta').hidden = true;
+  const largo = termino.trim().length;
+  $('error-termino').hidden = largo >= 2 && largo <= 60;
+  if (!$('error-termino').hidden) {
+    $('error-termino').textContent = 'Escriba de 2 a 60 caracteres.';
+    $('termino').setAttribute('aria-invalid', 'true');
+    $('termino').focus();
+    return;
+  }
+  $('termino').removeAttribute('aria-invalid');
+  ultimoTermino = termino;
+  try {
+    pintar(buscar(termino));
+  } catch {
+    $('resultados').replaceChildren();
+    $('estado').textContent = '';
+    $('alerta').innerHTML = 'No se pudo consultar el catálogo. No se muestran datos parciales. <button type="button" id="reintentar">Reintentar</button>';
+    $('alerta').hidden = false;
+    $('reintentar').addEventListener('click', () => ejecutarBusqueda(ultimoTermino));
+  }
+}
+
+function abrirVigencia(m, boton) {
+  seleccionado = m;
+  origenFoco = boton;
+  const destino = m.validity === 'active' ? 'inactive' : 'active';
+  $('dlg-vigencia-titulo').textContent = `¿${destino === 'inactive' ? 'Inactivar' : 'Activar'} ${m.code}?`;
+  $('dlg-vigencia-datos').replaceChildren(el('dt', 'Código'), el('dd', m.code), el('dt', 'Nombre'), el('dd', m.name),
+    el('dt', 'Principio activo'), el('dd', m.active_ingredient), el('dt', 'Vigencia'), el('dd', [`${texto[m.validity]} → `, el('strong', texto[destino])]));
+  $('dlg-confirmar').textContent = `${destino === 'inactive' ? 'Inactivar' : 'Activar'} ${m.code}`;
+  $('dlg-vigencia').showModal();
+  $('dlg-cancelar').focus();
+}
+
+function cerrar(dialogo) {
+  dialogo.close();
+  (origenFoco ?? $('termino')).focus();
+}
+
+$('dlg-cancelar').addEventListener('click', () => cerrar($('dlg-vigencia')));
+$('dlg-vigencia').addEventListener('close', () => origenFoco?.focus());
+$('dlg-confirmar').addEventListener('click', () => {
+  const codigo = seleccionado.code;
+  try {
+    const registro = catalogo().find((m) => m.id === seleccionado.id);
+    registro.validity = registro.validity === 'active' ? 'inactive' : 'active';
+    $('dlg-vigencia').close();
+    ejecutarBusqueda(ultimoTermino);
+    $('estado').textContent = `Vigencia actualizada: ${codigo} ahora está ${texto[registro.validity]}.`;
+    document.querySelector(`button[data-id="${registro.id}"]`)?.focus();
+  } catch {
+    $('dlg-vigencia').close();
+    $('alerta').textContent = `No se confirmó el cambio de ${codigo}. Se muestra el estado actual: ${texto[seleccionado.validity]}.`;
+    $('alerta').hidden = false;
+  }
+});
+
+$('buscar').addEventListener('submit', (e) => { e.preventDefault(); ejecutarBusqueda($('termino').value); });
+$('rol').addEventListener('change', () => {
+  $('abrir-alta').hidden = !esGestor();
+  if (ultimoTermino) { ejecutarBusqueda(ultimoTermino); }
+});
+$('abrir-alta').addEventListener('click', () => {
+  origenFoco = $('abrir-alta');
+  $('form-alta').reset();
+  document.querySelectorAll('#form-alta .error').forEach((p) => { p.textContent = ''; });
+  $('dlg-alta').showModal();
+  $('f-code').focus();
+});
+$('alta-cancelar').addEventListener('click', () => cerrar($('dlg-alta')));
+$('form-alta').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const borrador = Object.fromEntries(new FormData(e.target));
+  const errores = {};
+  const code = (borrador.code ?? '').trim().toUpperCase();
+  if (!/^[A-Z0-9][A-Z0-9-]{1,19}$/.test(code)) { errores.code = 'Use de 2 a 20 letras, dígitos o guiones.'; }
+  for (const campo of ['name', 'active_ingredient', 'pharmacological_group']) {
+    const largo = (borrador[campo] ?? '').trim().length;
+    if (largo < 2 || largo > 120) { errores[campo] = 'Complete este campo (2 a 120 caracteres).'; }
+  }
+  if (!errores.code && datos.some((m) => m.code === code)) { errores.code = 'Ya existe un medicamento con este código.'; }
+  for (const campo of ['code', 'name', 'active_ingredient', 'pharmacological_group']) {
+    $(`e-${campo}`).textContent = errores[campo] ?? '';
+    $(`f-${campo}`).toggleAttribute('aria-invalid', Boolean(errores[campo]));
+  }
+  const primero = Object.keys(errores)[0];
+  if (primero) { $(`f-${primero}`).focus(); return; }
+  try {
+    catalogo();
+    datos.push({ id: String(datos.length + 1), code, name: borrador.name.trim(), active_ingredient: borrador.active_ingredient.trim(),
+      pharmacological_group: borrador.pharmacological_group.trim(), validity: 'active' });
+    cerrar($('dlg-alta'));
+    $('estado').textContent = `Medicamento registrado: ${code} (Activo).`;
+  } catch {
+    $('e-code').textContent = 'El catálogo no está disponible: no se registró. Sus datos se conservan.';
+  }
+});
+</script>
+</body>
+</html>
