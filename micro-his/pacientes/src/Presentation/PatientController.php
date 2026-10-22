@@ -4,24 +4,22 @@ declare(strict_types=1);
 
 namespace MicroHis\Pacientes\Presentation;
 
-use MicroHis\Pacientes\Application\PatientOperationFailure;
 use MicroHis\Pacientes\Application\PatientService;
-use MicroHis\Pacientes\Application\PersistenceFailure;
 
 final class PatientController
 {
-    private readonly PatientView $view;
+    private readonly PatientResponsePresenter $presenter;
 
     public function __construct(
         private readonly PatientService $patients,
-        ?PatientView $view = null
+        ?PatientResponsePresenter $presenter = null
     ) {
-        $this->view = $view ?? new PatientView();
+        $this->presenter = $presenter ?? new PatientResponsePresenter();
     }
 
     public function register(array $data): array
     {
-        return $this->respond(
+        return $this->presenter->present(
             fn() => $this->patients->register($data),
             201
         );
@@ -29,35 +27,15 @@ final class PatientController
 
     public function search(string $code): array
     {
-        return $this->respond(
+        return $this->presenter->present(
             fn() => $this->patients->search($code)
         );
     }
 
     public function update(string $code, array $data): array
     {
-        return $this->respond(
+        return $this->presenter->present(
             fn() => $this->patients->update($code, $data)
         );
-    }
-
-    private function respond(callable $operation, int $successStatus = 200): array
-    {
-        try {
-            return $this->view->patient($operation(), $successStatus);
-        } catch (PatientOperationFailure $e) {
-            return $this->view->error(
-                $e->errorCode === 'PATIENT_NOT_FOUND' ? 404 : 422,
-                $e->errorCode,
-                $e->getMessage(),
-                $e->field
-            );
-        } catch (PersistenceFailure) {
-            return $this->view->error(
-                500,
-                'PERSISTENCE_FAILURE',
-                'No se pudo completar la operación.'
-            );
-        }
     }
 }
