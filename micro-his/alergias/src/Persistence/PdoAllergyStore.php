@@ -30,8 +30,8 @@ final class PdoAllergyStore implements AllergyStore
             $this->query('INSERT INTO allergies (allergy_id, local_patient_id, verified_by_user_ref_id, allergen_code, allergen_name, reaction,
                 allergy_type, severity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [$a->id, $a->patientId, $actor, $a->allergenCode, $a->allergenName,
                 $a->reaction, $a->type, $a->severity]);
-            $this->query('INSERT INTO local_access_audits (event, actor, subject_id, occurred_at) VALUES (?, ?, ?, ?)',
-                ['alergia.registrada', $actor, $a->id, date(DATE_ATOM)]);
+            $this->query("INSERT INTO local_access_audits (correlation_id, actor_user_ref_id, module, action, resource_type, resource_id, local_patient_id,
+                occurred_at) VALUES (?, ?, 'alergias', 'alergia.registrada', 'allergy', ?, ?, ?)", [bin2hex(random_bytes(16)), $actor, $a->id, $a->patientId, date(DATE_ATOM)]);
             $this->pdo->commit();
         } catch (PDOException $error) {
             $this->pdo->inTransaction() && $this->pdo->rollBack();

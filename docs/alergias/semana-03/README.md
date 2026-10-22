@@ -37,4 +37,4 @@ flowchart LR
 
 SQLite en memoria desde `database/schema.sql`, con datos ficticios. Las **14 verificaciones** cubren los cuatro niveles del banner, el alta auditada, el duplicado (409), tres reglas de dominio (422), paciente inexistente (404), sin usuario (401), la falla de auditoría con rollback y la falla segura de lectura. La salida completa está en el PR.
 
-**Limitaciones:** en el HIS el actor y el tenant llegan por JWT y `X-Tenant-ID`; aquí el actor es un parámetro. Inactivar o resolver alergias, MVC con Repository y el contrato API quedan para las Semanas 4 y 5. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
+**Limitaciones:** en el HIS el actor y el tenant llegan por JWT y `X-Tenant-ID`; aquí el actor es un parámetro. Inactivar o resolver alergias, MVC con Repository y el contrato API quedan para las Semanas 4 y 5. La auditoría escribe las columnas de `local_access_audits` del contrato H8 (migración 000700); `correlation_id` se genera en el adaptador porque aquí no hay petición HTTP. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).

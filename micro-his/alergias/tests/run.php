@@ -29,7 +29,7 @@ $penicilina = ['allergen_code' => 'RXN-7980', 'allergen_name' => 'Penicilina', '
 check('paciente sin alergias → nivel none', $http->handle('GET', '/patients/P-1/allergy-alert', [], 'medico1')[1]['alert']['level'] === 'none');
 [$status, $body] = $http->handle('POST', '/patients/P-1/allergies', $penicilina, 'medico1');
 check('alta válida → 201', $status === 201 && $body['allergy']['severity'] === 'life_threatening');
-check('el alta queda auditada en la misma transacción', $pdo->query('SELECT event FROM local_access_audits')->fetchColumn() === 'alergia.registrada');
+check('el alta queda auditada en la misma transacción', $pdo->query('SELECT action FROM local_access_audits')->fetchColumn() === 'alergia.registrada');
 [$status, $body] = $http->handle('GET', '/patients/P-1/allergy-alert', [], 'medico1');
 check('alergia que amenaza la vida → banner critical', $status === 200 && $body['alert']['level'] === 'critical' && count($body['alert']['allergies']) === 1);
 check('misma alergia activa otra vez (otro texto y mayúsculas) → 409', $http->handle('POST', '/patients/P-1/allergies', ['allergen_code' => ' rxn-7980 ', 'severity' => 'mild'] + $penicilina, 'medico1')[0] === 409);

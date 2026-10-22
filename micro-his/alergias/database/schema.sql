@@ -1,4 +1,4 @@
--- Subconjunto portable (SQLite y PostgreSQL) de la migración HOSPITAL 000401 (allergies) y de las tablas que lee o escribe.
+-- Subconjunto portable (SQLite y PostgreSQL) de las migraciones HOSPITAL 000200 (local_patients), 000401 (allergies) y 000700 (local_access_audits, H8).
 CREATE TABLE local_patients (local_patient_id TEXT PRIMARY KEY);
 CREATE TABLE allergies (
     allergy_id              TEXT PRIMARY KEY,
@@ -14,4 +14,5 @@ CREATE TABLE allergies (
 );
 CREATE UNIQUE INDEX allergies_active_equivalent_unique ON allergies
     (local_patient_id, allergy_type, lower(COALESCE(NULLIF(trim(allergen_code), ''), NULLIF(trim(allergen_name), '')))) WHERE status = 'active';
-CREATE TABLE local_access_audits (event TEXT NOT NULL, actor TEXT NOT NULL, subject_id TEXT NOT NULL, occurred_at TEXT NOT NULL);
+CREATE TABLE local_access_audits (correlation_id TEXT NOT NULL, actor_user_ref_id TEXT NOT NULL, module TEXT NOT NULL, action TEXT NOT NULL,
+    resource_type TEXT NOT NULL, resource_id TEXT, local_patient_id TEXT, care_episode_id TEXT, metadata TEXT NOT NULL DEFAULT '{}', occurred_at TEXT NOT NULL);
