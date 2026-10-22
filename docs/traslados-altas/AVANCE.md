@@ -16,6 +16,7 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 | 10 | Movilidad de 320 a 430 px, breakpoints, 5 pantallas, 2 escenarios con conexión limitada y corrección de H1–H4, H6 y H7 | `semana-10/` | Recorrido 9/9 en 3 anchos; móviles 4/4; sondas 9/10; `ui-mensajes` 7/7 | #866 y esta entrega | #868 | H5 (lista de camas) en la integración; sin dispositivo físico |
 | 11 | Prototipo navegable en escritorio y móvil: mapa, camino feliz, error crítico y simulaciones | `semana-11/` | Recorrido 9/9 a 1024 y 375 px; error crítico 2/2 | Esta entrega (capturas en #873) | — | Revisión humana de la S11 sin confirmar |
 | 12 | Segundo parcial: 5 diapositivas, recorrido, matriz de 14 decisiones de UX y cambio práctico (Escape y foco, simulado) | `semana-12/` | `teclado.mjs` 1/4 → 4/4; recorrido 9/9; `ui-mensajes` 7/7 | Esta entrega | — | Sin defensa oral declarada; revisión humana de la S12 sin confirmar |
+| 13 | Plan de revisión formal, checklist de 15 ítems con autoverificación, roles propuestos y formato de hallazgos | `semana-13/` | Criterios de entrada: `run.php` 95/95, `postgres.php` 20/20, `ui-mensajes` 7/7 | Esta entrega | — | **No completa:** confirmar roles y realizar la revisión; C7 y C12 sin evidencia |
 
 ## Funcionalidad comprobada hasta hoy
 
