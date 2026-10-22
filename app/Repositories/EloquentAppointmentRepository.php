@@ -49,7 +49,11 @@ class EloquentAppointmentRepository implements AppointmentRepositoryContract
 
     public function create(array $attributes): Appointment
     {
-        return $this->write(fn (): Appointment => Appointment::query()->create($attributes));
+        return $this->write(function () use ($attributes): Appointment {
+            $appointment = Appointment::query()->create($attributes);
+
+            return $appointment->refresh();
+        });
     }
 
     public function update(Appointment $appointment, array $attributes): Appointment
