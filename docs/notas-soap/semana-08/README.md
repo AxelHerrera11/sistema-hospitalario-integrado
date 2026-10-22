@@ -82,12 +82,12 @@ flowchart TD
   ver -- Sí --> buscar[Buscar la nota del episodio]
   buscar --> carga{Carga}
   carga -- en curso --> spinner[Lista en gris, sin datos clínicos visibles]
-  carga -- 200 con nota --> vista[Lectura: secciones, diagnósticos, autor y estado]
+  carga -- 200 con nota --> trat{¿Tiene asignación activa en el episodio?}
   carga -- 200 sin nota --> vacio[Vacío: «Este episodio aún no tiene nota SOAP»]
   carga -- 404 NOTE_NOT_FOUND --> d404[«La nota ya no está disponible»]
-  vista --> trat{¿Tiene asignación activa en el episodio?}
   trat -- No --> d403t[403 NOT_TREATING_PHYSICIAN: «No atiende este episodio; pida al médico tratante»]
-  trat -- Sí --> lect[Ver el texto clínico y los diagnósticos]
+  trat -- Sí --> vista[Lectura: secciones, diagnósticos, autor y estado]
+  vista --> lect[Ver el texto clínico y los diagnósticos]
   vista --> firmado{¿La nota está firmada?}
   firmado -- Sí --> inmutable[«Nota firmada: no se puede editar; una corrección crea una versión nueva»]
   firmado -- No --> editable[«Borrador: puede completar y asociar diagnósticos»]
