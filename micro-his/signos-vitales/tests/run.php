@@ -12,7 +12,8 @@ use MicroHis\SignosVitales\Domain\Severity;
 use MicroHis\SignosVitales\Domain\ThresholdEvaluator;
 use MicroHis\SignosVitales\Domain\VitalSignRule;
 use MicroHis\SignosVitales\Domain\VitalSigns;
-use MicroHis\SignosVitales\Persistence\PdoVitalSignStore;
+use MicroHis\SignosVitales\Persistence\PdoCareEpisodeReader;
+use MicroHis\SignosVitales\Persistence\PdoVitalSignRepository;
 use MicroHis\SignosVitales\Persistence\QueuedAlertNotifier;
 use MicroHis\SignosVitales\Presentation\VitalSignHttpHandler;
 
@@ -31,9 +32,9 @@ function app(): array
     $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
     $pdo->exec("INSERT INTO care_episodes VALUES ('ep1', 'open', '1980-05-10'), ('ep2', 'open', '2017-03-01'), ('ep3', 'closed', '1975-01-20')");
     $pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'dra.lopez', 'active'), ('ep2', 'dra.lopez', 'active'), ('ep3', 'dra.lopez', 'active'), ('ep1', 'dr.perez', 'ended')");
-    $store = new PdoVitalSignStore($pdo);
+    $repository = new PdoVitalSignRepository($pdo);
     $notifier = new QueuedAlertNotifier();
-    return [$pdo, new VitalSignHttpHandler(new RecordVitalSigns($store, new ThresholdEvaluator(rules()), $store, $notifier)), $notifier];
+    return [$pdo, new VitalSignHttpHandler(new RecordVitalSigns(new PdoCareEpisodeReader($pdo), new ThresholdEvaluator(rules()), $repository, $notifier)), $notifier];
 }
 
 function check(string $name, bool $ok): void
