@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
+    use HasUuids;
+
     public const STATUS_SCHEDULED = 'scheduled';
 
     public const STATUS_CONFIRMED = 'confirmed';
