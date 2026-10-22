@@ -137,3 +137,10 @@ git diff --check
 ## Conclusión
 
 El flujo traduce las garantías del backend a señales comprensibles: corte visible, discrepancias explícitas, falla segura y aislamiento por rol y hospital. Los wireframes sirven como base verificable para las evaluaciones de usabilidad, responsive y prototipo de las siguientes semanas.
+
+## Estado de la entrega
+
+Esta semana entrega el diseño UX: los wireframes y el flujo son la especificación de la
+interfaz, no su implementación. La pantalla que los materializa se entregó en la semana 16
+(PR #575) en `resources/js/modules/ocupacion/pages/OcupancyPage.vue`, y reproduce los estados
+carga, éxito, vacío, dato desactualizado, servicio caído y acceso denegado aquí descritos.
