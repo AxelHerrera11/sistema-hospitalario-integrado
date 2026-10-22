@@ -1,0 +1,42 @@
+@startuml
+title ASII-14 Semana 7 - Componentes frontend y backend del catálogo
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam componentStyle rectangle
+
+package "Frontend (propuesto: resources/js/modules/catalogo-medicamentos/)" as FE #EAF4FF {
+  [MedicationCatalogPage.vue\ncontenedor y estado] as Page
+  [MedicationSearchForm.vue] as Search
+  [MedicationResultsTable.vue] as Table
+  [MedicationFormDialog.vue\nalta] as Form
+  [ValidityChangeDialog.vue\nconfirmación] as Dialog
+  [medicationsApi.js\ncliente HTTP] as Client
+}
+package "Compartidos existentes" as SH #F1F5F9 {
+  [plugins/axios.js] as Axios
+  [router/permissions.js\ncan()] as Can
+}
+package "Backend (Laravel, propuesto para Semana 16)" as BE #FEF9C3 {
+  [MedicationController\nsolo traduce HTTP] as LCtrl
+  [middlewares tenant, jwt.auth\ny permiso RBAC] as Mw
+}
+package "Núcleo del micro-HIS (existe)" as Core #DCFCE7 {
+  [Contratos ISP\nRegistration / Lookup / ValidityControl] as Contracts
+  [Casos de uso + Domain] as UC
+  [MedicationRepository\nPDO / InMemory] as Repo
+}
+
+Page --> Search
+Page --> Table
+Page --> Form
+Page --> Dialog
+Page --> Client : único punto de llamada
+Page ..> Can : mostrar u ocultar acciones
+Client --> Axios
+Axios --> Mw : HTTPS /api/v1/medications
+Mw --> LCtrl
+LCtrl --> Contracts
+Contracts <|.. UC
+UC --> Repo
+@enduml
