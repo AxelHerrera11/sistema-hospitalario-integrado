@@ -1,0 +1,31 @@
+classDiagram
+  class HttpReviewController
+  class ValidateReviewedResult
+  class RejectReviewedResult
+  class ReviewableLabResult
+  class BiochemistReviewPolicy
+  class ReviewResultRepository {
+    <<interface>>
+    +getPending(tenantId, resultId)
+    +save(result)
+  }
+  class ReviewAuditLogger {
+    <<interface>>
+    +record(event)
+  }
+  class PdoReviewResultRepository
+  class InMemoryReviewResultRepository
+  class ArrayReviewAuditLogger
+
+  HttpReviewController --> ValidateReviewedResult
+  HttpReviewController --> RejectReviewedResult
+  ValidateReviewedResult --> ReviewResultRepository
+  ValidateReviewedResult --> ReviewAuditLogger
+  ValidateReviewedResult --> ReviewableLabResult
+  RejectReviewedResult --> ReviewResultRepository
+  RejectReviewedResult --> ReviewAuditLogger
+  RejectReviewedResult --> ReviewableLabResult
+  ReviewableLabResult --> BiochemistReviewPolicy
+  PdoReviewResultRepository ..|> ReviewResultRepository
+  InMemoryReviewResultRepository ..|> ReviewResultRepository
+  ArrayReviewAuditLogger ..|> ReviewAuditLogger

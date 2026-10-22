@@ -16,7 +16,6 @@ use MicroHis\NotasSoap\Presentation\Router;
 use MicroHis\NotasSoap\Presentation\SoapNoteController;
 
 require __DIR__ . '/bootstrap.php';
-
 /** Raíz de composición: el mismo MVC funciona con cualquier adaptador del Repository (PDO o InMemory). */
 function notas_soap_router(ClinicalNoteRepository $notes, CareAssignmentReader $assignments, Icd10Catalog $catalog): Router
 {
