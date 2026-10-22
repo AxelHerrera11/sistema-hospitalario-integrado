@@ -4,7 +4,7 @@
 
 ## Publicación posterior de esta revisión
 
-Por instrucción de la usuaria se publicó la corrección de permisos de acción en #858, commit `0bd73f06`. Este informe y sus evidencias se publican por separado desde `codex/rbac-evidencia-cierre`, basada en develop `070a255c`, para respetar 400 líneas por PR. Los resultados de pruebas que siguen pertenecen al snapshot `0926ad98` con las correcciones indicadas, no a una nueva ejecución sobre `070a255c`. Se mantienen los PR en borrador y sin merge. Las referencias a cambios «locales» y «sin publicar» describen el momento de la revisión, anterior a esta publicación.
+Por instrucción de la usuaria se publicó la corrección de permisos de acción en #858, commit `0bd73f06`. Este informe y sus evidencias se publican por separado desde `feature/asii-02-semana-17-rbac-evidencia-cierre-mar-03`, basada en develop `070a255c`, para respetar 400 líneas por PR. Los resultados de pruebas que siguen pertenecen al snapshot `0926ad98` con las correcciones indicadas, no a una nueva ejecución sobre `070a255c`. Se mantienen los PR en borrador y sin merge. Las referencias a cambios «locales» y «sin publicar» describen el momento de la revisión, anterior a esta publicación.
 
 No se realizó merge, push, aprobación ni cambio de estado de los PR. Los cambios locales de Pacientes encontrados al iniciar la revisión se conservaron. Este informe distingue pruebas automatizadas locales de demostraciones con usuarios en navegador y de staging.
 
