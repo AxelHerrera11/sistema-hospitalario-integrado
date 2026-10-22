@@ -25,14 +25,15 @@ Las flechas apuntan hacia adentro (Presentation → Application → Domain ← P
 - Todas las consultas usan `prepare()` y `execute([...])`. Ningún valor de entrada se concatena en el SQL.
 - `PDO::ERRMODE_EXCEPTION` está activo. Un `PDOException` dentro de la transacción hace `rollBack()` y se traduce a `500 SOAP_PERSISTENCE_ERROR`.
 - Las cuatro secciones se guardan como JSON en `clinical_notes.content`, con `note_type = 'soap'` y versión 1.
-- `database/schema.sql` es un subconjunto de la migración hospital `000400` adaptado a SQLite.
+- `database/schema.sql` es un esquema local simplificado para SQLite, **no un subconjunto** de la migración hospital `000400`. Sus divergencias con la base real están listadas como pendientes en la sección de supuestos.
 
 ## Dependencias externas y supuestos
 
 | Dependencia | Estado | Tratamiento en el prototipo |
 |---|---|---|
 | Autenticación JWT, RBAC y tenant (ASII-01, 02) | Fuera de alcance | `X-User-ID` identifica al médico. |
-| `care_assignments` (Admisión) | Otro módulo | Solo lectura. Se simplifica a `user_ref_id` en lugar de `doctor_profile_id`. |
+| `care_assignments` (Admisión) | Otro módulo | Solo lectura. Se simplifica a `user_ref_id` en lugar de `doctor_profile_id`, y a los estados `active` y `ended` en lugar de `active`, `closed` y `revoked` (migración `000200`). Pendiente de integración. |
+| `clinical_notes` (migración `000400`) | Otro módulo | El alta no envía `medical_record_id` ni `version_no`, que la tabla real exige (`NOT NULL`). Pendiente de integración con Expediente. |
 | Catálogo CIE-10 | Origen por acordar | Tabla `icd10_codes` detrás de `Icd10Catalog`; en las pruebas también un doble que simula caída. |
 | `local_access_audits` (slice H8) | Sin migración en `develop` | Tabla mínima en `schema.sql` para probar la atomicidad. |
 

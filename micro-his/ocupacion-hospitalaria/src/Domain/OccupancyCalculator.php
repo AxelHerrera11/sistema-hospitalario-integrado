@@ -53,9 +53,11 @@ final class OccupancyCalculator
 
     private function rate(array $counts): ?float
     {
-        $capacity = $counts['occupied'] + $counts['available'];
+        // Tasa sobre camas operativas: el inventario menos las camas en
+        // mantenimiento y las inactivas (contrato de ocupacion vigente).
+        $operational = $counts['total_beds'] - $counts['maintenance'] - $counts['inactive'];
 
-        return $capacity === 0 ? null : round($counts['occupied'] / $capacity * 100, 2);
+        return $operational <= 0 ? null : round($counts['occupied'] / $operational * 100, 2);
     }
 
     private function percentages(array $counts): array

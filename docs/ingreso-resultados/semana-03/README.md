@@ -36,3 +36,10 @@ OK: camino feliz, regla de dominio y error de persistencia verificados.
 ## Declaracion de uso de IA
 
 Se uso Codex/OpenAI para estructurar la evidencia, crear el primer borrador del prototipo y redactar la documentacion. El estudiante debe revisar y validar el contenido antes de marcar la tarea como completada en Odoo.
+
+## Limites de integracion
+
+- ASII-19 consume el `lab_test_id` de la version exacta publicada por ASII-17; la unidad, el rango y el umbral critico no se duplican en este modulo.
+- Las rutas futuras del modulo se ubicaran bajo `/api/v1` y usaran `X-Tenant-ID`, `X-User-Ref` y `X-Request-Id`, con errores `application/problem+json`.
+- La validacion de un resultado critico publicara `POST /api/v1/internal/result-validated` para ASII-21, idempotente por `result_version_id`.
+- ASII-19 es propietario de resultados y versiones. ASII-17 es propietario de `lab_tests` y ASII-21 de `critical_alerts`; este PR no crea esas tablas.
