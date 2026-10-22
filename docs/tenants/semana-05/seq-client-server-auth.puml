@@ -1,0 +1,175 @@
+@startuml
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBackgroundColor #E3F2FD
+skinparam sequenceParticipantBorderColor #1565C0
+skinparam sequenceActorBackgroundColor #BBDEFB
+skinparam sequenceActorBorderColor #1565C0
+skinparam sequenceGroupBackgroundColor #F5F5F5
+skinparam sequenceGroupBorderColor #757575
+title **Secuencia Cliente-Servidor: Flujo Completo Autenticación (Login → MFA → Tokens → Request → Refresh → Logout)**
+actor "Usuario Final\n(Portal Web / App Móvil)" as User
+participant "API Gateway\n(NGINX/Envoy)" as Gateway
+participant "Auth Service\n(Login, MFA, Tokens)" as AuthSvc
+participant "Redis Cluster\n(Tokens, Sessions, Blocklist)" as Redis
+participant "PostgreSQL\n(central_users, audit_log)" as DB
+participant "Message Broker\n(Kafka/RabbitMQ)" as Broker
+participant "Clinical Service\n(Expediente Médico)" as ClinicalSvc
+group **1. Login Inicial (Credenciales → MFA Challenge)**
+    User -> Gateway : POST /auth/login\n{email, password}\nX-Tenant-ID: tenant-001
+    Gateway -> Gateway : Rate Limit (20 req/15min per email+IP)\nTLS 1.3 termination
+    Gateway -> AuthSvc : Forward request (HTTP/gRPC)
+    AuthSvc -> DB : SELECT u.*, hm.role_code\nFROM central_users u\nJOIN hospital_memberships hm ON u.user_id = hm.user_id\nWHERE lower(u.email) = ? AND hm.hospital_id = ?\n  AND hm.status = 'active' AND u.status = 'active'
+    DB --> AuthSvc : UserDTO + roles
+    alt Usuario no existe
+        AuthSvc -> DB : INSERT audit_log (LOGIN_FAILED, user_not_found)
+        AuthSvc --> Gateway : 401 Invalid Credentials
+        Gateway --> User : 401 {error: "Credenciales inválidas"
+    }
+else Usuario existe
+    AuthSvc -> AuthSvc : Verify password (Argon2id)
+    alt Password inválido
+        AuthSvc -> Redis : INCR login_failures:{user_id}
+        AuthSvc -> DB : INSERT audit_log (LOGIN_FAILED, bad_password)
+        AuthSvc --> Gateway : 401 Invalid Credentials
+        Gateway --> User : 401
+    else Password válido
+        AuthSvc -> Redis : DEL login_failures:{user_id}
+        AuthSvc -> AuthSvc : Evaluate MFA Policy\n(roles: TENANT_ADMIN/AUDITOR → MFA required\n  tenant.policy.mfa_required\n  user.mfa_required)
+        alt MFA Requerido
+            AuthSvc -> AuthSvc : Generate MFA Challenge\n(TOTP: base32 secret / WebAuthn: challenge)
+            AuthSvc -> DB : INSERT audit_log (MFA_CHALLENGED)
+            AuthSvc --> Gateway : 200 MFA_CHALLENGE\n{challenge_id, method: TOTP}
+            Gateway --> User : 200 MFA_CHALLENGE
+        else Sin MFA
+            AuthSvc -> AuthSvc : Generate Tokens (ver 1.2)
+        end
+    end
+end
+end
+group **1.2 Generación Tokens (Post-MFA / Sin MFA)**
+AuthSvc -> AuthSvc : Create Access Token (JWT RS256)\nClaims: sub, roles[], tenant_id, session_id, jti, device_id, exp: +15min
+AuthSvc -> AuthSvc : Create Refresh Token (opaco, 32 bytes)\nHash = Argon2id(refresh_token)
+AuthSvc -> Redis : SET refresh:{user_id}:{device_id}\n{hash, jti_access, exp: 7d} EX 7d
+AuthSvc -> AuthSvc : Single Session Policy Check\nif tenant.single_session + existing session
+AuthSvc -> Redis : Blocklist old access JTI
+AuthSvc -> Redis : DEL old refresh + session
+end
+AuthSvc -> Redis : SET session:{
+session_id}\n{user_id, tenant_id, device_id, last_activity: now} EX 7d
+AuthSvc -> DB : INSERT audit_log (LOGIN_SUCCESS + hash_chain)
+AuthSvc -> Broker : PUBLISH UserLoggedInEvent
+AuthSvc --> Gateway : 200 OK\n{access_token, refresh_token, expires_in: 900, user, session_id}
+Gateway --> User : 200 OK + Tokens
+end
+group **2. Request Autenticada a Clinical Service**
+User -> Gateway : GET /api/expedientes/paciente/123\nAuthorization: Bearer <access_token>\nX-Tenant-ID: tenant-001
+Gateway -> Gateway : Validate JWT (JWKS cache)\nCheck blocklist (Redis O(1))\nExtract claims (sub, roles, tenant_id, session_id)
+alt Token inválido / en blocklist
+    Gateway --> User : 401 Token Revoked/Expired
+else Token válido
+    Gateway -> ClinicalSvc : Forward con user context\nHeaders: X-User-ID, X-Roles, X-Tenant-ID, X-Session-ID
+    ClinicalSvc -> DB : SELECT * FROM expedientes\nWHERE paciente_id = ? AND tenant_id = current_setting('app.tenant_id')
+    DB --> ClinicalSvc : ExpedienteDTO (RLS enforced)
+    ClinicalSvc --> Gateway : 200 OK {expediente...}
+    Gateway --> User : 200 OK
+end
+end
+group **3. Refresh Token Rotation**
+User -> Gateway : POST /auth/refresh\n{refresh_token}
+Gateway -> AuthSvc : Forward
+AuthSvc -> Redis : GET refresh:{user_id}:{device_id}
+alt No existe (revocado/expirado)
+    AuthSvc -> DB : INSERT audit_log (REFRESH_INVALID)
+    AuthSvc --> Gateway : 401 Refresh Revoked
+    Gateway --> User : 401
+else Existe
+    AuthSvc -> AuthSvc : Verify Argon2id(refresh_token) == hash
+    alt Hash NO coincide → REUSE DETECTED (ATAQUE)
+        AuthSvc -> Redis : KEYS refresh:{user_id}:* (revocar TODO)
+        loop Todas las sesiones
+            AuthSvc -> Redis : GET key → {jti_access}
+            AuthSvc -> Redis : SET blocklist:{jti_access} TTL=exp-now
+            AuthSvc -> Redis : DEL refresh:{user_id}:{device}
+            AuthSvc -> Redis : DEL session:{session_id}
+        end
+        AuthSvc -> DB : INSERT audit_log (REFRESH_REUSE_ATTACK, CRITICAL)
+        AuthSvc -> Broker : PUBLISH SecurityAlertEvent (CRITICAL)
+        AuthSvc --> Gateway : 401 Token Compromised
+        Gateway --> User : 401
+    else Hash coincide → ROTACIÓN VÁLIDA
+        AuthSvc -> Redis : DEL old refresh
+        AuthSvc -> AuthSvc : Generate NEW access + refresh
+        AuthSvc -> Redis : SET new refresh (hash, new_jti, exp: 7d)
+        AuthSvc -> Redis : UPDATE session last_activity
+        AuthSvc -> DB : INSERT audit_log (TOKEN_REFRESHED)
+        AuthSvc --> Gateway : 200 OK\n{new_access_token, new_refresh_token}
+        Gateway --> User : 200 OK
+    end
+end
+end
+group **4. Revocación: Logout Propio**
+User -> Gateway : POST /auth/logout\nAuthorization: Bearer <access_token>
+Gateway -> AuthSvc : Forward
+AuthSvc -> Redis : SET blocklist:{jti_from_token} TTL=exp-now
+AuthSvc -> Redis : DEL refresh:{user_id}:{device_id}
+AuthSvc -> Redis : DEL session:{session_id}
+AuthSvc -> DB : INSERT audit_log (REVOKE_SESSION, reason: logout)
+AuthSvc -> Broker : PUBLISH SessionRevokedEvent {user_id, reason: logout}
+AuthSvc --> Gateway : 200 OK {revoked_sessions: 1}
+Gateway --> User : 200 OK
+end
+group **4.2 Force-Revoke por Admin**
+actor "Admin Tenant" as Admin
+Admin -> Gateway : DELETE /admin/users/{target_user_id}/sessions\nAuthorization: Bearer <admin_token>
+Gateway -> AuthSvc : Forward (validar TENANT_ADMIN + mismo tenant)
+AuthSvc -> Redis : KEYS refresh:{target_user_id}:* → revocar todo
+AuthSvc -> Redis : KEYS session:{target_user_id}:* → revocar todo
+AuthSvc -> DB : INSERT audit_log (REVOKE_SESSION, reason: force_revoke, requester_id: admin_id)
+AuthSvc -> Broker : PUBLISH SessionRevokedEvent {user_id, reason: force_revoke}
+AuthSvc --> Gateway : 200 OK {revoked_sessions: N}
+Gateway --> Admin : 200 OK
+end
+note right of Gateway
+    **API Gateway Responsabilidades:**
+    - TLS 1.3 termination
+    - Rate limiting global + por tenant
+    - JWT validation (JWKS cache TTL 1h)
+    - Blocklist check (Redis O(1))
+    - Request routing + headers injection
+    - WAF básico (SQLi, XSS)
+end note
+note right of AuthSvc
+    **Auth Service Responsabilidades:**
+    - Credenciales + MFA (TOTP/WebAuthn)
+    - JWT RS256 signing (claves rotadas 24h)
+    - Refresh rotation + Reuse detection
+    - Blocklist management (Redis)
+    - Single session enforcement
+    - Audit logging (hash chain)
+    - Event publishing (Kafka)
+end note
+note right of Redis
+    **Redis Cluster Estructuras:**
+    - refresh:{user_id}:{device_id} → {hash, jti, exp} (TTL 7d)
+    - session:{session_id} → {user_id, tenant_id, device, last_activity} (TTL 7d)
+    - blocklist:{jti} → exp (TTL = exp-now)
+    - login_failures:{user_id} → count (TTL 15m)
+    - mfa_failures:{user_id} → count (TTL 30m)
+    - account_lock:{user_id} → locked (TTL variable)
+end note
+note right of DB
+    **PostgreSQL Central (his_central):**
+    - central_users + hospital_memberships (RLS ready)
+    - audit_log (append-only + hash chain SHA-256)
+    - Triggers: BEFORE UPDATE/DELETE → EXCEPTION
+    - Índices: user_id, tenant_id, email, session_id
+end note
+note right of Broker
+    **Message Broker (Kafka):**
+    - Topics: tenants.auth.*
+    - Partitions: 6-12 por topic
+    - Retention: 3-30d
+    - Consumers: Clinical, Governance, Audit
+end note
+@enduml

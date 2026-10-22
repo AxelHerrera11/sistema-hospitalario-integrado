@@ -1,4 +1,6 @@
--- Subconjunto de la migración hospital 000400 (SQLite para pruebas). care_assignments e icd10_codes son de solo lectura.
+-- Esquema local simplificado para SQLite, NO subconjunto de la migración hospital 000400. care_assignments e icd10_codes son de solo lectura.
+-- Divergencias pendientes de integración: care_assignments usa user_ref_id y los estados active/ended (la tabla real, migración 000200, usa doctor_profile_id y active/closed/revoked);
+-- clinical_notes se inserta sin medical_record_id ni version_no, que son NOT NULL en 000400.
 -- Replica las reglas que no dependen de otras tablas: nota firmada inmutable, diagnóstico con el episodio y autor de su nota,
 -- sin borrados y fechas ISO. local_access_audits sigue el Anexo A de la Semana 1 y es provisional hasta la migración del slice H8.
 PRAGMA foreign_keys = ON;

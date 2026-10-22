@@ -26,7 +26,7 @@ Usuario
 [ buscar...                    ]
 Rol
 [ Enfermeria                  ▾ ]
-Permiso requerido: rbac.roles.asignar
+Permiso requerido: rbac.asignar
 ---------------------------------
 (sticky)        [ Validar ][ Asignar ]
 ```
