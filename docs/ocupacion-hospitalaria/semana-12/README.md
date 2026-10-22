@@ -19,7 +19,7 @@ Defender las decisiones de Semanas 7 a 11 y demostrar cómo un cambio de experie
 
 ## Tesis de defensa
 
-El dashboard es una vista agregada, temporal y de solo lectura. El backend decide la clasificación de cada cama; el cliente presenta la fotografía, su antigüedad y cualquier discrepancia. Una falla nunca se traduce a ceros y una pérdida de autorización elimina los datos previos.
+El dashboard es una vista agregada, temporal y de solo lectura. El backend decide la clasificación de cada cama; el cliente presenta la fotografía, su antigüedad y cualquier discrepancia. Una falla nunca se traduce a ceros. El prototipo elimina los datos previos al simular una pérdida de autorización; la pantalla Vue aún debe aplicar esa limpieza a su estado en memoria.
 
 ## Componentes defendidos
 
@@ -29,7 +29,7 @@ El dashboard es una vista agregada, temporal y de solo lectura. El backend decid
 | `BedSnapshotReader` | Obtener fotografía coherente | El adaptador PDO y el doble en memoria sustituyen el mismo puerto |
 | `ConsultOccupancy` | Orquestar lectura y cálculo | No conoce HTTP ni SQL |
 | `OccupancyController` | Traducir solicitud y resultado | Una falla de persistencia produce `503` |
-| `OccupancyPage.vue` | Implementado en la semana 16: presenta y permite filtrar | No recalcula ocupación ni modifica camas |
+| `OccupancyPage.vue` | Implementado en la semana 16: presenta la fotografía y permite actualizarla; el filtro sigue propuesto | No recalcula ocupación ni modifica camas |
 | `ocupacion.js` | Implementado en la semana 16: utilidades puras de presentación | Sin acceso directo a la red; la red vive en el cliente común del grupo |
 | Utilidades de ordenación | **Propuesto**: priorizar salas con inconsistencias | No está implementado en la pantalla; es el cambio preparado de esta semana |
 
@@ -61,9 +61,11 @@ capturas se generaron el 21 de octubre de 2026 con Chromium sobre el prototipo s
 | P-04 | Pulsar «Acceso restringido» | [`semana-11/capturas/escritorio-error-critico.png`](../semana-11/capturas/escritorio-error-critico.png) | El estado 403 borra las cifras anteriores y anuncia el motivo. |
 | P-05 | Repetir P-01 y P-04 con viewport de 390 x 844 | [`semana-11/capturas/movil-camino-feliz.png`](../semana-11/capturas/movil-camino-feliz.png), [`semana-11/capturas/movil-error-critico.png`](../semana-11/capturas/movil-error-critico.png) | La misma información reorganizada en tarjetas, sin scroll horizontal, con el mismo comportamiento de error. |
 
-En la pantalla real de la semana 16 el recorrido equivalente es: entrar a `/ocupacion`, ver el
-estado de carga, la fotografía con su corte, filtrar por sala, pulsar «Actualizar» y, si el
-permiso se revoca, comprobar que las cifras desaparecen.
+En la pantalla real de la semana 16 el recorrido disponible es: entrar a `/ocupacion`, ver el
+estado de carga, la fotografía con su corte y pulsar «Actualizar». El filtro por sala y la
+priorización de inconsistencias siguen siendo propuestas. Si una recarga devuelve `403`, el
+backend no entrega cifras, pero el componente actual conserva el `snapshot` anterior en memoria;
+limpiarlo al perder autorización es un pendiente del cliente Vue.
 
 
 ## Caso práctico
@@ -150,11 +152,12 @@ plan SQA de la semana 14.
 
 ## Riesgos y límites
 
-- Falta integrar el cliente Vue y probarlo contra la API real.
+- El cliente Vue está integrado y consulta la API mediante `@/plugins/axios`; no implementa el
+  filtro por sala ni la priorización de inconsistencias propuestos.
+- Falta limpiar la fotografía previa en memoria cuando una recarga responde `401/403`.
 - Falta medir contraste y probar lector de pantalla y navegadores objetivo.
 - El prototipo no implementa autenticación ni tenant reales.
 - La prueba PostgreSQL es opcional mientras `MICROHIS_PG_DSN` no esté configurado.
-- Los componentes frontend siguen siendo una propuesta arquitectónica.
 
 ## Evidencia
 

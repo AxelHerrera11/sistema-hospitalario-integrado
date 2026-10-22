@@ -6,6 +6,6 @@
 
 **Prompt relevante:** «hace hasta la semana 14».
 
-**Contenido aceptado o modificado:** la defensa distingue componentes existentes, propuestas y simulaciones. No atribuye integración Vue, pruebas con usuarios, lector de pantalla o PostgreSQL que no se hayan ejecutado.
+**Contenido aceptado o modificado:** la defensa distingue la pantalla Vue integrada de los filtros y la priorización propuestos, además del prototipo simulado. No atribuye pruebas con usuarios o lector de pantalla que no se hayan ejecutado.
 
 **Validación humana:** pendiente de revisión por Javier Alexander Fajardo López antes de publicar esta entrega.

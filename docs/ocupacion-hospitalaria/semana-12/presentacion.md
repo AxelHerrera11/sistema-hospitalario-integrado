@@ -55,6 +55,6 @@ Agregar `Priorizar inconsistencias` como preferencia de presentación. No cambia
 
 - 12 verificaciones del Micro-HIS aprobadas.
 - Prototipo local con datos ficticios y sintaxis JS validada.
-- Evidencia pendiente declarada: Vue real, lector de pantalla, navegador y PostgreSQL configurado.
+- Evidencia pendiente declarada: filtro/priorización en Vue, limpieza del estado tras `401/403`, lector de pantalla y navegador.
 
 **Cierre:** una interfaz confiable no oculta la incertidumbre; la explica sin alterar la fuente de verdad.
