@@ -1,0 +1,12 @@
+@startsalt
+title W1 - Búsqueda: estado vacío y carga
+{+
+  {/ <b>Catálogo de medicamentos</b> | Hospital activo: Hospital Central }
+  ---
+  Buscar por código, nombre o principio activo
+  { "              " | [Buscar] }
+  <i>Ayuda: escriba al menos 2 caracteres. Ej.: AMX-500 o amoxicilina</i>
+  ---
+  { (X) Cargando… <i>(aria-busy, botón desactivado)</i> }
+}
+@endsalt

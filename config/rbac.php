@@ -34,6 +34,7 @@ return [
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'admin_hospital' => [
+            'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
             'citas.ver', 'citas.crear', 'citas.confirmar',
             'citas.cancelar', 'reportes.ver', 'reportes.exportar',
             'documentacion.ver', 'medicamentos.ver', 'laboratorio.ver',
@@ -106,6 +107,7 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
+        'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
         'citas.cancelar', 'reportes.ver', 'reportes.exportar',
         'documentacion.ver', 'admision.ver', 'expediente.ver',
