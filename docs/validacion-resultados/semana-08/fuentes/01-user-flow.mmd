@@ -1,0 +1,11 @@
+flowchart TD
+    A[Bioquimico abre bandeja] --> B[Filtra por unidad o prioridad]
+    B --> C[Revisa valor rango e historial]
+    C --> D{Datos consistentes?}
+    D -- No --> E[Solicitar correccion con motivo]
+    E --> F[Notificar al tecnico]
+    D -- Si --> G{Aprobar resultado?}
+    G -- No --> E
+    G -- Si --> H[Confirmar decision]
+    H --> I[Guardar estado y auditoria]
+    I --> J[Mostrar resultado aprobado]
