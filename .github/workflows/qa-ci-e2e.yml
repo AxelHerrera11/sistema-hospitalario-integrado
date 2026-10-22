@@ -85,12 +85,40 @@ jobs:
     name: Unitarias, integración y contratos
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      central:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_central_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres # contenedor efímero del job, sin datos reales
+        ports: ['55431:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      hospital:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_hospital_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['55433:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CENTRAL_DB_HOST: 127.0.0.1
+      CENTRAL_DB_PORT: '55431'
+      CENTRAL_DB_DATABASE: his_central_test
+      CENTRAL_DB_USERNAME: postgres
+      CENTRAL_DB_PASSWORD: postgres
+      HOSPITAL_DB_HOST: 127.0.0.1
+      HOSPITAL_DB_PORT: '55433'
+      HOSPITAL_DB_DATABASE: his_hospital_test
+      HOSPITAL_DB_USERNAME: postgres
+      HOSPITAL_DB_PASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: pdo_sqlite
+          extensions: pdo_pgsql, pgsql, pdo_sqlite
           coverage: none
       - uses: actions/setup-node@v4
         with:
@@ -99,6 +127,11 @@ jobs:
         run: |
           composer install --no-interaction --prefer-dist --no-progress
           mkdir -p "$EVIDENCE"/{phpunit,micro-his,frontend,contract}
+      - name: Migraciones del repositorio en las bases *_test
+        run: |
+          composer migrate:central
+          composer migrate:framework
+          composer migrate:hospital
       - name: PHPUnit Unit
         run: php vendor/phpunit/phpunit/phpunit --testsuite Unit --log-junit "$EVIDENCE/phpunit/unit.xml"
       - name: PHPUnit Feature (SQLite en memoria)
@@ -191,21 +224,21 @@ jobs:
           echo "::add-mask::$jwt"
           echo "::add-mask::$pass"
           { echo "JWT_SECRET=$jwt"; echo "E2E_PASSWORD=$pass"; } >> "$GITHUB_ENV"
-      - name: Suite Database contra PostgreSQL de prueba (bases *_test separadas)
-        continue-on-error: true # informativa hasta su primera ejecución verde en CI
-        env:
-          PGPASSWORD: postgres
-          CENTRAL_DB_DATABASE: his_central_test
-          HOSPITAL_DB_DATABASE: his_hospital_test
-        run: |
-          psql -h 127.0.0.1 -p 55431 -U postgres -c 'CREATE DATABASE his_central_test'
-          psql -h 127.0.0.1 -p 55433 -U postgres -c 'CREATE DATABASE his_hospital_test'
-          php vendor/phpunit/phpunit/phpunit --testsuite Database --log-junit "$EVIDENCE/phpunit/database.xml"
       - name: Migraciones del repositorio en las bases efímeras E2E
         run: |
           composer migrate:central
           composer migrate:framework
           composer migrate:hospital
+      - name: Suite Database contra PostgreSQL de prueba (bases *_test separadas)
+        env:
+          CENTRAL_DB_DATABASE: his_central_test
+          HOSPITAL_DB_DATABASE: his_hospital_test
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -p 55431 -U postgres -c 'CREATE DATABASE his_central_test'
+          psql -h 127.0.0.1 -p 55433 -U postgres -c 'CREATE DATABASE his_hospital_test'
+          psql -h 127.0.0.1 -p 55433 -U postgres -d his_hospital_test -c 'CREATE EXTENSION IF NOT EXISTS btree_gist'
+          php vendor/phpunit/phpunit/phpunit --testsuite Database --log-junit "$EVIDENCE/phpunit/database.xml"
       - name: Datos ficticios (solo bases *_e2e)
         run: E2E_ALLOW_SEED=1 php tests/E2E/fixtures/seed-e2e.php
       - name: Levantar servidores aislados
