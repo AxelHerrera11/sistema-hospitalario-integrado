@@ -19,8 +19,18 @@ const MOTIVOS = {
 export function interpretar(estado, cuerpo = {}) {
     const base = { puedeReintentar: false, debeConsultar: false };
     if (estado === 200 || estado === 201) {
-        const texto = cuerpo.estancia_destino_id ? 'Traslado confirmado. La cama de origen quedó liberada.' : 'Alta confirmada. La cama quedó liberada.';
-        return { ...base, tipo: 'exito', texto };
+        // H6 (Semana 9): el éxito informa la hora T y, en el traslado, la nueva estancia para poder seguir operando.
+        const hora = cuerpo.t ? ` Hora: ${new Date(cuerpo.t).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: false })}.` : '';
+        const texto = cuerpo.estancia_destino_id
+            ? `Traslado confirmado. La cama de origen quedó liberada. Nueva estancia: ${cuerpo.estancia_destino_id}.${hora}`
+            : `Alta confirmada. La cama quedó liberada.${hora}`;
+        return { ...base, tipo: 'exito', texto, estanciaNueva: cuerpo.estancia_destino_id ?? null };
+    }
+    if (estado === 0) {
+        // Conexión limitada (Semana 10): sin red no se envía nada; si se agotó el tiempo de un envío, es incierto.
+        return cuerpo.motivo === 'sin_red'
+            ? { ...base, tipo: 'reintentar', texto: 'Sin conexión. No se envió nada; reintente cuando vuelva la red.', puedeReintentar: true }
+            : { ...base, tipo: 'consultar', texto: 'La red no respondió a tiempo. No se sabe si se guardó: consulte el estado antes de reintentar.', debeConsultar: true };
     }
     if (estado === 409 || estado === 403) {
         return { ...base, tipo: 'rechazo', texto: MOTIVOS[cuerpo.motivo] ?? 'La operación fue rechazada. No se guardó ningún cambio.' };
@@ -40,9 +50,17 @@ export function interpretar(estado, cuerpo = {}) {
     return { ...base, tipo: 'error', texto: 'Error inesperado. No se confirmó la operación.' };
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** H1 (Semana 9): actor y estancia se validan antes de consultar, para no confundir un dato faltante con un 404. */
+export function validarConsulta({ actor = '', estancia = '' }) {
+    if (!UUID.test(actor.trim())) return 'actor';
+    return UUID.test(estancia.trim()) ? null : 'estancia';
+}
+
 /** Validación local previa al envío (la API vuelve a validar). Devuelve el campo inválido o null. */
 export function validarTraslado({ cama_destino_id: cama = '', motivo = '' }) {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cama.trim())) return 'cama_destino_id';
+    if (!UUID.test(cama.trim())) return 'cama_destino_id';
     const texto = motivo.trim();
     return texto.length === 0 || texto.length > 500 ? 'motivo' : null;
 }
