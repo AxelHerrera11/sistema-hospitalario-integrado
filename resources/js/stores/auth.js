@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', {
     }),
     actions: {
         setTenantId(tenantId) {
+            if (this.tenantId !== tenantId) this.clearSession();
             this.tenantId = tenantId;
             localStorage.setItem('tenant_id', tenantId);
         },
@@ -45,6 +46,12 @@ export const useAuthStore = defineStore('auth', {
             this.persistSession(data);
 
             return data.access_token;
+        },
+        async synchronizeIdentity() {
+            const { data } = await api.get('/auth/me');
+            this.user = data.user ?? null;
+            this.hospital = data.hospital ?? null;
+            this.roles = data.roles ?? [];
         },
         async initialize() {
             if (this.initialized) {

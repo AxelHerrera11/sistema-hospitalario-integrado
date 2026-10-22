@@ -159,3 +159,15 @@ exit=0
 exit=0
 Alcance de la evidencia: la corrección afecta la navegación (enlaces visibles y bloqueo de ruta);
 no hay capturas de navegador ni prueba manual por hospital y por rol, que siguen pendientes.
+
+2026-10-21: continuación de cierre local (no staging).
+El guard revalida /auth/me antes de cada pantalla protegida y limpia identidad
+ante revocación o cambio de hospital. Ante fallo de red bloquea la navegación.
+> node resources/js/router/permissions.test.mjs
+OK: pruebas de permisos del router pasaron.
+> node resources/js/router/navigation.test.mjs
+OK: navegacion revalida permisos, revocacion y fallo seguro
+Build conjunto: 105 módulos, OK. Navegador local con JWT real y usuarios ficticios:
+lector no entra a new/edit ni rbac; superadmin consulta catálogo; revocar rol
+redirige al login; hospital B muestra permisos propios; logout impide volver a rbac.
+La continuación se probó con develop a3925260, #848, #858 y activación de gobernanza.
