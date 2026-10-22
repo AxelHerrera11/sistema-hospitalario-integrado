@@ -17,6 +17,7 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 | 11 | Prototipo navegable en escritorio y móvil: mapa, camino feliz, error crítico y simulaciones | `semana-11/` | Recorrido 9/9 a 1024 y 375 px; error crítico 2/2 | Esta entrega (capturas en #873) | — | Revisión humana de la S11 sin confirmar |
 | 12 | Segundo parcial: 5 diapositivas, recorrido, matriz de 14 decisiones de UX y cambio práctico (Escape y foco, simulado) | `semana-12/` | `teclado.mjs` 1/4 → 4/4; recorrido 9/9; `ui-mensajes` 7/7 | Esta entrega | — | Sin defensa oral declarada; revisión humana de la S12 sin confirmar |
 | 13 | Plan de revisión formal, checklist de 15 ítems con autoverificación, roles propuestos y formato de hallazgos | `semana-13/` | Criterios de entrada: `run.php` 95/95, `postgres.php` 20/20, `ui-mensajes` 7/7 | Esta entrega | — | **No completa:** confirmar roles y realizar la revisión; C7 y C12 sin evidencia |
+| 14 | Plan SQA: 7 métricas, 5 riesgos, 8 controles y calendario | `semana-14/` | `metricas.php`: M1 95/95, M2 máx. 393, M3 10/10, M4 0; M5 9/10; M6 20/20 | Esta entrega | — | M7 concurrencia sin cumplir (S15); permisos con ASII-02 |
 
 ## Funcionalidad comprobada hasta hoy
 
