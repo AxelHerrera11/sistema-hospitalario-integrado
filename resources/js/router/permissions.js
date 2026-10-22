@@ -15,6 +15,8 @@ export const ROUTE_PERMISSIONS = {
     rbac: 'rbac.permisos.ver',
     'admin-users': 'usuarios.ver',
     patients: 'pacientes.ver',
+    'patients-new': 'pacientes.registrar',
+    'patients-edit': 'pacientes.editar',
 };
 
 /** Entradas de navegación sujetas a permiso. */

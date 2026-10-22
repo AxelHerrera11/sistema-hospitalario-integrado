@@ -71,12 +71,33 @@ NAVIGATION.forEach((entry) => {
     assert.ok(Object.values(ROUTE_PERMISSIONS).includes(entry.permission), `entrada sin permiso conocido: ${entry.to}`);
 });
 
+// Las acciones de Pacientes usan el permiso de la accion, no el de lectura.
+assert.equal(ROUTE_PERMISSIONS.patients, 'pacientes.ver');
+assert.equal(ROUTE_PERMISSIONS['patients-new'], 'pacientes.registrar');
+assert.equal(ROUTE_PERMISSIONS['patients-edit'], 'pacientes.editar');
+
+// Un lector no puede entrar por URL a registrar o editar; cada accion es independiente.
+for (const action of ['patients-new', 'patients-edit']) {
+    const meta = { permission: ROUTE_PERMISSIONS[action] };
+    assert.equal(allowsRoute({ permissions: ['pacientes.ver'] }, meta), false);
+    assert.equal(allowsRoute({ permissions: [meta.permission] }, meta), true);
+    assert.equal(allowsRoute(null, meta), false);
+}
+assert.equal(allowsRoute({ permissions: ['pacientes.registrar'] }, { permission: ROUTE_PERMISSIONS['patients-edit'] }), false);
+assert.equal(allowsRoute({ permissions: ['pacientes.editar'] }, { permission: ROUTE_PERMISSIONS['patients-new'] }), false);
+
+// Todo permiso de la interfaz existe en el catalogo del backend (config/rbac.php).
+const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');
+Object.values(ROUTE_PERMISSIONS).forEach((permission) => {
+    assert.ok(catalog.includes(`'${permission}'`), `permiso fuera del catalogo del backend: ${permission}`);
+});
+
 // Toda ruta protegida del enrutador declara el permiso que exige el backend.
 const routerSource = readFileSync(join(here, 'index.js'), 'utf8');
 const protectedRoutes = routerSource.match(/requiresAuth: true[^\n]*/g) ?? [];
 assert.ok(protectedRoutes.length >= 6, 'el enrutador debe seguir declarando rutas protegidas');
 protectedRoutes.forEach((route) => {
-    assert.match(route, /permission: ROUTE_PERMISSIONS[.[]/, `ruta protegida sin permiso declarado: ${route.trim()}`);
+    assert.match(route, /[{,]\s*permission\b/, `ruta protegida sin permiso declarado: ${route.trim()}`);
 });
 
 console.log('OK: pruebas de permisos del router pasaron.');

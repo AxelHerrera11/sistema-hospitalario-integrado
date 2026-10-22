@@ -48,11 +48,17 @@ const router = createRouter({
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.patients },
         },
-        ...['new', 'detail', 'edit', 'restricted', 'saved'].map((view) => ({
+        ...Object.entries({
+            new: ROUTE_PERMISSIONS['patients-new'],
+            detail: ROUTE_PERMISSIONS.patients,
+            edit: ROUTE_PERMISSIONS['patients-edit'],
+            restricted: ROUTE_PERMISSIONS.patients,
+            saved: ROUTE_PERMISSIONS.patients,
+        }).map(([view, permission]) => ({
             path: `/patients/${view}`,
             name: `patients-${view}`,
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
-            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.patients },
+            meta: { requiresAuth: true, permission },
         })),
     ],
 });

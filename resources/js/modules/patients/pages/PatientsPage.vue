@@ -5,7 +5,7 @@
 
         <nav v-if="demoMode" class="patients__nav" aria-label="Prototipo de pacientes">
             <RouterLink :to="target('patients')">Buscar</RouterLink>
-            <RouterLink :to="target('patients-new')">Nuevo paciente</RouterLink>
+            <RouterLink v-if="can(auth.user, 'pacientes.registrar')" :to="target('patients-new')">Nuevo paciente</RouterLink>
             <RouterLink :to="target('patients-restricted')">Acceso restringido</RouterLink>
         </nav>
 
@@ -43,7 +43,7 @@
                     <dt>Estado</dt><dd>{{ patient.status }}</dd>
                 </dl>
                 <div class="patients__actions">
-                    <button type="button" @click="go('patients-edit')">Editar datos (demo)</button>
+                    <button v-if="can(auth.user, 'pacientes.editar')" type="button" @click="go('patients-edit')">Editar datos (demo)</button>
                     <button class="patients__secondary" type="button" @click="go('patients')">Nueva búsqueda</button>
                 </div>
             </article>
