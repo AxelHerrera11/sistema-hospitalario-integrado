@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace MicroHis\CatalogoLab\Persistence;
 
-use MicroHis\CatalogoLab\Application\LabTestStore;
+use MicroHis\CatalogoLab\Application\LabTestRepository;
 use MicroHis\CatalogoLab\Application\PersistenceFailure;
 use MicroHis\CatalogoLab\Domain\LabTest;
 use PDO;
 use PDOException;
 
 /** Adaptador PDO de lab_tests y local_access_audits. Solo sentencias preparadas. */
-final class PdoLabTestStore implements LabTestStore
+final class PdoLabTestRepository implements LabTestRepository
 {
     public function __construct(private readonly PDO $pdo)
     {

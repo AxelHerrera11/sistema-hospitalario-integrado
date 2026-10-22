@@ -12,7 +12,7 @@ use MicroHis\CatalogoLab\Domain\LabTest;
 final class RegisterLabTest
 {
     /** @param Closure(): string $today @param Closure(): string $newId */
-    public function __construct(private readonly LabTestStore $store, private readonly Closure $today, private readonly Closure $newId) {}
+    public function __construct(private readonly LabTestRepository $store, private readonly Closure $today, private readonly Closure $newId) {}
 
     /** @param array<string, mixed> $data */
     public function execute(array $data, string $actor): LabTest
