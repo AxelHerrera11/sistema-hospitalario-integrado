@@ -8,20 +8,16 @@
                 <router-link class="layout__link" to="/">
                     Inicio
                 </router-link>
-                <router-link class="layout__link" to="/ocupacion">
-                    Ocupación
-                </router-link>
                 <router-link class="layout__link" to="/login">
                     Acceso
                 </router-link>
-                <router-link v-if="auth.token" class="layout__link" to="/admin/users">
-                    Usuarios
-                </router-link>
-                <router-link v-if="auth.token" class="layout__link" to="/patients">
-                    Pacientes
-                </router-link>
-                <router-link v-if="auth.token" class="layout__link" to="/medicamentos">
-                    Medicamentos
+                <router-link
+                    v-for="item in navigation"
+                    :key="item.to"
+                    class="layout__link"
+                    :to="item.to"
+                >
+                    {{ item.label }}
                 </router-link>
                 <button v-if="auth.token" class="layout__link layout__logout" @click="logout">
                     Cerrar sesión
@@ -30,6 +26,9 @@
         </header>
         <p v-if="auth.hospital" class="layout__tenant">
             Hospital activo: {{ auth.hospital.name }} · {{ auth.hospital.hospital_id }}
+        </p>
+        <p v-if="auth.notice" class="layout__error" role="alert">
+            {{ auth.notice }}
         </p>
         <p v-if="logoutError" class="layout__error" role="alert">
             {{ logoutError }}
@@ -41,13 +40,15 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { visibleNavigation } from '@/router/permissions';
 
 const auth = useAuthStore();
 const router = useRouter();
 const logoutError = ref('');
+const navigation = computed(() => visibleNavigation(auth.user));
 
 async function logout() {
     logoutError.value = '';

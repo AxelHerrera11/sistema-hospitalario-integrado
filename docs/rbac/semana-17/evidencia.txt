@@ -123,3 +123,39 @@ exit=0
 > php artisan config:clear --no-ansi
    INFO  Configuration cache cleared successfully.
 exit=0
+
+2026-10-21: corrección de seguridad del gating de la interfaz (permisos efectivos).
+Rama feature/asii-02-semana-17-rbac-seguridad-despliegue-mar-03 desde origin/develop (3afc782).
+Node 26.1.0 local; sin navegador, sin staging y sin E2E.
+> node resources/js/router/permissions.test.mjs
+OK: pruebas de permisos del router pasaron.
+exit=0
+> node resources/js/modules/medicamentos/medicamentos.test.mjs
+OK: reglas de la pantalla del catálogo de medicamentos
+exit=0
+> node resources/js/modules/ocupacion/ocupacion.test.mjs
+OK: 14 aserciones de la pantalla de ocupación aprobadas
+exit=0
+> npm run build
+
+> build
+> vite build
+
+vite v7.3.2 building client environment for production...
+transforming...
+✓ 105 modules transformed.
+rendering chunks...
+computing gzip size...
+public/build/manifest.json                     2.71 kB │ gzip:  0.50 kB
+public/build/assets/app-BaidUsmt.js            143.90 kB │ gzip: 55.79 kB
+✓ built in 3.01s
+
+exit=0
+> php artisan test tests/Feature/Rbac --no-ansi
+
+  Tests:    33 passed (3678 assertions)
+  Duration: 27.39s
+
+exit=0
+Alcance de la evidencia: la corrección afecta la navegación (enlaces visibles y bloqueo de ruta);
+no hay capturas de navegador ni prueba manual por hospital y por rol, que siguen pendientes.

@@ -9,12 +9,19 @@ export const useAuthStore = defineStore('auth', {
         hospital: null,
         roles: [],
         authError: '',
+        notice: '',
         initialized: false,
     }),
     actions: {
         setTenantId(tenantId) {
             this.tenantId = tenantId;
             localStorage.setItem('tenant_id', tenantId);
+        },
+        setNotice(message) {
+            this.notice = message;
+        },
+        clearNotice() {
+            this.notice = '';
         },
         persistSession(payload) {
             this.token = payload.access_token;
@@ -80,6 +87,7 @@ export const useAuthStore = defineStore('auth', {
             this.user = null;
             this.hospital = null;
             this.roles = [];
+            this.notice = '';
             localStorage.removeItem('auth_token');
             setAccessToken(null);
         },
