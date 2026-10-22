@@ -185,3 +185,23 @@ El docente o evaluador debe registrar el resultado de estos criterios después d
 ## Conclusión
 
 La defensa conecta arquitectura y experiencia mediante contratos claros: el backend mantiene la verdad, el cliente comunica contexto y fallas, y cualquier mejora visual conserva las garantías de seguridad y exactitud.
+
+## Verificación de la respuesta defendida
+
+Cada punto de la respuesta al cambio solicitado tiene una comprobación automatizada en el
+código integrado:
+
+| Punto de la respuesta | Comprobación |
+|---|---|
+| El corte y la antigüedad viajan en la respuesta | `test_devuelve_la_fotografia_de_ocupacion_con_el_corte_y_el_request_id` |
+| El corte por defecto es la hora del servidor | `test_el_corte_por_defecto_es_la_hora_del_servidor` |
+| Una fecha inválida se rechaza | `test_rechaza_un_corte_invalido` |
+| Sin token no hay datos | `test_sin_token_responde_` |
+| Sin el permiso `ocupacion.ver` no hay datos | `test_sin_el_permiso_ocupacion_ver_responde_` |
+| Otro hospital declarado no ve ocupación | `test_un_hospital_distinto_al_declarado_responde_` y `test_un_hospital_distinto_al_declarado_no_ve_ocupacion` |
+| Una falla de persistencia responde `503`, nunca ocupación cero | `test_la_falla_de_persistencia_responde_` y `test_una_base_hospital_inexistente_responde_` |
+| La respuesta no expone datos de pacientes | `test_la_respuesta_no_expone_datos_de_pacientes` |
+| El endpoint es de solo lectura | `test_el_endpoint_es_de_solo_lectura` |
+
+Las pruebas viven en `tests/Feature/Ocupacion/` y `tests/Database/Hospital/OccupancySnapshotIntegrityTest.php`,
+y se ejecutan con `php artisan test tests/Feature/Ocupacion tests/Database/Hospital/OccupancySnapshotIntegrityTest.php`.
