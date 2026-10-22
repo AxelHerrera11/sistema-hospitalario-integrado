@@ -9,12 +9,20 @@ export const useAuthStore = defineStore('auth', {
         hospital: null,
         roles: [],
         authError: '',
+        notice: '',
         initialized: false,
     }),
     actions: {
         setTenantId(tenantId) {
+            if (this.tenantId !== tenantId) this.clearSession();
             this.tenantId = tenantId;
             localStorage.setItem('tenant_id', tenantId);
+        },
+        setNotice(message) {
+            this.notice = message;
+        },
+        clearNotice() {
+            this.notice = '';
         },
         persistSession(payload) {
             this.token = payload.access_token;
@@ -38,6 +46,12 @@ export const useAuthStore = defineStore('auth', {
             this.persistSession(data);
 
             return data.access_token;
+        },
+        async synchronizeIdentity() {
+            const { data } = await api.get('/auth/me');
+            this.user = data.user ?? null;
+            this.hospital = data.hospital ?? null;
+            this.roles = data.roles ?? [];
         },
         async initialize() {
             if (this.initialized) {
@@ -80,6 +94,7 @@ export const useAuthStore = defineStore('auth', {
             this.user = null;
             this.hospital = null;
             this.roles = [];
+            this.notice = '';
             localStorage.removeItem('auth_token');
             setAccessToken(null);
         },
