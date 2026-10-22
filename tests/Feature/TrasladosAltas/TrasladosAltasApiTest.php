@@ -100,4 +100,34 @@ final class TrasladosAltasApiTest extends TestCase
             ->assertJsonPath('codigo', 'HOSPITAL_NO_DISPONIBLE')->assertHeader('Retry-After', '5');
         $this->assertNull($this->hospital->estancias[self::ESTANCIA]['fin']);
     }
+
+    public function test_body_cannot_spoof_actor_or_tenant_and_wrong_role_cannot_write(): void
+    {
+        $this->activarPropuesta();
+        $campos = ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento',
+            'actor_ref_id' => '00000000-0000-4000-8000-000000000099', 'hospital_id' => 'hospital-b'];
+        TrasladosTestIdentity::como('recepcion');
+        $this->postJson('/api/v1/traslados', $campos)->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        $this->assertNull($this->hospital->estancias[self::ESTANCIA]['fin']);
+
+        TrasladosTestIdentity::como('enfermeria');
+        $destino = $this->postJson('/api/v1/traslados', $campos)->assertStatus(201)->json('estancia_destino_id');
+        $this->assertSame('00000000-0000-4000-8000-0000000000f1', $this->hospital->estancias[$destino]['actor']);
+    }
+
+    public function test_database_error_hides_details_and_replaces_untrusted_trace(): void
+    {
+        $this->activarPropuesta();
+        config()->set('app.debug', false);
+        TrasladosTestIdentity::como('medico');
+        $this->app->bind(RegistroInternacion::class, static fn () => throw new PDOException('SQLSTATE[28P01] password=secreto'));
+
+        $respuesta = $this->withHeaders(['X-Request-Id' => '../../traza-no-confiable'])->postJson('/api/v1/altas', [
+            'estancia_esperada_id' => self::ESTANCIA,
+        ])->assertStatus(503)->assertJsonPath('codigo', 'HOSPITAL_NO_DISPONIBLE')
+            ->assertHeader('Cache-Control', 'no-store, private')->assertHeader('Retry-After', '5');
+        $this->assertMatchesRegularExpression('/^trace-[0-9a-f]{12}$/', $respuesta->json('trace_id'));
+        $this->assertStringNotContainsString('SQLSTATE', $respuesta->getContent());
+        $this->assertStringNotContainsString('secreto', $respuesta->getContent());
+    }
 }
