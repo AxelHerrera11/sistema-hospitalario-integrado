@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 use MicroHis\NotasSoap\Application\AssociateDiagnosis;
-use MicroHis\NotasSoap\Application\CatalogUnavailable;
+use MicroHis\NotasSoap\Application\CareAssignmentReader;
+use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Application\Icd10Catalog;
 use MicroHis\NotasSoap\Application\RegisterSoapNote;
 use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
@@ -11,6 +12,13 @@ use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
+use MicroHis\NotasSoap\Domain\Uuid;
+use MicroHis\NotasSoap\Persistence\InMemoryAuditTrail;
+use MicroHis\NotasSoap\Persistence\InMemoryCareAssignmentReader;
+use MicroHis\NotasSoap\Persistence\InMemoryClinicalNoteRepository;
+use MicroHis\NotasSoap\Persistence\InMemoryIcd10Catalog;
+use MicroHis\NotasSoap\Persistence\PdoAuditTrail;
+use MicroHis\NotasSoap\Persistence\PdoCareAssignmentReader;
 use MicroHis\NotasSoap\Persistence\PdoClinicalNoteStore;
 use MicroHis\NotasSoap\Persistence\PdoIcd10Catalog;
 use MicroHis\NotasSoap\Presentation\SoapNoteHttpHandler;
@@ -18,16 +26,28 @@ use MicroHis\NotasSoap\Presentation\SoapNoteHttpHandler;
 require __DIR__ . '/../bootstrap.php';
 
 /** Base de prueba: SQLite en memoria con datos ficticios. La Dra. López atiende el episodio ep1. */
-function app(?Icd10Catalog $catalog = null): array
+function app(?Icd10Catalog $catalog = null, ?InMemoryAuditTrail $audit = null): array
 {
     $pdo = new PDO('sqlite::memory:');
     $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
     $pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'dra.lopez', 'active'), ('ep1', 'dr.perez', 'ended')");
     $pdo->exec("INSERT INTO icd10_codes VALUES ('J18.9', 'Neumonía, no especificada', 1), ('I10', 'Hipertensión esencial', 1), ('A00', 'Cólera', 0)");
-    $store = new PdoClinicalNoteStore($pdo);
-    $guard = new TreatingPhysicianGuard($store);
-    $associate = new AssociateDiagnosis($guard, $catalog ?? new PdoIcd10Catalog($pdo), new DiagnosisPolicy(), $store);
-    return [$pdo, new SoapNoteHttpHandler(new RegisterSoapNote($guard, $store), $associate)];
+    return [$pdo, handler(new PdoClinicalNoteStore($pdo, $audit ?? new PdoAuditTrail($pdo)), new PdoCareAssignmentReader($pdo), $catalog ?? new PdoIcd10Catalog($pdo))];
+}
+
+/** Mismo flujo sin base de datos: repositorio, asignaciones, catálogo y auditoría en memoria. */
+function memoryApp(bool $auditDown = false): array
+{
+    $audit = new InMemoryAuditTrail($auditDown);
+    $notes = new InMemoryClinicalNoteRepository($audit);
+    $catalog = new InMemoryIcd10Catalog(['J18.9' => ['Neumonía, no especificada', true], 'A00' => ['Cólera', false]]);
+    return [$notes, $audit, handler($notes, new InMemoryCareAssignmentReader(['ep1' => ['dra.lopez']]), $catalog)];
+}
+
+function handler(ClinicalNoteRepository $notes, CareAssignmentReader $assignments, Icd10Catalog $catalog): SoapNoteHttpHandler
+{
+    $guard = new TreatingPhysicianGuard($assignments);
+    return new SoapNoteHttpHandler(new RegisterSoapNote($guard, $notes), new AssociateDiagnosis($guard, $catalog, new DiagnosisPolicy(), $notes));
 }
 
 function check(string $name, bool $ok): void
@@ -44,7 +64,8 @@ $soap = ['subjective' => 'Tos de 3 días', 'objective' => 'T 38.4 °C', 'assessm
 [$pdo, $http] = app();
 $r = $http->registerNote($lopez, 'ep1', $soap);
 $nota = $r['body']['clinical_note_id'] ?? '';
-check('camino feliz: nota SOAP 201 en borrador con auditoría', $r['status'] === 201 && $col($pdo, 'SELECT note_type FROM clinical_notes') === ['soap'] && $col($pdo, 'SELECT event FROM local_access_audits') === ['nota_soap_registrada']);
+check('camino feliz: nota SOAP 201 en borrador con auditoría', $r['status'] === 201 && $col($pdo, 'SELECT note_type FROM clinical_notes') === ['soap'] && $col($pdo, 'SELECT action FROM local_access_audits') === ['nota_soap.registrada']
+    && preg_match(Uuid::PATTERN, $nota) === 1 && $col($pdo, "SELECT resource_id FROM local_access_audits WHERE json_extract(metadata, '$.version_no') = 1") === [$nota]);
 $r = $http->associateDiagnosis($lopez, $nota, ['code' => 'J18.9', 'type' => 'primary']);
 check('camino feliz: diagnóstico principal J18.9 201 con descripción del catálogo', $r['status'] === 201 && $col($pdo, 'SELECT description FROM diagnoses') === ['Neumonía, no especificada']);
 
@@ -67,16 +88,38 @@ try {
     check('regla de dominio pura (sin BD): la política rechaza un segundo principal', $e->getMessage() === 'PRIMARY_DIAGNOSIS_EXISTS');
 }
 
-$caido = new class () implements Icd10Catalog {
-    public function description(string $code): ?string
-    {
-        throw new CatalogUnavailable();
-    }
-};
-[$pdo, $http] = app($caido);
+[$pdo, $http] = app(new InMemoryIcd10Catalog([], down: true));
 $nota = $http->registerNote($lopez, 'ep1', $soap)['body']['clinical_note_id'];
 check('doble de prueba: catálogo caído -> 503 y la nota queda sin diagnósticos', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'J18.9', 'type' => 'primary'])) === '503 ICD10_UNAVAILABLE' && $col($pdo, 'SELECT COUNT(*) FROM diagnoses') === [0]);
 [$pdo, $http] = app();
 $pdo->exec('DROP TABLE local_access_audits');
 check('error de persistencia: auditoría caída -> 500 y rollback de la nota', $status($http->registerNote($lopez, 'ep1', $soap)) === '500 SOAP_PERSISTENCE_ERROR' && $col($pdo, 'SELECT COUNT(*) FROM clinical_notes') === [0]);
+[$pdo, $http] = app(audit: new InMemoryAuditTrail(down: true));
+check('auditoría por interfaz: PDO con bitácora caída -> 500 y rollback de la nota', $status($http->registerNote($lopez, 'ep1', $soap)) === '500 SOAP_PERSISTENCE_ERROR' && $col($pdo, 'SELECT COUNT(*) FROM clinical_notes') === [0]);
+
+[$notes, $audit, $http] = memoryApp();
+$nota = $http->registerNote($lopez, 'ep1', $soap)['body']['clinical_note_id'];
+$r = $http->associateDiagnosis($lopez, $nota, ['code' => 'J18.9', 'type' => 'primary']);
+check('InMemory: nota y diagnóstico 201 con auditoría', $r['status'] === 201 && array_column($audit->events, 'action') === ['nota_soap.registrada', 'diagnostico.asociado']);
+check('InMemory: código inactivo -> 422 y no tratante -> 403', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'A00', 'type' => 'secondary'])) === '422 DIAGNOSIS_CODE_INVALID'
+    && $status($http->registerNote(['X-User-ID' => 'dr.perez'], 'ep1', $soap)) === '403 NOT_TREATING_PHYSICIAN');
+$notes->markSigned($nota);
+check('InMemory: nota firmada -> 409', $status($http->associateDiagnosis($lopez, $nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
+[$notes, $audit, $http] = memoryApp(auditDown: true);
+check('InMemory: auditoría caída -> 500 y la nota no queda guardada', $status($http->registerNote($lopez, 'ep1', $soap)) === '500 SOAP_PERSISTENCE_ERROR' && $notes->notes === []);
+[$pdo, $http] = app();
+$nota = $http->registerNote($lopez, 'ep1', $soap)['body']['clinical_note_id'];
+$rechaza = static function (string $sql) use ($pdo): bool {
+    try {
+        $pdo->exec($sql);
+        return false;
+    } catch (PDOException) {
+        return true;
+    }
+};
+check('integridad del doble: diagnóstico con otro autor o fecha no ISO, y borrado de la nota -> rechazados', $rechaza("INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES ('d1', '$nota', 'ep1', 'dr.perez', 'I10', 'x', 'secondary', '2026-10-20')")
+    && $rechaza("INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES ('d2', '$nota', 'ep1', 'dra.lopez', 'I10', 'x', 'secondary', '20/10/2026')")
+    && $rechaza("DELETE FROM clinical_notes"));
+$pdo->exec("UPDATE clinical_notes SET status = 'signed'");
+check('integridad del doble: nota firmada inmutable y auditoría solo de inserción', $rechaza("UPDATE clinical_notes SET content = 'otro'") && $rechaza('DELETE FROM local_access_audits'));
 echo 'Todas las pruebas pasaron.' . PHP_EOL;
