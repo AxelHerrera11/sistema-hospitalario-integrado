@@ -61,17 +61,17 @@ No se agregan métodos SQL al contrato solo porque un adaptador los necesita.
 flowchart TD
   Ordenes[Órdenes] --> Maestros[Datos maestros de orden]
   Catalogo[Catálogo] --> Requisitos[Requisitos de prueba]
-  Maestros --> Proyeccion[Proyección de recepción]
-  Requisitos --> Proyeccion
+  Maestros --> Gateway[Lectura de órdenes]
+  Requisitos --> Gateway
   Recepcion[Recepción] --> Muestras[Registro inmutable de muestras]
-  Proyeccion --> Hospital[(HOSPITAL)]
+  Gateway --> Hospital[(HOSPITAL)]
   Muestras --> Hospital
   Resultados[Ingreso de resultados] -->|consulta por código| Recepcion
 ~~~
 
 Compartir una base física permite una transacción local y reduce latencia.
 Compartir escrituras de todas las tablas, en cambio, acopla reglas y permite saltarse al propietario.
-Por eso recepción escribe solo sus tablas; órdenes/catálogo alimentan una proyección validada.
+Por eso recepción escribe solo specimens y eventos en outbox_events; consulta los requisitos de Órdenes/Catálogo mediante un adaptador de lectura validado.
 Ingreso de resultados consume una API de lectura y no muta el estado de recepción.
 
 ## Implementación equivalente en Laravel 12
