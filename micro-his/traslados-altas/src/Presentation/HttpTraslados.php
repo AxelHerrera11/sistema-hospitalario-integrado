@@ -28,8 +28,30 @@ final class HttpTraslados
     {
     }
 
-    /** @return array{estado: int, cuerpo: array<string, mixed>} */
+    /** Segundos sugeridos antes de reintentar un 503: el fallo es confirmado, así que reintentar es seguro. */
+    public const REINTENTAR_EN = 5;
+
+    /**
+     * Solo el 503 lleva Retry-After. El 500 (incierto) no lo lleva: antes hay que consultar el estado.
+     *
+     * @return array{estado: int, cuerpo: array<string, mixed>, cabeceras: array<string, string>}
+     */
     public function atender(string $metodo, string $ruta, ?string $actorRefId, string $cuerpo): array
+    {
+        return self::conCabeceras($this->responder($metodo, $ruta, $actorRefId, $cuerpo));
+    }
+
+    /**
+     * @param array{estado: int, cuerpo: array<string, mixed>} $respuesta
+     * @return array{estado: int, cuerpo: array<string, mixed>, cabeceras: array<string, string>}
+     */
+    public static function conCabeceras(array $respuesta): array
+    {
+        return $respuesta + ['cabeceras' => $respuesta['estado'] === 503 ? ['Retry-After' => (string) self::REINTENTAR_EN] : []];
+    }
+
+    /** @return array{estado: int, cuerpo: array<string, mixed>} */
+    private function responder(string $metodo, string $ruta, ?string $actorRefId, string $cuerpo): array
     {
         $consulta = preg_match('#^/estancias/([^/]+)/internacion$#', $ruta, $m) === 1;
         if (!$consulta && !in_array($ruta, ['/traslados', '/altas'], true)) {

@@ -20,9 +20,12 @@ try {
         $_SERVER['HTTP_X_ACTOR_REF'] ?? null, (string) file_get_contents('php://input'));
 } catch (PDOException) {
     // Sin conexión no se abrió ninguna transacción: no hubo cambios. No se exponen detalles internos.
-    $respuesta = ['estado' => 503, 'cuerpo' => ['resultado' => 'error', 'codigo' => 'HOSPITAL_NO_DISPONIBLE']];
+    $respuesta = HttpTraslados::conCabeceras(['estado' => 503, 'cuerpo' => ['resultado' => 'error', 'codigo' => 'HOSPITAL_NO_DISPONIBLE']]);
 }
 http_response_code($respuesta['estado']);
+foreach ($respuesta['cabeceras'] as $nombre => $valor) {
+    header("{$nombre}: {$valor}");
+}
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 echo json_encode($respuesta['cuerpo'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

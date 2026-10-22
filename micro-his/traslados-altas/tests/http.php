@@ -24,13 +24,14 @@ check('ruta inexistente → 404; método equivocado → 405', http(hospitalFalso
     && http(hospitalFalso(), 'GET', '/traslados')['estado'] === 405);
 $h = hospitalFalso();
 $h->fallarEn = 'escribir';
-check('HOSPITAL no confirma → 503', http($h, 'POST', '/altas', cuerpo: ['estancia_esperada_id' => ESTANCIA])['estado'] === 503);
+$r = http($h, 'POST', '/altas', cuerpo: ['estancia_esperada_id' => ESTANCIA]);
+check('HOSPITAL no confirma → 503 con Retry-After (fallo confirmado, reintento seguro)', $r['estado'] === 503 && $r['cabeceras'] === ['Retry-After' => '5']);
 
 // Resultado incierto → 500; el cliente consulta la estancia en lugar de reintentar.
 $h = hospitalFalso();
 $h->fallarEn = 'incierto';
 $r = http($h, 'POST', '/altas', cuerpo: ['estancia_esperada_id' => ESTANCIA]);
-check('COMMIT sin respuesta → 500 resultado incierto', $r['estado'] === 500 && $r['cuerpo']['resultado'] === 'incierto');
+check('COMMIT sin respuesta → 500 incierto, sin Retry-After', $r['estado'] === 500 && $r['cuerpo']['resultado'] === 'incierto' && $r['cabeceras'] === []);
 $h->fallarEn = null;
 $c = http($h, 'GET', '/estancias/' . ESTANCIA . '/internacion');
 check('GET de la estancia informa si sigue abierta', $c['estado'] === 200 && is_bool($c['cuerpo']['estancia_consultada_abierta']));
