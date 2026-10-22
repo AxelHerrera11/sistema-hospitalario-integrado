@@ -23,6 +23,18 @@
 | GET | `/api/v1/permissions` | `rbac.permisos.ver` | Catálogo de permisos |
 | GET | `/api/v1/denials` | `rbac.denegaciones.ver` | Historial de denegaciones (auditoría) |
 
+## Dos permisos que no son alias
+
+| Permiso | Operación | Dónde se aplica |
+|---|---|---|
+| `rbac.asignar` | Asignar o revocar una **membresía** (rol ↔ usuario) en un hospital | `AssignRole` del micro-HIS |
+| `rbac.roles.asignar` | Cambiar el **conjunto de permisos de un rol** | `POST /roles/{role}/permissions` (propuesto) |
+
+El contrato HTTP usa `rbac.roles.asignar` para editar roles; **no** reutiliza
+`rbac.asignar`, que pertenece a la asignación de membresías. No hay traducción ni
+alias entre ambos: un cliente que solo tenga `rbac.asignar` no puede editar roles, y
+uno que solo tenga `rbac.roles.asignar` no puede asignar membresías.
+
 ## Ejemplo: `POST /api/v1/authorize`
 
 Request:
