@@ -107,7 +107,7 @@ se documenta en [DECLARACION_IA.md](../DECLARACION_IA.md); no certifica revisió
 | Abstracción de los diagramas iniciales | Implementación Laravel 12 |
 |---|---|
 | SpecimenController / ReceiveSpecimenService | ReceptionController / ReceiveSpecimen. |
-| Gateway de orden y requisitos | OrderProjection y consulta de pendientes del hospital. |
+| Gateway de orden y requisitos | OrdersGateway y consulta de pendientes del hospital. |
 | SpecimenRepository y generador | ReceptionRepository/PDO y SpecimenCode. |
 | Notifier | Outbox durable y DeliverRejections; acuse externo por verificar. |
 | Código hospital-fecha-secuencia propuesto | 96 bits hexadecimales y dígito, con índice UNIQUE. |
@@ -121,3 +121,9 @@ La selección de orden no copia la identidad observada; el técnico debe comprob
 El alcance identifica actores, decisiones, excepciones y resultados enlazados entre los tres diagramas.
 El diseño se contrasta con fuentes reales y pruebas, y conserva los límites con órdenes, catálogo y resultados.
 Fuente: [README original y matriz ASII-18](../../../README.md); [cumplimiento completo](../matriz-cumplimiento.md).
+
+## Corrección de integración — 21 de octubre de 2026
+
+La tabla propia del HIS es specimens (migración 000601, propuesta de Javier); lab_order_item_id es UUID lógico sin FK a Órdenes. Las FK locales son indexadas y RESTRICT. Se reutiliza outbox_events.
+El módulo finalizado de Gerson se conserva; esta entrega no cambia Resultados/Validación. El contrato de lectura con ASII-16 debe verificarse con su proveedor; si no está disponible se responde 503 sin guardar muestras.
+La evidencia vigente y sus límites están en [semana 15](../semana-15/README.md). Esta corrección sigue en local, sin push ni cambio de estado de PR.
