@@ -64,3 +64,34 @@ resultado registrado en el PR #574 es `OK (78, 1295)`.
 - No hay defectos abiertos en el momento de esta entrega: la puerta de calidad exige cero
   hallazgos bloqueantes o mayores antes de integrar.
 - El histórico de revisiones de cada PR queda en GitHub como evidencia complementaria.
+
+## Seguimiento de los defectos
+
+| ID | Severidad | Detectado en | Corregido en | Prueba de regresión | Estado |
+|---|---|---|---|---|---|
+| D-01 | Mayor | Revisión del PR #574 (21-oct-2026) | PR #574, commits `03cb198` | `test_una_base_hospital_inexistente_responde_503` | Cerrado |
+| D-02 | Mayor | Revisión del PR #574 (21-oct-2026) | PR #574, commits `03cb198` | Suite `Feature` completa (`OK (78, 1295)`) | Cerrado |
+
+Comandos para reproducir la evidencia de ambos:
+
+```bash
+$ php artisan test tests/Feature/Ocupacion
+Tests:    16 passed (66 assertions)
+
+$ php artisan test tests/Feature/Rbac/PublishedContractsTest.php
+Tests:    1 passed (14 assertions)
+```
+
+## Criterio de registro
+
+Un hallazgo entra en este registro cuando cumple al menos una de estas condiciones:
+
+1. **Se detected en el módulo de ocupación** y ya está corregido, con prueba de regresión que
+   falle antes de la corrección y pase después.
+2. **Afecta al contrato o a la seguridad** del módulo, aunque lo detecte otra persona.
+3. **Es un defecto de otro módulo**: se reporta a su dueño y no se registra aquí, salvo que
+   impida cumplir un RF/RNF de ASII-09.
+
+No se registran como defectos las funcionalidades no implementadas y declaradas (por ejemplo, el
+filtro por sala): esas se listan como pendientes con responsable. No se registran observaciones
+sin reproducción.
