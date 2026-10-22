@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace MicroHis\Admision\Persistence;
 
-use MicroHis\Admision\Application\AdmissionStore;
+use MicroHis\Admision\Application\AdmissionRepository;
 use MicroHis\Admision\Application\PersistenceFailure;
 use MicroHis\Admision\Domain\Admission;
 use PDO;
 use PDOException;
 
 /** Adaptador PDO de care_episodes, bed_stays, beds.status y local_access_audits. Solo sentencias preparadas. */
-final class PdoAdmissionStore implements AdmissionStore
+final class PdoAdmissionRepository implements AdmissionRepository
 {
     public function __construct(private readonly PDO $pdo)
     {

@@ -7,7 +7,7 @@ namespace MicroHis\Admision\Application;
 use MicroHis\Admision\Domain\Admission;
 
 /** Puerto de persistencia que necesita la aplicación; lo implementa Persistence. */
-interface AdmissionStore
+interface AdmissionRepository
 {
     public function patientExists(string $patientId): bool;
     public function hasOpenInpatientEpisode(string $patientId): bool;
