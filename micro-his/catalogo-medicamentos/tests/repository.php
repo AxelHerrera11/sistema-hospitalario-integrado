@@ -47,6 +47,9 @@ foreach ($adapters as $name => $make) {
         $codes($repo->search('AMOXI', 50)) === ['AMX-500'] && $codes($repo->search('ibu', 50)) === ['IBU-400']);
     check("{$name}: ordena por nombre y respeta el límite", $codes($repo->search('0', 50)) === ['AMX-500', 'IBU-400', 'PCT-100']
         && $codes($repo->search('0', 2)) === ['AMX-500', 'IBU-400']);
+    $repo->insert(Medication::register($draft('ace-1', 'ÁCIDO ACETILSALICÍLICO', 'Ácido acetilsalicílico')));
+    check("{$name}: no distingue mayúsculas tampoco en caracteres no ASCII (defecto AV3)", $codes($repo->search('ácido', 50)) === ['ACE-1']
+        && $codes($repo->search('ÁCIDO', 50)) === ['ACE-1']);
     check("{$name}: '%' es literal, no comodín", $codes($repo->search('0%', 50)) === ['PCT-100'] && $repo->search('%%', 50) === []);
 
     $repo->updateValidity($saved->id, Validity::Inactive);

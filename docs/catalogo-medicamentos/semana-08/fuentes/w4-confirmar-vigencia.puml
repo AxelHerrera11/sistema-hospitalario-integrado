@@ -1,0 +1,15 @@
+@startsalt
+title W4 - Confirmación de vigencia con el registro completo (gestor)
+{+
+  <b>¿Inactivar este medicamento?</b>
+  ---
+  Código           | <b>AMX-500</b>
+  Nombre           | Amoxicilina 500 mg
+  Principio activo | Amoxicilina
+  Vigencia         | Activo -> <b>Inactivo</b>
+  ---
+  <i>No se borra el registro ni afecta lotes o vencimientos.</i>
+  <i>Las prescripciones existentes se conservan; no podrá usarse en nuevas.</i>
+  [Cancelar] | [Inactivar AMX-500]
+}
+@endsalt
