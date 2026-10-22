@@ -1,0 +1,50 @@
+@startuml
+title ASII-14 Semana 6 - Trazabilidad actor → caso de uso → requisito → componente → prueba
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam rectangleBorderColor #2563EB
+left to right direction
+
+actor "Gestor" as G
+actor "Usuario clínico" as U
+
+rectangle "UC-MED-01 Alta" as UC1
+rectangle "UC-MED-02 Buscar" as UC2
+rectangle "UC-MED-03 Consultar vigencia" as UC3
+rectangle "UC-MED-04 Cambiar vigencia" as UC4
+
+rectangle "RF-01/02/03/08" as R1
+rectangle "RF-04" as R2
+rectangle "RF-05" as R3
+rectangle "RF-06/08" as R4
+
+rectangle "RegistrationController\nRegisterMedication\nMedication::register" as C1
+rectangle "SearchController::search\nConsultMedications" as C2
+rectangle "SearchController::validity\nMedicationLookup::findById" as C3
+rectangle "ValidityController\nChangeMedicationValidity\nMedication::changeValidity" as C4
+
+rectangle "tests/domain.php\ntests/application.php (alta)\ntests/http.php (POST)" as T1
+rectangle "tests/repository.php (búsqueda)\ntests/pdo.php (LIKE e inyección)" as T2
+rectangle "tests/presentation.php (vigencia)\nGET /validity" as T3
+rectangle "tests/application.php (vigencia)\ntests/http.php (PATCH)" as T4
+
+G --> UC1
+U --> UC2
+G --> UC2
+U --> UC3
+G --> UC3
+G --> UC4
+UC1 --> R1
+UC2 --> R2
+UC3 --> R3
+UC4 --> R4
+R1 --> C1
+R2 --> C2
+R3 --> C3
+R4 --> C4
+C1 --> T1
+C2 --> T2
+C3 --> T3
+C4 --> T4
+@enduml

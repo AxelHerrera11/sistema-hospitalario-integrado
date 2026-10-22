@@ -1,0 +1,41 @@
+%% Actividad — Gobernanza y Auditoría (Semana 1). Dos particiones del mismo proceso:
+%% A) registro de un evento por un módulo consumidor; B) consulta autorizada.
+flowchart TD
+    subgraph A["A · Registrar evento (UC-GOB-01 / UC-GOB-02)"]
+        A0((Inicio)) --> A1["Módulo consumidor invoca RecordAuditEvent<br/>actor, tenant, módulo, acción, resultado, criticidad"]
+        A1 --> A2{"¿Datos mínimos válidos?<br/>actor, tenant, modulo.accion,<br/>resultado success|failure|denied"}
+        A2 -- No --> A2E["Reportar audit_event_invalid<br/>y lanzar InvalidAuditEvent<br/>(no se inventan datos)"] --> AF1((Fin: rechazado))
+        A2 -- Sí --> A3["Servidor asigna event_id (UUID v4)<br/>y occurred_at (UTC)"]
+        A3 --> A4["Filtrar contexto: quitar secretos,<br/>tokens y datos clínicos (redacted_keys)"]
+        A4 --> A5["AuditLogger.append<br/>INSERT audit_log + avanzar cadena SHA-256"]
+        A5 --> A6{"¿Persistió?"}
+        A6 -- Sí --> AF2((Fin: evento registrado))
+        A6 -- No --> A7["Reportar audit_record_failed<br/>al log de la aplicación"]
+        A7 --> A8{"¿Criticidad Security?"}
+        A8 -- "Sí (obligatorio)" --> A9["Lanzar AuditStorageFailure:<br/>el consumidor aborta o revierte"] --> AF3((Fin: operación abortada))
+        A8 -- "No (informativo)" --> A10["Devolver false;<br/>la operación continúa"] --> AF4((Fin: continúa sin evento))
+    end
+
+    subgraph B["B · Consultar bitácora (UC-GOB-03..07)"]
+        B0((Inicio)) --> B1["GET /api/v1/audit-events<br/>con filtros"]
+        B1 --> B2{"¿Usuario autenticado<br/>por el servidor?"}
+        B2 -- No --> B2E["401 AUTH_REQUIRED"] --> BF((Fin))
+        B2 -- Sí --> B3{"¿X-Tenant-ID presente y<br/>igual al tenant del servidor?"}
+        B3 -- "Falta" --> B3E["400 TENANT_REQUIRED"] --> BF
+        B3 -- "Distinto" --> B3M["403 TENANT_MISMATCH"] --> BF
+        B3 -- Sí --> B4{"¿RBAC autoriza<br/>auditoria.ver?"}
+        B4 -- "No (permiso)" --> B4E["RBAC registra la denegación (UC-GOB-02)<br/>403 RBAC_DENIED + trace_id"] --> BF
+        B4 -- "No disponible" --> B4U["503 RBAC_UNAVAILABLE"] --> BF
+        B4 -- Sí --> B5{"¿Filtros y paginación válidos?<br/>fechas, formato, por_pagina ≤ 100"}
+        B5 -- No --> B5E["422 AUDIT_FILTER_INVALID<br/>errores por parámetro"] --> BF
+        B5 -- Sí --> B6["Leer audit_log solo del tenant del servidor<br/>ORDER BY occurred_at DESC"]
+        B6 --> B7{"¿Lectura correcta?"}
+        B7 -- No --> B7E["Reportar y responder<br/>503 AUDIT_UNAVAILABLE"] --> BF
+        B7 -- Sí --> B8["Registrar gobernanza.auditoria_consultada<br/>(Security) — UC-GOB-07"]
+        B8 --> B9{"¿Consulta auditada?"}
+        B9 -- No --> B7E
+        B9 -- Sí --> B10["200: página de eventos + meta + trace_id<br/>sin hashes ni secretos"]
+        B10 --> B11{"¿Abrir un evento?"}
+        B11 -- Sí --> B12["Ver detalle (UC-GOB-04)"] --> BF2((Fin: consultado))
+        B11 -- No --> BF2
+    end
