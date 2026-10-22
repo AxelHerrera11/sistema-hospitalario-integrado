@@ -1,0 +1,34 @@
+---
+title: "Después de OCP — una especificación por tipo de resultado"
+---
+classDiagram
+  direction LR
+  class LabTestValidator {
+    +validate(draft, hoy) list
+  }
+  class ResultTypeRegistry {
+    +for(type) ResultTypeSpec?
+  }
+  class ResultTypeSpec {
+    <<interface>>
+    +type() string
+    +validate(draft) list
+  }
+  class LabTestRule {
+    <<interface>>
+    +validate(draft, hoy) list
+  }
+  class OrdinalResultSpec {
+    <<extensión>>
+    escala + umbral en la escala
+  }
+  LabTestController --> LabTestValidator
+  LabTestValidator --> ResultTypeRegistry
+  LabTestValidator --> LabTestRule : recorre
+  ResultTypeRegistry o-- ResultTypeSpec
+  ResultTypeSpec <|.. NumericResultSpec
+  ResultTypeSpec <|.. QualitativeResultSpec
+  ResultTypeSpec <|.. OrdinalResultSpec
+  LabTestRule <|.. SpecimenRequirementRule
+  LabTestRule <|.. ValidityRule
+  note for OrdinalResultSpec "Tipo nuevo: clase nueva + registro"

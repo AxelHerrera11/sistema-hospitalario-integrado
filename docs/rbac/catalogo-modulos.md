@@ -1,8 +1,8 @@
 # Catálogo común de integración RBAC
 
-Base revisada: develop b87bca1 y PR abiertos, 20 de octubre de 2026. Este documento y
+Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 67 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 69 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -21,6 +21,8 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
 | `medicamentos.ver` | Sí | Sí | Sí | Sí | — | — | — | — |
+| `medicamentos.registrar` | — | Sí | — | — | — | — | — | — |
+| `medicamentos.cambiar_vigencia` | — | Sí | — | — | — | — | — | — |
 | `laboratorio.ver` | Sí | Sí | Sí | — | — | Sí | Sí | — |
 | `auditoria.ver` | Sí | — | — | — | — | — | — | — |
 | `signos_vitales.corregir` | Sí | — | Sí | — | — | — | — | — |
@@ -92,6 +94,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Ocupación, `docs/ocupacion-hospitalaria/contrato-api.md` | ocupacion.ver; administración, recepción y enfermería, sin mutar camas |
 | Órdenes, `docs/ordenes-laboratorio/contrato-api.md` | laboratorio.ordenes.crear/ver/cancelar; médico muta, laboratorio consulta |
 | Catálogo de pruebas, `docs/catalogo-pruebas-lab` | conserva laboratorio.catalogo.ver y administración pendiente según pending |
+| Catálogo de medicamentos, #586–#604 | medicamentos.ver activo; medicamentos.registrar y medicamentos.cambiar_vigencia activos exclusivamente para admin_hospital; los otros siete roles siguen denegados |
 | Muestras, `docs/recepcion-muestras/semana-01` | muestras.recibir/ver/etiquetar/rechazar; técnico opera, bioquímico consulta |
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
@@ -141,13 +144,18 @@ Prescripciones.excepcion_alergia y notas_soap.transferir_autoria siguen reservad
 no se activan por publicar sus nombres. Los restantes pares pending son propuestas
 por rol; consulte config/rbac.php para las concesiones exactas que siguen denegadas.
 
-Se revisaron los 30 apartados del README y los 166 PR abiertos. Se inspeccionaron
-los archivos pertinentes de 160 PR con referencias disponibles; los restantes
-son integración o no contienen fuentes de contratos aplicables. Se buscaron tanto
+Se revisaron los 30 apartados del README y los 200 PR abiertos de la captura de
+auditoría. Las 200 referencias estaban disponibles. Se inspeccionaron sus archivos
+de texto modificados (MD, PHP, YAML/YML, JS/TS, Vue, HTML y JSON), sin depender de una
+lista fija de módulos para extraer los literales. Se buscaron tanto
 menciones de permisos como literales en tablas, código y navegación. Los eventos
 de auditoría, campos SQL, nombres de archivos y variables no se trataron como permisos.
 La evidencia de los contratos pendientes queda fijada por PR, SHA y ruta en
-`tests/Fixtures/Rbac/pending-contracts.json`, comprobada contra el catálogo.
+`tests/Fixtures/Rbac/pending-contracts.json`: 206 fuentes por PR, SHA y ruta,
+comprobadas contra el catálogo. El registro de las 200 referencias revisadas se
+entrega en el PR #687 para respetar el límite de 400 líneas. Los tests comprueban
+también que cada concesión activa o pendiente pertenezca al catálogo, que ningún
+par permiso/rol pendiente esté activo y que esta matriz coincida con la configuración.
 
 ## Ampliación de contratos pendientes
 
@@ -179,8 +187,23 @@ Las autorizaciones del backend siguen comprobándose en cada operación.
 
 La revisión cubre nombres concretos de contratos existentes, incluidos los PR
 pendientes, no funcionalidades futuras sin especificación. Las operaciones todavía
-sin nombres suficientes (mutaciones de catálogos de medicamentos/salas/camas,
+sin nombres suficientes (mutaciones de catálogos de salas/camas,
 traslados/altas y analytics) requieren contrato antes de habilitar concesiones.
 Los permisos de navegación no se convierten en permisos genéricos de escritura.
 La autenticación/tenant de Cindy y el acuerdo CENTRAL (#502/#507) siguen pendientes
 de integración; catálogo y alias no sustituyen esas dependencias.
+
+## Activación de escritura de medicamentos (20 de octubre de 2026)
+
+Decisión RBAC solicitada por Mar-03 sobre la propuesta ASII-14 (#586, #622):
+`medicamentos.registrar` y `medicamentos.cambiar_vigencia` se conceden exclusivamente
+al rol `admin_hospital` del hospital validado. Se retiran de `pending`.
+Los otros siete roles, incluido `superadmin`, siguen sin estas concesiones;
+no hay herencia administrativa implícita. La lectura conserva la matriz existente.
+
+El módulo ASII-14 debe proteger cada escritura con tenant, JWT y el permiso literal
+correspondiente. Registrar no autoriza cambiar vigencia, ni viceversa.
+La autorización no sustituye validación de duplicados, reglas de vigencia,
+auditoría ni selección de la conexión hospitalaria. Las pruebas de este cambio
+verifican matriz y middleware RBAC; no acreditan endpoints de medicamentos.
+La política entra en vigor al integrar este cambio; #622 por sí solo no la activa.
