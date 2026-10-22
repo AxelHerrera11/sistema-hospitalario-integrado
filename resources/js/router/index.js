@@ -49,6 +49,11 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['admin-users'] },
         },
         {
+            path: '/prototipos/tenants-responsive',
+            name: 'tenants-responsive-prototype',
+            component: () => import('@/modules/tenants/pages/ResponsivePrototypePage.vue'),
+        },
+        {
             path: '/patients',
             name: 'patients',
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
