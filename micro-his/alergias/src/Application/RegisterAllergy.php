@@ -12,7 +12,7 @@ use MicroHis\Alergias\Domain\DomainRuleViolation;
 final class RegisterAllergy
 {
     /** @param Closure(): string $newId */
-    public function __construct(private readonly AllergyStore $store, private readonly Closure $newId) {}
+    public function __construct(private readonly AllergyRepository $store, private readonly Closure $newId) {}
 
     /** @param array<string, mixed> $data */
     public function execute(string $patientId, array $data, string $actor): Allergy

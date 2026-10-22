@@ -9,7 +9,7 @@ use MicroHis\Alergias\Domain\AllergyAlert;
 /** UC-ALG-05 Alerta visual para el expediente y Prescripciones (ASII-10 y ASII-15). */
 final class GetAllergyAlert
 {
-    public function __construct(private readonly AllergyStore $store) {}
+    public function __construct(private readonly AllergyRepository $store) {}
 
     public function execute(string $patientId): AllergyAlert
     {
