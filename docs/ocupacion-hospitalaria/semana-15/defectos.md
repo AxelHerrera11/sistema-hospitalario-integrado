@@ -95,3 +95,13 @@ Un hallazgo entra en este registro cuando cumple al menos una de estas condicion
 No se registran como defectos las funcionalidades no implementadas y declaradas (por ejemplo, el
 filtro por sala): esas se listan como pendientes con responsable. No se registran observaciones
 sin reproducción.
+
+## Verificación de los criterios de registro
+
+| Criterio | D-01 | D-02 |
+|---|---|---|
+| Detectado en el módulo de ocupación | Sí: provider y adaptador de persistencia | Sí: ruta del archivo de pruebas y suite de RBAC |
+| Corregido antes de publicar esta entrega | Sí, en el PR #574 | Sí, en el PR #574 |
+| Prueba de regresión que falla antes y pasa después | `test_una_base_hospital_inexistente_responde_503` | Suite `Feature` completa, que se rompía por el falso positivo |
+| No es una funcionalidad no implementada | Es un comportamiento incorrecto (`500` en vez de `503`) | Es un defecto de la suite compartida, no una carencia |
+| Reproducible con un comando | Sí: `php artisan test --filter=test_una_base_hospital_inexistente_responde_503` | Sí: `php artisan test --testsuite Feature` |
