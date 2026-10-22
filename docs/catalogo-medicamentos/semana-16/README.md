@@ -7,7 +7,7 @@
 |---|---|---|
 | Integrar con los componentes reales del HIS | **Hecho** | API v1 en Laravel detrás de `tenant`, `jwt.auth` y `RequirePermission` reales, comprobados por HTTP con Tenants integrado ([integracion.md](./integracion.md)) |
 | Límites reales de autorización y hospital | **Hecho y probado** | Matriz real de `config/rbac.php`; 401, 400, 403 por tenant y 403 por permiso |
-| Alta, búsqueda, consulta y vigencia con rechazos y fallos | **Probado** | 6 pruebas Feature, OK sobre `develop`; escritura solo con los permisos propuestos concedidos en la prueba |
+| Alta, búsqueda, consulta y vigencia con rechazos y fallos | **Probado** | 6 pruebas Feature, OK sobre `develop`; escritura de `admin_hospital` con la matriz real desde #627; los demás roles, 403 auditado |
 | Configuración reproducible sin secretos | **Hecho** | [integracion.md](./integracion.md#configuración-reproducible-sin-secretos) |
 | Migraciones y semillas de prueba | **Bloqueado** | Tabla `medication` del slice H5 pendiente; no se inventa el esquema |
 | Evidencia en staging u on-premise | **Bloqueado** | No hay acceso a ningún entorno; solo ejecución local |

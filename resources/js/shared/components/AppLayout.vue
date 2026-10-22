@@ -8,11 +8,20 @@
                 <router-link class="layout__link" to="/">
                     Inicio
                 </router-link>
+                <router-link class="layout__link" to="/ocupacion">
+                    Ocupación
+                </router-link>
                 <router-link class="layout__link" to="/login">
                     Acceso
                 </router-link>
                 <router-link v-if="auth.token" class="layout__link" to="/admin/users">
                     Usuarios
+                </router-link>
+                <router-link v-if="auth.token" class="layout__link" to="/patients">
+                    Pacientes
+                </router-link>
+                <router-link v-if="auth.token" class="layout__link" to="/medicamentos">
+                    Medicamentos
                 </router-link>
                 <button v-if="auth.token" class="layout__link layout__logout" @click="logout">
                     Cerrar sesión
@@ -117,5 +126,23 @@ async function logout() {
 .layout__main {
     flex: 1;
     padding: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .layout__header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .layout__nav {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .layout__main {
+        padding: 1rem;
+    }
 }
 </style>

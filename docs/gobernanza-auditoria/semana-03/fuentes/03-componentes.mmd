@@ -1,0 +1,59 @@
+%% Componentes y dependencias (las flechas apuntan hacia lo que se usa).
+flowchart TB
+    subgraph Presentation
+        HTTP[AuditHttpHandler]
+        PRES[AuditEventPresenter]
+        CTRL["App\GobernanzaAuditoria\AuditEventController (Laravel)"]
+    end
+    subgraph Application
+        SEARCH[SearchAuditEvents]
+        REC[RecordAuditEvent]
+        PARSER[AuditFilterParser]
+        GATEI{{"AccessGate «interfaz»"}}
+        CLOCKI{{"Clock «interfaz»"}}
+        REPI{{"FailureReporter «interfaz»"}}
+    end
+    subgraph Domain
+        EVT[AuditEvent]
+        FIL[AuditFilter]
+        PAGE[AuditPage]
+        SAN[ContextSanitizer]
+        LOGI{{"AuditLogger «interfaz»"}}
+        READI{{"AuditEventReader «interfaz»"}}
+    end
+    subgraph Persistence
+        MEM[InMemoryAuditLog]
+        PDO[PdoAuditLog]
+        MAP[AuditRowMapper]
+        HASH[AuditChainHasher]
+    end
+    subgraph Integration
+        RGATE[RbacAccessGate]
+        RDEN["RbacDenialRecorder (implementa MicroHis\Rbac\Domain\DenialRecorder)"]
+        CLK[SystemClock]
+        ELOG[ErrorLogFailureReporter]
+    end
+
+    CTRL --> HTTP
+    HTTP --> SEARCH
+    HTTP --> PRES
+    SEARCH --> GATEI
+    SEARCH --> READI
+    SEARCH --> REC
+    SEARCH --> PARSER
+    REC --> LOGI
+    REC --> CLOCKI
+    REC --> REPI
+    REC --> EVT
+    EVT --> SAN
+    PARSER --> FIL
+    MEM -. implementa .-> LOGI
+    MEM -. implementa .-> READI
+    PDO -. implementa .-> LOGI
+    PDO -. implementa .-> READI
+    PDO --> MAP
+    PDO --> HASH
+    RGATE -. implementa .-> GATEI
+    RDEN --> REC
+    CLK -. implementa .-> CLOCKI
+    ELOG -. implementa .-> REPI

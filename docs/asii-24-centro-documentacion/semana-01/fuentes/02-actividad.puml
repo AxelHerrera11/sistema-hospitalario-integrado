@@ -1,0 +1,44 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam activity {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+  DiamondBackgroundColor #FFF8E1
+  DiamondBorderColor #B8860B
+}
+
+|Responsable de documentación|
+start
+:Redactar documento o manual
+(título, contenido, roles destinatarios);
+|Centro de documentación|
+:Validar sesión, rol y tenant;
+if (¿Autorizado a publicar?) then (No)
+  :Responder 403; <<#FFEBEE>>
+  stop
+else (Sí)
+  if (¿Datos y roles válidos?) then (No)
+    :Responder 422 con detalle; <<#FFEBEE>>
+    stop
+  else (Sí)
+    :Clasificar por rol y catálogo;
+    :Publicar documento (versión inicial);
+    :Indexar para búsqueda; <<#E8F5E9>>
+  endif
+endif
+|Usuario por rol|
+:Consultar catálogo;
+:Buscar y filtrar por texto o categoría;
+:Ver solo documentos permitidos por su rol;
+if (¿Documento visible para el rol?) then (No)
+  :Ocultar o responder 403; <<#FFEBEE>>
+  stop
+else (Sí)
+  :Ver detalle y vigencia;
+  :Descargar documento; <<#E8F5E9>>
+endif
+stop
+@enduml
