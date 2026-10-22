@@ -39,6 +39,6 @@ Fuentes editables: [`fuentes/01-diseno-antes-isp.puml`](./fuentes/01-diseno-ante
 
 ## Estado real
 
-- **Existente en el repositorio:** casos de uso de Semana 1, base HOSPITAL por hospital y RBAC sin permisos de medicamentos. Slice H5 de `medication` pendiente.
+- **Existente en el repositorio:** casos de uso de Semana 1, base HOSPITAL por hospital y, desde la reconciliación de RBAC, el permiso `medicamentos.ver` (sin permisos de escritura). Slice H5 de `medication` pendiente.
 - **Propuesto en esta entrega:** requisitos, criterios, supuestos, contratos segregados y la evidencia aislada en `evidencia/`.
 - **No implementado:** ninguna funcionalidad productiva, API, UI, migración ni permiso. El Micro-HIS ejecutable empieza en Semana 3.

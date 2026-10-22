@@ -1,0 +1,54 @@
+@startuml
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam actor {
+  BorderColor #263238
+  FontColor #263238
+}
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+actor "Usuario administrativo" as U
+actor "Servicio de autenticación\ny autorización" as Auth
+rectangle "ASII-27 · Reportes operativos exportables\ny filtros administrativos" {
+  usecase "CU-01\nConsultar reporte operativo" as CU01
+  usecase "CU-02\nAplicar filtros\nadministrativos" as CU02
+  usecase "CU-03\nVisualizar resultados" as CU03
+  usecase "CU-04\nExportar reporte" as CU04
+  usecase "Validar acceso\n(autenticación, autorización\ny tenant activo)" as Guard
+  usecase "Informar filtros inválidos\no sin resultados" as Empty #FFEBEE
+  usecase "Informar error\ndurante la exportación" as Error #FFEBEE
+}
+
+U --> CU01
+U --> CU02
+U --> CU03
+U --> CU04
+Auth --> Guard
+CU01 .> CU02 : <<include>>
+CU01 .> CU03 : <<include>>
+CU04 .> Guard : <<include>>
+CU02 .> Guard : <<include>>
+Empty .> CU02 : <<extend>>\n[filtros inválidos]
+Empty .> CU01 : <<extend>>\n[sin resultados]
+Error .> CU04 : <<extend>>\n[fallo de exportación]
+
+note bottom of Guard
+  Condición de acceso: identidad autenticada,
+  permiso de reportes y hospital/tenant activo.
+end note
+note bottom of CU04
+  Exportación reproducible: mismos filtros
+  producen el mismo archivo (CSV/PDF).
+end note
+@enduml
