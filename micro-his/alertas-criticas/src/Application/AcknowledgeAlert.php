@@ -10,7 +10,7 @@ use MicroHis\Alertas\Domain\DomainRuleViolation;
 /** UC-ALR-04 Acusar recibo: detiene el escalamiento. El primero que acusa gana. */
 final class AcknowledgeAlert
 {
-    public function __construct(private readonly AlertStore $store) {}
+    public function __construct(private readonly AlertRepository $store) {}
 
     /** @param array<string, mixed> $readBack */
     public function execute(string $alertId, string $user, array $readBack): CriticalAlert
