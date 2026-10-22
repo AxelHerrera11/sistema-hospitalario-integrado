@@ -41,3 +41,5 @@ La arquitectura es verificable: el controlador no ejecuta SQL y el servicio depe
 
 La prueba aporta evidencia de PostgreSQL real, con separación explícita de los dobles de memoria.
 No se atribuyen porcentajes de cobertura o rendimiento a siete comprobaciones de persistencia.
+
+Preparación local: depende de #690. Declaración de IA y validación humana pendiente en la entrega principal de semana 03; sin push ni PR nuevo.
