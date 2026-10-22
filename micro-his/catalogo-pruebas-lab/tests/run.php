@@ -29,7 +29,7 @@ $glucosa = ['code' => 'glu', 'name' => 'Glucosa', 'specimen_type' => 'serum', 'm
 [$pdo, $http] = app();
 [$status, $body] = $http->handle('POST', '/lab-tests', $glucosa, 'jefa.lab');
 check('alta válida → 201 con versión 1 y código normalizado', $status === 201 && $body['lab_test']['versionNo'] === 1 && $body['lab_test']['code'] === 'GLU');
-check('el alta queda auditada en la misma transacción', $pdo->query("SELECT event FROM local_access_audits")->fetchColumn() === 'prueba_lab.registrada');
+check('el alta queda auditada en la misma transacción', $pdo->query("SELECT action FROM local_access_audits")->fetchColumn() === 'prueba_lab.registrada');
 check('sin usuario → 401', $http->handle('POST', '/lab-tests', $glucosa, null)[0] === 401);
 check('segunda versión con vigencia abierta → 409 LAB_TEST_VALIDITY_OVERLAP', $http->handle('POST', '/lab-tests', $glucosa, 'jefa.lab') === [409, ['error' => 'LAB_TEST_VALIDITY_OVERLAP', 'field' => 'valid_from']]);
 foreach ([

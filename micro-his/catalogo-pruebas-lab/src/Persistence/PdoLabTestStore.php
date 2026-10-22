@@ -38,8 +38,8 @@ final class PdoLabTestStore implements LabTestStore
                 $t->id, $t->code, $t->name, $t->specimenType, $t->minVolumeMl, $t->resultType, $t->unit, $t->referenceLow,
                 $t->referenceHigh, $t->criticalLow, $t->criticalHigh, $t->versionNo, $t->validFrom,
             ]);
-            $this->query('INSERT INTO local_access_audits (event, actor, subject_id, occurred_at) VALUES (?, ?, ?, ?)',
-                ['prueba_lab.registrada', $actor, $t->id, date(DATE_ATOM)]);
+            $this->query("INSERT INTO local_access_audits (correlation_id, actor_user_ref_id, module, action, resource_type, resource_id, occurred_at)
+                VALUES (?, ?, 'catalogo_laboratorio', 'prueba_lab.registrada', 'lab_test', ?, ?)", [bin2hex(random_bytes(16)), $actor, $t->id, date(DATE_ATOM)]);
             $this->pdo->commit();
         } catch (PDOException $error) {
             $this->pdo->inTransaction() && $this->pdo->rollBack();
