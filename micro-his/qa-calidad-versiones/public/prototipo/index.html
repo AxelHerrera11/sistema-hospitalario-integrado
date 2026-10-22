@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calidad de versiones — QA, E2E y CI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="bar">
+    <div class="brand">
+        <h1>Calidad de versiones</h1>
+        <p class="sub">Planificación de pruebas, ejecución E2E, evidencia y quality gate</p>
+    </div>
+    <form class="session" aria-label="Contexto de demostración">
+        <label for="profile">Perfil de demostración</label>
+        <select id="profile">
+            <option value="lider">Líder QA · Hospital de pruebas 1</option>
+            <option value="observador">Observador · Hospital de pruebas 1</option>
+            <option value="lider_h2">Líder QA · Hospital de pruebas 2</option>
+            <option value="">Sin sesión</option>
+        </select>
+        <label for="failure">Simular falla</label>
+        <select id="failure">
+            <option value="">Ninguna</option>
+            <option value="almacen">Almacén caído</option>
+            <option value="rbac">RBAC caído</option>
+        </select>
+    </form>
+</header>
+<p class="demo-note" role="note">Prototipo con datos ficticios. Los permisos <code>qa.*</code> son una propuesta pendiente de RBAC.</p>
+
+<div id="status" class="sr-only" role="status" aria-live="polite"></div>
+<div id="alert" class="alert" role="alert" hidden>
+    <strong id="alert-title"></strong>
+    <span id="alert-message"></span>
+    <button type="button" id="alert-retry" hidden>Reintentar</button>
+    <button type="button" id="alert-close" aria-label="Cerrar aviso">×</button>
+</div>
+
+<main id="main" tabindex="-1">
+    <section id="view-list" aria-labelledby="list-title">
+        <div class="section-head">
+            <h2 id="list-title">Ejecuciones</h2>
+            <a class="button primary" href="#/nueva" id="new-run" data-needs="register">Planificar ejecución</a>
+        </div>
+        <p id="list-loading" class="muted" hidden>Cargando ejecuciones…</p>
+        <div id="list-empty" class="empty" hidden>
+            <p><strong>Todavía no hay ejecuciones en este hospital.</strong></p>
+            <p class="muted">Planifique una para registrar resultados y evaluar el gate.</p>
+        </div>
+        <ul id="run-list" class="cards"></ul>
+    </section>
+
+    <section id="view-new" aria-labelledby="new-title" hidden>
+        <h2 id="new-title">Planificar ejecución</h2>
+        <form id="plan-form" novalidate>
+            <div class="grid">
+                <div class="field">
+                    <label for="release">Versión (SemVer)</label>
+                    <input id="release" name="release_version" required placeholder="1.4.0-rc.1" aria-describedby="release-help release-error">
+                    <small id="release-help">Ej.: 1.4.0 o 1.4.0-rc.1</small>
+                    <small class="error" id="release-error"></small>
+                </div>
+                <div class="field">
+                    <label for="sha">Commit (SHA de 40 caracteres)</label>
+                    <input id="sha" name="commit_sha" required autocomplete="off" spellcheck="false" aria-describedby="sha-error">
+                    <small class="error" id="sha-error"></small>
+                </div>
+                <div class="field">
+                    <label for="environment">Ambiente aislado</label>
+                    <select id="environment" name="environment" aria-describedby="environment-error">
+                        <option value="ci">ci</option>
+                        <option value="staging">staging</option>
+                        <option value="local">local</option>
+                    </select>
+                    <small class="error" id="environment-error"></small>
+                </div>
+            </div>
+            <fieldset aria-describedby="suites-error">
+                <legend>Suites del plan</legend>
+                <div id="suite-rows"></div>
+                <button type="button" id="add-suite">Agregar suite</button>
+                <small class="error" id="suites-error"></small>
+            </fieldset>
+            <details class="help">
+                <summary>¿Qué suites necesita el plan?</summary>
+                <p>Al menos una suite <em>obligatoria</em> unitaria y una E2E. Las opcionales solo generan avisos en el gate.</p>
+            </details>
+            <div class="actions">
+                <a class="button" href="#/">Cancelar</a>
+                <button type="submit" class="primary">Guardar plan</button>
+            </div>
+        </form>
+    </section>
+
+    <section id="view-detail" aria-labelledby="detail-title" hidden>
+        <p><a href="#/">← Volver a ejecuciones</a></p>
+        <h2 id="detail-title" tabindex="-1">Ejecución</h2>
+        <dl id="detail-meta" class="meta"></dl>
+        <div id="gate-panel" class="gate" tabindex="-1" role="region" aria-label="Decisión del quality gate" hidden></div>
+        <div id="run-actions" class="actions"></div>
+        <h3>Suites y evidencia</h3>
+        <div class="table-wrap"><table id="suite-table">
+            <caption class="sr-only">Resultados por suite</caption>
+            <thead><tr><th scope="col">Suite</th><th scope="col">Tipo</th><th scope="col">Obligatoria</th><th scope="col">Resultado</th><th scope="col">Evidencia</th></tr></thead>
+            <tbody></tbody>
+        </table></div>
+        <form id="result-form" hidden novalidate>
+            <h3>Registrar resultado</h3>
+            <div class="grid">
+                <div class="field"><label for="r-suite">Suite</label><select id="r-suite"></select></div>
+                <div class="field"><label for="r-total">Total</label><input id="r-total" type="number" min="0" inputmode="numeric" required aria-describedby="r-total-error"><small class="error" id="r-total-error"></small></div>
+                <div class="field"><label for="r-failed">Fallidas</label><input id="r-failed" type="number" min="0" inputmode="numeric" value="0" aria-describedby="r-failed-error"><small class="error" id="r-failed-error"></small></div>
+                <div class="field"><label for="r-skipped">Omitidas</label><input id="r-skipped" type="number" min="0" inputmode="numeric" value="0"></div>
+                <div class="field"><label for="r-duration">Duración (ms)</label><input id="r-duration" type="number" min="0" inputmode="numeric" value="0"></div>
+                <div class="field wide"><label for="r-path">Evidencia (ruta en el paquete)</label><input id="r-path" placeholder="e2e/auth-rbac.xml" spellcheck="false" aria-describedby="r-evidence-error"></div>
+                <div class="field"><label for="r-bytes">Tamaño de la evidencia (bytes)</label><input id="r-bytes" type="number" min="1" inputmode="numeric" aria-describedby="r-evidence-error"></div>
+                <div class="field wide"><label for="r-sha">SHA-256 de la evidencia</label><input id="r-sha" spellcheck="false" autocomplete="off" aria-describedby="r-sha-help r-evidence-error"><small id="r-sha-help">En el CI la huella y el tamaño los calcula el gate; aquí se copian del artefacto.</small><small class="error" id="r-evidence-error"></small></div>
+            </div>
+            <div class="actions"><button type="submit" class="primary">Registrar resultado</button></div>
+        </form>
+    </section>
+</main>
+
+<dialog id="confirm" aria-labelledby="confirm-title">
+    <form method="dialog">
+        <h2 id="confirm-title">Confirmar</h2>
+        <p id="confirm-text"></p>
+        <div class="field" id="confirm-reason-field" hidden>
+            <label for="confirm-reason">Motivo (obligatorio)</label>
+            <input id="confirm-reason" maxlength="200">
+        </div>
+        <div class="actions">
+            <button value="cancel" formnovalidate>Cancelar</button>
+            <button value="ok" class="primary" id="confirm-ok">Confirmar</button>
+        </div>
+    </form>
+</dialog>
+<script type="module" src="app.js"></script>
+</body>
+</html>
