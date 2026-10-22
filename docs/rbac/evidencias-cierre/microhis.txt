@@ -1,0 +1,63 @@
+OK: camino feliz: 201, membresía y auditoría guardadas
+OK: regla de dominio: rol que supera el privilegio -> 403 y denegación con trace_id
+OK: regla de dominio: sin permiso rbac.asignar -> 403 RBAC_DENIED
+OK: regla de dominio: rol ya asignado -> 409
+OK: validación: rol inexistente -> 422
+OK: validación: entradas inválidas (array/objeto/espacios en user_id, headers no string) -> 422 sin TypeError
+OK: validación: ninguna entrada inválida escribió membresía ni auditoría
+OK: error de persistencia: auditoría caída -> 500 y rollback
+OK: falla segura: bitácora caída -> sigue denegado (403)
+Todas las pruebas pasaron.
+OK: contratos: implementa PermissionProvider, DenialRecorder y RoleResolver
+OK: permisos: rol conocido -> sus permisos
+OK: permisos: rol desconocido -> lista vacía
+OK: permisos: código vacío -> lista vacía (sin excepción)
+OK: roles: usuario con rol asignado -> ese rol
+OK: roles: usuario sin asignaciones -> lista vacía
+OK: tenant: el mismo usuario en otro hospital -> lista vacía
+OK: roles: varias asignaciones en el mismo hospital -> se acumulan
+OK: tenant: cada hospital mantiene sus propios roles
+OK: denegaciones: sin registros -> lista vacía
+OK: denegaciones: guarda la denegación tal cual
+OK: paridad PDO/InMemory: permissionsFor coincide
+OK: paridad PDO/InMemory: rolesIn coincide por hospital
+OK: colisión: los roles de (a@b,c) no aparecen en (a,b@c)
+OK: colisión: los roles de (a,b@c) no aparecen en (a@b,c)
+OK: colisión: cada par conserva sus propios roles
+OK: colisión: usuario sin membresía -> lista vacía
+OK: colisión: paridad con PDO para (a@b,c)
+OK: colisión: paridad con PDO para (a,b@c)
+OK: colisión: paridad con PDO para usuario sin membresía
+Todas las pruebas del adaptador InMemory pasaron.
+OK: permitido: rol con el permiso -> allowed true y trace_id
+OK: denegado: rol sin el permiso -> allowed false, motivo y trace_id
+OK: no autenticado: usuario sin roles -> allowed false
+OK: permiso desconocido -> allowed false
+OK: la denegación queda registrada en el DenialRecorder
+OK: falla segura: la bitácora falla -> sigue denegado con trace_id
+OK: handler: acción permitida -> 200 allowed true
+OK: handler: acción no cubierta -> 200 allowed false
+OK: handler: entradas inválidas -> 422 sin TypeError
+Todas las pruebas de autorización pasaron.
+OK: Authorize no se puede construir sin seguimiento de auditoria
+OK: RoleResolver lanza -> allowed false, resolucion_no_disponible, sin filtrar detalle
+OK: PermissionProvider lanza -> allowed false, resolucion_no_disponible
+OK: DenialRecorder lanza -> allowed false, registro_no_disponible, trace_id
+OK: Authorizer y caso de uso comparten el mismo registro (1 sola llamada)
+OK: denegacion ordinaria -> allowed false, permiso_faltante
+OK: handler: evalua al usuario del body -> 200 allowed true
+OK: handler: operacion evaluada y denegada -> 200 allowed false permiso_faltante
+OK: handler: sin autenticacion -> 401 con trace_id
+OK: handler: entrada invalida -> 422 con trace_id
+OK: handler: sin hospital -> 422 payload_invalido
+OK: handler: user_id=[] -> 422 con trace_id y sin invocar autorizacion
+OK: handler: user_id ausente -> fallback al solicitante
+OK: handler: user_id valido -> evalua el del body, no el solicitante
+OK: handler: user_id null/vacio/false/0/array/objeto -> 422 con trace_id
+OK: handler: solicitante sin permiso de endpoint -> 403 operacion_no_autorizada
+OK: handler: endpoint sin configurar -> 503 endpoint_no_configurado unificado
+OK: handler: auditoria caida -> 503 registro_no_disponible unificado
+OK: handler: RoleResolver lanza -> 503 resolucion_no_disponible unificado
+OK: handler: fallo transitorio -> 1er 503 unificado y luego 200 permiso_faltante
+OK: handler: 200 -> claves exactas allowed/reason/trace_id
+Todas las pruebas de errores de autorizacion pasaron.
