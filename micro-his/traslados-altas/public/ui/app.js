@@ -90,6 +90,7 @@ function revisar(evento) {
 async function confirmar() {
     $('confirmar').disabled = true;
     $('confirmar').textContent = 'Procesando…';
+    anunciar({ tipo: '', texto: 'Procesando…' }); // el estado de carga también se anuncia, no solo se ve en el botón
     const cuerpo = { estancia_esperada_id: $('estancia').value.trim(), ...(operacion === 'traslado' ? { cama_destino_id: $('cama').value.trim(), motivo: $('motivo').value.trim() } : {}) };
     const { estado, cuerpo: respuesta } = await llamar('POST', operacion === 'traslado' ? '/traslados' : '/altas', cuerpo);
     $('confirmar').disabled = false;
