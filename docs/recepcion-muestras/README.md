@@ -51,3 +51,7 @@ Issue verificado: [ASII-18 #6](https://github.com/compilations-teams/sistema-hos
 Ejecución y despliegue: [operación](operacion.md). Resultados: [semana 15](semana-15/README.md).
 Referencia SOLID: [MVP Cluster](https://mvpcluster.com/diseno-de-software-2/).
 Los registros de ejecución y la matriz final distinguen pruebas realizadas y validación externa pendiente.
+
+## Validación de la corrección de Javier
+OK (42 tests, 159 assertions) del módulo; OK (261 tests, 5632 assertions) del HIS y OK (108 tests, 1220 assertions) de integridad. Build, Pint, micro y navegador correctos.
+La referencia corregida está en el worktree local recepcion-integracion-javier. Las ramas históricas no representan esta validación. No se publicaron cambios.
