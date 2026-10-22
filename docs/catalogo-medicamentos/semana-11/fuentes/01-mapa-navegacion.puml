@@ -1,0 +1,41 @@
+@startuml
+title ASII-14 Semana 11 - Mapa de navegación del prototipo
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #334155
+skinparam state {
+  BackgroundColor #EAF4FF
+  BorderColor #2563EB
+}
+
+[*] --> Busqueda : abrir prototipo
+state "Búsqueda\n(vacío y ayuda)" as Busqueda
+state "Error de término\n(aria-invalid, foco en el campo)" as ErrTermino
+state "Resultados\n(tabla ≥ 768 px / tarjetas < 768 px)" as Resultados
+state "Sin coincidencias" as Vacio
+state "Catálogo no disponible\n[Reintentar]" as Caido #FCE7F3
+state "Confirmar vigencia\n(foco en Cancelar)" as Confirmar
+state "Alta\n(foco en Código)" as Alta
+state "Error de alta en el campo\n(datos conservados)" as ErrAlta
+
+Busqueda --> ErrTermino : < 2 o > 60 caracteres
+ErrTermino --> Busqueda : corrige
+Busqueda --> Resultados : Enter o Buscar
+Busqueda --> Vacio : sin coincidencias
+Busqueda --> Caido : catálogo caído (simulado)
+Caido --> Resultados : Reintentar con el catálogo disponible
+Resultados --> Confirmar : [gestor] Inactivar o Activar <código>
+Confirmar --> Resultados : Cancelar o Esc (foco al botón de origen)
+Confirmar --> Resultados : confirmar → "Vigencia actualizada"
+Resultados --> Alta : [gestor] Dar de alta
+Busqueda --> Alta : [gestor] Dar de alta
+Alta --> ErrAlta : duplicado o campo inválido
+ErrAlta --> Alta : corrige
+Alta --> Busqueda : Registrar → "Medicamento registrado"
+Alta --> Busqueda : Cancelar o Esc
+
+note right of Caido
+  Error crítico del recorrido:
+  sin datos parciales ni estado anterior
+end note
+@enduml

@@ -38,7 +38,7 @@ check('responde 200 con la misma fecha de corte', $response['status'] === 200 &&
 check('cada cama se cuenta exactamente una vez', $global['total_beds'] === 5 && array_sum(array_intersect_key($global, array_flip(['occupied', 'available', 'maintenance', 'inactive', 'unverified_occupied']))) === 5);
 check('la estancia activa prevalece sobre status available', $global['occupied'] === 1 && $global['inconsistencies'] === 2);
 check('occupied sin estancia queda no verificada', $global['unverified_occupied'] === 1);
-check('la tasa usa solo ocupadas y disponibles', $global['occupancy_rate'] === 50.0);
+check('la tasa usa solo camas operativas', $global['occupancy_rate'] === 33.33);
 check('la distribución usa el inventario total', $global['distribution_percentages']['maintenance'] === 20.0);
 check('consolida las salas sin perder camas', count($response['body']['wards']) === 2 && $response['body']['wards'][0]['total_beds'] === 4 && $response['body']['wards'][1]['total_beds'] === 1);
 $emptyCapacity = (new OccupancyCalculator())->calculate([
