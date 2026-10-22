@@ -21,7 +21,7 @@ en la semana 16**; ninguna fila afirma una interfaz que no exista en `develop`.
 
 | Componente | Estado | Responsabilidad | Contrato principal |
 |---|---|---|---|
-| `OccupancyPage.vue` | Implementado (semana 16) | Componer filtros, indicadores, salas y estados visuales | Lee estado local; no calcula ocupación |
+| `OccupancyPage.vue` | Implementado (semana 16) | Componer indicadores, salas y estados visuales; la pantalla actual no incluye filtro de sala | Consulta mediante el cliente HTTP común; no calcula ocupación |
 | `ocupacion.js` | Implementado (semana 16) | Utilidades puras: formateo, agregados y reglas de presentación | Sin `fetch`, sin estado global |
 | `router/index.js` | Implementado (semana 16) | Publicar la ruta `/ocupacion` | Ruta y nombre de vista |
 | Middleware `tenant` + `jwt.auth` + `rbac:ocupacion.ver` | Implementado (semana 16) | Autenticar, aislar por hospital y autorizar la lectura | Ruta protegida en `routes/api.php` |
@@ -46,8 +46,8 @@ en la semana 16**; ninguna fila afirma una interfaz que no exista en `develop`.
 
 ## Dependencias permitidas
 
-1. Vue depende del store y de tipos de respuesta, nunca de SQL ni de entidades PDO.
-2. El store depende del cliente HTTP, no de `fetch` disperso en componentes.
+1. Vue depende del cliente HTTP común y del contrato de respuesta, nunca de SQL ni de entidades PDO.
+2. `OccupancyPage.vue` usa `@/plugins/axios` directamente; un store de ocupación queda como propuesta, no como componente integrado.
 3. Presentation depende de Application; Application depende del puerto y del dominio.
 4. Persistence implementa el puerto del dominio; Domain y Application no dependen de PDO.
 5. ASII-09 solo lee `wards`, `beds` y `bed_stays`; ASII-06/07/08 conservan sus escrituras.
