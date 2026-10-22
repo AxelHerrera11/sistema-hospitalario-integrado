@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.architecture" tests="8" failures="0">
+    <testcase name="[AR01] Domain solo importa Domain" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR02] Domain no usa PDO ni SQL" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR03] Application solo importa Domain y Application" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR04] Presentation sin SQL ni PDO" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR05] Presentation no importa Persistence ni Ci" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR06] El controlador no decide veredictos ni valida reglas (sin GateVerdict/QualityGate/InvalidQaInput)" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR07] Solo Integration/ y Ci/ conocen a Gobernanza (contrato público)" classname="qa-calidad.architecture" time="0.000"/>
+    <testcase name="[AR08] Ningún archivo del módulo supera 400 líneas" classname="qa-calidad.architecture" time="0.000"/>
+  </testsuite>
+</testsuites>

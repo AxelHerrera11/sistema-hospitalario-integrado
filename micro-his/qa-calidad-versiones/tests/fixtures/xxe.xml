@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!DOCTYPE testsuites [ <!ENTITY secreto SYSTEM "file:///etc/hostname"> ]>
+<testsuites>
+  <testsuite name="xxe">
+    <testcase name="&secreto;" time="0.001"/>
+  </testsuite>
+</testsuites>

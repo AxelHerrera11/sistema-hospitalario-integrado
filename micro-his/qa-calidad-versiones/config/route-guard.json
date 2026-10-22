@@ -1,0 +1,11 @@
+{
+    "_comentario": "Excepciones explícitas al control de rutas. Toda ruta nueva fuera de estas listas debe llevar tenant + JwtAuth + rbac:<permiso del catálogo>.",
+    "public": [
+        "POST api/v1/auth/login",
+        "POST api/v1/auth/refresh"
+    ],
+    "authenticated_only": [
+        "GET api/v1/auth/me",
+        "POST api/v1/auth/logout"
+    ]
+}
