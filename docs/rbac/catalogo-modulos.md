@@ -80,6 +80,9 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `alertas.ver` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.acusar` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.cerrar` | Sí | — | Sí | — | — | — | — | — |
+| `traslados.registrar` | — | — | — | — | — | — | — | — |
+| `altas.registrar` | — | — | — | — | — | — | — | — |
+| `traslados.ver` | — | — | — | — | — | — | — | — |
 
 ## Contratos conciliados y decisiones
 
