@@ -1,0 +1,266 @@
+name: QA CI y E2E
+
+# Pipeline de calidad del HIS (módulo QA, pruebas E2E, CI y guía de despliegue).
+# Etapas: instalación controlada → sintaxis/lint/build → unitarias, integración y
+# contratos → E2E en ambiente aislado → quality gate con evidencia conservada.
+# Umbrales y suites obligatorias: micro-his/qa-calidad-versiones/config/*.json
+# (PROPUESTA pendiente de aprobación del grupo, ver docs/CI-E2E/semana-14).
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qa-ci-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EVIDENCE: qa-evidence
+  QA_BIN: micro-his/qa-calidad-versiones/bin
+  # Clave de pruebas pública (la misma de phpunit.xml). No es un secreto ni sirve fuera de CI.
+  APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  CACHE_STORE: array
+  SESSION_DRIVER: array
+  QUEUE_CONNECTION: sync
+
+jobs:
+  static:
+    name: Sintaxis, lint y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Pint --diff necesita la base del PR.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Instalación controlada de dependencias (lockfiles)
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --no-audit --no-fund
+      - name: Sintaxis PHP
+        run: >
+          php "$QA_BIN/junit-command.php" --suite=sintaxis-php
+          --junit="$EVIDENCE/syntax/php-lint.xml" --log="$EVIDENCE/syntax/php-lint.log" --
+          bash -c 'fail=0; while IFS= read -r -d "" f; do out=$(php -l "$f" 2>&1) || { echo "$out"; fail=1; }; done < <(find app bootstrap config database routes tests micro-his -name "*.php" -print0); exit $fail'
+      - name: Pint solo en archivos PHP cambiados (informativo)
+        if: github.event_name == 'pull_request'
+        # develop ya tiene archivos sin formato; bloquear aquí frenaría a todo el grupo.
+        continue-on-error: true
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: >
+          php "$QA_BIN/junit-command.php" --suite=pint-archivos-cambiados
+          --junit="$EVIDENCE/lint/pint.xml" --log="$EVIDENCE/lint/pint.log" --
+          vendor/bin/pint --test --diff="origin/$BASE_REF"
+      - name: Análisis estático
+        run: echo "::notice::Análisis estático no configurado (no hay PHPStan/Larastan en composer.json). Propuesta en docs/CI-E2E/semana-14."
+      - name: Build del frontend
+        if: success() || failure()
+        run: >
+          php "$QA_BIN/junit-command.php" --suite=build-frontend
+          --junit="$EVIDENCE/build/vite.xml" --log="$EVIDENCE/build/vite.log" -- npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-evidence-static
+          path: ${{ env.EVIDENCE }}
+          retention-days: 30
+          if-no-files-found: warn
+
+  tests:
+    name: Unitarias, integración y contratos
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalación controlada de dependencias (lockfile)
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          mkdir -p "$EVIDENCE"/{phpunit,micro-his,frontend,contract}
+      - name: PHPUnit Unit
+        run: php vendor/phpunit/phpunit/phpunit --testsuite Unit --log-junit "$EVIDENCE/phpunit/unit.xml"
+      - name: PHPUnit Feature (SQLite en memoria)
+        if: success() || failure()
+        run: php vendor/phpunit/phpunit/phpunit --testsuite Feature --log-junit "$EVIDENCE/phpunit/feature.xml"
+      - name: PHPUnit Integration
+        if: success() || failure()
+        run: php vendor/phpunit/phpunit/phpunit --testsuite Integration --log-junit "$EVIDENCE/phpunit/integration.xml"
+      - name: Suites micro-his de todos los módulos
+        if: success() || failure()
+        run: php "$QA_BIN/micro-his-suites.php" "$EVIDENCE/micro-his"
+      - name: Pruebas frontend (node --test)
+        if: success() || failure()
+        run: |
+          mapfile -t files < <(find resources/js tests/Frontend micro-his -name '*.test.mjs' -o -name '*Test.mjs' | grep -v node_modules | sort)
+          node --test --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination="$EVIDENCE/frontend/node.xml" "${files[@]}"
+      - name: Contrato de rutas (tenant + JWT + RBAC del catálogo)
+        if: success() || failure()
+        run: |
+          mkdir -p "$EVIDENCE/contract"
+          php artisan route:list --json --path=api > "$EVIDENCE/contract/routes.json"
+          php "$QA_BIN/route-guard.php" "$EVIDENCE/contract/routes.json" config/rbac.php "$EVIDENCE/contract/route-guard.xml"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-evidence-tests
+          path: ${{ env.EVIDENCE }}
+          retention-days: 30
+          if-no-files-found: warn
+
+  e2e:
+    name: E2E en ambiente aislado
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      central:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_central_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres # contenedor efímero del job, sin datos reales
+        ports: ['55431:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      hospital:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_hospital_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['55433:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: e2e
+      APP_DEBUG: 'false'
+      DB_CONNECTION: hospital
+      CENTRAL_DB_HOST: 127.0.0.1
+      CENTRAL_DB_PORT: '55431'
+      CENTRAL_DB_DATABASE: his_central_e2e
+      CENTRAL_DB_USERNAME: postgres
+      CENTRAL_DB_PASSWORD: postgres
+      HOSPITAL_DB_HOST: 127.0.0.1
+      HOSPITAL_DB_PORT: '55433'
+      HOSPITAL_DB_DATABASE: his_hospital_e2e
+      HOSPITAL_DB_USERNAME: postgres
+      HOSPITAL_DB_PASSWORD: postgres
+      TENANTS_REFRESH_COOKIE_SECURE: 'false'
+      E2E_HOSPITAL_ID: e2e00000-0000-4000-8000-000000000001
+      E2E_HOSPITAL_2_ID: e2e00000-0000-4000-8000-000000000002
+      E2E_ADMIN_EMAIL: admin.e2e@hospital-ficticio.test
+      E2E_MEDICO_EMAIL: medico.e2e@hospital-ficticio.test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_pgsql, pgsql, pdo_sqlite
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalación controlada de dependencias (lockfile)
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          mkdir -p "$EVIDENCE"/{phpunit,e2e}
+      - name: Secretos efímeros por ejecución
+        run: |
+          jwt=$(openssl rand -base64 48 | tr -d '\n')
+          pass="E2e-$(openssl rand -hex 12)-Aa1!"
+          echo "::add-mask::$jwt"
+          echo "::add-mask::$pass"
+          { echo "JWT_SECRET=$jwt"; echo "E2E_PASSWORD=$pass"; } >> "$GITHUB_ENV"
+      - name: Suite Database contra PostgreSQL de prueba (bases *_test separadas)
+        continue-on-error: true # informativa hasta su primera ejecución verde en CI
+        env:
+          PGPASSWORD: postgres
+          CENTRAL_DB_DATABASE: his_central_test
+          HOSPITAL_DB_DATABASE: his_hospital_test
+        run: |
+          psql -h 127.0.0.1 -p 55431 -U postgres -c 'CREATE DATABASE his_central_test'
+          psql -h 127.0.0.1 -p 55433 -U postgres -c 'CREATE DATABASE his_hospital_test'
+          php vendor/phpunit/phpunit/phpunit --testsuite Database --log-junit "$EVIDENCE/phpunit/database.xml"
+      - name: Migraciones del repositorio en las bases efímeras E2E
+        run: |
+          composer migrate:central
+          composer migrate:framework
+          composer migrate:hospital
+      - name: Datos ficticios (solo bases *_e2e)
+        run: E2E_ALLOW_SEED=1 php tests/E2E/fixtures/seed-e2e.php
+      - name: Levantar servidores aislados
+        run: |
+          mkdir -p "$EVIDENCE/e2e"
+          nohup php artisan serve --host=127.0.0.1 --port=8000 > "$EVIDENCE/e2e/laravel-server.log" 2>&1 &
+          QA_DEMO_DB="$RUNNER_TEMP/qa-demo.sqlite" nohup php -S 127.0.0.1:8093 -t micro-his/qa-calidad-versiones/public \
+            micro-his/qa-calidad-versiones/public/index.php > "$EVIDENCE/e2e/qa-server.log" 2>&1 &
+      - name: E2E módulo QA (planificación → evidencia → gate)
+        run: >
+          QA_E2E_BASE=http://127.0.0.1:8093 node --test --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=junit --test-reporter-destination="$EVIDENCE/e2e/qa-calidad.xml" tests/E2E/qa-calidad.e2e.mjs
+      - name: E2E autenticación, tenant y RBAC (pila completa)
+        if: success() || failure()
+        continue-on-error: true # informativa hasta su primera ejecución verde en CI
+        run: >
+          E2E_API_BASE=http://127.0.0.1:8000 node --test --test-reporter=spec --test-reporter-destination=stdout
+          --test-reporter=junit --test-reporter-destination="$EVIDENCE/e2e/auth-rbac.xml" tests/E2E/auth-rbac.e2e.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-evidence-e2e
+          path: ${{ env.EVIDENCE }}
+          retention-days: 30
+          if-no-files-found: warn
+
+  quality-gate:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    needs: [static, tests, e2e]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite
+          coverage: none
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qa-evidence-*
+          merge-multiple: true
+          path: ${{ env.EVIDENCE }}
+      - name: Evaluar quality gate
+        env:
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: >
+          php "$QA_BIN/quality-gate.php" --evidence-root="$EVIDENCE" --out-dir="$EVIDENCE/gate"
+          --sha="$COMMIT_SHA" --release="0.0.0-ci.$RUN_NUMBER" --environment=ci
+          --db="$EVIDENCE/gate/qa-runs.sqlite"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-gate-decision
+          path: ${{ env.EVIDENCE }}/gate
+          retention-days: 90
