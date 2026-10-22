@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo — Catálogo de pruebas de laboratorio</title>
+<style>
+:root{--ink:#1f2a44;--muted:#4a5266;--line:#c9cfdb;--bg:#f6f7fb;--ok:#1b5e20;--okbg:#e6f4ea;--warn:#6b4100;--warnbg:#fff3e0;--err:#8e1c1c;--errbg:#fdecea;--crit:#b71c1c;--grey:#303437;--greybg:#e3e5e8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+header{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:12px 16px;background:var(--ink);color:#fff}
+main{max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:0 0 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px}
+button{min-height:44px;min-width:44px;padding:10px 16px;border-radius:6px;border:1px solid var(--ink);background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+button.primary{background:var(--ink);color:#fff}
+button[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}
+label{display:block;font-weight:600;margin-top:12px}
+input,select{width:100%;min-height:44px;padding:8px;font:inherit;border:1px solid var(--muted);border-radius:6px;background:#fff}
+fieldset{border:1px solid var(--line);border-radius:6px;margin-top:12px}
+.msg{padding:12px;border-radius:6px;margin:12px 0;border-left:6px solid}
+.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.warn{background:var(--warnbg);border-color:#b26a00;color:var(--warn)}
+.err{background:var(--errbg);border-color:#c62828;color:var(--err)}
+.crit{background:var(--crit);border-color:#7f0000;color:#fff}
+.grey{background:var(--greybg);border-color:var(--grey);color:var(--grey)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.sim{font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:8px;margin-bottom:12px}
+.sim button{min-height:36px;padding:4px 10px;font-size:14px}
+.sim button[aria-pressed=true]{background:var(--ink);color:#fff}
+[role=radio][aria-checked=true]{background:var(--ink);color:#fff;outline:3px solid #ffbf47}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[hidden]{display:none!important}
+.sm-only{display:none}
+@media (max-width:639px){
+ .lg-only{display:none!important} .sm-only{display:block}
+ thead{display:none} tr{display:block;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px;background:#fff}
+ td{display:block;border:0;padding:2px 0}
+ .actions{position:sticky;bottom:0;background:var(--bg);padding:8px 0;margin:0} .actions button{flex:1}
+}
+</style>
+</head>
+<body>
+<header><strong>HIS · Catálogo de pruebas de laboratorio</strong><span>HOSP-DEMO · jefa.lab · datos ficticios</span></header>
+<main>
+<div class="sim" role="group" aria-label="Simulador del prototipo">Respuesta simulada del servidor: <button type="button" data-sim="ok" aria-pressed="true">Correcta</button> <button type="button" data-sim="empty" aria-pressed="false">Sin resultados</button> <button type="button" data-sim="conflict" aria-pressed="false">409 vigencia solapada</button> <button type="button" data-sim="down" aria-pressed="false">Servidor caído</button></div>
+<div id="live" class="sr" role="status" aria-live="polite"></div>
+<section id="lista" data-screen>
+  <h1>Pruebas vigentes</h1>
+  <form id="buscar" class="card" role="search">
+    <label for="q">Buscar por código o nombre</label>
+    <input id="q" name="q" value="gluc" autocomplete="off">
+    <div class="actions"><button type="submit">Buscar</button><button type="button" class="primary lg-only" data-go="nueva">Nueva versión</button></div>
+    <p class="sm-only">Para registrar versiones use una tablet o computadora.</p>
+  </form>
+  <div id="lista-msg" class="msg" hidden></div>
+  <table id="tabla"><thead><tr><th>Código</th><th>Nombre</th><th>Muestra</th><th>Unidad</th><th>Referencia</th><th>Versión</th></tr></thead><tbody></tbody></table>
+</section>
+<section id="detalle" data-screen hidden>
+  <h1>GLU · Glucosa · versión 1</h1>
+  <div class="card"><p><strong>Muestra:</strong> suero · tubo rojo · 1 mL · ayuno 8 h</p>
+  <p><strong>Rangos:</strong> referencia 70–100 mg/dL · crítico menor que 40 o mayor que 400</p>
+  <p>Las órdenes ya emitidas conservan esta versión.</p></div>
+  <div class="actions"><button type="button" data-go="lista">Volver a la lista</button></div>
+</section>
+<section id="nueva" data-screen hidden>
+  <h1>Nueva versión de prueba</h1>
+  <form id="alta" class="card" novalidate>
+    <label for="code">Código *</label><input id="code" value="NA" required>
+    <label for="name">Nombre *</label><input id="name" value="Sodio" required>
+    <label for="vol">Volumen mínimo (mL) *</label><input id="vol" value="1" inputmode="decimal" required>
+    <fieldset><legend>Rangos en mmol/L (de menor a mayor)</legend>
+      <label for="cl">Crítico bajo</label><input id="cl" value="120" inputmode="decimal" aria-describedby="alta-msg">
+      <label for="rl">Referencia baja</label><input id="rl" value="135" inputmode="decimal">
+      <label for="rh">Referencia alta</label><input id="rh" value="145" inputmode="decimal">
+      <label for="ch">Crítico alto</label><input id="ch" value="160" inputmode="decimal">
+    </fieldset>
+    <label for="from">Vigente desde *</label><input id="from" type="date" value="2026-11-01" min="2026-10-19">
+    <div id="alta-msg" class="msg" hidden></div>
+    <div class="actions"><button type="button" data-go="lista">Cancelar</button><button type="submit" class="primary">Guardar</button></div>
+  </form>
+</section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let sim = 'ok';
+document.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
+  sim = b.dataset.sim;
+  document.querySelectorAll('[data-sim]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+function show(id) {
+  document.querySelectorAll('section[data-screen]').forEach(s => { s.hidden = s.id !== id; });
+  const h = document.querySelector('#' + id + ' h1');
+  if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+  if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+}
+function say(el, cls, text) { el.className = 'msg ' + cls; el.textContent = text; el.hidden = false; }
+function announce(text) { $('#live').textContent = text; }
+document.addEventListener('click', e => { const go = e.target.closest('[data-go]'); if (go) { e.preventDefault(); show(go.dataset.go); } });
+const filas = [['GLU', 'Glucosa', 'Suero · 1 mL', 'mg/dL', '70–100', 'v1']];
+document.getElementById('buscar').addEventListener('submit', e => {
+  e.preventDefault();
+  const tbody = $('#tabla tbody'), msg = $('#lista-msg');
+  tbody.innerHTML = ''; msg.hidden = true; $('#tabla').hidden = false;
+  if (sim === 'down') { $('#tabla').hidden = true; return say(msg, 'grey', 'Catálogo no disponible: no se puede ordenar sin confirmar la versión. Reintente en unos segundos.'); }
+  const q = $('#q').value.trim().toLowerCase();
+  const hits = filas.filter(f => sim !== 'empty' && (f[0].toLowerCase() === q || f[1].toLowerCase().includes(q)));
+  if (!hits.length) { $('#tabla').hidden = true; return say(msg, 'warn', 'Sin pruebas vigentes para «' + $('#q').value + '» en esta fecha.'); }
+  hits.forEach(f => { const tr = tbody.insertRow(); f.forEach((v, i) => { const td = tr.insertCell(); td.textContent = v; }); const td = tr.insertCell(); td.innerHTML = '<button type="button" data-go="detalle">Ver</button>'; });
+});
+document.getElementById('alta').addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = $('#alta-msg'), n = id => Number($('#' + id).value);
+  if (sim === 'down') return say(msg, 'grey', 'Sin respuesta del catálogo: la versión no se guardó. Reintente.');
+  if (!(n('cl') < n('rl') && n('rl') <= n('rh') && n('rh') < n('ch'))) { say(msg, 'err', 'El crítico bajo debe ser menor que la referencia baja (RANGES_INCOHERENT).'); return $('#cl').focus(); }
+  if (sim === 'conflict') return say(msg, 'warn', 'La versión 1 de ' + $('#code').value + ' sigue vigente: cierre su vigencia primero (LAB_TEST_VALIDITY_OVERLAP).');
+  say(msg, 'ok', $('#code').value.toUpperCase() + ' v1 registrada, vigente desde ' + $('#from').value + '.');
+  announce('Versión registrada');
+});
+document.getElementById('buscar').requestSubmit();
+show(location.hash.slice(1) || 'lista');
+</script>
+</body>
+</html>
+
