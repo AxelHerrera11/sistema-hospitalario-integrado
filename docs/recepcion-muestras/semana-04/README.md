@@ -101,7 +101,7 @@ La integración de datos se diseña por propiedad y contrato, sin conceder escri
 - [Índice de semanas y archivos](../README.md).
 - [Ramas, PR y destino develop](../semana-15/ramas-prs.md).
 - Rama de entrega: feature/asii-18-semana-04-recepcion-muestras-mar-03.
-- La referencia reunida y probada es la rama semana-15-recepcion-muestras-integracion-mar-03.
+- La referencia corregida es el worktree local recepcion-integracion-javier, integrado desde develop y las 18 ramas.
 
 ## Corrección de integración — 21 de octubre de 2026
 
