@@ -2,6 +2,8 @@
 
 **Estado: Correcciones implementadas; cierre funcional pendiente de integración, cobertura y validación del entorno.**
 
+**Actualización posterior:** se completaron el cableado de gobernanza, la revalidación de sesión y los recorridos locales de navegador/HTTP. Ver [continuación del cierre](cierre-local-2026-10-21.md). El resto de este informe conserva el estado histórico de la primera revisión.
+
 ## Publicación posterior de esta revisión
 
 Por instrucción de la usuaria se publicó la corrección de permisos de acción en #858, commit `0bd73f06`. Este informe y sus evidencias se publican por separado desde `feature/asii-02-semana-17-rbac-evidencia-cierre-mar-03`, basada en develop `070a255c`, para respetar 400 líneas por PR. Los resultados de pruebas que siguen pertenecen al snapshot `0926ad98` con las correcciones indicadas, no a una nueva ejecución sobre `070a255c`. Se mantienen los PR en borrador y sin merge. Las referencias a cambios «locales» y «sin publicar» describen el momento de la revisión, anterior a esta publicación.

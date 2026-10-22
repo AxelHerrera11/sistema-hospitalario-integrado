@@ -1,6 +1,6 @@
 # Trazabilidad provisional RBAC, semanas 1–17
 
-Fuente de requisitos: los README históricos de `docs/rbac/semana-01` a `semana-17`. Contrastar con la planificación oficial antes de certificar cumplimiento. Los archivos de código y prueba son candidatos de evidencia del estado actual, no prueba de entrega en la fecha de cada semana.
+Fuente de requisitos: los README históricos de `docs/rbac/semana-01` a `semana-17`, contrastados con la tabla Plan semanal ASII del README raíz en develop a3925260. El archivo docs/weekly-plan.md que ese README enlaza no existe en esa versión. Los archivos de código y prueba son candidatos de evidencia actual, no prueba de entrega o aceptación en la fecha de cada semana. Ver cierre-local-2026-10-21.md para la continuación de navegador/HTTP y gobernanza.
 
 | Semana | Requisito según documento local | Código o artefacto a contrastar | Prueba/evidencia disponible o pendiente | Estado |
 |---|---|---|---|---|
