@@ -124,10 +124,10 @@ incorpora parte de las correcciones de este backlog. Verificado sobre `develop` 
 | H-03 | Alta | Parcial | La tabla no declara reflow a 320 px en el componente. |
 | H-04 | Media | Cerrado | La vista distingue «no verificada» de «disponible» y expone el detalle agregado. |
 | H-05 | Media | Cerrado | `role="status"` en carga y en la marca de fotografía desactualizada; `role="alert"` en error y en acceso denegado. |
-| H-06 | Media | Parcial | La tabla no declara `caption` ni encabezados con `scope`. |
+| H-06 | Media | Cerrado | `OccupancyPage.vue` incluye `caption`, encabezados de columna con `scope="col"` y encabezado de fila con `scope="row"`. |
 | H-07 | Media | Cerrado | El corte se muestra con un único formato y la antigüedad se etiqueta de forma explícita. |
 | H-08 | Baja | Cerrado | El identificador de solicitud viaja en la respuesta y en la bitácora del módulo. |
 
-Los hallazgos H-01, H-02, H-03 y H-06 siguen abiertos: son los puntos que el plan de revisión
+Los hallazgos H-01, H-02 y H-03 siguen abiertos: son los puntos que el plan de revisión
 técnica de la semana 13 y el plan SQA de la semana 14 deben vigilar, y son los candidatos
 naturales para el cambio solicitado en la evaluación final.
