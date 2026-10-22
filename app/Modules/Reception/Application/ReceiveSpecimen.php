@@ -25,8 +25,6 @@ final class ReceiveSpecimen
     private function receive(string $tenant, string $actor, array $input, \DateTimeImmutable $now): array
     {
         return $this->repository->transaction(function () use ($tenant, $actor, $input, $now) {
-            $order = $this->repository->order($tenant, $input['item_id']);
-            if (!$order) throw new \DomainException('Ítem no encontrado', 404);
             ksort($input);
             $hash = hash('sha256', json_encode($input, JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION));
             $previous = $this->repository->byRequest($tenant, $input['request_key']);
@@ -36,6 +34,8 @@ final class ReceiveSpecimen
                 }
                 return $previous;
             }
+            $order = $this->repository->order($tenant, $input['item_id']);
+            if (!$order) throw new \DomainException('Ítem no encontrado', 404);
             if (!in_array($order['status'], ['pending', 'pending_new_sample'], true)) {
                 throw new \DomainException('Ítem no disponible', 409);
             }
@@ -44,8 +44,9 @@ final class ReceiveSpecimen
                     ? 'identificacion_discordante' : null);
             $reason ??= (new SampleValidator($order['type']))->reason($input, $order, $now);
             $sample = [
-                'id' => bin2hex(random_bytes(16)), 'tenant_id' => $tenant,
+                'id' => (string) \Illuminate\Support\Str::uuid(), 'tenant_id' => $tenant,
                 'item_id' => $input['item_id'], 'actor_id' => $actor,
+                'local_patient_id' => $order['local_patient_id'] ?? null, 'care_episode_id' => $order['care_episode_id'] ?? null,
                 'request_key' => $input['request_key'], 'request_hash' => $hash,
                 'status' => $reason ? 'rejected' : 'accepted', 'reason' => $reason,
                 'code' => $reason ? null : ($this->generate ? ($this->generate)() : SpecimenCode::generate()),
