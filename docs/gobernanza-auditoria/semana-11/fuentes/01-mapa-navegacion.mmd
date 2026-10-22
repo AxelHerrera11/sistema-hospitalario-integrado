@@ -1,0 +1,17 @@
+%% Mapa de navegación del prototipo (Semana 11): pantallas y transiciones implementadas.
+stateDiagram-v2
+    [*] --> Cargando : abrir /prototipo/
+    Cargando --> Resultados : 200 con datos
+    Cargando --> SinResultados : 200 sin datos
+    Cargando --> ErroresFiltro : 422
+    Cargando --> AccesoDenegado : 403
+    Cargando --> SesionRequerida : 401
+    Cargando --> NoDisponible : 503 / sin conexión
+    Resultados --> Cargando : Buscar / Anterior / Siguiente / Limpiar
+    SinResultados --> Cargando : Buscar / Limpiar
+    ErroresFiltro --> Cargando : corregir y Buscar
+    NoDisponible --> Cargando : cambiar simulación
+    AccesoDenegado --> Cargando : cambiar sesión simulada
+    SesionRequerida --> Cargando : cambiar sesión simulada
+    Resultados --> Detalle : Ver detalle (Enter)
+    Detalle --> Resultados : Cerrar / Esc (foco vuelve al botón)

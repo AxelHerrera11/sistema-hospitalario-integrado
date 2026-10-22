@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ArrowColor #263238
+skinparam class {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontColor #17212B
+}
+skinparam note {
+  BackgroundColor #FFF8E1
+  BorderColor #B8860B
+  FontColor #17212B
+}
+
+interface ContractMenuBuilder {
+  + menuPara(rol: string, permisos: array): array
+}
+interface ContractGuard {
+  + evaluar(sesion: array, vista: string): string
+}
+interface ContractResumenLoader {
+  + cargar(): array
+}
+interface ContractEstadoPresenter {
+  + presentar(resultado: array): string
+}
+class MenuBuilder implements ContractMenuBuilder
+class GuardNavegacion implements ContractGuard
+class ResumenLoader implements ContractResumenLoader
+class EstadoPresenter implements ContractEstadoPresenter
+class DashboardController {
+  - menu: ContractMenuBuilder
+  - guard: ContractGuard
+  - loader: ContractResumenLoader
+  - presentador: ContractEstadoPresenter
+  + mostrarVista(rol: string, permisos: array): string
+}
+
+DashboardController o-- ContractMenuBuilder
+DashboardController o-- ContractGuard
+DashboardController o-- ContractResumenLoader
+DashboardController o-- ContractEstadoPresenter
+MenuBuilder ..|> ContractMenuBuilder
+GuardNavegacion ..|> ContractGuard
+ResumenLoader ..|> ContractResumenLoader
+EstadoPresenter ..|> ContractEstadoPresenter
+
+note right of MenuBuilder
+  Cambia solo si cambia el
+  catalogo del menu por rol.
+end note
+note bottom of GuardNavegacion
+  Cambia solo si cambian las
+  reglas de acceso (login/403).
+end note
+note bottom of ResumenLoader
+  Cambia solo si cambia el
+  contrato de la API de resumen.
+end note
+note bottom of EstadoPresenter
+  Cambia solo si cambian los
+  criterios de estado de la UI.
+end note
+@enduml
