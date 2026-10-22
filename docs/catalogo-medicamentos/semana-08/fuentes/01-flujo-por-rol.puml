@@ -1,0 +1,62 @@
+@startuml
+title ASII-14 Semana 8 - Flujo UX por rol (propuesto)
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam ActivityDiamondBackgroundColor #FEF3C7
+
+|Gestor o usuario clínico\n(medicamentos.ver: superadmin,\nadmin_hospital, medico, enfermeria)|
+start
+:Abre "Catálogo de medicamentos";
+if (¿Sesión y hospital activos?) then (no)
+  :Pantalla de inicio de sesión;
+  stop
+endif
+|Gestor\n(admin_hospital;\nescritura PROPUESTA)|
+|Gestor o usuario clínico\n(medicamentos.ver: superadmin,\nadmin_hospital, medico, enfermeria)|
+:Estado vacío con ayuda:\n"Escriba al menos 2 caracteres del\ncódigo, nombre o principio activo";
+:Escribe el término y busca;
+if (¿Término de 2 a 60 caracteres?) then (no)
+  :Mensaje junto al campo; el foco permanece en él;
+  detach
+endif
+:Estado "Cargando…" (aria-busy);
+if (Resultado) then (503)
+  :Error recuperable:\n"El catálogo no está disponible" + [Reintentar];
+  detach
+elseif (lista vacía) then
+  :"Sin coincidencias" + sugerencia de otro término;
+  detach
+else (resultados)
+  :Tabla con código, nombre,\nprincipio activo y vigencia;
+endif
+:Abre el detalle: muestra la vigencia;
+|Gestor\n(admin_hospital;\nescritura PROPUESTA)|
+if (¿Tiene permiso de escritura?) then (no)
+  :Acciones de alta y vigencia no visibles;\nel servidor responde 403 si se intentan;
+  stop
+else (sí)
+  if (Acción) then (alta)
+    :Formulario de alta con validación por campo;
+    if (Respuesta) then (422 o 409)
+      :Mensaje en el campo indicado;\nlos datos escritos se conservan;
+      detach
+    else (201)
+      :"Medicamento registrado" con su código;
+    endif
+  else (cambiar vigencia)
+    :Diálogo de confirmación con código,\nnombre y principio activo del registro;
+    if (¿Confirma?) then (no)
+      :Cierra sin cambios;
+      detach
+    else (sí)
+      if (Respuesta) then (503)
+        :"No se confirmó el cambio";\nse recarga el estado real;
+        detach
+      else (200)
+        :"Vigencia actualizada" y la fila\nmuestra el nuevo estado;
+      endif
+    endif
+  endif
+endif
+stop
+@enduml

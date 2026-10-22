@@ -1,0 +1,28 @@
+@startuml
+!include <C4/C4_Container>
+title ASII-14 Semana 5 - Cliente-servidor del catálogo (propuesta, no desplegada)
+LAYOUT_TOP_DOWN()
+AddRelTag("propuesto", $lineStyle = DashedLine(), $legendText = "propuesto")
+
+Person(gestor, "Gestor del catálogo", "admin_hospital (propuesto para escritura)")
+Person(clinico, "Usuario clínico", "medico / enfermeria: medicamentos.ver")
+
+System_Boundary(his, "HIS (monolito modular Laravel)") {
+  Container(spa, "SPA Vue", "Vue 3 + Axios", "Pantallas de búsqueda, alta y vigencia (Semanas 8-11)")
+  Container(api, "API HTTP v1", "Laravel 12", "Middlewares tenant y jwt.auth, permiso RBAC y trace_id")
+  Container(mod, "Módulo Catálogo", "PHP: Application + Domain del micro-HIS", "Mismos casos de uso y reglas; adaptador de Persistence nuevo")
+  ContainerDb(hdb, "Base HOSPITAL", "PostgreSQL, una por hospital", "Tabla medication (slice H5 pendiente)")
+}
+System_Ext(rbac, "RBAC", "config/rbac.php + RequirePermission")
+System_Ext(presc, "Prescripciones", "Consume la lectura del catálogo")
+
+Rel(gestor, spa, "alta y vigencia", "HTTPS")
+Rel(clinico, spa, "búsqueda y consulta", "HTTPS")
+Rel(spa, api, "JSON /api/v1/medications", "HTTPS + Bearer + X-Tenant-ID")
+Rel(api, rbac, "permiso por operación")
+Rel(api, mod, "contratos segregados", "llamada en proceso")
+Rel(mod, hdb, "MedicationRepository", "PDO, sentencias preparadas")
+Rel(presc, mod, "MedicationLookup (solo lectura)", "en proceso", $tags = "propuesto")
+
+SHOW_LEGEND()
+@enduml

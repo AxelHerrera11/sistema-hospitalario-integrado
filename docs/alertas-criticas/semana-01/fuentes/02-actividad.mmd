@@ -1,0 +1,58 @@
+---
+title: "Actividad — Detección, envío, acuse y escalamiento de una alerta crítica"
+---
+flowchart LR
+  classDef ini fill:#1f2a44,stroke:#1f2a44
+  classDef fin fill:#ffffff,stroke:#1f2a44,stroke-width:4px
+  classDef ok fill:#e6f4ea,stroke:#2e7d32,color:#1b5e20
+  classDef err fill:#fdecea,stroke:#c62828,color:#8e1c1c
+  classDef dec fill:#fff8e1,stroke:#8a6d00
+  classDef warn fill:#fff3e0,stroke:#b26a00,color:#7a4a00
+  classDef tx fill:#eef3fb,stroke:#3a5a8c,color:#1f2a44
+
+  subgraph A["A · Detectar, generar y notificar (UC-ALR-01, 02, 03, 09)"]
+    direction TB
+    ai(( )):::ini --> a1["Llega «resultado validado» (ASII-20)<br/>por inbox, al menos una vez"]
+    a1 --> a2{"¿Evento completo<br/>y del tenant?"}:::dec
+    a2 -- No --> a3["inbox = failed + log<br/>(sin alerta)"]:::err
+    a2 -- Sí --> a4{"¿La versión de la prueba (ASII-17)<br/>tiene umbrales y el valor los supera?"}:::dec
+    a4 -- No --> a5["Sin alerta"]
+    a4 -- Sí --> a6{"¿Ya hay alerta para<br/>este resultado?"}:::dec
+    a6 -- Sí --> a7["Ignorar duplicado<br/>(idempotencia)"]:::warn
+    a6 -- No --> a8["Destinatario: médico tratante (nivel 0)<br/>o jefatura de servicio (nivel 1) si no hay"]
+    a8 --> a9["BEGIN: INSERT critical_alerts (open, due_at = +15 min)<br/>+ local_access_audits + outbox_events"]:::tx
+    a9 --> a10{"¿Transacción?"}:::dec
+    a10 -- "Índice único violado" --> a7
+    a10 -- "Falla" --> a11["ROLLBACK · el evento<br/>se reintenta"]:::err
+    a10 -- Correcto --> a12["COMMIT · notificar a la bandeja (UC-ALR-03);<br/>si el canal falla, reintento sin detener el plazo"]:::tx
+    a12 --> aok["status = notified"]:::ok
+    a3 & a5 & a7 & a11 & aok --> af((( ))):::fin
+  end
+
+  subgraph B["B · Acusar recibo y cerrar (UC-ALR-04, 06, 07, 08, 09)"]
+    direction TB
+    bi(( )):::ini --> b1["Médico abre la bandeja (UC-ALR-06)"]
+    b1 --> b2{"¿JWT, tenant y<br/>alertas.acusar?"}:::dec
+    b2 -- No --> b401["401 / 403"]:::err
+    b2 -- Sí --> b3{"¿Lectura de verificación de<br/>paciente, prueba y valor?"}:::dec
+    b3 -- No --> b422["422 READ_BACK_REQUIRED"]:::err
+    b3 -- Sí --> b4{"¿Existe, hay relación de cuidado<br/>y sigue pendiente?"}:::dec
+    b4 -- No --> b4x["404 / 403 / 409<br/>ALERT_ALREADY_ACKNOWLEDGED"]:::err
+    b4 -- Sí --> b5["BEGIN FOR UPDATE: status = acknowledged<br/>+ auditoría (UC-ALR-04, 09)"]:::tx
+    b5 --> b6{"¿Falla de<br/>auditoría?"}:::dec
+    b6 -- Sí --> b500["ROLLBACK + 500"]:::err
+    b6 -- No --> b7["COMMIT · 200 · se detiene<br/>el escalamiento"]:::ok
+    b7 --> b8["Registra la acción clínica (UC-ALR-07)<br/>→ status = resolved + auditoría"]:::ok
+    b401 & b422 & b4x & b500 & b8 --> bf((( ))):::fin
+  end
+
+  subgraph C["C · Escalar alerta vencida (UC-ALR-05, 03, 09)"]
+    direction TB
+    ci(( )):::ini --> c1["alerts:escalate cada minuto: pendientes con<br/>due_at ≤ ahora · FOR UPDATE SKIP LOCKED"]:::tx
+    c1 --> c2{"¿Nivel #lt; 2?"}:::dec
+    c2 -- Sí --> c3["Nivel + 1, nuevo destinatario, due_at = +15 min,<br/>status = escalated + auditoría · notificar"]:::warn
+    c2 -- No --> c4["Escalamiento agotado: aviso a dirección médica<br/>y llamada registrada · la alerta sigue abierta"]:::err
+    c3 & c4 --> cf((( ))):::fin
+  end
+
+  A ~~~ B ~~~ C
