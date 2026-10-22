@@ -17,5 +17,8 @@ require __DIR__ . '/traslado.php';
 require __DIR__ . '/alta.php';
 require __DIR__ . '/presentacion.php';
 require __DIR__ . '/contrato-inmemory.php';
+require __DIR__ . '/consulta.php';
+require __DIR__ . '/http.php';
+require __DIR__ . '/ejecutor.php';
 
 finish();
