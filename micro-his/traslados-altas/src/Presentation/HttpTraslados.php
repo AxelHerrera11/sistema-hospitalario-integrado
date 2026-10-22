@@ -14,7 +14,7 @@ use MicroHis\TrasladosAltas\Domain\Identificador;
 use MicroHis\TrasladosAltas\Domain\SolicitudInvalida;
 
 /**
- * PROTOTIPO de API HTTP del micro-HIS (Semana 5). Reutiliza ConsolaTraslados y VistaResultado: solo traduce HTTP.
+ * PROTOTIPO de API HTTP del micro-HIS (Semana 5). Delega en EjecutorOperaciones y VistaResultado: solo traduce HTTP.
  * El actor llega en la cabecera X-Actor-Ref; en la integración la reemplazan JWT, tenant y RBAC de Laravel.
  */
 final class HttpTraslados
@@ -70,10 +70,8 @@ final class HttpTraslados
         if (!is_array($datos)) {
             return self::error(400, 'JSON_INVALIDO');
         }
-        $argumentos = $ruta === '/traslados'
-            ? ['trasladar', (string) ($datos['estancia_esperada_id'] ?? ''), (string) ($datos['cama_destino_id'] ?? ''), (string) ($datos['motivo'] ?? '')]
-            : ['alta', (string) ($datos['estancia_esperada_id'] ?? '')];
-        $respuesta = (new ConsolaTraslados($this->dependencias, $actorRefId))->atender($argumentos);
+        $tipo = $ruta === '/traslados' ? EjecutorOperaciones::TRASLADO : EjecutorOperaciones::ALTA;
+        $respuesta = (new EjecutorOperaciones($this->dependencias))->ejecutar($tipo, $datos, $actorRefId);
         $estado = self::ESTADOS[$respuesta['codigo']];
         if (($respuesta['cuerpo']['motivo'] ?? null) === 'NO_AUTORIZADO') {
             $estado = 403;
