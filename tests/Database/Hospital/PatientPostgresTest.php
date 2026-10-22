@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Database\Hospital;
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use MicroHis\Pacientes\Application\PersistenceFailure;
@@ -24,6 +25,19 @@ final class PatientPostgresTest extends TestCase
         $this->assertSame('testing', app()->environment());
         $this->assertSame('his_hospital_test', DB::connection('hospital')->getDatabaseName());
         $this->assertSame('55433', (string) config('database.connections.hospital.port'));
+
+        Artisan::call('migrate:fresh', [
+            '--database' => 'hospital',
+            '--path' => database_path('migrations/hospital'),
+            '--realpath' => true,
+            '--force' => true,
+        ]);
+        Artisan::call('migrate:fresh', [
+            '--database' => 'central',
+            '--path' => database_path('migrations/central'),
+            '--realpath' => true,
+            '--force' => true,
+        ]);
 
         $this->pdo = DB::connection('hospital')->getPdo();
         $this->assertSame('local_patients', $this->pdo->query("SELECT to_regclass('public.local_patients')")->fetchColumn());
