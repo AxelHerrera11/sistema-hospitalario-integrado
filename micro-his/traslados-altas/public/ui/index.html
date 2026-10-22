@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Traslados y altas (prototipo)</title>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<main>
+    <h1>Traslados y altas</h1>
+    <p class="aviso">PROTOTIPO con datos ficticios. La referencia de usuario reemplaza al inicio de sesión real.</p>
+
+    <form id="consulta" novalidate>
+        <h2>1. Paciente internado</h2>
+        <label for="actor">Referencia de usuario</label>
+        <input id="actor" autocomplete="off" required aria-describedby="ayuda-actor">
+        <p id="ayuda-actor" class="ayuda">Identificador local del usuario que realiza la operación.</p>
+        <label for="estancia">Estancia (cama actual)</label>
+        <input id="estancia" autocomplete="off" required>
+        <button type="submit">Consultar</button>
+    </form>
+
+    <section id="estado" hidden aria-labelledby="titulo-estado">
+        <h2 id="titulo-estado">2. Situación actual</h2>
+        <dl id="datos"></dl>
+        <p id="vacio" class="ayuda" hidden>El episodio no tiene una cama asignada: no hay nada que trasladar ni dar de alta.</p>
+        <div id="acciones">
+            <button type="button" id="elegir-traslado">Trasladar</button>
+            <button type="button" id="elegir-alta" class="secundario">Dar de alta</button>
+        </div>
+    </section>
+
+    <form id="formulario" hidden novalidate>
+        <h2 id="titulo-formulario">3. Datos</h2>
+        <div id="campos-traslado">
+            <label for="cama">Cama destino</label>
+            <input id="cama" autocomplete="off" aria-describedby="error-cama">
+            <p id="error-cama" class="error" hidden>Indique una cama destino válida.</p>
+            <label for="motivo">Motivo del traslado</label>
+            <textarea id="motivo" maxlength="500" rows="3" aria-describedby="contador error-motivo"></textarea>
+            <p id="contador" class="ayuda">0 / 500</p>
+            <p id="error-motivo" class="error" hidden>El motivo es obligatorio (máximo 500 caracteres).</p>
+        </div>
+        <button type="submit">Revisar</button>
+        <button type="button" id="cancelar" class="secundario">Cancelar</button>
+    </form>
+
+    <section id="confirmacion" hidden aria-labelledby="titulo-confirmacion">
+        <h2 id="titulo-confirmacion">4. Confirmar</h2>
+        <p id="resumen"></p>
+        <button type="button" id="confirmar">Confirmar</button>
+        <button type="button" id="volver" class="secundario">Volver</button>
+    </section>
+
+    <div id="resultado" role="status" aria-live="polite"></div>
+    <button type="button" id="reconsultar" hidden>Consultar estado</button>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
