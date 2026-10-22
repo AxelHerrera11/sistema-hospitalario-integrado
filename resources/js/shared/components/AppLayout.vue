@@ -23,6 +23,9 @@
                 <router-link v-if="auth.token" class="layout__link" to="/medicamentos">
                     Medicamentos
                 </router-link>
+                <router-link v-if="auth.token" class="layout__link" to="/traslados">
+                    Traslados
+                </router-link>
                 <button v-if="auth.token" class="layout__link layout__logout" @click="logout">
                     Cerrar sesión
                 </button>
