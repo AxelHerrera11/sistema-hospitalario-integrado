@@ -1,10 +1,13 @@
 <?php
+
 declare(strict_types=1);
+
 namespace App\Modules\Reception\Application;
 
+use App\Modules\Reception\Domain\CodeCollision;
 use App\Modules\Reception\Domain\SampleValidator;
 use App\Modules\Reception\Domain\SpecimenCode;
-use App\Modules\Reception\Domain\CodeCollision;
+use Illuminate\Support\Str;
 
 final class ReceiveSpecimen
 {
@@ -16,7 +19,9 @@ final class ReceiveSpecimen
             try {
                 return $this->receive($tenant, $actor, $input, $now);
             } catch (CodeCollision $e) {
-                if ($attempt === 2) throw $e;
+                if ($attempt === 2) {
+                    throw $e;
+                }
             }
         }
         throw new \LogicException('Recepción sin resultado');
@@ -32,11 +37,14 @@ final class ReceiveSpecimen
                 if ($previous['request_hash'] !== $hash || $previous['actor_id'] !== $actor) {
                     throw new \DomainException('Clave de solicitud ya utilizada', 409);
                 }
+
                 return $previous;
             }
             $order = $this->repository->order($tenant, $input['item_id']);
-            if (!$order) throw new \DomainException('Ítem no encontrado', 404);
-            if (!in_array($order['status'], ['pending', 'pending_new_sample'], true)) {
+            if (! $order) {
+                throw new \DomainException('Ítem no encontrado', 404);
+            }
+            if (! in_array($order['status'], ['pending', 'pending_new_sample'], true)) {
                 throw new \DomainException('Ítem no disponible', 409);
             }
             $reason = ($input['sin_etiqueta'] ?? false) ? 'sin_etiqueta' :
@@ -44,7 +52,7 @@ final class ReceiveSpecimen
                     ? 'identificacion_discordante' : null);
             $reason ??= (new SampleValidator($order['type']))->reason($input, $order, $now);
             $sample = [
-                'id' => (string) \Illuminate\Support\Str::uuid(), 'tenant_id' => $tenant,
+                'id' => (string) Str::uuid(), 'tenant_id' => $tenant,
                 'item_id' => $input['item_id'], 'actor_id' => $actor,
                 'local_patient_id' => $order['local_patient_id'] ?? null, 'care_episode_id' => $order['care_episode_id'] ?? null,
                 'request_key' => $input['request_key'], 'request_hash' => $hash,
@@ -53,6 +61,7 @@ final class ReceiveSpecimen
                 'received_at' => $now->format(DATE_ATOM),
             ];
             $this->repository->save($sample);
+
             return $sample;
         });
     }
