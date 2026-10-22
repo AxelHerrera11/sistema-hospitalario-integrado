@@ -35,9 +35,9 @@ Antes de ejecutar, mostrar el código de la regla que se está probando:
 
 ### Paso 3 - La pantalla
 
-Abrir `/ocupacion` y recorrer: estado de carga, fotografía con su corte y antigüedad, filtro por
-sala, tabla por sala, aviso de inconsistencias. Después mostrar el prototipo de la semana 11 en
-móvil para la comparación con las capturas de la semana 11.
+Abrir `/ocupacion` y recorrer: estado de carga, fotografía con su corte y antigüedad, actualización,
+tabla por sala y aviso de inconsistencias. El filtro se muestra únicamente en el prototipo de la
+semana 11 porque todavía no existe en la pantalla productiva.
 
 ### Paso 4 - La evidencia de despliegue
 
@@ -77,7 +77,7 @@ plan transversal deja esa decisión al equipo.
 | ¿Por qué un puerto y no una consulta directa? | Para probar el mismo caso de uso con y sin base de datos, y para que el controlador no dependa del esquema. |
 | ¿Por qué no calcular la ocupación en Vue? | Duplicaría el dominio y la respuesta podría divergir de la autoritativa. |
 | ¿Por qué se conserva la fotografía anterior ante una falla? | Para poder operar, pero solo si se rotula con el corte y la antigüedad; nunca se presenta como actual. |
-| ¿Por qué se ocultan las cifras ante un `403`? | La autorización actual prevalece sobre cualquier dato previo en pantalla. |
+| ¿Qué falta ante un `403` posterior a una consulta exitosa? | El backend no entrega cifras, pero el cliente Vue todavía debe limpiar el `snapshot` previo en memoria. |
 | ¿El módulo crea tablas? | No. Lee `wards`, `beds` y `bed_stays`, propiedad de ASII-06/07/08. |
 | ¿Cuándo tendría sentido un microservicio? | Solo con métricas medidas de carga, p95 y disponibilidad que justifiquen autonomía y costo de red. |
 | ¿Qué quedó sin probar? | Contraste y reflow con navegador real, lector de pantalla, volumen de 10 000 camas y el filtro por sala, que aún no existe. |

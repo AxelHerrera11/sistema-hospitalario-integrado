@@ -5,7 +5,8 @@
 - **Estudiante:** Javier Alexander Fajardo López (`Javifa2324`)
 - **Módulo:** ASII-09 - Dashboard de ocupación hospitalaria
 - **Issue:** [#36](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/issues/36)
-- **Entrega:** evaluación final y defensa. Demo funcional, PR integrado y evidencia completa.
+- **Entrega:** evaluación final y defensa. Demo funcional y evidencia consolidada, con pendientes
+  técnicos y validación humana declarados.
 
 - [Trazabilidad de las 18 semanas](./trazabilidad-semanas.md)
 - [Guion de defensa y demo funcional](./guion-defensa.md)
@@ -83,19 +84,19 @@ reales:
 
 ## Pendientes al cierre de la entrega
 
-| # | Pendiente | Responsable | Dónde se pidió |
-|---:|---|---|---|
-| 1 | Ratificación del permiso `ocupacion.ver` en el catálogo común | ASII-02 | PR #574 |
-| 2 | Formato común de errores entre el endpoint y el middleware RBAC | Lis | PR #574 |
-| 3 | Lista blanca de hospitales permitidos | ASII-25 | PR #579 |
-| 4 | Rate limiting de `/api/v1` | ASII-30 | PR #579 |
-| 5 | Capa común de filtros y exportación para no duplicarla entre dashboards | Yamilet y Lis | Issue #36 |
-| 6 | Filtro por sala (RF-OCC-05) sin implementar | ASII-09 (propuesta R-3) | Semana 13 |
-| 7 | Contraste y reflow sin medición de navegador | ASII-09 | Semanas 9 y 14 |
+| # | Estado | Pendiente o decisión | Responsable | Evidencia |
+|---:|---|---|---|---|
+| 1 | Resuelto | Permiso `ocupacion.ver` publicado y aplicado | ASII-02 | `config/rbac.php`, `routes/api.php`, `RoleMatrixTest` y `OccupancyEndpointTest` |
+| 2 | Pendiente | Formato común de errores entre el endpoint y el middleware RBAC | Lis | PR #574 |
+| 3 | Pendiente | Lista blanca de hospitales permitidos | ASII-25 | PR #579 |
+| 4 | Pendiente | Rate limiting de `/api/v1` | ASII-30 | PR #579 |
+| 5 | Pendiente | Capa común de filtros y exportación para no duplicarla entre dashboards | Yamilet y Lis | Issue #36 |
+| 6 | Pendiente | Filtro por sala (RF-OCC-05) sin implementar | ASII-09 (propuesta R-3) | Semana 13 |
+| 7 | Pendiente | Contraste y reflow sin medición de navegador | ASII-09 | Semanas 9 y 14 |
+| 8 | Pendiente | Limpiar la fotografía previa en memoria tras una respuesta `401/403` | ASII-09 | Semana 12 |
 
-Los cinco primeros son acuerdos con el equipo que no bloquean la entrega funcional: el módulo
-funciona y está verificado con datos reales. Los dos últimos son deuda técnica declarada del
-propio módulo.
+Los puntos 2 a 5 son acuerdos con el equipo. Los puntos 6 a 8 son deuda técnica declarada del
+propio módulo; no se presentan como funcionalidades ya implementadas.
 
 ## Límites de esta entrega
 

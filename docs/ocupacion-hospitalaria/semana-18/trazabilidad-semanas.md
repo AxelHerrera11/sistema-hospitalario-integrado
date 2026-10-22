@@ -8,21 +8,21 @@ la situación verificada el 21 de octubre de 2026.
 | 1 | Modelado UML del flujo de ocupación: casos de uso, actividad y secuencia | #45 | Fusionado |
 | 2 | Diseño con ISP: RF/RNF, criterios de aceptación, diseño antes/después | #68 | Fusionado |
 | 3 | Micro-HIS en PHP vanilla con capas Presentation, Application, Domain y Persistence | #171 | Fusionado |
-| 4 | Arquitectura en capas y patrón Repository: MVC, puerto `BedSnapshotReader` y repositorio compartido | #872 | Abierto |
-| 5 | Cliente-servidor: contrato API, frontera de microservicio y migración razonada | #883 | Abierto |
-| 6 | Primera evaluación parcial: matriz decisión → evidencia, diagrama trazable y cambio práctico | #886 | Abierto |
-| 7 | Componentes backend/frontend, contratos de entrada/salida y comparación antes/después | #889 | Abierto |
-| 8 | Flujo UX por rol, seis wireframes y reglas de interacción | #875 | Abierto |
-| 9 | Usabilidad y accesibilidad: checklist, ocho hallazgos y backlog priorizado | #879 | Abierto |
-| 10 | Diseño responsive: jerarquía móvil, breakpoints y escenarios | #880 | Abierto |
-| 11 | Prototipo navegable desktop/móvil con capturas reales | #899 | Abierto |
-| 12 | Segunda evaluación parcial: recorrido navegable y respuesta al cambio solicitado | #901 | Abierto |
-| 13 | Revisión técnica formal: checklist de 30 ítems, roles y formato de acta | #881 | Abierto |
-| 14 | Plan SQA: métricas, riesgos, controles y calendario de seguimiento | #892 | Abierto |
-| 15 | Pruebas unitarias, de caja blanca y de caja negra trazadas a RF/RNF | #904 y #905 | Abierto |
+| 4 | Arquitectura en capas y patrón Repository: MVC, puerto `BedSnapshotReader` y repositorio compartido | #872 | Fusionado |
+| 5 | Cliente-servidor: contrato API, frontera de microservicio y migración razonada | #883 | Fusionado |
+| 6 | Primera evaluación parcial: matriz decisión → evidencia, diagrama trazable y cambio práctico | #886 | Fusionado |
+| 7 | Componentes backend/frontend, contratos de entrada/salida y comparación antes/después | #889 | Fusionado |
+| 8 | Flujo UX por rol, seis wireframes y reglas de interacción | #875 | Fusionado |
+| 9 | Usabilidad y accesibilidad: checklist, ocho hallazgos y backlog priorizado | #879 | Fusionado |
+| 10 | Diseño responsive: jerarquía móvil, breakpoints y escenarios | #880 | Fusionado |
+| 11 | Prototipo navegable desktop/móvil con capturas reales | #899 | Fusionado |
+| 12 | Segunda evaluación parcial: recorrido navegable y respuesta al cambio solicitado | #901 | Fusionado |
+| 13 | Revisión técnica formal: checklist de 30 ítems, roles y formato de acta | #881 | Fusionado |
+| 14 | Plan SQA: métricas, riesgos, controles y calendario de seguimiento | #892 | Fusionado |
+| 15 | Pruebas unitarias, de caja blanca y de caja negra trazadas a RF/RNF | #904 y #905 | Fusionado |
 | 16 | Integración en Laravel, pantalla Vue y validación con datos reales | #574 y #575 | Fusionado |
 | 17 | Seguridad y despliegue final: amenazas, permisos y bitácora | #579 | Fusionado |
-| 18 | Evaluación final y defensa | Este PR | Abierto |
+| 18 | Evaluación final y defensa | Este PR | En revisión |
 
 ## Continuidad entre entregas
 

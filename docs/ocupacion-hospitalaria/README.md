@@ -17,7 +17,7 @@ indexa el contrato vigente; las entregas semanales permanecen en
 |---|---|
 | Contrato API de ocupación | Publicado y validado en la semana 16 |
 | Endpoint en Laravel | Implementado en la semana 16 (`GET /api/v1/occupancy`, PR #574) |
-| Permiso `ocupacion.ver` | Activado en la matriz compartida; pendiente de ratificación de ASII-02 |
+| Permiso `ocupacion.ver` | Integrado en `config/rbac.php`, aplicado en `routes/api.php` y cubierto por pruebas de RBAC y ocupación |
 | Pantalla Vue del dashboard | Entregada en la semana 16 (`resources/js/modules/ocupacion/`) |
 | Migraciones | No requiere tablas nuevas; usa `wards`, `beds`, `bed_stays` y `care_episodes` |
 
@@ -45,12 +45,11 @@ El detalle de qué semana corresponde a qué Pull Request está en
 
 ## Pendientes acordados con el equipo
 
-1. **Ratificar** el permiso `ocupacion.ver`: ya está en el catálogo RBAC de `develop` y concedido
-   a cuatro roles; falta la ratificación formal de ASII-02.
-2. Confirmar la lista blanca de hospitales permitidos (ASII-25).
-3. Confirmar si el corte por defecto es la hora del servidor o un cierre de turno: el endpoint usa
+1. Confirmar la lista blanca de hospitales permitidos (ASII-25).
+2. Confirmar si el corte por defecto es la hora del servidor o un cierre de turno: el endpoint usa
    la hora del servidor.
-4. Adoptar un formato común de errores entre el endpoint y el middleware RBAC (Lis).
-5. Definir el rate limiting de `/api/v1` (ASII-30).
-6. Coordinar la capa común de filtros y exportación para no duplicarla entre dashboards
+3. Adoptar un formato común de errores entre el endpoint y el middleware RBAC (Lis).
+4. Definir el rate limiting de `/api/v1` (ASII-30).
+5. Coordinar la capa común de filtros y exportación para no duplicarla entre dashboards
    (Yamilet y Lis).
+6. Limpiar la fotografía previa en memoria cuando una recarga responda `401/403`.
