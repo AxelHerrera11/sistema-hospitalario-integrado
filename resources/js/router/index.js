@@ -19,6 +19,12 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
+            path: '/traslados',
+            name: 'traslados',
+            component: () => import('@/modules/traslados/pages/TrasladosPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),
