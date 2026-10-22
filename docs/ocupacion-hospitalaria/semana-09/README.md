@@ -111,3 +111,23 @@ git diff --numstat HEAD^
 ## Conclusión
 
 El flujo tiene una base segura, pero necesita evidencia concreta de teclado, contraste, semántica y reflow. Las mejoras convierten esas brechas en criterios observables para la propuesta móvil y el prototipo navegable.
+
+## Verificación posterior de los hallazgos
+
+La pantalla de la semana 16 (`resources/js/modules/ocupacion/pages/OcupancyPage.vue`) ya
+incorpora parte de las correcciones de este backlog. Verificado sobre `develop` en `75bd69ce`:
+
+| Hallazgo | Severidad | Estado en la pantalla integrada | Evidencia |
+|---|---|---|---|
+| H-01 | Alta | Parcial | No hay control de foco al filtrar ni al recargar documentado en el componente. |
+| H-02 | Alta | Parcial | Hay semántica y roles, pero el contraste no se midió con herramienta. |
+| H-03 | Alta | Parcial | La tabla no declara reflow a 320 px en el componente. |
+| H-04 | Media | Cerrado | La vista distingue «no verificada» de «disponible» y expone el detalle agregado. |
+| H-05 | Media | Cerrado | `role="status"` en carga y en la marca de fotografía desactualizada; `role="alert"` en error y en acceso denegado. |
+| H-06 | Media | Parcial | La tabla no declara `caption` ni encabezados con `scope`. |
+| H-07 | Media | Cerrado | El corte se muestra con un único formato y la antigüedad se etiqueta de forma explícita. |
+| H-08 | Baja | Cerrado | El identificador de solicitud viaja en la respuesta y en la bitácora del módulo. |
+
+Los hallazgos H-01, H-02, H-03 y H-06 siguen abiertos: son los puntos que el plan de revisión
+técnica de la semana 13 y el plan SQA de la semana 14 deben vigilar, y son los candidatos
+naturales para el cambio solicitado en la evaluación final.
