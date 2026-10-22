@@ -110,8 +110,23 @@ $('consulta').addEventListener('submit', (e) => { e.preventDefault(); consultar(
 $('elegir-traslado').addEventListener('click', () => elegir('traslado'));
 $('elegir-alta').addEventListener('click', () => elegir('alta'));
 $('formulario').addEventListener('submit', revisar);
-$('cancelar').addEventListener('click', () => mostrar('estado'));
-$('volver').addEventListener('click', () => mostrar('estado', 'formulario'));
+// Semana 12: «Cancelar» y «Volver» devuelven el foco al paso anterior, que antes quedaba sobre un elemento oculto.
+function cancelar() {
+    mostrar('estado');
+    $('titulo-estado').focus();
+}
+function volver() {
+    mostrar('estado', 'formulario');
+    $(operacion === 'traslado' ? 'cama' : 'titulo-formulario').focus();
+}
+$('cancelar').addEventListener('click', cancelar);
+$('volver').addEventListener('click', volver);
+// Escape retrocede un paso (confirmación → datos → situación), salvo mientras se procesa un envío.
+document.addEventListener('keydown', (evento) => {
+    if (evento.key !== 'Escape' || $('confirmar').disabled) return;
+    if (!$('confirmacion').hidden) volver();
+    else if (!$('formulario').hidden) cancelar();
+});
 $('confirmar').addEventListener('click', confirmar);
 $('reconsultar').addEventListener('click', consultar);
 $('seguir').addEventListener('click', () => { $('estancia').value = estanciaNueva; $('seguir').hidden = true; consultar(); });
