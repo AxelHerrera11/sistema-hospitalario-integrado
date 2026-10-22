@@ -19,7 +19,8 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 | 13 | Plan de revisión formal, checklist de 15 ítems con autoverificación, roles propuestos y formato de hallazgos | `semana-13/` | Criterios de entrada: `run.php` 95/95, `postgres.php` 20/20, `ui-mensajes` 7/7 | Esta entrega | — | **No completa:** confirmar roles y realizar la revisión; C7 y C12 sin evidencia |
 | 14 | Plan SQA: 7 métricas, 5 riesgos, 8 controles y calendario | `semana-14/` | `metricas.php`: M1 95/95, M2 máx. 393, M3 10/10, M4 0; M5 9/10; M6 20/20 | Esta entrega | — | M7 concurrencia sin cumplir (S15); permisos con ASII-02 |
 | 15 | Matriz RF/RNF → prueba (4 U, 3 W, 6 B), concurrencia real con conexiones independientes y 7 defectos reales | `semana-15/` | `run.php` 101/101; `postgres.php` 20/20; concurrencia 20/20 (8/10 antes de corregir D5); `ui-mensajes` 7/7 | #895 y esta entrega | #896 | Corte real durante el COMMIT sin probar |
-| 16 | Integración funcional: SPA Vue → API Laravel → JWT/tenant/RBAC → micro-HIS → PostgreSQL | `semana-16/` | API Feature 3/3; PostgreSQL 3/3; HTTP 11/11; SPA 6/6; `run.php` 101/101 | #908, #913, #915 y esta entrega | #909, #914, #916; esta entrega pendiente | Activación RBAC, `local_user_refs` y conexión HOSPITAL por tenant |
+| 16 | Integración funcional: SPA Vue → API Laravel → JWT/tenant/RBAC → micro-HIS → PostgreSQL | `semana-16/` | API Feature 3/3; PostgreSQL 3/3; HTTP 11/11; SPA 6/6; `run.php` 101/101 | #908, #913, #915, #919 | #909, #914, #916, #920 | Activación RBAC, `local_user_refs` y conexión HOSPITAL por tenant |
+| 17 | Seguridad y preparación de despliegue: 17 amenazas, datos sensibles, reversión y bloqueos | `semana-17/` | API Feature 5 pruebas/44 aserciones; `run.php` 101/101; SPA 3/3; build 109 módulos | Esta entrega | Pendiente | Despliegue final bloqueado por RBAC, identidad, conexión por tenant y entorno autorizado |
 
 ## Funcionalidad comprobada hasta hoy
 

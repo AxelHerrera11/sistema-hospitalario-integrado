@@ -6,6 +6,7 @@ namespace Tests\Feature\TrasladosAltas;
 
 use App\TrasladosAltas\ResolutorActorLocal;
 use DateTimeImmutable;
+use Illuminate\Contracts\Http\Kernel;
 use MicroHis\Rbac\Domain\DenialRecorder;
 use MicroHis\Rbac\Domain\RoleResolver;
 use MicroHis\TrasladosAltas\Application\Autorizador;
@@ -19,7 +20,9 @@ use Tests\TestCase;
 final class TrasladosAltasApiTest extends TestCase
 {
     private const ESTANCIA = '00000000-0000-4000-8000-0000000000e1';
+
     private const CAMA_A = '00000000-0000-4000-8000-0000000000b1';
+
     private const CAMA_B = '00000000-0000-4000-8000-0000000000b2';
 
     private InMemoryRegistroInternacion $hospital;
@@ -27,23 +30,25 @@ final class TrasladosAltasApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        $this->app->make(Kernel::class);
         $this->app['router']->aliasMiddleware('tenant', TrasladosTestIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', TrasladosTestIdentity::class);
-        $this->app->instance(RoleResolver::class, new TrasladosTestIdentity());
-        $this->app->instance(DenialRecorder::class, new TrasladosTestIdentity());
-        $this->hospital = new InMemoryRegistroInternacion();
+        $this->app->instance(RoleResolver::class, new TrasladosTestIdentity);
+        $this->app->instance(DenialRecorder::class, new TrasladosTestIdentity);
+        $this->hospital = new InMemoryRegistroInternacion;
         $this->hospital->episodios = ['00000000-0000-4000-8000-0000000000c1' => ['tipo' => 'inpatient', 'estado' => 'open', 'inicio' => new DateTimeImmutable('-2 days'), 'fin' => null]];
         $this->hospital->estancias = [self::ESTANCIA => ['episodio' => '00000000-0000-4000-8000-0000000000c1', 'cama' => self::CAMA_A, 'inicio' => new DateTimeImmutable('-1 day'), 'fin' => null]];
         $this->hospital->camas = [self::CAMA_A => 'available', self::CAMA_B => 'available'];
         $this->app->instance(RegistroInternacion::class, $this->hospital);
-        $this->app->instance(Autorizador::class, new class implements Autorizador {
+        $this->app->instance(Autorizador::class, new class implements Autorizador
+        {
             public function permite(string $actorRefId, Operacion $operacion): bool
             {
                 return true;
             }
         });
-        $this->app->instance(ResolutorActorLocal::class, new class implements ResolutorActorLocal {
+        $this->app->instance(ResolutorActorLocal::class, new class implements ResolutorActorLocal
+        {
             public function referencia(string $centralUserId): ?string
             {
                 return $centralUserId === '00000000-0000-4000-8000-00000000c0a1' ? '00000000-0000-4000-8000-0000000000f1' : null;
@@ -82,7 +87,7 @@ final class TrasladosAltasApiTest extends TestCase
             'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento'])->assertStatus(201)->assertJsonPath('trace_id', 'req-traslado-01')
             ->assertHeader('Cache-Control', 'no-store, private')->json('estancia_destino_id');
         $this->assertSame('00000000-0000-4000-8000-0000000000f1', $this->hospital->estancias[$id]['actor']);
-        $this->getJson('/api/v1/estancias/' . self::ESTANCIA . '/internacion')->assertOk()->assertJsonPath('estancia_consultada_abierta', false);
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertOk()->assertJsonPath('estancia_consultada_abierta', false);
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $id])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
         TrasladosTestIdentity::como('medico');
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $id])->assertOk()->assertJsonPath('resultado', 'exito');
@@ -99,5 +104,35 @@ final class TrasladosAltasApiTest extends TestCase
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => self::ESTANCIA])->assertStatus(503)
             ->assertJsonPath('codigo', 'HOSPITAL_NO_DISPONIBLE')->assertHeader('Retry-After', '5');
         $this->assertNull($this->hospital->estancias[self::ESTANCIA]['fin']);
+    }
+
+    public function test_body_cannot_spoof_actor_or_tenant_and_wrong_role_cannot_write(): void
+    {
+        $this->activarPropuesta();
+        $campos = ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento',
+            'actor_ref_id' => '00000000-0000-4000-8000-000000000099', 'hospital_id' => 'hospital-b'];
+        TrasladosTestIdentity::como('recepcion');
+        $this->postJson('/api/v1/traslados', $campos)->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        $this->assertNull($this->hospital->estancias[self::ESTANCIA]['fin']);
+
+        TrasladosTestIdentity::como('enfermeria');
+        $destino = $this->postJson('/api/v1/traslados', $campos)->assertStatus(201)->json('estancia_destino_id');
+        $this->assertSame('00000000-0000-4000-8000-0000000000f1', $this->hospital->estancias[$destino]['actor']);
+    }
+
+    public function test_database_error_hides_details_and_replaces_untrusted_trace(): void
+    {
+        $this->activarPropuesta();
+        config()->set('app.debug', false);
+        TrasladosTestIdentity::como('medico');
+        $this->app->bind(RegistroInternacion::class, static fn () => throw new PDOException('SQLSTATE[28P01] password=secreto'));
+
+        $respuesta = $this->withHeaders(['X-Request-Id' => '../../traza-no-confiable'])->postJson('/api/v1/altas', [
+            'estancia_esperada_id' => self::ESTANCIA,
+        ])->assertStatus(503)->assertJsonPath('codigo', 'HOSPITAL_NO_DISPONIBLE')
+            ->assertHeader('Cache-Control', 'no-store, private')->assertHeader('Retry-After', '5');
+        $this->assertMatchesRegularExpression('/^trace-[0-9a-f]{12}$/', $respuesta->json('trace_id'));
+        $this->assertStringNotContainsString('SQLSTATE', $respuesta->getContent());
+        $this->assertStringNotContainsString('secreto', $respuesta->getContent());
     }
 }
