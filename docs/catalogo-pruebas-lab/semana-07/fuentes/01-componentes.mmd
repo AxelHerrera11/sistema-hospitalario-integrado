@@ -1,0 +1,19 @@
+---
+title: "Componentes backend/frontend — Catálogo de pruebas de laboratorio"
+---
+flowchart LR
+  subgraph FE[Frontend Vue 3]
+    page[LabCatalogPage.vue<br/>LabTestTable.vue · LabTestForm.vue] --> store[stores/labCatalog.js<br/>Pinia]
+    store --> api[api/labCatalogApi.js<br/>plugins/axios + X-Tenant-ID + JWT]
+  end
+  subgraph BE[Backend Laravel 12]
+    mw[Middlewares<br/>tenant · jwt.auth · permission:modulo.accion] --> ctrl[Api/V1/LabTestController<br/>+ StoreLabTestRequest]
+    ctrl --> app[Application<br/>RegisterLabTest · FindActiveLabTests]
+    app --> dom[Domain<br/>LabTest · DomainRuleViolation]
+    app --> port{{LabTestRepository<br/>«interfaz»}}
+    eloq[EloquentLabTestRepository] -. implementa .-> port
+    mem[InMemoryLabTestRepository<br/>pruebas] -. implementa .-> port
+    app --> audit[AuditLogger<br/>ASII-22 / Cindy]
+  end
+  api --> mw
+  eloq --> db[(lab_tests · local_access_audits)]

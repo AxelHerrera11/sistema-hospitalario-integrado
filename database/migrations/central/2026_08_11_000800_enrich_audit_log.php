@@ -11,6 +11,10 @@ return new class extends Migration
     public function up(): void
     {
         $connection = DB::connection($this->connection);
+        // An empty audit table is removed on rollback, never left mutable.
+        if (! $connection->getSchemaBuilder()->hasTable('audit_log')) {
+            (require __DIR__.'/2026_08_11_000700_create_audit_log.php')->up();
+        }
         $connection->unprepared(<<<'SQL'
             ALTER TABLE audit_log
                 ADD COLUMN event_id uuid,
@@ -76,17 +80,15 @@ return new class extends Migration
 
     public function down(): void
     {
+        $connection = DB::connection($this->connection);
+        $connection->statement('LOCK TABLE audit_log IN ACCESS EXCLUSIVE MODE');
+        if ($connection->table('audit_log')->exists()) {
+            throw new RuntimeException('Cannot roll back audit enrichment with existing events; preserve the audit trail.');
+        }
         DB::connection($this->connection)->unprepared(<<<'SQL'
-            DROP TRIGGER IF EXISTS audit_log_reject_update_or_delete ON audit_log;
+            DROP TABLE audit_log;
             DROP FUNCTION IF EXISTS reject_audit_log_mutation();
             DROP TABLE IF EXISTS audit_chain_state;
-            ALTER TABLE audit_log
-                DROP CONSTRAINT IF EXISTS audit_log_pkey,
-                DROP COLUMN IF EXISTS event_id,
-                DROP COLUMN IF EXISTS occurred_at,
-                DROP COLUMN IF EXISTS result,
-                DROP COLUMN IF EXISTS previous_hash,
-                DROP COLUMN IF EXISTS event_hash;
             SQL);
     }
 

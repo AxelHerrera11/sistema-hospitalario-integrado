@@ -21,6 +21,7 @@ use Throwable;
 final class HospitalMedicationRepository implements MedicationRepository
 {
     private ?PdoMedicationCatalog $adapter = null;
+    private ?PDO $pdo = null;
 
     /** @param Closure(): PDO $connect */
     public function __construct(private readonly Closure $connect)
@@ -52,10 +53,43 @@ final class HospitalMedicationRepository implements MedicationRepository
         $this->adapter()->updateValidity($id, $validity);
     }
 
-    private function adapter(): PdoMedicationCatalog
+    /** Transacción explícita para las escrituras auditadas (M6): se confirma solo después de registrar el evento. */
+    public function begin(): void
+    {
+        $this->guard(fn () => $this->pdo()->beginTransaction());
+    }
+
+    public function commit(): void
+    {
+        $this->guard(fn () => $this->pdo()->commit());
+    }
+
+    public function rollBack(): void
     {
         try {
-            return $this->adapter ??= new PdoMedicationCatalog(($this->connect)());
+            if ($this->pdo !== null && $this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+        } catch (Throwable) {
+            // Si la conexión se perdió, PostgreSQL ya descartó la transacción.
+        }
+    }
+
+    private function adapter(): PdoMedicationCatalog
+    {
+        return $this->adapter ??= $this->guard(fn () => new PdoMedicationCatalog($this->pdo()));
+    }
+
+    private function pdo(): PDO
+    {
+        return $this->pdo ??= ($this->connect)();
+    }
+
+    /** @template T @param Closure(): T $operation @return T */
+    private function guard(Closure $operation): mixed
+    {
+        try {
+            return $operation();
         } catch (Throwable $error) {
             throw new PersistenceFailure('La base HOSPITAL no está disponible.', previous: $error);
         }

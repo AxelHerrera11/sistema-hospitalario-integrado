@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo — Alertas críticas y notificaciones internas</title>
+<style>
+:root{--ink:#1f2a44;--muted:#4a5266;--line:#c9cfdb;--bg:#f6f7fb;--ok:#1b5e20;--okbg:#e6f4ea;--warn:#6b4100;--warnbg:#fff3e0;--err:#8e1c1c;--errbg:#fdecea;--crit:#b71c1c;--grey:#303437;--greybg:#e3e5e8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+header{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:12px 16px;background:var(--ink);color:#fff}
+main{max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:0 0 12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px}
+button{min-height:44px;min-width:44px;padding:10px 16px;border-radius:6px;border:1px solid var(--ink);background:#fff;color:var(--ink);font:inherit;cursor:pointer}
+button.primary{background:var(--ink);color:#fff}
+button[disabled]{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid #ffbf47;outline-offset:2px}
+label{display:block;font-weight:600;margin-top:12px}
+input,select{width:100%;min-height:44px;padding:8px;font:inherit;border:1px solid var(--muted);border-radius:6px;background:#fff}
+fieldset{border:1px solid var(--line);border-radius:6px;margin-top:12px}
+.msg{padding:12px;border-radius:6px;margin:12px 0;border-left:6px solid}
+.ok{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.warn{background:var(--warnbg);border-color:#b26a00;color:var(--warn)}
+.err{background:var(--errbg);border-color:#c62828;color:var(--err)}
+.crit{background:var(--crit);border-color:#7f0000;color:#fff}
+.grey{background:var(--greybg);border-color:var(--grey);color:var(--grey)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.sim{font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:8px;margin-bottom:12px}
+.sim button{min-height:36px;padding:4px 10px;font-size:14px}
+.sim button[aria-pressed=true]{background:var(--ink);color:#fff}
+[role=radio][aria-checked=true]{background:var(--ink);color:#fff;outline:3px solid #ffbf47}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+[hidden]{display:none!important}
+.sm-only{display:none}
+@media (max-width:639px){
+ .lg-only{display:none!important} .sm-only{display:block}
+ thead{display:none} tr{display:block;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;padding:8px;background:#fff}
+ td{display:block;border:0;padding:2px 0}
+ .actions{position:sticky;bottom:0;background:var(--bg);padding:8px 0;margin:0} .actions button{flex:1}
+}
+</style>
+</head>
+<body>
+<header><strong>HIS · Alertas críticas y notificaciones internas</strong><span>HOSP-DEMO · dra.lopez · datos ficticios</span></header>
+<main>
+<div class="sim" role="group" aria-label="Simulador del prototipo">Respuesta simulada del servidor: <button type="button" data-sim="ok" aria-pressed="true">Correcta</button> <button type="button" data-sim="empty" aria-pressed="false">Sin pendientes</button> <button type="button" data-sim="down" aria-pressed="false">Servidor caído</button> <button type="button" data-sim="norel" aria-pressed="false">403 sin relación</button> <button type="button" data-sim="already" aria-pressed="false">409 ya acusada</button></div>
+<div id="live" class="sr" role="status" aria-live="polite"></div>
+<section id="bandeja" data-screen>
+  <h1>Alertas críticas pendientes</h1>
+  <div id="bandeja-msg" class="msg" hidden></div>
+  <ul id="lista" class="card" style="list-style:none;padding-left:16px"></ul>
+  <div class="actions"><button type="button" id="refrescar">Actualizar</button></div>
+</section>
+<section id="lectura" data-screen hidden>
+  <h1>Confirmar lectura</h1>
+  <form id="f-lectura" class="card" novalidate>
+    <p id="datos-alerta"></p>
+    <label for="valor">Escriba el valor que leyó *</label><input id="valor" inputmode="decimal" autocomplete="off" aria-describedby="lectura-msg">
+    <div id="lectura-msg" class="msg" hidden></div>
+    <div class="actions"><button type="button" data-go="bandeja">Cancelar</button><button type="submit" class="primary">Acusar recibo</button></div>
+  </form>
+</section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let sim = 'ok';
+document.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
+  sim = b.dataset.sim;
+  document.querySelectorAll('[data-sim]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+}));
+function show(id) {
+  document.querySelectorAll('section[data-screen]').forEach(s => { s.hidden = s.id !== id; });
+  const h = document.querySelector('#' + id + ' h1');
+  if (h) { h.setAttribute('tabindex', '-1'); h.focus(); }
+  if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+}
+function say(el, cls, text) { el.className = 'msg ' + cls; el.textContent = text; el.hidden = false; }
+function announce(text) { $('#live').textContent = text; }
+document.addEventListener('click', e => { const go = e.target.closest('[data-go]'); if (go) { e.preventDefault(); show(go.dataset.go); } });
+let alertas = [{id: 'ALR-1', test: 'Glucosa (GLU-v1)', value: 32, unit: 'mg/dL', dir: 'bajo', patient: 'P-DEMO', min: 12},
+               {id: 'ALR-2', test: 'Potasio (K-v1)', value: 7.1, unit: 'mmol/L', dir: 'sobre', patient: 'P-0002', min: 3}];
+let actual = null;
+function pintarBandeja() {
+  const ul = $('#lista'), msg = $('#bandeja-msg');
+  ul.innerHTML = ''; msg.hidden = true; ul.hidden = false;
+  if (sim === 'down') { ul.hidden = true; return say(msg, 'grey', 'Alertas no disponibles: consulte al laboratorio por teléfono.'); }
+  const pendientes = sim === 'empty' ? [] : alertas.slice().sort((a, b) => a.min - b.min);
+  $('#bandeja h1').textContent = 'Alertas críticas pendientes (' + pendientes.length + ')';
+  if (!pendientes.length) { ul.hidden = true; return say(msg, 'ok', 'No hay alertas pendientes.'); }
+  pendientes.forEach(a => {
+    const li = document.createElement('li'); li.style.margin = '8px 0';
+    li.innerHTML = '<strong>Crítica · </strong>';
+    li.append(a.test + ' ' + a.value + ' ' + a.unit + ' (' + a.dir + ' el umbral crítico) · ' + a.patient + ' · vence en ' + a.min + ' min ');
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Abrir'; b.dataset.alert = a.id;
+    b.addEventListener('click', () => { actual = a; $('#datos-alerta').textContent = 'Paciente ' + a.patient + ' · ' + a.test; $('#valor').value = ''; $('#lectura-msg').hidden = true; show('lectura'); });
+    li.appendChild(b); ul.appendChild(li);
+  });
+}
+$('#refrescar').addEventListener('click', pintarBandeja);
+document.getElementById('f-lectura').addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = $('#lectura-msg');
+  if (sim === 'norel') return say(msg, 'err', 'No tiene relación de cuidado con este paciente (NO_CARE_RELATION). Avise a la jefatura de guardia.');
+  if (sim === 'already') return say(msg, 'warn', 'Esta alerta ya la acusó dr.ruiz a las 08:07 (ALERT_ALREADY_ACKNOWLEDGED).');
+  if (Number($('#valor').value.replace(',', '.')) !== actual.value) { say(msg, 'err', 'El valor no coincide con la alerta (READ_BACK_MISMATCH): vuelva a leerla.'); return $('#valor').focus(); }
+  alertas = alertas.filter(a => a !== actual); announce('Alerta acusada'); show('bandeja'); pintarBandeja();
+  say($('#bandeja-msg'), 'ok', 'Alerta acusada: el escalamiento se detuvo. Registre la acción clínica (propuesto).');
+});
+pintarBandeja();
+show(location.hash.slice(1) || 'bandeja');
+</script>
+</body>
+</html>
+
