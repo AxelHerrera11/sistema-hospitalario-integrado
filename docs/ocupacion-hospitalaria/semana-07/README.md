@@ -56,7 +56,7 @@ en la semana 16**; ninguna fila afirma una interfaz que no exista en `develop`.
 
 **Refactor: resolución perezosa de la conexión HOSPITAL.** Es el punto de mayor acoplamiento entre
 el módulo, el framework y la base: la conexión se obtenía al construir el adaptador, fuera del
-alcance delmanejo de fallos.
+alcance del manejo de fallos.
 
 | Aspecto | Antes | Después |
 |---|---|---|
