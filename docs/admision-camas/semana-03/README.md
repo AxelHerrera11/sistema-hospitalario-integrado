@@ -39,4 +39,4 @@ flowchart LR
 
 SQLite en memoria desde `database/schema.sql`, con datos ficticios. Las **15 verificaciones** cubren el camino feliz (cama ocupada, episodio abierto y auditoría), la cama ocupada o en mantenimiento (409), el paciente ya admitido (409), tipo y motivo (422), paciente y cama inexistentes (404), sin usuario (401), la búsqueda de camas y la falla de auditoría con rollback. La salida completa está en el PR.
 
-**Limitaciones:** `beds.status` debe tener un solo escritor acordado con ASII-06 (salas y camas) y ASII-08 (traslados y altas). Lista de espera, médico responsable, MVC con Repository y el contrato API quedan para las Semanas 4 y 5. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).
+**Limitaciones:** `beds.status` debe tener un solo escritor acordado con ASII-06 (salas y camas) y ASII-08 (traslados y altas). Lista de espera, médico responsable, MVC con Repository y el contrato API quedan para las Semanas 4 y 5. La auditoría escribe las columnas de `local_access_audits` del contrato H8 (migración 000700); `correlation_id` se genera en el adaptador porque aquí no hay petición HTTP. Uso de IA: [DECLARACION_IA.md](./DECLARACION_IA.md).

@@ -38,14 +38,16 @@ final class PdoAdmissionStore implements AdmissionStore
     {
         try {
             $this->pdo->beginTransaction();
-            $this->query("INSERT INTO care_episodes (care_episode_id, local_patient_id, type) VALUES (?, ?, 'inpatient')", [$a->episodeId, $a->patientId]);
+            $this->query("INSERT INTO care_episodes (care_episode_id, local_patient_id, type, started_at, reason) VALUES (?, ?, 'inpatient', ?, ?)",
+                [$a->episodeId, $a->patientId, $a->startedAt, $a->reason]);
             $this->query('INSERT INTO bed_stays (bed_stay_id, care_episode_id, bed_id, assigned_by_user_ref_id, started_at, reason)
                 VALUES (?, ?, ?, ?, ?, ?)', [$a->stayId, $a->episodeId, $a->bedId, $actor, $a->startedAt, $a->reason]);
             if ($this->query("UPDATE beds SET status = 'occupied' WHERE bed_id = ? AND status = 'available'", [$a->bedId])->rowCount() !== 1) {
                 throw new PDOException('la cama dejó de estar disponible', 23000);
             }
-            $this->query('INSERT INTO local_access_audits (event, actor, subject_id, occurred_at) VALUES (?, ?, ?, ?)',
-                ['admision.cama_asignada', $actor, $a->stayId, $a->startedAt]);
+            $this->query("INSERT INTO local_access_audits (correlation_id, actor_user_ref_id, module, action, resource_type, resource_id, local_patient_id,
+                care_episode_id, occurred_at) VALUES (?, ?, 'admision', 'admision.cama_asignada', 'bed_stay', ?, ?, ?, ?)",
+                [bin2hex(random_bytes(16)), $actor, $a->stayId, $a->patientId, $a->episodeId, $a->startedAt]);
             $this->pdo->commit();
         } catch (PDOException $error) {
             $this->pdo->inTransaction() && $this->pdo->rollBack();

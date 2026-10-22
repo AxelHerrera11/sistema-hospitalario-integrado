@@ -34,7 +34,7 @@ $count = fn (PDO $pdo, string $table): int => (int) $pdo->query("SELECT COUNT(*)
 check('admisión válida → 201 con episodio y estancia', $status === 201 && $body['admission']['bedId'] === 'B-101');
 check('la cama queda ocupada y el episodio inpatient abierto', $pdo->query("SELECT status FROM beds WHERE bed_id = 'B-101'")->fetchColumn() === 'occupied'
     && $pdo->query("SELECT type || '/' || status FROM care_episodes")->fetchColumn() === 'inpatient/open');
-check('la asignación queda auditada en la misma transacción', $pdo->query('SELECT event FROM local_access_audits')->fetchColumn() === 'admision.cama_asignada');
+check('la asignación queda auditada en la misma transacción', $pdo->query('SELECT action FROM local_access_audits')->fetchColumn() === 'admision.cama_asignada');
 check('otra admisión a la misma cama → 409 BED_NOT_AVAILABLE', $http->handle('POST', '/admissions', ['patient_id' => 'P-2'] + $admision, 'admision1')[1]['error'] === 'BED_NOT_AVAILABLE');
 check('el mismo paciente en otra cama → 409 PATIENT_ALREADY_ADMITTED', $http->handle('POST', '/admissions', ['bed_id' => 'B-102'] + $admision, 'admision1')[1]['error'] === 'PATIENT_ALREADY_ADMITTED');
 foreach ([
