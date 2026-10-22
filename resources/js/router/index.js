@@ -7,6 +7,18 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
+            path: '/ocupacion',
+            name: 'ocupacion',
+            component: () => import('@/modules/ocupacion/pages/OccupancyPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
+            path: '/medicamentos',
+            name: 'medicamentos',
+            component: () => import('@/modules/medicamentos/pages/MedicationsPage.vue'),
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),

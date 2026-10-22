@@ -8,6 +8,9 @@
                 <router-link class="layout__link" to="/">
                     Inicio
                 </router-link>
+                <router-link class="layout__link" to="/ocupacion">
+                    Ocupación
+                </router-link>
                 <router-link class="layout__link" to="/login">
                     Acceso
                 </router-link>
@@ -16,6 +19,9 @@
                 </router-link>
                 <router-link v-if="auth.token" class="layout__link" to="/patients">
                     Pacientes
+                </router-link>
+                <router-link v-if="auth.token" class="layout__link" to="/medicamentos">
+                    Medicamentos
                 </router-link>
                 <button v-if="auth.token" class="layout__link layout__logout" @click="logout">
                     Cerrar sesión

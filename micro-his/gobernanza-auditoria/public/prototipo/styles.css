@@ -1,0 +1,121 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1b1f24;
+  --muted: #4a5360;
+  --border: #c5ccd6;
+  --primary: #0b5cad;
+  --primary-text: #ffffff;
+  --focus: #b35c00;
+  --danger: #a4161a;
+  --danger-bg: #fdecec;
+  --ok: #1d6b33;
+  --ok-bg: #e7f4ea;
+  --warn: #7a4b00;
+  --warn-bg: #fff4dc;
+  --demo-bg: #2b2f36;
+  --demo-text: #ffffff;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+* { box-sizing: border-box; }
+/* El atributo hidden debe ganar a cualquier display de componente (p. ej. .pager). */
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--text); }
+code { font-size: .9em; }
+
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 1rem; top: .5rem; background: var(--surface); padding: .5rem 1rem; z-index: 10; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.demo-banner { background: var(--demo-bg); color: var(--demo-text); padding: .5rem 1rem; font-size: .9rem; }
+
+.app-header {
+  display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;
+  padding: 1rem; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.app-header h1 { margin: 0; font-size: 1.5rem; }
+.demo-controls { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+
+main { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 1rem; padding: 1rem; }
+/* Sin filtros (401/403) el mensaje ocupa todo el ancho. */
+main:has(> .filters[hidden]) { grid-template-columns: 1fr; }
+section { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; min-width: 0; }
+h2 { margin-top: 0; font-size: 1.2rem; }
+
+fieldset { border: 1px solid var(--border); border-radius: 4px; margin: 0 0 1rem; padding: .75rem; }
+legend { font-weight: 600; padding: 0 .25rem; }
+.field { margin-bottom: .75rem; }
+label { display: block; font-weight: 600; margin-bottom: .25rem; }
+input, select, button { font: inherit; min-height: 44px; }
+input, select { width: 100%; padding: .5rem; border: 1px solid #6b7480; border-radius: 4px; background: var(--surface); color: var(--text); }
+input[aria-invalid="true"], select[aria-invalid="true"] { border: 2px solid var(--danger); }
+.hint { margin: .25rem 0 0; color: var(--muted); font-size: .875rem; }
+.field-error { margin: .25rem 0 0; color: var(--danger); font-weight: 600; font-size: .9rem; }
+.field-error::before { content: "Error: "; }
+
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+button { padding: .5rem 1rem; border: 1px solid #6b7480; border-radius: 4px; background: var(--surface); color: var(--text); cursor: pointer; }
+button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
+button:disabled { opacity: .6; cursor: not-allowed; }
+
+.error-summary { border: 2px solid var(--danger); background: var(--danger-bg); padding: .75rem; margin-bottom: 1rem; border-radius: 4px; }
+.error-summary ul { margin: .25rem 0 0; padding-left: 1.25rem; }
+.error-summary a { color: var(--danger); }
+
+.status { min-height: 1.5rem; color: var(--muted); }
+.state { border-radius: 4px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border); }
+.state.error, .state.denied { border-color: var(--danger); background: var(--danger-bg); }
+.state.empty { background: var(--bg); }
+.state.loading { background: var(--warn-bg); color: var(--warn); }
+.state h3 { margin: 0 0 .25rem; font-size: 1.05rem; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--bg); }
+td .id { font-family: ui-monospace, Consolas, monospace; font-size: .85rem; word-break: break-all; }
+
+.badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .85rem; font-weight: 600; border: 1px solid currentColor; }
+.badge.success { color: var(--ok); background: var(--ok-bg); }
+.badge.failure { color: var(--warn); background: var(--warn-bg); }
+.badge.denied { color: var(--danger); background: var(--danger-bg); }
+.badge.unknown { color: var(--muted); background: var(--bg); }
+
+.pager { display: flex; gap: 1rem; align-items: center; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap; }
+
+dialog { max-width: min(640px, calc(100vw - 2rem)); width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; }
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.dialog-head h2 { margin: 0; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+dt { font-weight: 600; }
+dd { margin: 0; word-break: break-word; }
+
+/* Tableta: filtros arriba en dos columnas */
+@media (max-width: 960px) {
+  main { grid-template-columns: 1fr; }
+  #filter-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+  #filter-form .actions { grid-column: 1 / -1; }
+}
+
+/* Móvil: un campo por fila y la tabla se convierte en tarjetas */
+@media (max-width: 600px) {
+  .app-header { padding: .75rem; }
+  main { padding: .5rem; }
+  #filter-form { display: block; }
+  .actions button { flex: 1 1 100%; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tr { border: 1px solid var(--border); border-radius: 6px; margin-bottom: .75rem; padding: .5rem; }
+  td { border: 0; padding: .25rem 0; }
+  td::before { content: attr(data-label); display: block; font-size: .8rem; font-weight: 600; color: var(--muted); }
+  .pager { justify-content: space-between; }
+  dl { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

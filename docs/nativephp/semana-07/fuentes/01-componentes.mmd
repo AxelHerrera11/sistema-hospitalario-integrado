@@ -1,0 +1,15 @@
+flowchart LR
+  UI[UI offline futura] --> C[PrototypeController]
+  C --> P[PrepareLocalAction]
+  C --> S[SyncLocalActions]
+  P --> D[LocalHisAction]
+  S --> D
+  S --> R[LocalActionRepository]
+  R --> IM[InMemoryLocalActionRepository]
+  R --> PDO[PdoLocalActionRepository]
+  S --> G[SyncGateway]
+  S --> T[TelemetryRecorder]
+  G --> API[(API HIS futura)]
+  T --> OBS[(Observabilidad)]
+  PDO --> DB[(Almacenamiento local)]
+
