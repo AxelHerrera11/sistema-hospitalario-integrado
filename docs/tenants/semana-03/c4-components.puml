@@ -1,0 +1,167 @@
+@startuml
+LAYOUT_WITH_LEGEND()
+LAYOUT_TOP_DOWN()
+title **C4 Component Diagram: Application + Domain Layers - Módulo Tenants & Auth**\n(Semana 03 | Versión 1.0)
+package "Presentation Layer" {
+    [AuthController] as ctrl
+    [RegisterUserRequest] as req_reg
+    [LoginRequest] as req_login
+    [RefreshRequest] as req_refresh
+    [RevokeSessionRequest] as req_revoke
+    [AuthResponseTransformer] as transformer
+}
+package "Application Layer (Use Cases)" {
+    [RegisterUserUseCase] as uc_reg
+    [AuthenticateUserUseCase] as uc_auth
+    [RevokeSessionUseCase] as uc_revoke
+    [RefreshTokenUseCase] as uc_refresh
+    [GetUserUseCase] as uc_get
+    [UpdateUserUseCase] as uc_update
+    [DeactivateUserUseCase] as uc_deactivate
+    [ListUsersUseCase] as uc_list
+}
+package "Domain Layer" {
+    package "Entities" {
+        [User] as ent_user
+        [Tenant] as ent_tenant
+        [Session] as ent_session
+        [RefreshToken] as ent_refresh
+    }
+    package "Value Objects" {
+        [Email] as vo_email
+        [Password] as vo_password
+        [TenantId] as vo_tenant_id
+        [UserId] as vo_user_id
+        [SessionId] as vo_session_id
+        [JwtClaims] as vo_jwt_claims
+        [Role] as vo_role
+        [DeviceFingerprint] as vo_device
+    }
+    package "Domain Services" {
+        [PasswordPolicy] as ds_password
+        [MfaPolicy] as ds_mfa
+        [TokenFactory] as ds_token_factory
+        [RefreshTokenRotator] as ds_refresh_rotator
+        [DeviceTrustService] as ds_device_trust
+    }
+    package "Domain Events" {
+        [UserCreated] as evt_created
+        [UserLoggedIn] as evt_logged_in
+        [UserLoginFailed] as evt_login_failed
+        [MfaChallenged] as evt_mfa_challenged
+        [MfaSucceeded] as evt_mfa_succeeded
+        [MfaFailed] as evt_mfa_failed
+        [SessionRevoked] as evt_session_revoked
+        [TokenRefreshed] as evt_token_refreshed
+        [RefreshReuseDetected] as evt_refresh_reuse
+        [AccountLocked] as evt_account_locked
+        [CrossTenantAttempt] as evt_cross_tenant
+        [TenantQuotaExceeded] as evt_quota_exceeded
+        [TenantInactive] as evt_tenant_inactive
+    }
+    package "Repository Interfaces (Ports)" {
+        () UserRepositoryInterface as repo_user_int
+        () TenantRepositoryInterface as repo_tenant_int
+        () SessionRepositoryInterface as repo_session_int
+        () RefreshTokenRepositoryInterface as repo_refresh_int
+        () AuditLogRepositoryInterface as repo_audit_int
+    }
+}
+package "Infrastructure Layer (Adapters)" {
+    package "Persistence (PDO)" {
+        [PDOUserRepository] as repo_user_pdo
+        [PDOTenantRepository] as repo_tenant_pdo
+        [PDOSessionRepository] as repo_session_pdo
+    }
+    package "Persistence (Redis)" {
+        [RedisRefreshTokenRepository] as repo_refresh_redis
+        [RedisSessionRepository] as repo_session_redis
+        [RedisBlocklistRepository] as repo_blocklist_redis
+        [RedisLockoutRepository] as repo_lockout_redis
+        [RedisRateLimitRepository] as repo_ratelimit_redis
+    }
+    package "Security Services" {
+        [JwtTokenService] as svc_jwt
+        [TotpVerifier] as svc_totp
+        [WebAuthnVerifier] as svc_webauthn
+        [Argon2idHasher] as svc_hasher
+    }
+    package "Audit & Events" {
+        [PdoAuditLogRepository] as repo_audit_pdo
+        [EventPublisher] as pub_events
+    }
+    package "External Integrations" {
+        [HaveIBeenPwnedClient] as svc_hibp
+        [EmailNotificationService] as svc_email
+        [SiemForwarder] as svc_siem
+    }
+}
+' Relationships
+ctrl --> req_reg : uses
+ctrl --> req_login : uses
+ctrl --> req_refresh : uses
+ctrl --> req_revoke : uses
+ctrl --> uc_reg : executes
+ctrl --> uc_auth : executes
+ctrl --> uc_revoke : executes
+ctrl --> uc_refresh : executes
+ctrl --> transformer : transforms
+uc_reg --> ent_user : creates
+uc_reg --> ent_tenant : validates
+uc_reg --> ds_password : validates
+uc_reg --> ds_mfa : evaluates
+uc_reg --> repo_user_int : saves
+uc_reg --> repo_tenant_int : checks quota
+uc_reg --> evt_created : emits
+uc_auth --> ent_user : retrieves
+uc_auth --> vo_password : verifies
+uc_auth --> ds_mfa : evaluates
+uc_auth --> ds_mfa : challenges
+uc_auth --> ds_token_factory : creates tokens
+uc_auth --> ds_refresh_rotator : stores refresh
+uc_auth --> ds_device_trust : registers
+uc_auth --> repo_user_int : finds
+uc_auth --> repo_refresh_int : saves
+uc_auth --> repo_session_int : saves
+uc_auth --> evt_logged_in : emits
+uc_auth --> evt_login_failed : emits
+uc_auth --> evt_mfa_challenged : emits
+uc_auth --> evt_mfa_succeeded : emits
+uc_auth --> evt_mfa_failed : emits
+uc_auth --> evt_account_locked : emits
+uc_revoke --> repo_refresh_int : deletes all
+uc_revoke --> repo_session_int : deletes all
+uc_revoke --> repo_blocklist_redis : adds JTI
+uc_revoke --> evt_session_revoked : emits
+uc_revoke --> pub_events : publishes SessionRevokedEvent
+uc_refresh --> ds_refresh_rotator : rotates
+uc_refresh --> repo_refresh_int : finds + saves
+uc_refresh --> ds_token_factory : creates new tokens
+uc_refresh --> evt_token_refreshed : emits
+uc_refresh --> evt_refresh_reuse : emits (on attack)
+uc_get --> repo_user_int : finds
+uc_update --> repo_user_int : updates
+uc_deactivate --> repo_user_int : updates status
+uc_list --> repo_user_int : lists
+' Domain Service implementations
+ds_password --> svc_hasher : uses
+ds_password --> svc_hibp : checks breach
+ds_mfa --> svc_totp : verifies
+ds_mfa --> svc_webauthn : verifies
+ds_token_factory --> svc_jwt : signs/validates
+ds_refresh_rotator --> repo_refresh_int : uses
+ds_refresh_rotator --> svc_hasher : hashes
+ds_device_trust --> repo_session_int : stores
+' Repository implementations
+repo_user_int <|.. repo_user_pdo
+repo_tenant_int <|.. repo_tenant_pdo
+repo_session_int <|.. repo_session_pdo
+repo_session_int <|.. repo_session_redis
+repo_refresh_int <|.. repo_refresh_redis
+repo_blocklist_redis --> repo_blocklist_redis
+repo_audit_int <|.. repo_audit_pdo
+' Infrastructure usage
+svc_jwt --> repo_audit_pdo : logs key rotation
+svc_email --> pub_events : async
+svc_siem --> pub_events : async
+@enduml

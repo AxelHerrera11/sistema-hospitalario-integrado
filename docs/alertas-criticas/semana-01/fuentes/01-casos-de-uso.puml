@@ -1,0 +1,51 @@
+@startuml
+title Casos de uso — Detección, envío, acuse y escalamiento de una alerta crítica
+left to right direction
+skinparam actorStyle awesome
+
+actor "Enfermería de sala" as enf
+actor "Médico tratante" as med
+actor "Jefatura de servicio / médico de guardia" as jef
+actor "Validación de resultados (ASII-19/20)" as res <<sistema>>
+actor "Catálogo de pruebas (ASII-17)" as cat <<sistema>>
+actor "Planificador (alerts:escalate)" as sch <<sistema>>
+actor "RBAC / JWT (ASII-01/02)" as rbac <<sistema>>
+actor "Bitácora de auditoría (HOSPITAL)" as aud <<sistema>>
+
+rectangle "HIS · Alertas críticas y notificaciones internas (tenant = hospital activo)" {
+  usecase "UC-ALR-01\nDetectar valor crítico" as UC_ALR_01
+  usecase "UC-ALR-02\nGenerar alerta crítica" as UC_ALR_02
+  usecase "UC-ALR-03\nNotificar al destinatario" as UC_ALR_03
+  usecase "UC-ALR-04\nAcusar recibo de la alerta" as UC_ALR_04
+  usecase "UC-ALR-05\nEscalar alerta vencida" as UC_ALR_05
+  usecase "UC-ALR-06\nConsultar bandeja de alertas" as UC_ALR_06
+  usecase "UC-ALR-07\nRegistrar acción y cerrar alerta" as UC_ALR_07
+  usecase "UC-ALR-08\nValidar acceso y relación de cuidado" as UC_ALR_08
+  usecase "UC-ALR-09\nRegistrar auditoría" as UC_ALR_09
+}
+
+enf -- UC_ALR_06
+med -- UC_ALR_06
+med -- UC_ALR_04
+med -- UC_ALR_07
+jef -- UC_ALR_04
+jef -- UC_ALR_07
+res -- UC_ALR_01
+cat -- UC_ALR_01
+sch -- UC_ALR_05
+rbac -- UC_ALR_08
+aud -- UC_ALR_09
+UC_ALR_02 ..> UC_ALR_03 : <<include>>
+UC_ALR_05 ..> UC_ALR_03 : <<include>>
+UC_ALR_04 ..> UC_ALR_08 : <<include>>
+UC_ALR_06 ..> UC_ALR_08 : <<include>>
+UC_ALR_07 ..> UC_ALR_08 : <<include>>
+UC_ALR_04 ..> UC_ALR_09 : <<include>>
+UC_ALR_05 ..> UC_ALR_09 : <<include>>
+UC_ALR_07 ..> UC_ALR_09 : <<include>>
+UC_ALR_03 ..> UC_ALR_09 : <<include>>
+UC_ALR_02 ..> UC_ALR_01 : <<extend>>
+' UC-ALR-02 extiende a UC-ALR-01 solo si el valor cae fuera de los umbrales críticos de la versión de la prueba y aún no existe una alerta para ese resultado (idempotencia).
+' UC-ALR-05 lo dispara el planificador: si vence el plazo sin acuse, sube un nivel (médico tratante → jefatura de servicio → dirección médica) y vuelve a notificar (UC-ALR-03).
+' Fuente de esta semana: resultados de laboratorio. Signos vitales (ASII-13) podría ser otra fuente con el mismo contrato (coordinación C1).
+@enduml

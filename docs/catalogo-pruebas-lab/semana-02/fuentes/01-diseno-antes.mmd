@@ -1,0 +1,17 @@
+---
+title: "Antes de OCP — un switch por tipo de resultado en el servicio"
+---
+classDiagram
+  direction LR
+  class LabTestController {
+    +store(request)
+  }
+  class LabTestCatalogService {
+    +validar(draft, hoy) list
+    -if muestra inválida → 422
+    -switch(resultType) numeric · qualitative
+    -default → RESULT_TYPE_UNSUPPORTED
+    -if vigencia retroactiva → 422
+  }
+  LabTestController --> LabTestCatalogService
+  note for LabTestCatalogService "Cada tipo nuevo (ordinal, título, cultivo)<br>modifica el switch y obliga a volver a probar todos"
