@@ -23,6 +23,9 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
 
     public function find(string $noteId): ?ClinicalNote
     {
+        if (!PostgresIds::usable($this->pdo, $noteId)) {
+            return null;
+        }
         $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status, content FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
         $diagnoses = $this->rows("SELECT code, type FROM diagnoses WHERE clinical_note_id = ? AND status = 'active'", [$noteId]);
         return $note === null ? null : new ClinicalNote($noteId, $note['care_episode_id'], $note['author_user_ref_id'], $note['status'],
@@ -63,6 +66,7 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
     /** El expediente abierto del paciente del episodio. Crearlo es de Expediente: sin él no se escribe (409) en lugar de inventarlo. */
     private function openMedicalRecord(string $episodeId): string
     {
+        PostgresIds::usable($this->pdo, $episodeId) || throw new SoapRuleViolation('MEDICAL_RECORD_NOT_FOUND', 409);
         $record = $this->rows("SELECT r.medical_record_id FROM care_episodes e JOIN medical_records r ON r.local_patient_id = e.local_patient_id AND r.status = 'open' WHERE e.care_episode_id = ?", [$episodeId])[0] ?? null;
         return $record['medical_record_id'] ?? throw new SoapRuleViolation('MEDICAL_RECORD_NOT_FOUND', 409);
     }
