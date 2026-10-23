@@ -89,6 +89,41 @@ paths:
         '409': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
         '500': { $ref: '#/components/responses/Error' }
+  /api/v1/soap-notes/{clinical_note_id}/corrections:
+    post:
+      summary: Corregir una nota firmada creando la versión siguiente en borrador (permiso notas_soap.corregir)
+      parameters:
+        - { $ref: '#/components/parameters/NoteId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SoapSections'
+                - type: object
+                  required: [correction_reason]
+                  properties:
+                    correction_reason: { type: string, minLength: 1, maxLength: 500 }
+      responses:
+        '201':
+          description: Versión n + 1 en borrador; la firmada no cambia
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [clinical_note_id, supersedes_id, status, trace_id]
+                properties:
+                  clinical_note_id: { type: string, format: uuid }
+                  supersedes_id: { type: string, format: uuid }
+                  status: { type: string, enum: [draft] }
+                  trace_id: { type: string, format: uuid }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
   /api/v1/soap-notes/{clinical_note_id}:
     get:
       summary: Leer una nota con secciones y diagnósticos activos (permiso notas_soap.ver y asignación activa)
@@ -107,6 +142,8 @@ paths:
                   care_episode_id: { type: string }
                   author_user_ref_id: { type: string }
                   status: { type: string, enum: [draft, signed] }
+                  version_no: { type: integer, minimum: 1 }
+                  supersedes_id: { type: string, format: uuid, nullable: true }
                   sections: { $ref: '#/components/schemas/SoapSections' }
                   diagnoses: { type: array, items: { $ref: '#/components/schemas/Diagnosis' } }
                   trace_id: { type: string, format: uuid }
@@ -145,7 +182,7 @@ components:
         code:
           type: string
           enum: [UNAUTHENTICATED, FORBIDDEN, NOT_TREATING_PHYSICIAN, ROUTE_NOT_FOUND, NOTE_NOT_FOUND, DIAGNOSIS_DUPLICATED, PRIMARY_DIAGNOSIS_EXISTS, NOTE_SIGNED,
-            PAYLOAD_INVALID, SOAP_SECTION_INVALID, DIAGNOSIS_INVALID, DIAGNOSIS_CODE_INVALID, SOAP_PERSISTENCE_ERROR, ICD10_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE, MEDICAL_RECORD_NOT_FOUND, LOCAL_USER_NOT_FOUND, HOSPITAL_UNAVAILABLE, RECORD_ALREADY_HAS_NOTE, SOAP_INCOMPLETE]
+            PAYLOAD_INVALID, SOAP_SECTION_INVALID, DIAGNOSIS_INVALID, DIAGNOSIS_CODE_INVALID, SOAP_PERSISTENCE_ERROR, ICD10_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE, MEDICAL_RECORD_NOT_FOUND, LOCAL_USER_NOT_FOUND, HOSPITAL_UNAVAILABLE, RECORD_ALREADY_HAS_NOTE, SOAP_INCOMPLETE, NOTE_NOT_SIGNED, NOTE_ALREADY_CORRECTED, CORRECTION_REASON_INVALID]
         permission: { type: string, description: Solo en 403 FORBIDDEN, example: notas_soap.crear }
         trace_id: { type: string, format: uuid }
   responses:

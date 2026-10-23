@@ -22,7 +22,7 @@ Contrato que consumen Expediente clínico, Prescripciones, Órdenes de laborator
 | `GET` | `/api/v1/soap-notes/{clinical_note_id}` | `notas_soap.ver` | `200` | implementado |
 | `GET` | `/api/v1/care-episodes/{care_episode_id}/soap-notes` | `notas_soap.ver` | `200` | propuesto |
 | `POST` | `/api/v1/soap-notes/{clinical_note_id}/sign` | `notas_soap.firmar` | `200` | implementado (Semana 18) |
-| `POST` | `/api/v1/soap-notes/{clinical_note_id}/corrections` | `notas_soap.corregir` | `201` | propuesto |
+| `POST` | `/api/v1/soap-notes/{clinical_note_id}/corrections` | `notas_soap.corregir` | `201` | implementado (Semana 18) |
 
 El permiso de diagnósticos pasa de `diagnosticos.asociar` (Semana 2, RNF-SOAP-01) a `notas_soap.asociar_diagnostico` para respetar `modulo.accion` de dos partes, la misma forma que usa Médicos (`medicos.asociar_especialidad`, #371). Ninguno está aún en el [catálogo de RBAC](../../rbac/semana-05/permisos.md); se proponen a María (ASII-02) con esta matriz inicial:
 
@@ -79,9 +79,30 @@ Sin cuerpo. Solo firma el autor con asignación activa y solo si la nota está c
 
 La firma y la auditoría `nota_soap.firmada` (con `version_no`, `primary_code` y `diagnosis_codes`, sin texto clínico) van en una sola transacción. **Pendiente:** el `outbox_events` hacia CENTRAL que prevé la Semana 1 no se escribe todavía, porque no hay contrato del evento con ASII-09 ni con Gobernanza.
 
+### `POST /api/v1/soap-notes/{clinical_note_id}/corrections`
+
+Las cuatro secciones corregidas más el motivo. La Semana 1 solo nombraba el motivo; se piden también las secciones porque el módulo todavía no tiene una ruta para editar un borrador, y sin ellas la versión nueva repetiría el texto.
+
+| Campo | Tipo | Regla |
+|---|---|---|
+| `subjective`, `objective`, `assessment`, `plan` | string | las mismas reglas que al registrar |
+| `correction_reason` | string | obligatorio, no vacío ni solo espacios, máximo 500 caracteres |
+
+`201` → `{ "clinical_note_id": "<nueva>", "supersedes_id": "<firmada>", "status": "draft", "trace_id": "…" }`. La versión nueva queda en el mismo expediente con `version_no + 1`, sin diagnósticos: se asocian de nuevo (UC-SOAP-02) y se firma con `/sign`. La nota firmada no cambia.
+
+| Resultado | Código | Cuándo |
+|---|---|---|
+| `403` | `NOT_TREATING_PHYSICIAN` | no es el autor o ya no tiene asignación activa |
+| `404` | `NOTE_NOT_FOUND` | la nota no existe |
+| `409` | `NOTE_NOT_SIGNED` | la nota sigue en borrador: se edita, no se corrige |
+| `409` | `NOTE_ALREADY_CORRECTED` | ya tiene una versión siguiente (cada nota se reemplaza una sola vez) |
+| `422` | `CORRECTION_REASON_INVALID` | motivo ausente, en blanco o de más de 500 caracteres |
+
+La auditoría `nota_soap.corregida` (con `version_no` y `supersedes_id`, sin el motivo ni el texto clínico) va en la misma transacción; el motivo queda en `clinical_notes.correction_reason`. Con la fila original bloqueada, dos correcciones simultáneas no crean dos versiones.
+
 ### `GET /api/v1/soap-notes/{clinical_note_id}`
 
-`200` → `{ "clinical_note_id": "…", "care_episode_id": "…", "author_user_ref_id": "…", "status": "draft", "sections": { "subjective": "…", "objective": "…", "assessment": "…", "plan": "…" }, "diagnoses": [ { "code": "J18.9", "type": "primary" } ], "trace_id": "…" }`. Además de `notas_soap.ver`, exige asignación activa en el episodio: es dato clínico.
+`200` → `{ "clinical_note_id": "…", "care_episode_id": "…", "author_user_ref_id": "…", "status": "draft", "version_no": 1, "supersedes_id": null, "sections": { "subjective": "…", "objective": "…", "assessment": "…", "plan": "…" }, "diagnoses": [ { "code": "J18.9", "type": "primary" } ], "trace_id": "…" }`. Además de `notas_soap.ver`, exige asignación activa en el episodio: es dato clínico.
 
 Un campo con tipo incorrecto (número, arreglo, `null`, booleano) o un JSON malformado responde `422 PAYLOAD_INVALID` antes de llegar al caso de uso y no guarda nada.
 
