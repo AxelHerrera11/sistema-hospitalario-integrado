@@ -2,7 +2,7 @@
 
 **Estudiante:** Hicho García, Josué Fernando (`Jhos-hgnu`) · **Módulo:** ASII-04 · **Entrega:** el micro-HIS de médicos deja de ser PHP aislado y queda expuesto en el API de Laravel, con adaptador PDO compatible con PostgreSQL y pruebas de contrato HTTP.
 
-> **Estado: parcial.** La integración de backend está hecha y probada con dobles y SQLite. **No se ejecutó contra PostgreSQL** (el entorno local no tiene `pdo_pgsql` ni servidor) y **no hay interfaz Vue**. Ambas cosas siguen pendientes y no se dan por cumplidas (sección 6).
+> **Estado: entrega funcional, con dos reservas.** El API, el adaptador PostgreSQL, los defectos de la Semana 15, `slot_minutes`, la zona horaria del hospital y la pantalla Vue están hechos y probados. **La pantalla no se abrió en un navegador** (solo build y pruebas de utilidades; sin capturas) y **el despliegue final** de la Semana 17 sigue bloqueado por el entorno (sección 6).
 
 ## 1. Qué se entrega
 
@@ -10,7 +10,24 @@
 |---|---|---|
 | [#1038](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1038) | `PdoDoctorStore` compatible con el esquema HOSPITAL de PostgreSQL | Borrador |
 | [#1039](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1039) | Rutas, controlador, provider, actor local y lector de `doctor_schedules` (apilado sobre #1038) | Borrador |
-| Este PR | Documentación y evidencia de la semana (apilado sobre #1039) | Borrador |
+| [#1042](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1042) | Defectos D-01, D-02 y D-04 de la Semana 15 | Borrador |
+| [#1043](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1043) | Prueba de base de datos contra PostgreSQL 16 | Borrador |
+| [#1044](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1044) | Horario partido con el `slot_minutes` de `doctor_schedules` | Borrador |
+| [#1045](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1045) | Pantalla Vue `/medicos` | Borrador |
+| [#1046](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1046) | Citas leídas en la zona horaria del hospital del tenant | Borrador |
+| Este PR | Documentación y evidencia de la semana | Borrador |
+
+Los PR forman una cadena apilada (#1038 → #1039 → #1042 → #1043 → #1044 → #1045 → #1046); cada uno apunta a la rama del anterior para que su diff sea revisable (menos de 400 líneas) y se reorienta a `develop` cuando el previo se integra. Este PR de documentación está apilado sobre #1039.
+
+### 1.3 Piezas posteriores (#1042 a #1046)
+
+| PR | Qué cambia | Por qué |
+|---|---|---|
+| #1042 | D-01: la licencia se normaliza (`trim` + mayúsculas). D-02: `AppointmentReader` entrega intervalos `[inicio, fin)` y `SlotPlanner` bloquea todo bloque que solape; una cita que cruza la medianoche ocupa su parte de cada día. D-04: `GET /availability` sin `specialty` responde 422 `PAYLOAD_INVALID` | Eran los defectos abiertos de la Semana 15; D-02 hacía ofrecer franjas ya tomadas |
+| #1043 | `DoctorsPostgresTest`: alta, auditoría, atomicidad, asociación y disponibilidad sobre el esquema HOSPITAL migrado | El adaptador solo se había probado en SQLite |
+| #1044 | `PdoScheduleProvider` entrega `[inicio, fin, slot_minutes]` y `SlotPlanner` lo usa por franja | Los horarios de 20 o 15 minutos se partían en bloques de 30 |
+| #1045 | `DoctorsPage.vue` y utilidades puras: consulta de disponibilidad, alta y asociación, con formularios según permiso | Parte visible de la entrega |
+| #1046 | La zona de lectura de citas es `hospitals.timezone` del tenant; si no es un identificador IANA válido, la de la aplicación | El servidor está en UTC; «08:00» debe ser la hora local del hospital |
 
 ### 1.1 Adaptador PDO (#1038)
 
@@ -61,7 +78,7 @@ Lo que más pesa: (1) un `doctor_profile_id` uuid real, creado por el alta; (2) 
 | RF-MED-01, 03, 05 | Alta y asociación expuestas por HTTP; reglas del dominio intactas |
 | RF-MED-06, 07 | Disponibilidad con horario real de `doctor_schedules`; sin horario se informa `SCHEDULE_NOT_CONFIGURED` |
 | RNF-MED-01 | Permiso por operación, tenant y actor local; falla cerrada ante RBAC o base caídos |
-| RNF-MED-02 | La transacción del alta (perfil + vínculo + auditoría) se conserva en PostgreSQL; sin ejecutar allí todavía |
+| RNF-MED-02 | La transacción del alta (perfil + vínculo + auditoría) se verificó en PostgreSQL: si la auditoría falla, no queda perfil ni vínculo (#1043) |
 
 ## 4. Evidencia ejecutada
 
@@ -78,7 +95,27 @@ Lo que más pesa: (1) un `doctor_profile_id` uuid real, creado por el alta; (2) 
 # resultado: las tres rutas de médicos registradas (DoctorApiController)
 ```
 
-Entorno: PHP 8.3.33, PHPUnit 11.5.55, adaptadores PDO sobre SQLite en memoria y dobles InMemory. Las 10 pruebas HTTP cubren: alta con auditoría del actor local, asociación, disponibilidad, códigos de error del módulo, 401 en las tres rutas, permiso propio por operación, tenant ajeno, actor sin referencia local, base caída y base inexistente (503, no 500). Las pruebas del adaptador agregan: id uuid v4, lectura de citas en otra zona horaria y lectura de `doctor_schedules` (vigencia, día sin franjas, médico sin horario, horario inactivo).
+Evidencia agregada por los PR posteriores (se ejecutó en la rama de cada uno):
+
+```bash
+# php -d extension=pdo_pgsql -d extension=pgsql vendor/bin/phpunit tests/Database/Hospital/DoctorsPostgresTest.php   [PostgreSQL 16]
+# resultado: OK (7 tests, 24 assertions)
+# php -d extension=pdo_pgsql -d extension=pgsql vendor/bin/phpunit tests/Database/Hospital/DoctorScheduleIntegrityTest.php
+# resultado: OK (16 tests, 135 assertions)
+# php -d extension=pdo_pgsql -d extension=pgsql vendor/bin/phpunit --testsuite Database
+# resultado: 135 tests, 1 falla en tests/Database/Central/AuditChainIntegrityTest.php (escritores concurrentes de CENTRAL),
+#            archivo ajeno a este módulo, no investigado; confirmar en CI
+# php vendor/bin/phpunit tests/Feature/Medicos
+# resultado: OK (11 tests, 42 assertions)
+# node resources/js/modules/medicos/medicos.test.mjs
+# resultado: OK: aserciones de la pantalla de médicos aprobadas
+# npm run build
+# resultado: ✓ 130 modules transformed; DoctorsPage-B-lfS94Z.js 8.91 kB
+```
+
+PostgreSQL: contenedores efímeros `postgres:16` en los puertos de la CI (55431 y 55433) con `btree_gist`, migraciones HOSPITAL reales y PHP con `pdo_pgsql`.
+
+Entorno de las pruebas anteriores: PHP 8.3.33, PHPUnit 11.5.55, adaptadores PDO sobre SQLite en memoria y dobles InMemory. Las 10 pruebas HTTP cubren: alta con auditoría del actor local, asociación, disponibilidad, códigos de error del módulo, 401 en las tres rutas, permiso propio por operación, tenant ajeno, actor sin referencia local, base caída y base inexistente (503, no 500). Las pruebas del adaptador agregan: id uuid v4, lectura de citas en otra zona horaria y lectura de `doctor_schedules` (vigencia, día sin franjas, médico sin horario, horario inactivo).
 
 ## 5. Estado de los defectos de la Semana 15
 
@@ -86,17 +123,20 @@ Entorno: PHP 8.3.33, PHPUnit 11.5.55, adaptadores PDO sobre SQLite en memoria y 
 |---|---|
 | D-03 (tenant ajeno acepta 201) | Cubierto en la ruta de Laravel por `tenant` (prueba `TENANT_MISMATCH`); sigue abierto en el micro-HIS aislado |
 | D-05 (ruta sin permiso) | Cubierto: cada ruta declara `rbac:` |
-| D-01 (licencia con espacios) · D-02 (citas fuera de la rejilla) · D-04 (`specialty` ausente) | **Abiertos**; son de dominio y van en PR aparte |
+| D-01 (licencia con espacios) | Corregido en #1042: se normaliza al registrar. Las licencias ya guardadas sin normalizar no se migran |
+| D-02 (citas fuera de la rejilla) | Corregido en #1042: franjas por intervalo `[inicio, fin)` |
+| D-04 (`specialty` ausente) | Corregido en #1042: 422 `PAYLOAD_INVALID` |
 
 ## 6. Pendientes y riesgos
 
 | # | Pendiente | Efecto |
 |---|---|---|
-| 1 | Prueba E2E contra PostgreSQL 16 (esquema HOSPITAL migrado) | Hasta entonces el adaptador está probado solo en SQLite |
-| 2 | `slot_minutes` por horario (issue #207 con Citas) | Las franjas se parten en bloques fijos de 30 min |
-| 3 | Zona horaria del hospital | Hoy sale de `config('app.timezone')`; confirmar el valor real |
-| 4 | Interfaz Vue (hay prototipo de la Semana 11) | Sin pantalla integrada |
-| 5 | Usuarios sin `local_user_refs` | Responden 403 hasta que la sincronización los provisione |
+| 1 | Revisión visual de la pantalla en navegador (escritorio y móvil) y capturas | Solo se verificó con build y pruebas de utilidades |
+| 2 | Formato de los slots que espera Citas (issue #207) | Se entregan franjas `HH:MM` partidas por `slot_minutes`; falta confirmar con Citas que ese formato les sirve |
+| 3 | Falla de `AuditChainIntegrityTest` en la suite `Database` | Ajena al módulo; confirmar en CI si es del entorno Windows |
+| 4 | Usuarios sin `local_user_refs` | Responden 403 hasta que la sincronización los provisione |
+| 5 | Lectura real de `hospitals.timezone` desde `TenantMiddleware` | Se probó con un doble del tenant; la columna es `NOT NULL` en CENTRAL |
+| 6 | Licencias ya guardadas sin normalizar | La corrección de D-01 actúa en el alta; no migra datos existentes |
 
 **Semana 17** (seguridad y despliegue) depende de lo anterior: la matriz de amenazas y las pruebas de permisos pueden avanzar; el despliegue final queda bloqueado por el entorno.
 
