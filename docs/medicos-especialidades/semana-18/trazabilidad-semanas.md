@@ -22,7 +22,7 @@ Cada semana corresponde a una entrega con su Pull Request. La columna «Estado»
 | 15 | Pruebas unitarias, de caja blanca y de caja negra trazadas a RF/RNF, con 5 defectos registrados | #527 | **Borrador** |
 | 16 | Integración en Laravel: adaptador PostgreSQL, API, defectos corregidos, prueba en PostgreSQL 16, `slot_minutes`, pantalla Vue, zona horaria y documentación | #1038, #1039, #1042, #1043, #1044, #1045, #1046, #1040 | **Abiertos** (#1038 listo para revisión; el resto, borrador y apilado) |
 | 17 | Seguridad: pruebas de permisos y datos sensibles, matriz de amenazas, bitácora de despliegue local, límite de tasa y longitudes máximas | #1052, #1061 | **Borrador**, apilados |
-| 18 | Evaluación final y defensa: README, trazabilidad y guion (#1076); `trace_id` en Laravel (#1088); medición de RNF-MED-04 y lectura en lote (#1091); prueba de punta a punta contra el backend real (#1109); errores del cliente que no son 500 (#1111); contrato API actualizado (este PR) | #1076, #1088, #1091, #1109, #1111 y este PR | Borrador, apilados |
+| 18 | Evaluación final y defensa: README, trazabilidad y guion (#1076); `trace_id` en Laravel (#1088); medición de RNF-MED-04 y lectura en lote (#1091); prueba de punta a punta contra el backend real (#1109); errores del cliente que no son 500 (#1111); contrato API actualizado (#1112); contraste y teclado de la pantalla real (este PR) | #1076, #1088, #1091, #1109, #1111, #1112 y este PR | Borrador, apilados |
 
 ## Continuidad entre entregas
 
