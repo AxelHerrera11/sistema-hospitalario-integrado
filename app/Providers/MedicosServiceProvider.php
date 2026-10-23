@@ -12,7 +12,7 @@ use MicroHis\Medicos\Presentation\Router;
 
 /**
  * Conecta el Micro-HIS de médicos con Laravel: el dominio no depende del framework; aquí solo se cablea el
- * adaptador PDO sobre la conexión HOSPITAL. La zona horaria de las citas sale de `config('app.timezone')`.
+ * adaptador PDO sobre la conexión HOSPITAL.
  */
 final class MedicosServiceProvider extends ServiceProvider
 {
@@ -20,9 +20,10 @@ final class MedicosServiceProvider extends ServiceProvider
     {
         require_once base_path('micro-his/medicos-especialidades/app.php');
 
-        $this->app->bind(Router::class, static function (): Router {
+        // `timezone` la aporta el controlador con la zona del hospital del tenant; sin ella, la de la aplicación.
+        $this->app->bind(Router::class, static function ($app, array $parameters = []): Router {
             $pdo = DB::connection('hospital')->getPdo();
-            $store = new PdoDoctorStore($pdo, (string) config('app.timezone', 'UTC'));
+            $store = new PdoDoctorStore($pdo, (string) ($parameters['timezone'] ?? config('app.timezone', 'UTC')));
 
             return medicos_router($store, $store, new PdoScheduleProvider($pdo));
         });

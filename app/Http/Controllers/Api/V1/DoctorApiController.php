@@ -43,7 +43,7 @@ final class DoctorApiController extends Controller
             if ($actor === null) {
                 return $this->failure(403, 'ACTOR_NOT_PROVISIONED');
             }
-            $result = app(Router::class)->dispatch(new DoctorRequest(
+            $result = app(Router::class, ['timezone' => $this->hospitalTimezone($request)])->dispatch(new DoctorRequest(
                 $request->method(), $path, ['X-User-ID' => $actor], $request->query(), $request->json()->all(),
             ));
         } catch (\PDOException) { // incluye QueryException
@@ -51,6 +51,15 @@ final class DoctorApiController extends Controller
         }
 
         return response()->json(json_decode($result['body'], true), $result['status'])->header('Cache-Control', 'no-store, private');
+    }
+
+    /** Zona del hospital del tenant (`hospitals.timezone`): las horas de las citas se leen y se informan en ella. Sin una zona válida, la de la aplicación. */
+    private function hospitalTimezone(Request $request): string
+    {
+        $tenant = $request->attributes->get('tenant');
+        $zone = is_object($tenant) ? ($tenant->timezone ?? null) : null;
+
+        return is_string($zone) && in_array($zone, \DateTimeZone::listIdentifiers(), true) ? $zone : (string) config('app.timezone', 'UTC');
     }
 
     private function failure(int $status, string $code): JsonResponse
