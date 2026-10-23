@@ -1,5 +1,7 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Reception\Domain;
 
 final class SpecimenCode
@@ -7,6 +9,7 @@ final class SpecimenCode
     public static function generate(): string
     {
         $body = strtoupper(bin2hex(random_bytes(12)));
+
         return $body.'-'.self::digit($body);
     }
 
@@ -19,7 +22,10 @@ final class SpecimenCode
     private static function digit(string $body): string
     {
         $sum = 0;
-        foreach (str_split($body) as $char) $sum += hexdec($char);
+        foreach (str_split($body) as $char) {
+            $sum += hexdec($char);
+        }
+
         return (string) ($sum % 10);
     }
 }
