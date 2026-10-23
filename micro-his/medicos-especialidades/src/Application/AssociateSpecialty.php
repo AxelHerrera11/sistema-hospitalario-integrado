@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MicroHis\Medicos\Application;
 
 use MicroHis\Medicos\Domain\DoctorRuleViolation;
+use MicroHis\Medicos\Domain\Limits;
 use MicroHis\Medicos\Domain\Period;
 use MicroHis\Medicos\Domain\SpecialtyAssignmentPolicy;
 use MicroHis\Medicos\Domain\SpecialtyLink;
@@ -18,6 +19,7 @@ final class AssociateSpecialty
 
     public function execute(string $actorId, string $doctorId, string $specialtyCode, bool $isPrimary, string $from, ?string $to = null): SpecialtyLink
     {
+        Limits::within($specialtyCode, Limits::SPECIALTY_CODE);
         $specialtyId = $this->catalog->activeSpecialtyId($specialtyCode) ?? throw new DoctorRuleViolation('SPECIALTY_INACTIVE', 422);
         [$profile, $current] = $this->specialties->specialtiesOf($doctorId) ?? throw new DoctorRuleViolation('DOCTOR_NOT_FOUND', 404);
         $link = new SpecialtyLink($specialtyId, $isPrimary, new Period($from, $to));
