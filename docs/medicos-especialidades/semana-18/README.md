@@ -66,7 +66,7 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 | Prototipo de la Semana 11 (guion de la Semana 12) | 27 de 27 comprobaciones; 16 de 16 pares de color |
 | Matriz de amenazas | 18 amenazas: 15 probadas, 1 verificada por lectura, 1 parcial, 1 abierta |
 | Rendimiento (RNF-MED-04), [rendimiento.md](./rendimiento.md) | Un día con 20 médicos: p95 de 120 a ~13 ms. Ventana de 14 días: p95 de 1561 a 145–194 ms (límite 500 ms) |
-| Backend real de punta a punta, [e2e-real.md](./e2e-real.md) | 16 de 16 verificaciones (Laravel, JWT, tenant, RBAC y PostgreSQL 16) y 6 capturas con sesión real |
+| Backend real de punta a punta, [e2e-real.md](./e2e-real.md) | 21 de 21 verificaciones (Laravel, JWT, tenant, RBAC y PostgreSQL 16) y 6 capturas con sesión real |
 
 ## Pendientes técnicos declarados
 
@@ -74,7 +74,7 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 |---|---|---|
 | 1 | Integrar los PR en orden (#1038 primero) | Hasta entonces `develop` no tiene las rutas de médicos |
 | 2 | Servidor API y cliente HTTP de la Semana 5 (#372) | Abierto; no hay cliente HTTP en `develop` |
-| 3 | Contraste y teclado sobre la pantalla `/medicos` | Se probó contra el backend real con sesión real (16 de 16 verificaciones y 6 capturas, ver [e2e-real.md](./e2e-real.md)), pero el contraste y el teclado solo se midieron sobre el prototipo de la Semana 12 |
+| 3 | Contraste y teclado sobre la pantalla `/medicos` | Se probó contra el backend real con sesión real (21 de 21 verificaciones y 6 capturas, ver [e2e-real.md](./e2e-real.md)), pero el contraste y el teclado solo se midieron sobre el prototipo de la Semana 12 |
 | 4 | MED-13: la conexión `hospital` no cambia por tenant | El aislamiento entre hospitales depende de una base por hospital; decisión de la plataforma |
 | 5 | MED-08: las lecturas de disponibilidad no se auditan | Parcial |
 | 6 | Despliegue final | Sin staging u on-premise ni semillas aprobadas de `specialties` y `local_user_refs` |

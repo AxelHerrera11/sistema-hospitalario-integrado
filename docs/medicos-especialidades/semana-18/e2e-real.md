@@ -14,7 +14,7 @@ Hasta aquí las pruebas HTTP usaban dobles de identidad y las capturas de la Sem
 
 Los nombres de base deben terminar en `_e2e`: el sembrador y el script de medición se niegan a correr en otra base. No se tocó ninguna base compartida ni real.
 
-## Resultado: 16 de 16 verificaciones
+## Resultado: 21 de 21 verificaciones
 
 [`evidencia/e2e-real.mjs`](./evidencia/e2e-real.mjs) hace todo por `/api/v1` con tokens obtenidos de `/auth/login`:
 
@@ -35,7 +35,12 @@ Los nombres de base deben terminar en `_e2e`: el sembrador y el script de medici
 | 13 | Token del hospital 1 con `X-Tenant-ID` del hospital 2: 403 `TENANT_MISMATCH`, sin escritura | Cumple |
 | 14 | Fecha imposible: 422 con `trace_id` | Cumple |
 | 15 | Licencia de 65 caracteres: 422 | Cumple |
-| 16 | Límite de tasa: 8 respuestas 429 en 125 consultas más | Cumple |
+| 16 | Id de médico que no es uuid: 404 `DOCTOR_NOT_FOUND`, no 500 | Cumple |
+| 17 | Referencia de usuario que no es uuid: 422 `PAYLOAD_INVALID`, no 500 | Cumple |
+| 18 | Referencia de usuario inexistente: 422 `USER_REF_NOT_FOUND` | Cumple |
+| 19 | Usuario que ya tiene un perfil activo: 409 `USER_ALREADY_REGISTERED` | Cumple |
+| 20 | Ninguno de esos rechazos dejó un perfil | Cumple |
+| 21 | Límite de tasa: 8 respuestas 429 en 125 consultas más | Cumple |
 
 El horario (`doctor_schedules`) y la cita se insertan por SQL directo: el módulo todavía no tiene rutas para cargar horarios y las citas son de otro módulo.
 
@@ -57,6 +62,7 @@ El horario (`doctor_schedules`) y la cita se insertan por SQL directo: el módul
 1. **El límite de tasa solo funciona con una caché compartida y persistente.** Con `CACHE_STORE=array` no se contó ninguna petición (0 respuestas 429); con la caché en base de datos, que es la del proyecto, sí (8 de 125). Quien despliegue debe confirmar que `CACHE_STORE` no es `array` ni un almacén por proceso. Se refleja en la matriz de amenazas (MED-14).
 2. **Una corrección de estilos no había llegado a las ramas posteriores.** Las primeras capturas reales salieron con campos sin borde porque la rama de trabajo era posterior a la corrección de #1045. Al integrar en orden esto se resuelve solo; las capturas de este informe son del estado final, con la corrección mezclada en una rama temporal que no se publicó.
 3. **El módulo no tiene forma de cargar horarios ni especialidades por la API.** Hubo que insertarlos por SQL. Es la brecha funcional más grande y queda fuera de este PR.
+4. **Defecto encontrado y corregido en la rama siguiente (errores del cliente salían como 500).** Con PostgreSQL real, un id de médico que no es uuid, una referencia de usuario mal formada o inexistente, o un usuario que ya tiene un perfil activo respondían `500 DOCTOR_PERSISTENCE_ERROR`: el adaptador trataba toda excepción de la base como «base caída», y el cliente no podía distinguir sus errores de una falla del servidor. Ninguna prueba anterior lo detectó porque SQLite no valida uuid ni claves foráneas. Ahora devuelven 404 `DOCTOR_NOT_FOUND`, 422 `PAYLOAD_INVALID`, 422 `USER_REF_NOT_FOUND` y 409 `USER_ALREADY_REGISTERED` (verificaciones 16 a 20 y `DoctorsPostgresTest`, que falla si se quita la corrección). La licencia repetida detectada por la restricción de unicidad también devuelve 409.
 
 ## Cómo repetirlo
 

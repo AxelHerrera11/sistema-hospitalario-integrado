@@ -128,6 +128,28 @@ final class DoctorsPostgresTest extends TestCase
         $this->assertSame([404, 'ROUTE_NOT_FOUND'], [$byPath['status'], $byPath['body']['code']]);
     }
 
+    public function test_los_errores_del_cliente_que_postgresql_detecta_no_son_un_500(): void
+    {
+        $id = $this->send('POST', '/doctors', self::ALTA)['body']['doctor_profile_id'];
+        $assoc = ['specialty_code' => 'NEURO', 'valid_from' => '2026-02-01'];
+
+        $notUuid = $this->send('POST', '/doctors/doc-x/specialties', $assoc);
+        $badRef = $this->send('POST', '/doctors', ['local_user_ref_id' => 'u-ana', 'license_number' => 'COL-2'] + self::ALTA);
+        $missingRef = $this->send('POST', '/doctors', ['local_user_ref_id' => '00000000-0000-4000-8000-0000000000aa', 'license_number' => 'COL-3'] + self::ALTA);
+        $sameUser = $this->send('POST', '/doctors', ['license_number' => 'COL-4'] + self::ALTA);
+        $unknown = $this->send('POST', '/doctors/00000000-0000-4000-8000-0000000000bb/specialties', $assoc);
+        $known = $this->send('POST', "/doctors/$id/specialties", $assoc);
+
+        $this->assertSame([404, 'DOCTOR_NOT_FOUND'], [$notUuid['status'], $notUuid['body']['code']], 'id que no es uuid');
+        $this->assertSame([422, 'PAYLOAD_INVALID'], [$badRef['status'], $badRef['body']['code']], 'referencia de usuario que no es uuid');
+        $this->assertSame([422, 'USER_REF_NOT_FOUND'], [$missingRef['status'], $missingRef['body']['code']], 'referencia de usuario inexistente');
+        $this->assertSame([409, 'USER_ALREADY_REGISTERED'], [$sameUser['status'], $sameUser['body']['code']], 'usuario con perfil activo');
+        $this->assertSame([404, 'DOCTOR_NOT_FOUND'], [$unknown['status'], $unknown['body']['code']], 'uuid válido pero inexistente');
+        $this->assertSame(201, $known['status']);
+        $this->assertSame(1, (int) $this->hospital()->scalar('SELECT count(*) FROM doctor_profiles'), 'ninguno de los rechazos dejó un perfil');
+        $this->assertSame(2, (int) $this->hospital()->scalar('SELECT count(*) FROM local_access_audits'), 'solo el alta y la asociación válidas se auditaron');
+    }
+
     public function test_los_campos_desmesurados_no_llegan_a_postgresql(): void
     {
         $tooLong = $this->send('POST', '/doctors', ['license_number' => str_repeat('L', 10_000)] + self::ALTA);
