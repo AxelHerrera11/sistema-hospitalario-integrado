@@ -98,7 +98,8 @@ final class DoctorSecurityTest extends TestCase
         $this->pdo->exec('DROP TABLE local_access_audits');
         $failure = $this->postJson('/api/v1/doctors', ['license_number' => 'SECRETO-123'] + self::ALTA)->assertStatus(500);
 
-        $this->assertSame(['code' => 'DOCTOR_PERSISTENCE_ERROR'], $failure->json());
+        $this->assertSame(['code', 'trace_id'], $this->sorted($failure->json()));
+        $this->assertSame('DOCTOR_PERSISTENCE_ERROR', $failure->json('code'));
         foreach (['SQLSTATE', 'PDOException', 'local_access_audits', '.php', 'SECRETO-123', 'vendor'] as $leak) {
             $this->assertStringNotContainsString($leak, $failure->getContent());
         }
