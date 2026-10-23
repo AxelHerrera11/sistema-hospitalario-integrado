@@ -1,0 +1,21 @@
+flowchart LR
+    %% Componentes backend y frontend del módulo
+    subgraph FE["Frontend - public/prototipo"]
+        APP[app.js<br/>vistas: lista, planificar, detalle]
+        VM[view-model.js<br/>validatePlan, validateResult,<br/>allowedActions, errorMessage]
+        CLIENT[api.js<br/>createApi, permissionsFor]
+        APP --> VM
+        APP --> CLIENT
+    end
+    subgraph BE["Backend - src"]
+        HTTP[Presentation<br/>QaHttpHandler, QaController,<br/>RunPresenter, ErrorMapper]
+        UC[Application<br/>5 casos de uso + Authorizer]
+        DOM[Domain<br/>TestRun, QualityGate, política]
+        ADP[Persistence / Integration<br/>PDO, InMemory, Gobernanza, gate estático]
+        CIC[Ci<br/>GateRunner, JUnit, EvidenceCollector,<br/>RouteGuard, GateReportWriter]
+        HTTP --> UC --> DOM
+        ADP -.implementa puertos.-> UC
+        CIC --> UC
+    end
+    CLIENT -->|HTTP JSON /api/v1/qa/runs| HTTP
+    WF[qa-ci-e2e.yml] -->|reportes JUnit + artefactos| CIC

@@ -1,0 +1,25 @@
+flowchart TB
+  subgraph T1["Semana 1 - UML"]
+    A1["Casos de uso, actividad y secuencia"]
+  end
+  subgraph T2["Semana 2 - ISP"]
+    A2["RF/RNF y criterios de aceptación"]
+  end
+  subgraph T3["Semana 3 - Micro-HIS"]
+    A3["Presentation/Application/Domain/Persistence"]
+  end
+  subgraph T4["Semana 4 - MVC y Repository"]
+    A4["BedSnapshotReader + PdoBedSnapshotReader"]
+  end
+  subgraph T5["Semana 5 - Cliente-servidor"]
+    A5["Contrato API y frontera evaluada"]
+  end
+  T1 --> T2 --> T3 --> T4 --> T5
+  T5 --> E1["Evidencia: 12 verificaciones del Micro-HIS"]
+  T5 --> E2["Evidencia: 22 pruebas y 125 aserciones (Feature/Ocupacion + OccupancySnapshotIntegrityTest)"]
+  T5 --> E3["Evidencia: 8 pruebas del contrato HTTP en el PR #574"]
+  E1 --> D1["Decisión: mantener módulo cliente-servidor, no microservicio"]
+  E2 --> D1
+  E3 --> D1
+  E1 --> D2["Decisión: ocupación desde el intervalo de bed_stays"]
+  E2 --> D2
