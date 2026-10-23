@@ -32,3 +32,43 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 
 - 21/10/2026: la autora confirmó la revisión personal de las semanas 3 a 10 (PR #790–#869); ver el [registro](./revision-humana.md). No es una aprobación independiente: ningún PR la tiene.
 - Semanas 1 y 2: siguen pendientes de confirmación.
+
+## Cierre provisional (23/10/2026)
+
+No es un cierre al 100 %: quedan requisitos obligatorios sin comprobar. Estado al pausar la sesión.
+
+### Comprobado
+
+- **Verificación técnica por consultas de lectura** (23/10/2026) contra `his_hospital_traslados_revision_test` (PostgreSQL desechable 55433): el traslado de `00000000-0000-4000-8000-00000000e801` hacia la cama `00000000-0000-4000-8000-00000000b802` cerró la estancia origen (22/10 23:30:18, motivo «Requiere aislamiento») y abrió la estancia `843f602b-580c-4bdd-bd08-06907086566d` en el episodio `00000000-0000-4000-8000-00000000c801` (aún abierto); el alta de `00000000-0000-4000-8000-00000000e802` cerró su estancia (23/10 00:14:44) y el episodio `00000000-0000-4000-8000-00000000c802` queda `closed`, con la cama `00000000-0000-4000-8000-00000000b803` liberada. Registro técnico: se separa de la revisión visual y no la sustituye.
+- **Revisión humana confirmada por la autora (22/10/2026)** en el entorno local 8090 con datos ficticios: consulta de la estancia original; traslado con motivo «Requiere aislamiento» y aparición de la estancia nueva `843f602b-…`; consulta de e801 («estancia vigente no», cama actual b802); alta de `00000000-0000-4000-8000-00000000e802` como médico con el mensaje «Alta confirmada. La cama quedó liberada».
+- **Defecto D8 corregido y pendiente de integración**: PR #1108 (entrada «Traslados y altas» en el menú de la SPA, 8+/0−, 3 commits, base `develop`).
+- **Defecto de logout con token vencido (aviso falso persistente) corregido y pendiente de integración**: PR #1113 (72+/3−, 3 commits, apilado sobre #1108; retarget a `develop` cuando #1108 se integre): `SESSION_REVOKED` tratado como sesión ya cerrada, bloqueo de doble clic reutilizando `createSubmitGuard`, y limpieza del aviso tras un login exitoso; pruebas en `logoutPolicy.test.mjs` y `vite build` verificados localmente. **La corrección todavía NO está activa en 8090** porque el servidor sirve la rama de #1108.
+- Login enfermería/médico/recepción verificado contra `his_central_smoke` (55431) y su referencia local activa; la activación temporal de permisos propuestos RBAC vive solo como cambio local sin commit en `config/rbac.php` y no constituye aprobación productiva.
+
+### Pendiente de prueba humana
+
+- Consulta posterior al alta de e802 mostrando episodio cerrado y estancia no vigente.
+- Rechazo de traslado de `00000000-0000-4000-8000-00000000e803` hacia la cama `00000000-0000-4000-8000-00000000b805` (ocupada por la estancia e804) sin cambios.
+- Recepción sin acceso al módulo (403).
+- Validación de motivo vacío (422) y vista móvil a 375 px.
+- Persistencia de la sesión y de los cambios tras salir y volver por el menú.
+
+### Pendientes externos (no propios de ASII-08)
+
+1. Activación oficial de consulta/traslado/alta en RBAC (ASII-02), sobre la propuesta publicada en Semana 16.
+2. Asociación de identidad CENTRAL con `local_user_refs` (sembrado manual actual).
+3. Selección de base HOSPITAL por tenant (la conexión fija `hospital` del proveedor es temporal).
+4. Rate limiting de la API para traslados y altas.
+5. Staging/on-premise autorizado para el despliegue final.
+6. Revisión independiente de ningún PR, según reglas del repositorio.
+
+### Bloqueo de GitHub Actions
+
+Vigente por facturación/límite de gasto: los jobs arrancan y fallan en ~3 s (mismo patrón en PR de otros módulos), por lo que los checks de #1108/#1113 siguen sin ejecutarse. No relanzar jobs hasta que se resuelva la facturación; entonces verificar los checks de los SHA actuales y retomar el ciclo normal de integración (merge de #1108, retarget e integración de #1113, y promoción completa a `main` antes de integrar otra parte).
+
+### Para retomar
+
+1. Entorno local: servidor en `http://127.0.0.1:8090` sirve el clon en la rama de #1108 con una compilación que ya incluye la entrada de menú; `.env` apunta a las bases de revisión (`his_central_smoke` en 55431 y `his_hospital_traslados_revision_test` en 55433). Datos de la revisión intactos; no recrear ni resetear.
+2. Ejecutar primero las pruebas humanas pendientes de la lista superior y confirmarlas en `revision-humana.md`.
+3. Con Actions desbloqueado: integrar #1108, retarget #1113 a `develop`, integrar #1113 y promover a `main`.
+4. No declarar el módulo completo mientras queden los pendientes externos sin resolver.
