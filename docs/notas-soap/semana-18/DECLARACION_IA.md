@@ -12,10 +12,10 @@
 - Un fallo propio quedó registrado: las pruebas de corrección contra PostgreSQL esperaban el error de `clinical_notes_supersedes_unique`, pero la base respondió con `clinical_notes_record_version_unique`, que se evalúa antes; la prueba y el contrato se corrigieron en vez de forzar el resultado.
 - Se decidió, sin que el enunciado lo pida, que la corrección reciba las cuatro secciones corregidas además del motivo, porque el módulo no tiene ruta para editar un borrador. Está documentado como decisión para revisar.
 - El catálogo CIE-10 provisional son 20 códigos escritos de memoria, sin revisión clínica ni contraste con la fuente oficial: debe revisarse antes de usarse y viene apagado por defecto.
-- La pantalla Vue **no se ejercitó en un navegador**; solo se comprobó que compila y que sus reglas pasan sus pruebas.
+- La pantalla Vue se ejercitó en Chrome real con un script de `puppeteer-core` (20 comprobaciones contra el API y PostgreSQL, ver `evidencia-pantalla.txt`). Esa prueba reveló que los campos y botones salían sin borde y se corrigió; no se probó con otros navegadores ni con lector de pantalla.
 - El cambio solicitado de la defensa («más de una nota por expediente») es una **hipótesis**: el enunciado oficial no lo especifica.
 - No se implementó el `outbox_events` que prevé la Semana 1, ni se midió el rendimiento. Los pendientes se escriben tal como están.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el código de #1083, #1087, #1089 y #1090, la evidencia, el guion y este documento antes de aprobarlo.
+**Validación humana:** realizada el 2026-10-23. Josué Fernando Hicho García revisó el código de #1083, #1087, #1089 y #1090, la evidencia, el guion y este documento, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.

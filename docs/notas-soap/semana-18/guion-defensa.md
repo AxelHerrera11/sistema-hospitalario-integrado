@@ -20,11 +20,11 @@ La nota clínica del episodio debe ser completa, tener un diagnóstico principal
 3. **Firmar** → `200 signed`. Firmar de nuevo → `409 NOTE_SIGNED`. Intentar un `UPDATE` directo sobre la fila en PostgreSQL → el trigger responde `clinical_notes_signed_immutable`.
 4. **Corregir** con las secciones corregidas y el motivo → `201`, versión 2 en borrador; la versión 1 sigue firmada. Corregir otra vez la misma → `409 NOTE_ALREADY_CORRECTED`.
 5. **Fallo seguro**: con la bitácora caída, firmar y corregir responden `500` y la nota no cambia. *Nunca se firma sin traza.*
-6. Si el equipo lo permite, abrir `/notas-soap`: la pantalla ofrece solo las acciones que el estado y los permisos permiten, aunque el servidor decide de todos modos.
+6. Abrir `/notas-soap`: la pantalla ofrece solo las acciones que el estado y los permisos permiten, aunque el servidor decide de todos modos. Se ejercitó en Chrome real con el recorrido completo ([evidencia](./evidencia-pantalla.txt), [capturas](./capturas/)).
 
 ## 4. Qué no está terminado (2 min)
 
-Decirlo antes de que lo pregunten: R-06 (una nota por expediente), la tabla `icd10_codes` y el trigger de D-02 son de ASII-09; el catálogo provisional de 20 códigos existe solo para la demo y está apagado por defecto; no se escribe `outbox_events`; la pantalla no se ejercitó en un navegador; y ningún PR de la cadena está revisado ni hay CI porque los checks no arrancan. La lista completa está en el [README](./README.md#lo-que-no-está-resuelto).
+Decirlo antes de que lo pregunten: R-06 (una nota por expediente), la tabla `icd10_codes` y el trigger de D-02 son de ASII-09; el catálogo provisional de 20 códigos existe solo para la demo y está apagado por defecto; no se escribe `outbox_events`; la pantalla se probó solo en Chrome y sin lector de pantalla; y ningún PR de la cadena está revisado ni hay CI porque los checks no arrancan. La lista completa está en el [README](./README.md#lo-que-no-está-resuelto).
 
 ## Cambio solicitado previsto (hipótesis de defensa)
 

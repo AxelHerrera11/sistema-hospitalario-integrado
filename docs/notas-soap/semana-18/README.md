@@ -5,7 +5,7 @@
 - **Issue:** Refs #22
 - **PR de código de la semana:** #1083 (firma), #1087 (corrección), #1089 (catálogo CIE-10 provisional) y #1090 (pantalla Vue). Este PR solo agrega documentación.
 
-[Trazabilidad de las 18 semanas](./trazabilidad-semanas.md) · [Guion de defensa, cambio solicitado y preguntas esperadas](./guion-defensa.md) · [Evidencia de la demo](./evidencia-demo.txt) · [Declaración de IA](./DECLARACION_IA.md)
+[Trazabilidad de las 18 semanas](./trazabilidad-semanas.md) · [Guion de defensa, cambio solicitado y preguntas esperadas](./guion-defensa.md) · [Evidencia de la demo](./evidencia-demo.txt) · [Evidencia de la pantalla](./evidencia-pantalla.txt) y [capturas](./capturas/) · [Declaración de IA](./DECLARACION_IA.md)
 
 ## Qué entrega el módulo
 
@@ -34,7 +34,7 @@ El médico tratante registra una nota SOAP en borrador, le asocia diagnósticos 
 | Firmar | Funciona: exige las cuatro secciones y un solo diagnóstico principal; 409 si ya está firmada |
 | Corregir | Funciona: versión `n + 1` en borrador; 409 si ya fue corregida |
 | Más de una nota por expediente | **No:** R-06 (409 `RECORD_ALREADY_HAS_NOTE`) |
-| Pantalla | Compila y sus reglas están probadas; **no se ejercitó en un navegador** |
+| Pantalla `/notas-soap` | Ejercitada en Chrome real contra el API y PostgreSQL: 20 comprobaciones sin fallos ([evidencia](./evidencia-pantalla.txt)) |
 
 ## Demo funcional
 
@@ -67,6 +67,7 @@ Resultado registrado el 2026-10-22 sobre el tope del código (salida completa en
 | Rutas HTTP (`tests/Feature/NotasSoap`) | `OK (13 tests, 94 assertions)` |
 | PostgreSQL 16.15 | `OK (28 tests, 159 assertions)` |
 | Interfaz | reglas, permisos y navegación OK; `vite build` genera `NotasSoapPage` |
+| Pantalla en Chrome | 20 comprobaciones OK (login, registrar, validaciones, diagnóstico, firma, corrección, versión 2, 409 y 404, y 390 px sin desbordamiento) |
 | `Unit,Feature` completo | 215 pruebas, 1 falla ajena al módulo: `SalasCamas\CatalogLaravelIntegrationTest` exige una base `his_hospital_test` en el puerto 55433 que no existe en este equipo |
 
 La prueba `NotasSoapProvisionalCatalogPostgresTest` recorre por el API real (token, RBAC, PDO, PostgreSQL) registrar, diagnosticar, firmar, corregir, completar y volver a firmar, y comprueba las seis auditorías esperadas en orden.
@@ -84,9 +85,8 @@ Se declara en vez de ocultarse:
 | 5 | **D-02 abierto en la base:** el trigger de `diagnoses` no mira si la nota está firmada | Un `INSERT` directo se salta la mitigación del módulo (#1074). **Aprobado por Javier:** trigger con `FOR SHARE` que rechaza con `diagnoses_note_signed_trigger` (23514), también al mover un diagnóstico fuera de una nota firmada; pendiente de migración | Javier (ASII-09) |
 | 6 | **Quién crea el expediente abierto de cada paciente** | Sin él, registrar una nota da 409 `MEDICAL_RECORD_NOT_FOUND`, que es la respuesta correcta mientras tanto. Javier indica que le corresponde a ASII-10 (Maryori) y lo coordina | ASII-10 |
 | 7 | **No se escribe `outbox_events`** al firmar y corregir | La Semana 1 lo prevé; no hay contrato del evento hacia CENTRAL. La auditoría local sí queda | Gobernanza y ASII-09 |
-| 8 | **Pantalla no ejercitada en navegador**, sin listado de notas por episodio y sin edición de borrador | Se abre una nota por su identificador; la corrección envía las secciones completas | Autor |
+| 8 | **Sin listado de notas por episodio y sin edición de borrador** | Se abre una nota por su identificador; la corrección envía las secciones completas. La pantalla se probó solo en Chrome y sin lector de pantalla | Autor |
 | 9 | **Sin despliegue en staging ni producción** | Solo ejecución local; ver la [bitácora de la Semana 17](../semana-17/bitacora-despliegue.md) | Equipo |
 | 10 | **Firmar o corregir una nota inexistente da 404 y una ajena da 403** | Permite saber si un identificador existe; mitigado porque son UUID v4. La lectura sí responde igual en ambos casos | Autor |
-| 11 | **Declaraciones de IA con validación humana pendiente** | Hasta que el estudiante las apruebe | Estudiante |
 
 Las Semanas 16 y 17 decían que firma y corrección no estaban implementadas; esas filas quedan superadas por #1083 y #1087 y no se reescriben en sus documentos.
