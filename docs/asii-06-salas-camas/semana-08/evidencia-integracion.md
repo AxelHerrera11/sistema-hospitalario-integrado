@@ -37,8 +37,9 @@ ejecutaron comprobaciones de regresión sobre el código existente:
   — 11 pruebas, 48 assertions; sin fallos, pero el wrapper reportó 11
   advertencias `file_get_contents(...)`. PHPUnit directo PASS.
 - `php micro-his/salas-camas/tests/run.php` — PASS: 4 escenarios.
-- `php artisan route:list --path=api` — PASS: 25 rutas registradas; incluye
-  `GET|HEAD api/v1/wards` y `GET|HEAD api/v1/wards/{ward}/beds`.
+- `php artisan route:list --path=api` — PASS: 11 rutas registradas en el árbol
+  integrado; incluye `GET|HEAD api/v1/wards` y
+  `GET|HEAD api/v1/wards/{ward}/beds`.
 - `php -l` en los PHP relevantes sin cambios — sin errores de sintaxis.
 - `git diff --check` — PASS; no detectó whitespace inválido en el diff.
 - Búsqueda de espacios finales en los documentos nuevos — sin coincidencias.

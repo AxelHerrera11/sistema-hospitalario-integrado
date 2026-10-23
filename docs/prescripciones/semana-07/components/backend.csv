@@ -1,0 +1,9 @@
+componente,estado,responsabilidad,evidencia_o_limite
+Prescription,"PROPUESTO","Representar el dominio de una prescripción","No se declara una implementación integrada en origin/develop"
+PrescriptionService,"PROPUESTO","Coordinar creación, validación y firma","Caso de uso pendiente de validación e integración"
+PrescriptionRepository,"PROPUESTO","Definir el límite de persistencia","No se afirma contrato ni adaptador integrado"
+MedicationCatalog,"PROPUESTO","Consultar el catálogo de medicamentos","Dependencia externa; contrato pendiente de integración"
+AllergyChecker,"PROPUESTO","Consultar alergias activas","La falla no se debe convertir en ausencia de alergias"
+AuditLogger,"PROPUESTO","Solicitar registro de eventos","Adaptador e integración pendientes"
+PDO adapter,"PROPUESTO","Persistir prescripciones con el esquema aprobado","No hay evidencia de repositorio PDO integrado en develop"
+HTTP boundary,"PROPUESTO","Traducir entrada y respuesta del caso de uso","No implica controlador ni endpoint desplegado"
