@@ -1,0 +1,12 @@
+{
+ "_fuente": "Script ejecutado en el navegador integrado sobre http://localhost:8096/ui/ el 2026-10-23, antes de las correcciones de la Semana 12. Pasos: listar el orden de tabulación, revisar etiquetas, consultar P-0001 como médica tratante y luego escribir el código inválido 'P 0002'.",
+ "ordenTab": ["A#Saltar al contenido", "SELECT#usuario", "SELECT#hospital", "INPUT#codigo", "BUTTON#consultar", "BUTTON#abrir"],
+ "camposSinEtiqueta": [],
+ "lang": "es",
+ "landmarks": ["HEADER", "MAIN"],
+ "focoTrasConsulta": "t-resultado",
+ "encabezados": ["H1:Expediente médico", "H2:Buscar expediente", "H2:Resultado", "H3:Episodios clínicos (más reciente pr", "H3:HospitalizaciónAbierto", "H3:EmergenciaCerrado", "H3:Consulta externaCerrado", "H2:¿Abrir el expediente?"],
+ "fechaNacimientoMostrada": ["Nacimiento=1980-05-14", "Abierto el=2/03/2026, 3:00 a. m."],
+ "trasCodigoInvalido": {"expedienteVisible": true, "campo": "P 0002", "ariaInvalid": "true", "describedby": "ayuda-codigo error-codigo", "foco": "codigo"},
+ "estadoRole": "status / aria-live=polite"
+}
