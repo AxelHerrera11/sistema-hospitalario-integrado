@@ -80,6 +80,7 @@ Un campo con tipo incorrecto (número, arreglo, `null`, booleano) o un JSON malf
 | `404` | `ROUTE_NOT_FOUND` / `NOTE_NOT_FOUND` | Ruta inexistente / nota inexistente |
 | `409` | `DIAGNOSIS_DUPLICATED` / `PRIMARY_DIAGNOSIS_EXISTS` | Código ya asociado / segundo principal (RF-SOAP-05) |
 | `409` | `NOTE_SIGNED` | La nota firmada no acepta diagnósticos (RF-SOAP-07) |
+| `409` | `MEDICAL_RECORD_NOT_FOUND` | El paciente del episodio no tiene un expediente abierto; este módulo no lo crea |
 | `422` | `PAYLOAD_INVALID` | JSON malformado o campo con tipo incorrecto |
 | `422` | `SOAP_SECTION_INVALID` | Sección ausente, vacía o mayor a 4000 caracteres (RF-SOAP-02) |
 | `422` | `DIAGNOSIS_INVALID` | Código vacío o tipo fuera de los tres permitidos |
