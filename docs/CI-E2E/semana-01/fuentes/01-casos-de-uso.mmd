@@ -1,0 +1,43 @@
+flowchart LR
+    %% Casos de uso: planificación de pruebas, ejecución E2E, conservación de evidencia y quality gates
+    LQ([Líder QA / responsable de versión])
+    DEV([Desarrollador/a de módulo])
+    CI([Pipeline CI - cuenta de servicio ci-bot])
+    OBS([Observador: revisora de integración, docente])
+    RBAC[[RBAC - María]]
+    GOB[[Gobernanza y Auditoría]]
+
+    subgraph SIS["Micro-HIS QA, pruebas E2E, CI y guía de despliegue final"]
+        CU01((CU-01 Planificar ejecución))
+        CU02((CU-02 Ejecutar etapas automatizadas y E2E))
+        CU03((CU-03 Registrar resultado de suite))
+        CU04((CU-04 Conservar evidencia con huella SHA-256))
+        CU05((CU-05 Evaluar quality gate))
+        CU06((CU-06 Consultar ejecuciones y decisión))
+        CU07((CU-07 Abortar ejecución))
+        CU08((CU-08 Autorizar acción))
+        CU09((CU-09 Auditar acción))
+    end
+
+    DEV -->|abre PR| CU02
+    CI --> CU01
+    CI --> CU02
+    CI --> CU03
+    CI --> CU05
+    LQ --> CU01
+    LQ --> CU05
+    LQ --> CU07
+    OBS --> CU06
+    LQ --> CU06
+
+    CU03 -. include .-> CU04
+    CU01 -. include .-> CU08
+    CU03 -. include .-> CU08
+    CU05 -. include .-> CU08
+    CU06 -. include .-> CU08
+    CU07 -. include .-> CU08
+    CU01 -. include .-> CU09
+    CU05 -. include .-> CU09
+    CU08 -. denegación .-> CU09
+    CU08 --- RBAC
+    CU09 --- GOB
