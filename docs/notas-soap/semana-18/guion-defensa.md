@@ -32,8 +32,8 @@ El enunciado oficial no especifica el cambio. Se ensaya este porque coincide con
 
 > **«Permitir más de una nota por expediente.»**
 
-- **Dónde está el límite:** en la base, no en el módulo. `clinical_notes_record_version_unique (medical_record_id, version_no)` junto con el trigger que exige `version_no = 1` en toda nota original. La versión debería ser única por **cadena de corrección** (por ejemplo, con un identificador de cadena), como propuso la Semana 1.
-- **Qué cambiaría en el módulo:** casi nada. `PdoClinicalNoteStore::add()` ya inserta con `version_no = 1`; solo dejaría de dispararse la traducción a `409 RECORD_ALREADY_HAS_NOTE`, y la prueba `test_known_limit_r06…` de `NotasSoapPostgresTest` debe invertirse (así está anotado en ella).
+- **Dónde está el límite:** en la base, no en el módulo. `clinical_notes_record_version_unique (medical_record_id, version_no)` junto con el trigger que exige `version_no = 1` en toda nota original. Javier (ASII-09) aprobó el 22-oct la solución: una columna `note_series_id` y `UNIQUE (note_series_id, version_no)` en lugar del actual; nota nueva = serie nueva, corrección = serie del padre. Está pendiente de su migración y del visto bueno de Yamilet y del grupo.
+- **Qué cambiaría en el módulo:** poco, y ya sabemos qué. `add()` se queda igual (serie nueva por defecto). `correct()` debe insertar con el `note_series_id` del padre: sin eso, el valor por defecto crearía una serie nueva y el trigger rechazaría la corrección. La lectura expone `note_series_id`. La prueba `test_known_limit_r06…` de `NotasSoapPostgresTest` se invierte y la traducción a `409 RECORD_ALREADY_HAS_NOTE` queda sin uso.
 - **Qué no se puede hacer solo:** cambiar la migración es de Javier (ASII-09); el módulo no debe tocar el esquema.
 - **Lo que ya se hizo bien:** la corrección no choca con R-06, porque la versión 2 lleva `supersedes_id` y `version_no = 2`.
 
