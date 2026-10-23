@@ -1,0 +1,59 @@
+openapi: 3.0.3
+info:
+  title: Micro-HIS Dashboard base (ASII-26) - API REST
+  version: 0.5.0
+  description: >
+    Contrato de la Semana 5. Borde REST sobre el Micro-HIS MVC + Repository de la Semana 4.
+    En el HIS real el prefijo es /api/v1 detras del API Gateway, con JWT (Authorization: Bearer)
+    y X-Tenant-ID; el sobre de respuesta sigue el formato comun de ASII-24.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+    tenantHeader: []
+paths:
+/tablero:
+  get:
+    summary: Tablero de indicadores de un periodo (read model)
+    parameters:
+      - { name: periodo, in: query, required: true, schema: { type: string, example: '2026-11' } }
+    responses:
+      '200':
+        description: Read model del tablero en `data`
+        content: { application/json: { schema: { properties: { data: { $ref: '#/components/schemas/Tablero' } } } } }
+      '422': { $ref: '#/components/responses/Error' }
+      '405': { $ref: '#/components/responses/Error' }
+      '404': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    tenantHeader: { type: apiKey, in: header, name: X-Tenant-ID }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, description: Codigo estable del error }
+        message: { type: string }
+        errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+  responses:
+    Error:
+      description: Sobre comun de error (ASII-24)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+Tablero:
+  type: object
+  properties:
+    periodo: { type: string }
+    total: { type: integer }
+    cumplen_meta: { type: integer }
+    indicadores:
+      type: array
+      items:
+        type: object
+        properties:
+          clave: { type: string }
+          valor: { type: number }
+          meta: { type: number }
+          cumple_meta: { type: boolean }
