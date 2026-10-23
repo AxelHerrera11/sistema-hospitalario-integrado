@@ -103,6 +103,6 @@ check('W-09', 'Una nota firmada entre la lectura y la escritura no recibe el dia
 [, $repo, $id] = flow();
 $repo->addDiagnosis($repo->find($id), new Diagnosis('J18.9', 'primary'), 'Neumonía');
 $firmaCarrera = new SignSoapNote(new TreatingPhysicianGuard(new InMemoryCareAssignmentReader(['ep1' => ['dra.lopez']])), new SignaturePolicy(), new FirmaEnMedio($repo));
-check('W-10', 'Una nota firmada entre la lectura y el UPDATE responde NOTE_SIGNED y no registra otra auditoría de firma (UC-SOAP-05)', outcome(fn () => $firmaCarrera->execute('dra.lopez', $id)) === 'NOTE_SIGNED');
+check('W-10', 'Una nota firmada entre la lectura y el UPDATE no se vuelve a firmar y responde NOTE_SIGNED (UC-SOAP-05)', outcome(fn () => $firmaCarrera->execute('dra.lopez', $id)) === 'NOTE_SIGNED');
 
 summary();
