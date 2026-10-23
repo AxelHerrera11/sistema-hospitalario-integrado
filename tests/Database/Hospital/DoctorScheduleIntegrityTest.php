@@ -23,7 +23,7 @@ class DoctorScheduleIntegrityTest extends TestCase
     {
         $this->insertSchedule('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-000000000002', 1, 480, 720, 30);
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM doctor_schedules'));
-        $this->assertSame('2026-10-01', DB::connection('hospital')->scalar("SELECT valid_from::text FROM doctor_schedules"));
+        $this->assertSame('2026-10-01', DB::connection('hospital')->scalar('SELECT valid_from::text FROM doctor_schedules'));
     }
 
     public function test_overlapping_block_for_the_same_doctor_and_weekday_is_rejected(): void
