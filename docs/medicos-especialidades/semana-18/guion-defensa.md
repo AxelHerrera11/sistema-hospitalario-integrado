@@ -45,7 +45,7 @@ node --test "resources/js/modules/medicos/*.test.mjs"
 npm run build
 ```
 
-Señalar: la pantalla `/medicos` no decide nada de negocio; valida lo mismo que el servidor para avisar antes de enviar, muestra mensajes seguros por código de error y oculta los formularios para los que la sesión no tiene permiso (el servidor los vuelve a exigir). Distingue «sin horario configurado» de «sin franjas libres».
+Señalar: la pantalla `/medicos` no decide nada de negocio; valida lo mismo que el servidor para avisar antes de enviar, muestra mensajes seguros por código de error y oculta los formularios para los que la sesión no tiene permiso (el servidor los vuelve a exigir). Distingue «sin horario configurado» de «sin franjas libres». Para mostrar los estados sin levantar el backend, usar las 9 capturas del PR #1040 (`docs/medicos-especialidades/semana-16/capturas/`): disponibilidad, validación, alta, licencia duplicada, servicio caído, rol de recepción, sin permiso y la vista a 390 px.
 
 ### Paso 5 - Prototipo y accesibilidad (opcional)
 
@@ -72,7 +72,7 @@ Resultado verificado: 27 de 27 comprobaciones y 16 de 16 pares de color cumplen.
 - Que el módulo está desplegado: **no hay despliegue** fuera del equipo local.
 - Que la inyección SQL o los límites se probaron en CI: se probaron localmente con PostgreSQL 16 efímero.
 - Que las 18 semanas están integradas: las semanas 13, 15, 16, 17 y 18 están en PR abiertos.
-- Que la pantalla se vio en un navegador real: se verificó con el build y pruebas de utilidades, y los guiones del prototipo de la Semana 12.
+- Que la pantalla se probó contra el backend real: las 9 capturas (PR #1040, `semana-16/capturas`) son de Chrome sin interfaz con un **API simulado**. Sirven para mostrar los estados y la adaptación a 390 px, no como prueba de integración. El contraste y el teclado se midieron sobre el prototipo de la Semana 12, no sobre esta pantalla.
 - Que se resolvió la amenaza MED-13 (aislamiento entre hospitales): sigue abierta y es de la plataforma.
 
 ## Antes de entrar a la defensa

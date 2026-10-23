@@ -72,7 +72,7 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 |---|---|---|
 | 1 | Integrar los PR en orden (#1038 primero) | Hasta entonces `develop` no tiene las rutas de médicos |
 | 2 | Servidor API y cliente HTTP de la Semana 5 (#372) | Abierto; no hay cliente HTTP en `develop` |
-| 3 | Revisión visual de `/medicos` en navegador, con capturas | Solo se verificó con build y pruebas de utilidades |
+| 3 | Probar `/medicos` contra el backend real con una sesión real | Hay 9 capturas en Chrome sin interfaz (PR #1040, `semana-16/capturas`), pero con un API simulado; no se midió contraste ni se recorrió con teclado sobre esta pantalla |
 | 4 | MED-13: la conexión `hospital` no cambia por tenant | El aislamiento entre hospitales depende de una base por hospital; decisión de la plataforma |
 | 5 | MED-08: las lecturas de disponibilidad no se auditan | Parcial |
 | 6 | Despliegue final | Sin staging u on-premise ni semillas aprobadas de `specialties` y `local_user_refs` |
