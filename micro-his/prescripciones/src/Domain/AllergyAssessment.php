@@ -13,7 +13,7 @@ namespace MicroHis\Prescripciones\Domain;
 final class AllergyAssessment
 {
     /**
-     * @param list<AllergyConflict> $conflicts
+     * @param  list<AllergyConflict>  $conflicts
      * @return array{blocked: bool, conflicts: list<AllergyConflict>, exceptionAllowed: bool}
      */
     public function assess(array $conflicts): array

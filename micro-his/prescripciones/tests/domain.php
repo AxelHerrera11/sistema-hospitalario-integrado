@@ -83,7 +83,7 @@ check('medicamento: conserva los datos del catálogo', $snapshot->activeIngredie
 
 // --- AllergyMatcher (nuevo) ---
 
-$matcher = new AllergyMatcher();
+$matcher = new AllergyMatcher;
 $med = new MedicationSnapshot('m-1', 'AMX-500', 'Amoxicilina 500 mg', 'Amoxicilina', 'Antibiótico', true);
 
 // Coincide por principio activo (normalizado): 'Amoxicilina' normalizado = 'amoxicilina'.
@@ -112,7 +112,7 @@ check('matcher: sin alergias → lista vacía', count($conflicts5) === 0);
 
 // --- AllergyAssessment (nuevo) ---
 
-$assessment = new AllergyAssessment();
+$assessment = new AllergyAssessment;
 
 // Conflicto grave → bloqueado, sin excepción.
 $graveConflicts = [new AllergyConflict('PEN', AllergyType::Allergy, Severity::Severe, AllergyConflict::ACTIVE_INGREDIENT)];
@@ -165,34 +165,34 @@ $errDur = thrown(static fn () => Prescription::createDraft('rx', 'p', 'd', 'e', 
 check('prescripción: duración 0 viola regla', $errDur instanceof PrescriptionRuleViolation && $errDur->field === 'durationDays');
 
 // Firmar borrador válido sin conflictos → OK.
-$signed = $rx->sign('doctor-1', new \DateTimeImmutable('2026-10-20 10:00:00'), []);
+$signed = $rx->sign('doctor-1', new DateTimeImmutable('2026-10-20 10:00:00'), []);
 check('prescripción: firmar borrador sin conflictos', $signed->isSigned() && $signed->signedBy === 'doctor-1' && $signed->allergyConflictsAtSign === []);
 
 // Firmar de nuevo (ya firmada) → PrescriptionNotDraft.
-$errAlreadySigned = thrown(static fn () => $signed->sign('doctor-1', new \DateTimeImmutable('2026-10-20 11:00:00'), []), PrescriptionNotDraft::class);
+$errAlreadySigned = thrown(static fn () => $signed->sign('doctor-1', new DateTimeImmutable('2026-10-20 11:00:00'), []), PrescriptionNotDraft::class);
 check('prescripción: firmar ya firmada da 409', $errAlreadySigned instanceof PrescriptionNotDraft);
 
 // Otro médico intenta firmar → NotTreatingPhysician.
-$errNotTreating = thrown(static fn () => $rx->sign('doctor-2', new \DateTimeImmutable('2026-10-20 10:00:00'), []), NotTreatingPhysician::class);
+$errNotTreating = thrown(static fn () => $rx->sign('doctor-2', new DateTimeImmutable('2026-10-20 10:00:00'), []), NotTreatingPhysician::class);
 check('prescripción: médico no tratante da 403', $errNotTreating instanceof NotTreatingPhysician);
 
 // Firmar con conflicto grave → AllergyConflictBlocked sin excepción (SD-PRE-01).
 $errGraveConflict = thrown(
-    static fn () => $rx->sign('doctor-1', new \DateTimeImmutable('2026-10-20 10:00:00'), $graveConflicts),
+    static fn () => $rx->sign('doctor-1', new DateTimeImmutable('2026-10-20 10:00:00'), $graveConflicts),
     AllergyConflictBlocked::class
 );
 check('prescripción: conflicto grave al firmar bloquea sin excepción', $errGraveConflict instanceof AllergyConflictBlocked && $errGraveConflict->exceptionAllowed === false);
 
 // Firmar con conflicto no grave → NO lanza (exceptionAllowed=true); la capa de aplicación valida el permiso.
 $rxMild = Prescription::createDraft('rx-mild', 'p', 'doctor-1', 'e', $medSnap, PrescriptionRoute::fromInput('Oral'), '1', 'f', '1');
-$signedMild = $rxMild->sign('doctor-1', new \DateTimeImmutable('2026-10-20 10:00:00'), $mildConflicts);
+$signedMild = $rxMild->sign('doctor-1', new DateTimeImmutable('2026-10-20 10:00:00'), $mildConflicts);
 check('prescripción: conflicto no grave admite excepción (no lanza en dominio)', $signedMild->isSigned());
 
 // La prescripción firmada guarda los conflictos detectados al firmar.
 check('prescripción: guarda conflictos al firmar', $signedMild->allergyConflictsAtSign !== null && count($signedMild->allergyConflictsAtSign) === 1);
 
 // Assessment confirma que conflicto no grave admite excepción.
-$allowedToSign = (new AllergyAssessment())->assess($mildConflicts);
+$allowedToSign = (new AllergyAssessment)->assess($mildConflicts);
 check('prescripción: assessment dice que conflicto no grave admite excepción', $allowedToSign['exceptionAllowed'] === true);
 
 finish();

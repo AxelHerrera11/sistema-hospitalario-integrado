@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace MicroHis\Prescripciones\Domain;
 
-use MicroHis\Prescripciones\Domain\AllergyConflictBlocked;
-use MicroHis\Prescripciones\Domain\NotTreatingPhysician;
-use MicroHis\Prescripciones\Domain\PrescriptionNotDraft;
-
 /**
  * Agregado raíz de la prescripción.
  *
@@ -87,8 +83,9 @@ final class Prescription
      * - el firmante sea el mismo doctorProfileId (tratante)
      * - no haya conflictos de alergia no cubiertos (exceptionAllowed = false)
      *
-     * @param list<AllergyConflict> $conflictsAtSign conflictos detectados al firmar
+     * @param  list<AllergyConflict>  $conflictsAtSign  conflictos detectados al firmar
      * @return self nueva instancia firmada (inmutable)
+     *
      * @throws PrescriptionNotDraft si no está en draft
      * @throws NotTreatingPhysician si no es el médico tratante
      * @throws AllergyConflictBlocked si hay conflicto grave o no cubierto
@@ -99,13 +96,13 @@ final class Prescription
         array $conflictsAtSign,
     ): self {
         if ($this->status !== PrescriptionStatus::Draft) {
-            throw new PrescriptionNotDraft();
+            throw new PrescriptionNotDraft;
         }
         if ($signerDoctorProfileId !== $this->doctorProfileId) {
-            throw new NotTreatingPhysician();
+            throw new NotTreatingPhysician;
         }
 
-        $assessment = (new AllergyAssessment())->assess($conflictsAtSign);
+        $assessment = (new AllergyAssessment)->assess($conflictsAtSign);
         if ($assessment['blocked'] && ! $assessment['exceptionAllowed']) {
             throw new AllergyConflictBlocked($conflictsAtSign, false);
         }
