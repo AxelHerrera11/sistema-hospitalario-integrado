@@ -17,7 +17,7 @@ El alta de médicos con su especialidad principal, la asociación de especialida
 | Pieza | Ubicación | Estado |
 |---|---|---|
 | Micro-HIS por capas (Presentation, Application, Domain, Persistence) y Repository con adaptadores PDO e InMemory | `micro-his/medicos-especialidades/` | Integrado en `develop` (semanas 3 y 4) |
-| Contrato API v1 y OpenAPI | `docs/medicos-especialidades/semana-05/` | Integrado (#371) |
+| Contrato API v1 y OpenAPI | `docs/medicos-especialidades/semana-05/` | Integrado (#371); actualizado con el comportamiento real en Laravel (OpenAPI 1.1.0 y sección final del contrato) en este PR |
 | Prototipo navegable, diseño móvil y accesibilidad | `docs/medicos-especialidades/semana-08/` a `semana-12/` | Integrado |
 | Adaptador PDO compatible con el esquema HOSPITAL de PostgreSQL | `PdoDoctorStore` | Abierto (#1038) |
 | Rutas en Laravel con tenant, JWT y un permiso por operación | `routes/api.php`, `DoctorApiController` | Abierto (#1039) |
