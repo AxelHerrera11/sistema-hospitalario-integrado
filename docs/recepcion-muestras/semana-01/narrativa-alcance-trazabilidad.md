@@ -25,7 +25,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
   - fuera de tiempo de estabilidad
   - temperatura inadecuada
   - derramada
-- Notificar el rechazo al médico solicitante.
+- Registrar un evento para la notificación externa PROPUESTA.
 - Consultar una muestra por código, por ejemplo desde *Ingreso de resultados*.
 
 **Fuera de alcance**
@@ -39,7 +39,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 - Solo se recibe contra un ítem en estado "pendiente de muestra". Un ítem cancelado o con muestra ya aceptada responde `409`.
 - La identidad discordante **siempre** se rechaza: es el error más peligroso del laboratorio y no admite excepción.
 - El código se genera solo al aceptar. El rechazo queda registrado contra el ítem de la orden, con motivo, técnico y hora.
-- Si la notificación falla, el rechazo ya está guardado y la notificación queda en cola de reintento. El registro nunca depende del canal de aviso.
+- La transacción inserta specimens y outbox_events; el publicador externo PROPUESTO puede reintentar sin revertir el rechazo. El registro nunca depende del canal de aviso.
 - La etiqueta se imprime solo después del `201` con el código. La falla de la impresora no revierte el registro: la muestra sigue aceptada y queda pendiente la impresión o reimpresión de la etiqueta con el mismo código.
 
 ## Trazabilidad entre los diagramas
@@ -53,7 +53,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 | UC-MUE-05 | Aceptar y generar código | "Generar código…", "¿Código único?" (reintento por colisión), "Guardar muestra accepted", "201…", "Imprimir etiqueta", "¿Reintentar impresión?" | 26–40 |
 | UC-MUE-06 | Rechazar muestra con motivo | "Elegir motivo…" / "Motivo obligatorio…" → "Registrar rechazo" | 17–18, 23–25 |
 | UC-MUE-07 | Consultar muestra por código | Fuera del flujo de recepción: lo usa *Ingreso de resultados* | Nota final (`GET /lab/specimens/{código}`) |
-| UC-MUE-08 | Notificar rechazo al solicitante | "Notificar al solicitante…" y "¿Notificación entregada?" | 19–22 |
+| UC-MUE-08 | Notificar rechazo al solicitante | Evento en outbox_events; publicación externa PROPUESTA | 19–22 |
 | UC-MUE-09 | Validar acceso (rol y tenant) | "¿Rol con permiso muestras.recibir…?" | 2–3 |
 
 ### Caminos y excepciones transversales
