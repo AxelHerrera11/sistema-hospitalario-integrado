@@ -1,0 +1,283 @@
+{
+    "run": {
+        "id": "479d0726-2d30-429e-91b5-0c6555cea97d",
+        "tenant_id": "hospital-pruebas-e2e",
+        "release_version": "0.0.0-local",
+        "commit_sha": "5e6f0044beb05f8954dce0058900133367cc3a52",
+        "environment": "local",
+        "status": "completed",
+        "created_by": "ci-bot",
+        "created_at": "2026-10-21T21:52:29Z",
+        "finished_at": "2026-10-21T21:52:29Z",
+        "abort_reason": null,
+        "suites": [
+            {
+                "name": "sintaxis-php",
+                "kind": "syntax",
+                "required": true,
+                "result": {
+                    "total": 1,
+                    "passed": 1,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 62585,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "syntax/php-lint.xml",
+                            "sha256": "4bcb4e83b7a7f2a118f8d101aa260b29a429e818a4eb7c365c882960fbf645fc",
+                            "bytes": 455
+                        },
+                        {
+                            "kind": "log",
+                            "path": "syntax/php-lint.log",
+                            "sha256": "d77e548872859158e3d69300dac9c1ad850c6e90a725f8626179c8a9f3f42f43",
+                            "bytes": 240
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "pint-archivos-cambiados",
+                "kind": "lint",
+                "required": false,
+                "result": {
+                    "total": 1,
+                    "passed": 1,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 1989,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "lint/pint.xml",
+                            "sha256": "883942e33841547fabd81ce94a902652883e67ce3f1b193eb107dec44a5976f4",
+                            "bytes": 270
+                        },
+                        {
+                            "kind": "log",
+                            "path": "lint/pint.log",
+                            "sha256": "65e708151baf4f5280799148db12ff808e8aea8d276f850a10096d413f8d0c80",
+                            "bytes": 119
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "phpunit-unit",
+                "kind": "unit",
+                "required": true,
+                "result": {
+                    "total": 5,
+                    "passed": 5,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 13,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "phpunit/unit.xml",
+                            "sha256": "5c7681a555c6d9760cd0cf7efb7d9412eace8511a43d023a91a46f272ee9cacd",
+                            "bytes": 2370
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "micro-his",
+                "kind": "unit",
+                "required": true,
+                "result": {
+                    "total": 14,
+                    "passed": 10,
+                    "failed": 0,
+                    "skipped": 4,
+                    "duration_ms": 3610,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "micro-his/micro-his.xml",
+                            "sha256": "7e48555e2ed6ed13db572858073c311259351444ef1a58b0d849d97c3b64c548",
+                            "bytes": 1517
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "frontend-node",
+                "kind": "unit",
+                "required": true,
+                "result": {
+                    "total": 11,
+                    "passed": 11,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 188,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "frontend/node.xml",
+                            "sha256": "8bbc6f1aa70049916bc70248952418680bb34a738bfd9c66a0fe09294bb45cc3",
+                            "bytes": 1506
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "phpunit-feature",
+                "kind": "integration",
+                "required": true,
+                "result": {
+                    "total": 102,
+                    "passed": 102,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 7868,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "phpunit/feature.xml",
+                            "sha256": "5e8457a7740233a6b73fd45f52be136cbc4a252d2908f571fc2a0327dbbf5209",
+                            "bytes": 40494
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "phpunit-integration",
+                "kind": "integration",
+                "required": true,
+                "result": {
+                    "total": 4,
+                    "passed": 4,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 406,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "phpunit/integration.xml",
+                            "sha256": "d00e87aafb1e8c10d6f0225c52651da99e76e862fa3ea555493dd560b75242f9",
+                            "bytes": 2011
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "contrato-rutas-rbac",
+                "kind": "contract",
+                "required": true,
+                "result": {
+                    "total": 17,
+                    "passed": 17,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 0,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "contract/route-guard.xml",
+                            "sha256": "c3c4c2cb4906bda95ab50693a5187bacd71a43c5de0738841a4b27f7908a2174",
+                            "bytes": 1663
+                        },
+                        {
+                            "kind": "log",
+                            "path": "contract/routes.json",
+                            "sha256": "c2972457192b101fdb3b7644a1fc4411f81a64605599d759ec555a69534cd6e9",
+                            "bytes": 4682
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "build-frontend",
+                "kind": "build",
+                "required": true,
+                "result": {
+                    "total": 1,
+                    "passed": 1,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 3435,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "build/vite.xml",
+                            "sha256": "54fbc09d12c7b66984583e5c3537f9cd091ebf593df3affc01f4df5138f75505",
+                            "bytes": 225
+                        },
+                        {
+                            "kind": "log",
+                            "path": "build/vite.log",
+                            "sha256": "bee2b755701972cb7741b4b237f6e133787ab6a91bca603c46a65ec83e05fa5c",
+                            "bytes": 2121
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "e2e-qa-calidad",
+                "kind": "e2e",
+                "required": true,
+                "result": {
+                    "total": 9,
+                    "passed": 9,
+                    "failed": 0,
+                    "skipped": 0,
+                    "duration_ms": 733,
+                    "evidence": [
+                        {
+                            "kind": "junit",
+                            "path": "e2e/qa-calidad.xml",
+                            "sha256": "4f1e6012669ad8cda3df7c0d5a336dc97f27d79644e09b47ce586bc009ae4de9",
+                            "bytes": 1797
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "phpunit-database-pg",
+                "kind": "integration",
+                "required": false,
+                "result": null
+            },
+            {
+                "name": "e2e-auth-rbac",
+                "kind": "e2e",
+                "required": false,
+                "result": null
+            }
+        ],
+        "gate": {
+            "run_id": "479d0726-2d30-429e-91b5-0c6555cea97d",
+            "verdict": "rejected",
+            "policy_version": "qg-0.1-propuesta",
+            "evaluated_by": "ci-bot",
+            "evaluated_at": "2026-10-21T21:52:29Z",
+            "findings": [
+                {
+                    "rule": "SKIPPED_IN_REQUIRED",
+                    "severity": "rejection",
+                    "suite": "micro-his",
+                    "detail": "4 pruebas omitidas en una suite obligatoria."
+                },
+                {
+                    "rule": "SUITE_MISSING",
+                    "severity": "warning",
+                    "suite": "phpunit-database-pg",
+                    "detail": "No se registró resultado para la suite."
+                },
+                {
+                    "rule": "SUITE_MISSING",
+                    "severity": "warning",
+                    "suite": "e2e-auth-rbac",
+                    "detail": "No se registró resultado para la suite."
+                }
+            ]
+        }
+    },
+    "notes": [
+        "phpunit-database-pg: no se encontró phpunit/database.xml (la etapa no corrió o no publicó su reporte).",
+        "e2e-auth-rbac: no se encontró e2e/auth-rbac.xml (la etapa no corrió o no publicó su reporte)."
+    ]
+}

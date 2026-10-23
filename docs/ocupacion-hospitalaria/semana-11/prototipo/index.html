@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototipo de ocupación hospitalaria</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <p class="eyebrow">Micro-HIS · Hospital Central</p>
+    <h1>Ocupación hospitalaria</h1>
+    <p>Fotografía operativa agregada, sin datos de pacientes.</p>
+  </header>
+
+  <main id="app">
+    <p class="prototype-note"><strong>Prototipo:</strong> todos los datos son ficticios; no hay conexión con la API.</p>
+
+    <section class="demo-controls" aria-labelledby="demo-title">
+      <h2 id="demo-title">Escenarios de demostración</h2>
+      <div class="button-row">
+        <button type="button" data-state="success">Resultado válido</button>
+        <button type="button" data-state="stale">Dato desactualizado</button>
+        <button type="button" data-state="denied">Acceso restringido</button>
+      </div>
+    </section>
+
+    <p id="announcer" class="sr-only" aria-live="polite"></p>
+    <div id="dashboard"></div>
+  </main>
+
+  <template id="success-template">
+    <section aria-labelledby="summary-title">
+      <div class="context-row">
+        <div>
+          <p class="eyebrow">Corte temporal</p>
+          <p class="cutoff"><time datetime="2026-10-16T10:00:00-06:00">16/10/2026 10:00 -06</time></p>
+          <p id="freshness">Actualizado hace 1 minuto</p>
+        </div>
+        <div class="filters">
+          <label for="ward">Sala</label>
+          <select id="ward">
+            <option value="all">Todas las salas</option>
+            <option value="MED">Medicina</option>
+            <option value="UCI">UCI</option>
+          </select>
+          <button id="refresh" class="primary" type="button">Actualizar</button>
+        </div>
+      </div>
+
+      <h2 id="summary-title">Resumen global</h2>
+      <div id="metrics" class="metrics" aria-label="Indicadores de ocupación"></div>
+      <p class="warning"><span aria-hidden="true">!</span> <strong id="issue-count"></strong> inconsistencias operativas. <a href="#definitions">Ver explicación</a></p>
+
+      <h2>Ocupación por sala</h2>
+      <div class="table-wrap">
+        <table>
+          <caption>Conteos agregados por sala</caption>
+          <thead><tr><th scope="col">Sala</th><th scope="col">Ocupadas</th><th scope="col">Disponibles</th><th scope="col">Mantenimiento</th><th scope="col">No verificadas</th><th scope="col">Tasa</th></tr></thead>
+          <tbody id="ward-rows"></tbody>
+        </table>
+      </div>
+      <div id="ward-cards" class="ward-cards"></div>
+
+      <details id="definitions">
+        <summary>¿Qué significan los estados?</summary>
+        <p><strong>No verificada:</strong> el estado operativo indica ocupación, pero no existe una estancia activa en el corte. También hay inconsistencia cuando una estancia activa coincide con un estado operativo distinto de ocupada. Ambos casos requieren revisión en el sistema responsable; este dashboard no corrige camas.</p>
+      </details>
+    </section>
+  </template>
+
+  <template id="denied-template">
+    <section class="state-panel" tabindex="-1" aria-labelledby="denied-title">
+      <p class="state-code">403</p>
+      <h2 id="denied-title">Acceso restringido</h2>
+      <p>No tiene permiso para consultar ocupación hospitalaria. Las cifras anteriores fueron retiradas.</p>
+      <button type="button" data-state="success">Volver a la demostración</button>
+    </section>
+  </template>
+</body>
+</html>
