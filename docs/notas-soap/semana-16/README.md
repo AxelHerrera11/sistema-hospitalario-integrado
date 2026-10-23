@@ -6,9 +6,9 @@
 
 - **Semana:** Semana 16 — Integración y primera entrega funcional
 - **Issue:** Refs #22
-- **PR de código:** #1049 (corrección de defectos) y #1059 (integración en Laravel). Este PR solo agrega documentación.
+- **PR de código:** #1049 (D-01 y D-03), #1059 (integración en Laravel), #1067 (adaptadores PDO), #1074 (D-02) y #1075 (identidad). Este PR solo agrega documentación.
 
-**La Semana 16 no se declara completa:** la persistencia real contra PostgreSQL no se ha probado (en parte por desalineaciones de mis propios adaptadores) y el despliegue depende de terceros (ver [bloqueos](#bloqueos-y-limitaciones-no-se-declaran-completados)).
+**La Semana 16 no se declara completa:** falta el catálogo CIE-10, R-06 y el trigger de D-02 dependen de ASII-09, y el despliegue depende de un entorno autorizado (ver [bloqueos](#bloqueos-y-limitaciones-no-se-declaran-completados)).
 
 ## Qué se integró
 
@@ -43,17 +43,17 @@ cd micro-his/notas-soap && php tests/unit.php && php tests/whitebox.php && php t
 
 | # | Bloqueo | Por qué | Quién |
 |---|---|---|---|
-| 1 | **Adaptadores PDO desalineados con el esquema de `develop`** (corrección propia) | Verificado el 2026-10-22 contra `develop` y todas las ramas remotas. (a) `clinical_notes.medical_record_id` es `NOT NULL` y `PdoClinicalNoteStore` no lo envía. (b) `PdoCareAssignmentReader` consulta `care_assignments.user_ref_id`, columna que no existe: la asignación cuelga de `doctor_profile_id` (el usuario está en `doctor_profiles.local_user_ref_id`) y exige `status = 'active'` y `valid_to IS NULL`. (c) Las pruebas usan adaptadores InMemory, así que no lo detectaron | Autor (este módulo) |
-| 2 | **D-02 abierto (confirmado)** | `enforce_diagnosis_integrity` en `develop` no comprueba que la nota esté sin firmar, y ninguna rama ni PR toca `diagnoses` ni `clinical_notes`. Exige repetir la comprobación en la transacción y un trigger en `diagnoses` | Javier (ASII-09) |
-| 3 | **Mapeo de identidad** | El id del token se usa como `user_ref_id`; falta confirmar su relación con `local_user_refs` (el FK de `clinical_notes.author_user_ref_id` y de `local_access_audits.actor_user_ref_id`) | Javier y María (ASII-02) |
+| 1 | ~~Adaptadores PDO desalineados con el esquema de `develop`~~ **Corregido en #1067** | Ejecutados contra PostgreSQL 16 real con las migraciones de `develop` (ver `persistencia-postgresql.md` en #1067): lector de asignaciones por `doctor_profiles`, expediente abierto y `version_no` al crear la nota | Autor (este módulo) |
+| 2 | **D-02: mitigado en el módulo, abierto en la base** | #1074 relee el estado de la nota con `FOR SHARE` y responde 409 `NOTE_SIGNED`. Un INSERT directo en `diagnoses` se salta el control: falta el trigger | Javier (ASII-09) |
+| 3 | ~~Mapeo de identidad~~ **Resuelto en #1075** | El `sub` del JWT es el id CENTRAL y se traduce con `local_user_refs.central_user_id`; sin referencia, 403 `LOCAL_USER_NOT_FOUND` | Autor (este módulo) |
 | 4 | **Firma, corrección y versionado** | Los permisos `notas_soap.firmar` y `notas_soap.corregir` existen en RBAC, pero no hay rutas ni código | Pendiente de semanas posteriores |
-| 5 | **Catálogo CIE-10 inexistente** | `PdoIcd10Catalog` lee `icd10_codes`, que no está en `develop` ni en ninguna rama remota; `diagnoses.code` y `description` son texto libre. Hay que decidir quién aporta el catálogo | Por decidir con Javier |
+| 5 | **Catálogo CIE-10 inexistente** | `PdoIcd10Catalog` lee `icd10_codes`, que no está en `develop` ni en ninguna rama remota; con la API real, asociar un diagnóstico responde 503. Hay que decidir quién aporta el catálogo | Por decidir con Javier |
 | 6 | **Staging u on-premise** | No hay acceso a ningún entorno; solo ejecución local | Equipo |
-| 7 | **R-06** | `clinical_notes_record_version_unique` choca con el riesgo R1 de la Semana 1 | Javier |
+| 7 | **R-06 confirmado en la base real** | `clinical_notes_record_version_unique` junto con el trigger que exige `version_no = 1` permite una sola nota SOAP por expediente (choca con el riesgo R1 de la Semana 1); la API la informa como 409 `RECORD_ALREADY_HAS_NOTE` desde #1080 | Javier (ASII-09) |
 
 ## Estado de la cadena de PR
 
-#128 → #129 → #376 → #378 → #404 → #405 → #551 → **#1049** → **#1059** → este PR. Todos en borrador, revisora Yamilet, apilados con merge. #1059 apunta a `develop` porque contiene un merge de `develop` y depende de #1049.
+#128 → #129 → #376 → #378 → #404 → #405 → #551 → **#1049** → **#1059** → #1067 → #1074 → #1075 → #1077 → #1080 (semana 17) y este PR. Todos en borrador, revisora Yamilet, apilados con merge. #1059 apunta a `develop` porque contiene un merge de `develop` y depende de #1049.
 
 ## Archivos
 
