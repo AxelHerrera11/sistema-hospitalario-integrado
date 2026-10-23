@@ -111,13 +111,30 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     check($t('firma: un médico sin asignación activa no firma -> 403, y una nota inexistente -> 404'), $status($sign($nota, 'dr.perez')) === '403 NOT_TREATING_PHYSICIAN' && $status($sign('nota-nadie')) === '404 NOTE_NOT_FOUND');
     $r = $sign($nota);
     check($t('firma: la autora firma -> 200 signed, con signed_at y una auditoría nota_soap.firmada'), $r['status'] === 200 && $r['body']['status'] === 'signed' && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.firmada')) === 1 && in_array('signed:1', $state['signed'](), true));
-    check($t('firma: firmar otra vez -> 409 NOTE_SIGNED sin segunda auditoría'), $status($sign($nota)) === '409 NOTE_SIGNED' && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.firmada')) === 1);    check($t('regla de dominio: nota firmada no acepta diagnósticos -> 409'), $status($diagnose($nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
+    check($t('firma: firmar otra vez -> 409 NOTE_SIGNED sin segunda auditoría'), $status($sign($nota)) === '409 NOTE_SIGNED' && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.firmada')) === 1);    $correct = static fn (string $note, array $body = ['correction_reason' => 'Plan corregido'] + ['plan' => 'Amoxicilina 500 mg'] + SOAP, string $actor = 'dra.lopez'): array => call($router, "/soap-notes/$note/corrections", $body, ['X-User-ID' => $actor]);
+    check($t('corrección: un borrador no se corrige (409 NOTE_NOT_SIGNED) ni sin motivo (422); otro médico 403'), $status($correct($vacia)) === '409 NOTE_NOT_SIGNED' && $status($correct($nota, ['correction_reason' => '  '] + SOAP)) === '422 CORRECTION_REASON_INVALID'
+        && $status($correct($nota, ['plan' => 'x'] + SOAP)) === '422 CORRECTION_REASON_INVALID' && $status($correct($nota, actor: 'dr.perez')) === '403 NOT_TREATING_PHYSICIAN' && $status($correct('nota-nadie')) === '404 NOTE_NOT_FOUND');
+    $v2 = $correct($nota);
+    $nueva = $v2['body']['clinical_note_id'] ?? '';
+    $leida = call($router, "/soap-notes/$nueva", [], method: 'GET');
+    check($t('corrección: la firmada genera la versión 2 en borrador con sus secciones y su auditoría; la original no cambia'), $v2['status'] === 201 && $v2['body']['supersedes_id'] === $nota && $v2['body']['status'] === 'draft' && $leida['body']['version_no'] === 2 && $leida['body']['supersedes_id'] === $nota
+        && $leida['body']['sections']['plan'] === 'Amoxicilina 500 mg' && $leida['body']['status'] === 'draft' && call($router, "/soap-notes/$nota", [], method: 'GET')['body']['sections']['plan'] === 'Amoxicilina'
+        && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.corregida')) === 1);
+    check($t('corrección: la nota ya corregida no se corrige otra vez (409 NOTE_ALREADY_CORRECTED) y no queda otra versión'), $status($correct($nota)) === '409 NOTE_ALREADY_CORRECTED' && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.corregida')) === 1);
+    check($t('corrección: la versión 2 se completa con su diagnóstico principal y se firma -> 200'), $diagnose($nueva, ['code' => 'J18.9', 'type' => 'primary'])['status'] === 201 && $sign($nueva)['status'] === 200 && call($router, "/soap-notes/$nueva", [], method: 'GET')['body']['status'] === 'signed');
+    check($t('regla de dominio: nota firmada no acepta diagnósticos -> 409'), $status($diagnose($nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
     check($t('ruta desconocida -> 404 ROUTE_NOT_FOUND'), $status(call($router, '/soap-notes', [], method: 'DELETE')) === '404 ROUTE_NOT_FOUND');
 
     $otra = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];
     $diagnose($otra, ['code' => 'I10', 'type' => 'primary']);
+    $tercera = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];
+    $diagnose($tercera, ['code' => 'I10', 'type' => 'primary']);
+    $sign($tercera);
+    $antes = $state['notes']();
     $state['breakAudit']();
-    check($t('firma: bitácora caída -> 500 y la nota sigue en borrador (nunca se firma sin traza)'), $status($sign($otra)) === '500 SOAP_PERSISTENCE_ERROR' && count(array_filter($state['signed'](), static fn (string $s): bool => $s === 'signed:1')) === 1);
+    check($t('corrección: bitácora caída -> 500 y no queda una versión a medias'), $status($correct($tercera)) === '500 SOAP_PERSISTENCE_ERROR' && $state['notes']() === $antes);
+    $firmadas = count(array_filter($state['signed'](), static fn (string $s): bool => $s === 'signed:1'));
+    check($t('firma: bitácora caída -> 500 y la nota sigue en borrador (nunca se firma sin traza)'), $status($sign($otra)) === '500 SOAP_PERSISTENCE_ERROR' && count(array_filter($state['signed'](), static fn (string $s): bool => $s === 'signed:1')) === $firmadas);
 
     [$router, $state] = $make('catalog');
     $nota = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];

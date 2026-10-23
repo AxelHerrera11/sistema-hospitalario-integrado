@@ -20,6 +20,7 @@ final class ApiKernel
         ['POST', '#^/care-episodes/[\w.-]+/soap-notes$#', 'notas_soap.crear'],
         ['POST', '#^/soap-notes/[\w.-]+/diagnoses$#', 'notas_soap.asociar_diagnostico'],
         ['POST', '#^/soap-notes/[\w.-]+/sign$#', 'notas_soap.firmar'],
+        ['POST', '#^/soap-notes/[\w.-]+/corrections$#', 'notas_soap.corregir'],
         ['GET', '#^/soap-notes/[\w.-]+$#', 'notas_soap.ver'],
     ];
 
