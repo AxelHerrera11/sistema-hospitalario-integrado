@@ -1,0 +1,7 @@
+flowchart LR
+    Entrada --> ReceptionController
+    ReceptionController --> ReceiveSpecimen
+    ReceiveSpecimen --> Domain
+    ReceiveSpecimen --> ReceptionRepository
+    ReceptionRepository --> PDO
+    ReceptionRepository --> InMemory
