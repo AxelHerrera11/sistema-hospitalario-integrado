@@ -1,0 +1,21 @@
+flowchart LR
+    %% C4 nivel 1 - Contexto
+    dev([Desarrollador/a de módulo<br/>abre PR hacia develop])
+    lider([Líder QA<br/>planifica y evalúa])
+    obs([Revisora de integración / docente<br/>consulta decisiones])
+    gh[(GitHub<br/>repositorio, PR, Actions, artefactos)]
+    qa[Micro-HIS QA, E2E, CI<br/>y guía de despliegue<br/>decide si una versión se promueve]
+    his[Sistema Hospitalario Integrado<br/>Laravel 12 + Vue 3<br/>sistema bajo prueba]
+    rbac[[RBAC - María<br/>decide permisos]]
+    gob[[Gobernanza y Auditoría - Cindy<br/>registra cada acción]]
+    pg[(PostgreSQL 16 efímero<br/>bases *_e2e del job)]
+
+    dev -->|push / PR| gh
+    gh -->|dispara workflow qa-ci-e2e.yml| qa
+    qa -->|E2E HTTP con datos ficticios| his
+    his --> pg
+    qa -->|¿permiso qa.*?| rbac
+    qa -->|eventos qa_calidad| gob
+    qa -->|resumen + gate-decision.json| gh
+    lider --> qa
+    obs -->|lee check y artefactos| gh

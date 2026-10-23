@@ -19,3 +19,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
 #resultado.reintentar, #resultado.consultar { border-color: #c2410c; }
 dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
 dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Semana 10 — movilidad de 320 a 430 px. Base: objetivos táctiles de 44 px y texto de 16 px en los campos (evita el
+   zoom automático de iOS). Un único punto de corte en 30rem (480 px): una columna, botones a todo el ancho y menos relleno. */
+button { min-height: 44px; }
+input, textarea { font-size: 1rem; }
+@media (max-width: 30rem) {
+    main { padding: .75rem; }
+    h1 { font-size: 1.25rem; }
+    form, section { padding: .75rem; }
+    button { width: 100%; }
+    dl { grid-template-columns: 1fr; gap: 0; }
+    dt { font-weight: 600; }
+    dd { margin-bottom: .5rem; }
+}

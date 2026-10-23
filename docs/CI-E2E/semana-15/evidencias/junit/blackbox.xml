@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.blackbox" tests="23" failures="0">
+    <testcase name="[BN01] Sin identidad → 401 AUTH_REQUIRED" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN02] Sin X-Tenant-ID → 400 TENANT_REQUIRED" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN03] X-Tenant-ID distinto al del token → 403 TENANT_MISMATCH" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN04] Observador (solo ver) intenta planificar → 403 RBAC_DENIED" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN05] Observador puede listar → 200" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN06] Plan válido → 201 con status planned y 3 suites" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN07] Respuesta no cacheable y con el mismo X-Request-ID" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN08] Registrar resultado → 201 con passed calculado" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN09] Gate de ejecución verde → 201 verdict approved" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN10] Detalle incluye la última decisión del gate" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN11] Ejecución de otro hospital → 404 (no revela que existe)" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN12] Resultado sobre ejecución completada → 409 QA_RUN_STATE_CONFLICT" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN13] Ambiente production → 422 ambiente_no_permitido" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN14] required como texto &quot;false&quot; → 422 (no se vuelve opcional en silencio)" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN15] JSON mal formado → 400 INVALID_JSON" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN16] Cuerpo de 64 KiB + 1 byte → 413 PAYLOAD_TOO_LARGE" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN17] Método no soportado → 404 ROUTE_NOT_FOUND (no hay borrado de evidencia)" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN18] Exactamente 30 suites → 201" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN19] 31 suites → 422 suites_invalidas" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN20] 0 suites → 422 suites_invalidas" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN21] Listado respeta el tenant: H1 ve sus 2 ejecuciones" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN22] RBAC no disponible → 503 RBAC_UNAVAILABLE (falla cerrado)" classname="qa-calidad.blackbox" time="0.000"/>
+    <testcase name="[BN23] Almacén caído → 503 QA_STORAGE_UNAVAILABLE sin detalle técnico" classname="qa-calidad.blackbox" time="0.000"/>
+  </testsuite>
+</testsuites>
