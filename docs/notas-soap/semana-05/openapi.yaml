@@ -68,7 +68,7 @@ paths:
         '503': { $ref: '#/components/responses/Error' }
   /api/v1/soap-notes/{clinical_note_id}:
     get:
-      summary: Leer una nota con secciones y diagnósticos activos (permiso notas_soap.ver y asignación activa)
+      summary: Leer una nota con secciones y diagnósticos activos (permiso notas_soap.ver y asignación activa; sin asignación responde 404 NOTE_NOT_FOUND, igual que una nota inexistente)
       parameters:
         - { $ref: '#/components/parameters/NoteId' }
       responses:
