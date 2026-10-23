@@ -37,7 +37,7 @@ function server(bool $rbacDown = false, ?array &$log = null): array
 {
     $pdo = new PDO('sqlite::memory:');
     $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
-    $pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'dra.lopez', 'active'), ('ep1', 'dr.perez', 'ended')");
+    $pdo->exec(file_get_contents(__DIR__ . '/care-seed.sql'));
     $pdo->exec("INSERT INTO icd10_codes VALUES ('J18.9', 'Neumonía, no especificada', 1)");
     $log = [];
     $api = notas_soap_api(new PdoClinicalNoteStore($pdo, new PdoAuditTrail($pdo, TRACE)), new PdoCareAssignmentReader($pdo), new PdoIcd10Catalog($pdo),
@@ -92,7 +92,7 @@ $nota = send($memory, 'POST', $notes, 'dra.lopez', SOAP)['body']['clinical_note_
 $r = send($memory, 'POST', "/api/v1/soap-notes/$nota/diagnoses", 'dra.lopez', ['code' => 'J18.9', 'type' => 'primary']);
 check('resiliencia: InMemory con catálogo CIE-10 caído -> 503 ICD10_UNAVAILABLE con trace_id UUID', $status($r) === '503 ICD10_UNAVAILABLE' && preg_match(Uuid::PATTERN, $r['body']['trace_id']) === 1);
 [$api, $pdo] = server();
-$pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'enf.ruiz', 'active')");
+$pdo->exec("INSERT INTO doctor_profiles VALUES ('p-enf.ruiz', 'enf.ruiz'); INSERT INTO care_assignments (care_episode_id, doctor_profile_id, status) VALUES ('ep1', 'p-enf.ruiz', 'active')");
 $client = new SoapNoteApiClient(new KernelTransport($api), 'dra.lopez');
 $nota = $client->registerNote('ep1', ...array_values(SOAP));
 $client->associateDiagnosis($nota, 'J18.9', 'primary');
