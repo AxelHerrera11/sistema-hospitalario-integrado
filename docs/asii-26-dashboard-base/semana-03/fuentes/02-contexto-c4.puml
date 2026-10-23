@@ -1,0 +1,14 @@
+@startuml
+!include <C4/C4_Context>
+
+title Contexto C4 - Dashboard base (ASII-26)
+
+Person(usuario, "Usuario del HIS", "Enfermeria, recepcion o administracion")
+System(dashboard, "Dashboard base", "Muestra indicadores agregados al iniciar sesion")
+System_Ext(otros, "Modulos del HIS", "Citas, documentacion y reportes")
+System_Ext(rbac, "RBAC del HIS", "Resuelve el rol del usuario")
+
+Rel(usuario, dashboard, "Consulta el resumen inicial")
+Rel(dashboard, otros, "Obtiene indicadores agregados")
+Rel(dashboard, rbac, "Resuelve el rol del usuario")
+@enduml

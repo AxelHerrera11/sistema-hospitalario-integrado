@@ -1,0 +1,17 @@
+{
+    "_comentario": "PROPUESTA v0.1 pendiente de aprobación del grupo (ver docs/CI-E2E/semana-14). Cambiar un umbral exige subir version.",
+    "version": "qg-0.1-propuesta",
+    "min_pass_rate": {
+        "syntax": 1.0,
+        "lint": 1.0,
+        "static_analysis": 1.0,
+        "build": 1.0,
+        "unit": 1.0,
+        "integration": 1.0,
+        "contract": 1.0,
+        "e2e": 1.0
+    },
+    "require_evidence": true,
+    "allow_skipped_in_required": false,
+    "max_e2e_duration_ms": 300000
+}

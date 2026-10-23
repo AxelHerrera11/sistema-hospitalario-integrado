@@ -1,0 +1,71 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #17242b;
+  background: #edf1ee;
+  --ink: #17242b;
+  --muted: #536269;
+  --paper: #fffef9;
+  --line: #c6d0cc;
+  --green: #075f4d;
+  --green-dark: #03483a;
+  --amber: #8b4b00;
+  --amber-bg: #fff1d6;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+.masthead { padding: 2.5rem max(1rem, calc((100% - 72rem) / 2)); color: #fff; background: linear-gradient(120deg, #063e35, #08705a); }
+.masthead h1 { margin: .2rem 0; font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.5rem); }
+.masthead p { margin: .3rem 0; }
+.eyebrow { margin: 0; font-size: .78rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+main { width: min(72rem, calc(100% - 2rem)); margin: 1.5rem auto 4rem; }
+.prototype-note, .demo-controls, #dashboard > section { padding: 1.25rem; border: 1px solid var(--line); background: var(--paper); box-shadow: 0 6px 24px #163b3020; }
+.prototype-note { border-left: .35rem solid var(--green); }
+.demo-controls { margin-block: 1rem; }
+h2 { margin-top: 1.75rem; font-family: Georgia, serif; }
+.demo-controls h2 { margin-top: 0; }
+.button-row, .filters { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; }
+button, select { min-height: 44px; padding: .65rem .9rem; border: 2px solid var(--green); border-radius: .25rem; color: var(--green-dark); background: #fff; font: inherit; font-weight: 700; }
+button:hover { background: #e3f1ec; }
+button:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid #b85d00; outline-offset: 3px; }
+.primary { color: #fff; background: var(--green); }
+.context-row { display: flex; justify-content: space-between; gap: 1.5rem; }
+.cutoff { margin: .25rem 0; font-size: 1.25rem; font-weight: 800; }
+.filters label { align-self: center; font-weight: 800; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }
+.metric { min-width: 0; padding: 1rem; border-top: .3rem solid var(--green); background: #eef5f1; }
+.metric strong { display: block; margin-top: .35rem; font: 700 1.7rem Georgia, serif; }
+.warning { padding: 1rem; color: #522d00; background: var(--amber-bg); border-left: .35rem solid var(--amber); }
+.warning span { display: inline-grid; width: 1.5rem; height: 1.5rem; place-items: center; border-radius: 50%; color: #fff; background: var(--amber); font-weight: 900; }
+table { width: 100%; border-collapse: collapse; }
+caption { padding: .5rem 0; text-align: left; color: var(--muted); }
+th, td { padding: .8rem .6rem; border-bottom: 1px solid var(--line); text-align: right; }
+th:first-child, td:first-child { text-align: left; }
+.ward-cards { display: none; }
+.ward-card { padding: 1rem; border: 1px solid var(--line); border-left: .35rem solid var(--green); }
+.ward-card h3 { margin-top: 0; }
+.ward-card dl { display: grid; grid-template-columns: 1fr auto; gap: .5rem; }
+.ward-card dt, .ward-card dd { margin: 0; }
+.ward-card dd { font-weight: 800; }
+details { margin-top: 1rem; padding: 1rem; border: 1px solid var(--line); }
+summary { cursor: pointer; font-weight: 800; }
+.state-panel { min-height: 18rem; display: grid; align-content: center; justify-items: start; }
+.state-code { margin: 0; color: var(--amber); font: 800 3rem Georgia, serif; }
+.stale-banner { padding: 1rem; border: 2px solid var(--amber); color: #522d00; background: var(--amber-bg); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 768px) {
+  .context-row { display: block; }
+  .filters { display: grid; grid-template-columns: 1fr; margin-top: 1rem; }
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .table-wrap { display: none; }
+  .ward-cards { display: grid; gap: .75rem; }
+}
+
+@media (max-width: 360px) {
+  main { width: min(100% - 1rem, 72rem); }
+  .masthead { padding-inline: .75rem; }
+  .metrics { grid-template-columns: 1fr; }
+  .button-row { display: grid; }
+}
