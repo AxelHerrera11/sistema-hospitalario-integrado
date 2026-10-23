@@ -31,14 +31,14 @@ revisión técnica formal; issue #11 no amplía ese alcance.
 
 ### GitHub Actions
 
-Para el SHA `e2af53353347c493f56ba650e1748c8647eae9c4`, los runs
-`ASII PR Guard` (40024136340) y `QA CI y E2E` (40024136078) terminaron como
-failure antes de iniciar los jobs. Las anotaciones de cada check indican:
+Para el SHA validado `beb184edcedfb3c72b6b230028100d9637bd9774`, los runs
+`ASII PR Guard` (40026740719) y `QA CI y E2E` (40026740736) terminaron como
+failure antes de iniciar los jobs. Las anotaciones de los checks fallidos indican:
 “The job was not started because recent account payments have failed or your
 spending limit needs to be increased.” Esto confirma el bloqueo de facturación
-para esos runs; no se infiere únicamente de la respuesta 404 al descargar logs.
-El arreglo del harness es posterior a ese SHA, por lo que esas anotaciones no
-validan la nueva revisión. Se volverá a consultar Actions en el SHA actualizado.
+en esos runs; no se infiere únicamente de la respuesta 404 al descargar logs.
+Los jobs no ejecutaron pruebas en Actions; las validaciones locales posteriores
+se consignan separadamente y no se presentan como checks de Actions exitosos.
 
 La prueba de aislamiento reprodujo primero la condición anterior a #1154:
 Hospital B, con sesión y `camas.ver` válidos, recibió HTTP 200 y el catálogo
