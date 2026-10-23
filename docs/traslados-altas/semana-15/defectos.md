@@ -22,6 +22,7 @@ Cada uno se observó en una ejecución real y se corrigió con una prueba que lo
 | D5 | 15 | Concurrencia: el perdedor de dos traslados a la misma cama terminaba en `FalloConfirmado` y no en `DESTINO_OCUPADO` | `concurrencia.php` C2 (3/5) | Comprobar si la cama está libre después del bloqueo (#895) | `concurrencia.php` C2 (10/10) |
 | D6 | 12 | Tras «Cancelar» o «Volver», el foco quedaba en un botón oculto | `teclado.mjs` (1/4) | Devolver el foco y retroceder con Escape (#884) | `teclado.mjs` (4/4) |
 | D7 | 6 y 8 | Dos nombres de archivo citados en `docs/` (el punto de entrada original de la consola y el primer recorrido de la interfaz) contenían el nombre del módulo seguido de un punto y la extensión. `PublishedContractsTest` los habría leído como permisos | Búsqueda del patrón de la prueba | Renombrar a `bin/consola.php` y `recorrido-ui.mjs` | Búsqueda en cada PR de documentación |
+| D8 | 17 (revisión) | El menú con permisos efectivos se agregó a develop sin una entrada para `/traslados`: la página no era alcanzable desde el menú | Revisión del estado de develop antes de la prueba manual | Entrada «Traslados y altas» en `NAVIGATION` | `resources/js/router/permissions.test.mjs` (falla sin la entrada) |
 
 ## Pendientes de prueba
 
