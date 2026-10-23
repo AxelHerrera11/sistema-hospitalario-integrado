@@ -17,7 +17,7 @@ use MicroHis\Medicos\Presentation\DoctorController;
 use MicroHis\Medicos\Presentation\Request;
 use MicroHis\Medicos\Presentation\Router;
 
-require __DIR__ . '/../app.php';
+require __DIR__.'/../app.php';
 
 /** Datos ficticios comunes a los dos adaptadores: Ana y Beto con NEURO principal; Ana atiende los lunes de 08:00 a 09:30. */
 const SPECIALTIES = ['CARD' => ['sp-card', 'active'], 'NEURO' => ['sp-neuro', 'active'], 'PED' => ['sp-ped', 'inactive']];
@@ -33,7 +33,7 @@ function schedule(): ConfigScheduleProvider
 function pdoApp(bool $storageDown = false): array
 {
     $pdo = new PDO('sqlite::memory:');
-    $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+    $pdo->exec(file_get_contents(__DIR__.'/../database/schema.sql'));
     foreach (SPECIALTIES as $code => [$id, $status]) {
         $pdo->prepare('INSERT INTO specialties VALUES (?, ?, ?)')->execute([$id, $code, $status]);
     }
@@ -44,6 +44,7 @@ function pdoApp(bool $storageDown = false): array
     $pdo->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 08:30:00', 'confirmed'), ('doc-ana', '2026-10-19 09:00:00', 'cancelled')");
     $storageDown && $pdo->exec('DROP TABLE local_access_audits');
     $store = new PdoDoctorStore($pdo);
+
     return [medicos_router($store, $store, schedule()), $store, fn (): array => array_map(static fn (string $action): string => substr($action, strlen('medicos.')), $pdo->query('SELECT action FROM local_access_audits')->fetchAll(PDO::FETCH_COLUMN))];
 }
 
@@ -57,12 +58,13 @@ function memoryApp(bool $storageDown = false): array
     }
     $repository = new InMemoryDoctorRepository(SPECIALTIES, $profiles, $links, $storageDown);
     $appointments = new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => ['08:30']]]);
+
     return [medicos_router($repository, $appointments, schedule()), $repository, fn (): array => array_column($repository->audits, 'event')];
 }
 
 function check(string $name, bool $ok): void
 {
-    echo ($ok ? 'OK' : 'FALLO') . ": $name" . PHP_EOL;
+    echo ($ok ? 'OK' : 'FALLO').": $name".PHP_EOL;
     $ok || exit(1);
 }
 
@@ -70,10 +72,11 @@ function check(string $name, bool $ok): void
 function call(Router $router, string $method, string $path, array $body = [], array $query = [], array $headers = ['X-User-ID' => 'admin1']): array
 {
     $response = $router->dispatch(new Request($method, $path, $headers, $query, $body));
+
     return ['status' => $response['status'], 'type' => $response['headers']['Content-Type'], 'body' => json_decode($response['body'], true)];
 }
 
-$status = static fn (array $r): string => $r['status'] . ' ' . ($r['body']['code'] ?? '');
+$status = static fn (array $r): string => $r['status'].' '.($r['body']['code'] ?? '');
 
 foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     $t = static fn (string $label): string => "[$adapter] $label";
@@ -87,7 +90,7 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     $porMedico = array_column(call($router, 'GET', '/availability', [], ['specialty' => 'NEURO', 'date' => '2026-10-19'])['body']['doctors'], null, 'doctor_id');
     check($t('camino feliz: disponibilidad del lunes -> Ana libre 08:00 y 09:00 (08:30 confirmada)'), $porMedico['doc-ana']['slots'] === ['08:00', '09:00']);
     check($t('RF-MED-07: médico sin horario aparece con SCHEDULE_NOT_CONFIGURED'), $porMedico['doc-beto']['status'] === 'SCHEDULE_NOT_CONFIGURED');
-    check($t('vigencia del perfil: médico con perfil vencido no aparece en la disponibilidad'), !isset($porMedico['doc-caro']));
+    check($t('vigencia del perfil: médico con perfil vencido no aparece en la disponibilidad'), ! isset($porMedico['doc-caro']));
     check($t('RF-MED-06: especialidad sin médicos -> 200 NO_DOCTORS_FOR_SPECIALTY'), call($router, 'GET', '/availability', [], ['specialty' => 'CARD', 'date' => '2025-12-01'])['body']['code'] === 'NO_DOCTORS_FOR_SPECIALTY');
 
     check($t('regla de dominio: misma especialidad en periodo solapado -> 409'), $status(call($router, 'POST', "/doctors/$id/specialties", ['specialty_code' => 'NEURO', 'valid_from' => '2026-03-01'])) === '409 SPECIALTY_ALREADY_ASSOCIATED');
@@ -106,35 +109,35 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
         && $status(call($router, 'POST', '/doctors/doc-beto/specialties', ['specialty_code' => 'CARD', 'valid_from' => '2026-11-01', 'valid_to' => 20261201])) === '422 PAYLOAD_INVALID'
         && $status(call($router, 'POST', '/doctors/doc-beto/specialties', ['specialty_code' => ['CARD'], 'valid_from' => '2026-11-01'])) === '422 PAYLOAD_INVALID' && $links() === $antes);
     check($t('validación de tipos: encabezado o licencia no string -> 422 sin guardar'), $status(call($router, 'POST', '/doctors', ['license_number' => 'COL-2'] + ALTA, [], ['X-User-ID' => 7])) === '422 PAYLOAD_INVALID'
-        && $status(call($router, 'POST', '/doctors', ['license_number' => 2] + ALTA)) === '422 PAYLOAD_INVALID' && !$repository->licenseExists('COL-2') && !$repository->licenseExists('2'));
+        && $status(call($router, 'POST', '/doctors', ['license_number' => 2] + ALTA)) === '422 PAYLOAD_INVALID' && ! $repository->licenseExists('COL-2') && ! $repository->licenseExists('2'));
     check($t('validación de tipos: fecha de disponibilidad no string -> 422'), $status(call($router, 'GET', '/availability', [], ['specialty' => 'NEURO', 'date' => ['2026-10-19']])) === '422 PAYLOAD_INVALID');
     $r = call($router, 'POST', '/doctors/doc-beto/specialties', ['specialty_code' => 'CARD', 'is_primary' => false, 'valid_from' => '2026-11-01']);
     check($t('is_primary booleano: false se guarda como secundaria'), $r['status'] === 201 && $r['body']['is_primary'] === false && end($repository->specialtiesOf('doc-beto')[1])->isPrimary === false);
     check($t('ruta desconocida -> 404 ROUTE_NOT_FOUND'), $status(call($router, 'DELETE', '/doctors')) === '404 ROUTE_NOT_FOUND');
 
     [$router, $repository] = $make(true);
-    check($t('error de persistencia: base caída -> 500 y sin perfil a medias'), $status(call($router, 'POST', '/doctors', ALTA)) === '500 DOCTOR_PERSISTENCE_ERROR' && !$repository->licenseExists('COL-1'));
+    check($t('error de persistencia: base caída -> 500 y sin perfil a medias'), $status(call($router, 'POST', '/doctors', ALTA)) === '500 DOCTOR_PERSISTENCE_ERROR' && ! $repository->licenseExists('COL-1'));
 }
 
 [$router, $store] = pdoApp();
 $nuevo = call($router, 'POST', '/doctors', ALTA)['body']['doctor_profile_id'];
 check('PostgreSQL: el id del perfil nuevo es un uuid v4 (doctor_profile_id es uuid en HOSPITAL)', preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $nuevo) === 1);
 $zonas = new PDO('sqlite::memory:');
-$zonas->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+$zonas->exec(file_get_contents(__DIR__.'/../database/schema.sql'));
 $zonas->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 14:30:00', 'confirmed'), ('doc-ana', '2026-10-20 05:30:00', 'confirmed')");
 check('PostgreSQL: las citas se leen en la zona del hospital (UTC-6: 14:30Z es 08:30 del 19 y 05:30Z del 20 cae el 19 a las 23:30)',
     (new PdoDoctorStore($zonas, 'America/Guatemala'))->busySlots('doc-ana', '2026-10-19') === ['08:30', '23:30']
     && (new PdoDoctorStore($zonas))->busySlots('doc-ana', '2026-10-19') === ['14:30']);
 
 try {
-    (new SpecialtyAssignmentPolicy())->assertCanAssociate(new Period('2026-01-01'), [new SpecialtyLink('x', true, new Period('2026-01-01'))], new SpecialtyLink('y', true, new Period('2026-05-01', '2026-06-01')));
+    (new SpecialtyAssignmentPolicy)->assertCanAssociate(new Period('2026-01-01'), [new SpecialtyLink('x', true, new Period('2026-01-01'))], new SpecialtyLink('y', true, new Period('2026-05-01', '2026-06-01')));
     check('regla de dominio pura (sin BD): la política rechaza dos principales', false);
 } catch (DoctorRuleViolation $e) {
     check('regla de dominio pura (sin BD): la política rechaza dos principales', $e->getMessage() === 'PRIMARY_SPECIALTY_CONFLICT');
 }
 $tipos = static fn (string $class): array => array_map(static fn (ReflectionParameter $p): string => (string) $p->getType(), (new ReflectionMethod($class, '__construct'))->getParameters());
-check('ISP: la disponibilidad no depende de puertos de escritura', !array_intersect($tipos(QueryAvailability::class), [DoctorProfileStore::class, DoctorSpecialtyStore::class]));
+check('ISP: la disponibilidad no depende de puertos de escritura', ! array_intersect($tipos(QueryAvailability::class), [DoctorProfileStore::class, DoctorSpecialtyStore::class]));
 $controller = (string) file_get_contents((new ReflectionClass(DoctorController::class))->getFileName());
-check('MVC: el controlador solo recibe casos de uso y la vista, sin SQL ni PDO', array_filter($tipos(DoctorController::class), static fn (string $t): bool => !str_contains($t, '\\Application\\') && !str_ends_with($t, '\\JsonView')) === []
+check('MVC: el controlador solo recibe casos de uso y la vista, sin SQL ni PDO', array_filter($tipos(DoctorController::class), static fn (string $t): bool => ! str_contains($t, '\\Application\\') && ! str_ends_with($t, '\\JsonView')) === []
     && preg_match('/\b(SELECT|INSERT|UPDATE|DELETE|PDO)\b/', $controller) === 0);
-echo 'Todas las pruebas pasaron.' . PHP_EOL;
+echo 'Todas las pruebas pasaron.'.PHP_EOL;
