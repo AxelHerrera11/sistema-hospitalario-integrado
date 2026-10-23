@@ -2,7 +2,7 @@
 
 **Estudiante:** Hicho García, Josué Fernando (`Jhos-hgnu`) · **Módulo:** ASII-04 · **Entrega:** el micro-HIS de médicos deja de ser PHP aislado y queda expuesto en el API de Laravel, con adaptador PDO compatible con PostgreSQL y pruebas de contrato HTTP.
 
-> **Estado: entrega funcional, con dos reservas.** El API, el adaptador PostgreSQL, los defectos de la Semana 15, `slot_minutes`, la zona horaria del hospital y la pantalla Vue están hechos y probados. **La pantalla no se abrió en un navegador** (solo build y pruebas de utilidades; sin capturas) y **el despliegue final** de la Semana 17 sigue bloqueado por el entorno (sección 6).
+> **Estado: entrega funcional, con dos reservas.** El API, el adaptador PostgreSQL, los defectos de la Semana 15, `slot_minutes`, la zona horaria del hospital y la pantalla Vue están hechos y probados. **La pantalla se fotografió en Chrome sin interfaz, pero con un API simulado**: no se probó contra el backend real con una sesión real ([capturas](#41-evidencia-visual)). **El despliegue final** de la Semana 17 sigue bloqueado por el entorno (sección 6).
 
 ## 1. Qué se entrega
 
@@ -115,6 +115,28 @@ Evidencia agregada por los PR posteriores (se ejecutó en la rama de cada uno):
 
 PostgreSQL: contenedores efímeros `postgres:16` en los puertos de la CI (55431 y 55433) con `btree_gist`, migraciones HOSPITAL reales y PHP con `pdo_pgsql`.
 
+### 4.1 Evidencia visual
+
+La aplicación real (layout, router, pantalla y estilos) se montó con un **API simulado** que responde datos ficticios, y Chrome sin interfaz fotografió cada estado a 1280 px y a 390 px de ancho. No es un backend real ni una sesión real. Las 9 capturas están en [`capturas/`](./capturas) y se regeneran con los pasos de [`evidencia/pantalla/capturar-pantalla.mjs`](./evidencia/pantalla/capturar-pantalla.mjs) (requiere el código de #1045); al repetirlas salieron idénticas byte a byte.
+
+| Captura | Qué muestra |
+|---|---|
+| [01](./capturas/01-disponibilidad-escritorio.png) | Consulta de disponibilidad con los tres estados de médico: con franjas libres, sin franjas libres y sin horario configurado |
+| [02](./capturas/02-validacion-alta-escritorio.png) | Validación previa del alta: cada campo obligatorio se señala por separado |
+| [03](./capturas/03-alta-registrada-escritorio.png) | Alta registrada, con el identificador |
+| [04](./capturas/04-licencia-duplicada-escritorio.png) | Error 409 de licencia ya registrada, con mensaje y sin pantalla en blanco |
+| [05](./capturas/05-servicio-no-disponible-escritorio.png) | Servicio no disponible (503): mensaje y botón «Reintentar» |
+| [06](./capturas/06-recepcion-solo-consulta-escritorio.png) | Rol de recepción: solo ve la consulta de disponibilidad; no aparecen el alta ni la asociación |
+| [07](./capturas/07-sin-permiso-escritorio.png) | Sin permiso: la guarda del router redirige al inicio con el aviso |
+| [08](./capturas/08-disponibilidad-movil.png) | Disponibilidad a 390 px |
+| [09](./capturas/09-validacion-alta-movil.png) | Validación del alta a 390 px |
+
+Resultado de la comprobación: **sin desborde horizontal a 390 px y sin errores de consola**.
+
+**Defecto que las capturas encontraron.** En la primera ronda los campos y botones salían sin borde ni fondo (parecían texto plano) y los títulos sin jerarquía: el preflight de Tailwind quita esos estilos y la pantalla no los restauraba. El build y las pruebas de utilidades no podían detectarlo. Se corrigió en #1045 con los mismos tokens que usa Medicamentos (campos de 44 px con borde, botones, mensajes con color y trazo, foco visible); las capturas de esta sección son las posteriores a la corrección.
+
+**Lo que no cubren:** no se midió contraste ni se recorrió con teclado o lector de pantalla; eso se hizo sobre el prototipo de la Semana 12, no sobre esta pantalla.
+
 Entorno de las pruebas anteriores: PHP 8.3.33, PHPUnit 11.5.55, adaptadores PDO sobre SQLite en memoria y dobles InMemory. Las 10 pruebas HTTP cubren: alta con auditoría del actor local, asociación, disponibilidad, códigos de error del módulo, 401 en las tres rutas, permiso propio por operación, tenant ajeno, actor sin referencia local, base caída y base inexistente (503, no 500). Las pruebas del adaptador agregan: id uuid v4, lectura de citas en otra zona horaria y lectura de `doctor_schedules` (vigencia, día sin franjas, médico sin horario, horario inactivo).
 
 ## 5. Estado de los defectos de la Semana 15
@@ -131,7 +153,7 @@ Entorno de las pruebas anteriores: PHP 8.3.33, PHPUnit 11.5.55, adaptadores PDO 
 
 | # | Pendiente | Efecto |
 |---|---|---|
-| 1 | Revisión visual de la pantalla en navegador (escritorio y móvil) y capturas | Solo se verificó con build y pruebas de utilidades |
+| 1 | Probar la pantalla contra el backend real con una sesión real, y revisar contraste y teclado sobre ella | Las capturas usan un API simulado (sección 4.1) |
 | 2 | Formato de los slots que espera Citas (issue #207) | Se entregan franjas `HH:MM` partidas por `slot_minutes`; falta confirmar con Citas que ese formato les sirve |
 | 3 | Falla de `AuditChainIntegrityTest` en la suite `Database` | Ajena al módulo; confirmar en CI si es del entorno Windows |
 | 4 | Usuarios sin `local_user_refs` | Responden 403 hasta que la sincronización los provisione |
