@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia';
 import api, { registerRefreshHandler, setAccessToken } from '@/plugins/axios';
+import { createLogoutGuard, isSessionAlreadyClosed } from './logoutPolicy.js';
+
+const logoutGuard = createLogoutGuard();
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -78,9 +81,15 @@ export const useAuthStore = defineStore('auth', {
             let requestError = null;
 
             try {
-                await api.post('/auth/logout');
-            } catch (error) {
-                requestError = error;
+                await logoutGuard.run(async () => {
+                    try {
+                        await api.post('/auth/logout');
+                    } catch (error) {
+                        if (! isSessionAlreadyClosed(error)) {
+                            requestError = error;
+                        }
+                    }
+                });
             } finally {
                 this.clearSession();
             }
