@@ -84,4 +84,4 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 
 ## Validación humana
 
-Declarada en `DECLARACION_IA.md`: realizada el 2026-10-22 por el autor.
+Declarada en `DECLARACION_IA.md`: realizada por el autor el 2026-10-23, sobre la entrega completa.
