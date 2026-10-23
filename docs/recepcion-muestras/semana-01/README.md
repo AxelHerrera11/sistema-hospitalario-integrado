@@ -1,7 +1,7 @@
 # Recepción de muestras y códigos identificadores — Semana 1
 
 > Entrega corregida: el diseño UML expresa el flujo objetivo. La implementación acumulada hasta
-> semana 15 y las decisiones de integración se consultan en el [índice](../README.md).
+> semana 15 y las decisiones de integración se consultan en el [índice](../../../README.md).
 > ASII-18 conserva la asignación oficial del README; Mar-03 identifica la autoría de esta entrega.
 > La impresión ocurre en el navegador después de persistir; la entrega del aviso externo no se
 > declara confirmada hasta recibir acuse del consumidor. Los casos de uso y excepciones se mantienen.
@@ -120,7 +120,7 @@ La selección de orden no copia la identidad observada; el técnico debe comprob
 
 El alcance identifica actores, decisiones, excepciones y resultados enlazados entre los tres diagramas.
 El diseño se contrasta con fuentes reales y pruebas, y conserva los límites con órdenes, catálogo y resultados.
-Fuente: [README original y matriz ASII-18](../../../../README.md); [validaciones de esta semana](./EVIDENCIA.md).
+Fuente: [README original y matriz ASII-18](../../../README.md); [validaciones de esta semana](./EVIDENCIA.md).
 
 ## Corrección de integración — 21 de octubre de 2026
 
