@@ -44,7 +44,7 @@ function pdoApp(string $fail = ''): array
         'notes' => fn (): int => (int) $col('SELECT COUNT(*) FROM clinical_notes')[0],
         'descriptions' => fn (): array => $col('SELECT description FROM diagnoses'),
         'audits' => fn (): array => $col('SELECT action FROM local_access_audits'),
-        'sign' => fn (string $id) => $pdo->prepare("UPDATE clinical_notes SET status = 'signed' WHERE clinical_note_id = ?")->execute([$id]),
+        'sign' => fn (string $id) => $pdo->prepare("UPDATE clinical_notes SET status = 'signed', signed_at = CURRENT_TIMESTAMP WHERE clinical_note_id = ?")->execute([$id]),
     ]];
 }
 

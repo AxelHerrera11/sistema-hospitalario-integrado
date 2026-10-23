@@ -17,4 +17,7 @@ interface ClinicalNoteRepository
     public function add(string $episodeId, string $authorId, SoapSections $sections): string;
 
     public function addDiagnosis(ClinicalNote $note, Diagnosis $diagnosis, string $description): void;
+
+    /** Firma el borrador y audita la firma, todo o nada. Si otra sesión ya la firmó, lanza NOTE_SIGNED (409). */
+    public function sign(ClinicalNote $note): void;
 }

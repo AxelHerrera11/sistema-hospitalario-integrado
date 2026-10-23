@@ -51,7 +51,18 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
         });
     }
 
-    /** Solo para pruebas: la firma real (UC-SOAP-05) aún no está implementada. */
+    public function sign(ClinicalNote $note): void
+    {
+        ($this->notes[$note->id]['status'] ?? null) === 'draft' || throw new SoapRuleViolation('NOTE_SIGNED', 409);
+        $this->atomically(function () use ($note): void {
+            $this->notes[$note->id]['status'] = 'signed';
+            $codes = array_map(static fn (Diagnosis $d): string => $d->code, $note->diagnoses);
+            $primary = array_values(array_filter($note->diagnoses, static fn (Diagnosis $d): bool => $d->type === 'primary'))[0]->code ?? '';
+            $this->audit->record($note->authorId, 'nota_soap.firmada', 'clinical_note', $note->id, $note->episodeId, ['version_no' => 1, 'primary_code' => $primary, 'diagnosis_codes' => $codes]);
+        });
+    }
+
+    /** Solo para pruebas: deja la nota firmada sin pasar por el caso de uso ni la auditoría. */
     public function markSigned(string $noteId): void
     {
         $this->notes[$noteId]['status'] = 'signed';
