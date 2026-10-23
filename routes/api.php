@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\HospitalController;
 use App\Http\Controllers\Api\V1\Admin\HospitalUserController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DoctorApiController;
 use App\Http\Controllers\Api\V1\OccupancyController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,4 +35,14 @@ Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
 
 Route::middleware(['tenant', 'jwt.auth', 'rbac:ocupacion.ver'])->group(function (): void {
     Route::get('/occupancy', [OccupancyController::class, 'index']);
+});
+
+// Médicos y especialidades (ASII-04): cada operación declara su propio permiso.
+Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
+    Route::post('/doctors', [DoctorApiController::class, 'register'])
+        ->middleware('rbac:medicos.registrar');
+    Route::post('/doctors/{doctor}/specialties', [DoctorApiController::class, 'associateSpecialty'])
+        ->middleware('rbac:medicos.asociar_especialidad');
+    Route::get('/availability', [DoctorApiController::class, 'availability'])
+        ->middleware('rbac:medicos.ver_disponibilidad');
 });

@@ -3,6 +3,7 @@
 use App\Providers\AppServiceProvider;
 use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
+use App\Providers\MedicosServiceProvider;
 use App\Providers\OcupacionServiceProvider;
 use App\Providers\PatientsServiceProvider;
 use App\Providers\RbacServiceProvider;
@@ -22,4 +23,5 @@ return [
     // Ocupación al final: solo cablea el adaptador PDO del Micro-HIS, no altera el binding de RBAC.
     OcupacionServiceProvider::class,
     TrasladosAltasServiceProvider::class,
+    MedicosServiceProvider::class,
 ];
