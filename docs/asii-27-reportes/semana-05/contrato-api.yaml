@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: Micro-HIS Reportes exportables (ASII-27) - API REST
+  version: 0.5.0
+  description: >
+    Contrato de la Semana 5. Borde REST sobre el Micro-HIS MVC + Repository de la Semana 4.
+    En el HIS real el prefijo es /api/v1 detras del API Gateway, con JWT (Authorization: Bearer)
+    y X-Tenant-ID; el sobre de respuesta sigue el formato comun de ASII-24.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+    tenantHeader: []
+paths:
+/reportes:
+  get:
+    summary: Listar reportes generados en un periodo
+    parameters:
+      - { name: periodo, in: query, required: true, schema: { type: string, example: '2026-11' } }
+    responses:
+      '200':
+        description: "`data.reportes[]`"
+        content: { application/json: { schema: { properties: { data: { properties: { reportes: { type: array, items: { $ref: '#/components/schemas/Reporte' } } } } } } } }
+      '422': { $ref: '#/components/responses/Error' }
+  post:
+    summary: Generar reporte operativo inmutable para un periodo
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [periodo]
+            properties:
+              periodo: { type: string }
+              datos: { type: object, additionalProperties: true }
+    responses:
+      '201': { description: Reporte generado (`data.id`) }
+      '422': { $ref: '#/components/responses/Error' }
+      '404': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    tenantHeader: { type: apiKey, in: header, name: X-Tenant-ID }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, description: Codigo estable del error }
+        message: { type: string }
+        errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+  responses:
+    Error:
+      description: Sobre comun de error (ASII-24)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+Reporte:
+  type: object
+  properties:
+    id: { type: string }
+    periodo: { type: string }
+    contenido: { type: object, additionalProperties: true }
