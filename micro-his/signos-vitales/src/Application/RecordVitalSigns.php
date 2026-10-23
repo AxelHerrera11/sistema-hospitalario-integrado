@@ -21,10 +21,12 @@ final class RecordVitalSigns
     ) {
     }
 
-    /** @return array{vital_sign_id: string, code: string, severity: string, findings: array<string, string>} */
-    public function execute(string $userId, string $episodeId, VitalSigns $vitals, string $measuredAt): array
+    /** @param array<string, float> $measurements signos medidos; el dominio los valida (VitalSigns)
+     * @return array{vital_sign_id: string, code: string, severity: string, findings: array<string, string>} */
+    public function execute(string $userId, string $episodeId, array $measurements, string $measuredAt): array
     {
-        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $measuredAt);
+        $vitals = new VitalSigns($measurements);
+        $parsed =\DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $measuredAt);
         if ($parsed === false || $parsed->format('Y-m-d H:i:s') !== $measuredAt) {
             throw new VitalSignViolation('MEASURED_AT_INVALID', 422);
         }
