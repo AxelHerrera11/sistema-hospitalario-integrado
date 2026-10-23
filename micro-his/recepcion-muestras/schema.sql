@@ -1,24 +1,21 @@
--- PostgreSQL; projection populated by the orders/catalog integration, never by reception clients.
-CREATE TABLE reception_order_items (
-    tenant_id varchar(100) NOT NULL, item_id varchar(100) NOT NULL,
-    patient_code text NOT NULL, patient_name text NOT NULL,
-    type text NOT NULL CHECK (type IN ('blood', 'urine', 'swab')),
-    container text NOT NULL, min_volume double precision NOT NULL CHECK (min_volume >= 0),
-    max_minutes integer NOT NULL CHECK (max_minutes > 0),
-    min_temperature double precision NOT NULL, max_temperature double precision NOT NULL,
-    status text NOT NULL CHECK (status IN ('pending', 'pending_new_sample', 'received', 'cancelled')),
-    PRIMARY KEY (tenant_id, item_id), CHECK (min_temperature <= max_temperature)
+-- Ejercicio aislado S03/S04; no sustituye las migraciones clínicas de Laravel.
+-- Los UUID locales son lógicos aquí; las FK RESTRICT reales se verifican en S05.
+CREATE TABLE specimens (
+    specimen_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), lab_order_item_id uuid NOT NULL,
+    local_patient_id uuid NOT NULL, care_episode_id uuid NOT NULL, received_by_user_ref_id uuid NOT NULL,
+    request_key uuid NOT NULL UNIQUE, request_hash text NOT NULL,
+    volume numeric(10,3) NOT NULL CHECK (volume BETWEEN 0 AND 1000),
+    temperature numeric(6,2) NOT NULL CHECK (temperature BETWEEN -80 AND 100),
+    status text NOT NULL CHECK (status IN ('accepted','rejected')), reason text,
+    code text CONSTRAINT specimens_code_unique UNIQUE, received_at timestamptz NOT NULL,
+    CHECK ((status='accepted' AND code IS NOT NULL AND reason IS NULL) OR (status='rejected' AND reason IS NOT NULL))
 );
-CREATE TABLE reception_specimens (
-    id varchar(32) PRIMARY KEY, tenant_id varchar(100) NOT NULL, item_id varchar(100) NOT NULL,
-    actor_id varchar(100) NOT NULL, status text NOT NULL CHECK (status IN ('accepted', 'rejected')),
-    reason text, code varchar(26) UNIQUE, received_at timestamp with time zone NOT NULL,
-    FOREIGN KEY (tenant_id, item_id) REFERENCES reception_order_items(tenant_id, item_id),
-    CHECK ((status = 'accepted' AND code IS NOT NULL AND reason IS NULL)
-        OR (status = 'rejected' AND code IS NULL AND reason IS NOT NULL))
-);
-CREATE UNIQUE INDEX reception_one_accepted ON reception_specimens (tenant_id, item_id) WHERE status = 'accepted';
-CREATE TABLE reception_outbox (
-    specimen_id varchar(32) PRIMARY KEY REFERENCES reception_specimens(id),
-    tenant_id varchar(100) NOT NULL, payload text NOT NULL, delivered_at timestamp with time zone
+CREATE UNIQUE INDEX specimens_one_accepted ON specimens(lab_order_item_id) WHERE status='accepted';
+CREATE INDEX specimens_lab_order_item_id_index ON specimens(lab_order_item_id);
+COMMENT ON COLUMN specimens.lab_order_item_id IS 'FK a lab_order_items cuando ASII-16 publique 000600';
+CREATE TABLE outbox_events (
+    outbox_event_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), event_id uuid NOT NULL UNIQUE,
+    correlation_id uuid NOT NULL, aggregate_type text NOT NULL, aggregate_id uuid,
+    event_type text NOT NULL, payload_minimal jsonb NOT NULL, status text NOT NULL DEFAULT 'pending',
+    occurred_at timestamptz NOT NULL DEFAULT now()
 );

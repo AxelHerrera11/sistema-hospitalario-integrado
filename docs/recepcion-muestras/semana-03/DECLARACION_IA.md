@@ -1,8 +1,7 @@
-# Declaración de IA — semana 3
+# Declaración de IA — S03
 
-- Herramienta: Codex (OpenAI).
-- Propósito: revisar la matriz ASII-18 y corregir coherencia de código, documentación y pruebas según Javier.
-- Instrucciones relevantes: completar semanas 1–15, conservar Resultados de Gerson, PR menores de 400 líneas y no publicar cambios.
-- Contenido generado o modificado: documentación y correcciones de esta semana; evidencia solo de comandos realmente ejecutados.
-- Validación técnica: consultar semana 15 y el informe local; las pruebas automatizadas no sustituyen revisión clínica.
-- Validación humana: pendiente de María y de los revisores; no se declara aceptación docente ni de otros módulos.
+- Herramienta: Codex (OpenAI), para integrar capas del mismo micro y corregir persistencia/esquema.
+- Instrucciones: conservar historial, base develop, menos de 400 líneas propias; solo Yamilet mergea.
+- Cambios: adaptadores PDO/InMemory, controlador, pruebas, esquema didáctico, documentación y diagramas.
+- Validaciones ejecutadas: EVIDENCIA.md y PR #690; no se atribuyen pruebas PostgreSQL de otra rama.
+- Validación humana y clínica: pendiente.

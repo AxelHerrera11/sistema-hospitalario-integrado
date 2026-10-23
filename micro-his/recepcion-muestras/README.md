@@ -1,17 +1,14 @@
 # Micro-HIS Recepción de muestras
 
-PHP 8.2 vanilla, sin Composer. Desde la raíz: `php micro-his/recepcion-muestras/tests/run.php`.
-Domain valida requisitos de blood/urine/swab bajo un mismo contrato (LSP).
-Application coordina recepción; Repository abstrae persistencia; PDO usa parámetros preparados.
-El adaptador InMemory permite ejecutar éxito, rechazo y fallo de persistencia sin infraestructura.
-`schema.sql` define el almacenamiento PostgreSQL del adaptador PDO y de la implementación Laravel.
+PHP 8.2+ vanilla. Una sola fuente de dominio compartida con Laravel mediante app/Modules/Reception/bootstrap.php.
 
-La integración debe cargar una proyección confiable de órdenes y requisitos desde ASII-16/17.
-El cliente solo informa observaciones: nunca impone identidad esperada ni mínimos del catálogo.
-La recepción bloquea la fila, guarda muestra, cambia estado y encola rechazo en una transacción.
-El outbox conserva el aviso; su entrega a ASII-21 requiere un consumidor, aún pendiente.
-El código aleatorio de 96 bits tiene dígito de control y restricción UNIQUE; una colisión revierte
-la operación. No se declara implementado el reintento selectivo propuesto en semana 1.
-La impresión usa el código persistido; nunca vuelve a ejecutar la recepción.
-No hay comandos de borrado/edición de muestras. La inmutabilidad frente a administradores SQL
-requiere privilegios del despliegue y no está certificada aquí.
+- Presentation/ReceptionController valida y traduce errores; no contiene SQL ni reglas clínicas.
+- Application/ReceiveSpecimen depende de ReceptionRepository y OrderGateway.
+- Domain contiene código verificable, UUID, errores y validadores intercambiables.
+- Persistence implementa InMemory (doble) y PDO con consultas preparadas; specimen y evento se guardan juntos.
+
+Ejecutar `php micro-his/recepcion-muestras/tests/run.php` y `php micro-his/recepcion-muestras/tests/lsp.php` desde la raíz. Las pruebas reales PostgreSQL se agregan en el complemento S03, PR #840.
+
+schema.sql pertenece exclusivamente a un ejercicio aislado (his_reception_test), no reemplaza las migraciones Laravel ni crea tablas de órdenes. Usa specimens, outbox_events, UUID y numeric, sin tenant_id. Las referencias UUID locales son lógicas en este ejercicio; las FK RESTRICT clínicas se prueban en la migración 000601 de S05.
+
+La conexión PDO debe pertenecer al hospital autenticado: no se acepta un DSN ni credenciales desde el payload. La API real usa la conexión hospital seleccionada por tenant/JWT. Órdenes reales y su búsqueda quedan indisponibles/PROPUESTAS hasta que ASII-16 publique su contrato; las pruebas utilizan un doble de OrderGateway.

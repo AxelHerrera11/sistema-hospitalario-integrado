@@ -1,13 +1,17 @@
 <?php
+
 declare(strict_types=1);
+
 namespace Reception\Persistence;
 
 use PDO;
 use Reception\Application\ReceptionRepository;
+use Reception\Domain\CodeCollision;
+use Reception\Domain\ReceptionError;
 
-final class PdoReceptionRepository implements ReceptionRepository
+class PdoReceptionRepository implements ReceptionRepository
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(protected PDO $pdo) {}
 
     public function transaction(callable $operation): mixed
     {
@@ -15,39 +19,71 @@ final class PdoReceptionRepository implements ReceptionRepository
         try {
             $result = $operation();
             $this->pdo->commit();
-            return $result;
-        } catch (\Throwable $e) {
-            if ($this->pdo->inTransaction()) $this->pdo->rollBack();
-            throw $e;
-        }
-    }
 
-    public function order(string $tenant, string $item): ?array
-    {
-        $lock = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql' ? ' FOR UPDATE' : '';
-        $stmt = $this->pdo->prepare('SELECT * FROM reception_order_items WHERE tenant_id = ? AND item_id = ?'.$lock);
-        $stmt->execute([$tenant, $item]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            return $result;
+        } catch (\Throwable $error) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $error;
+        }
     }
 
     public function save(array $sample): void
     {
-        $stmt = $this->pdo->prepare('INSERT INTO reception_specimens
-            (id, tenant_id, item_id, actor_id, status, reason, code, received_at)
-            VALUES (:id, :tenant_id, :item_id, :actor_id, :status, :reason, :code, :received_at)');
-        $stmt->execute($sample);
-        $stmt = $this->pdo->prepare('UPDATE reception_order_items SET status = ? WHERE tenant_id = ? AND item_id = ?');
-        $stmt->execute([$sample['status'] === 'accepted' ? 'received' : 'pending_new_sample', $sample['tenant_id'], $sample['item_id']]);
-        if ($sample['status'] === 'rejected') {
-            $stmt = $this->pdo->prepare('INSERT INTO reception_outbox (specimen_id, tenant_id, payload) VALUES (?, ?, ?)');
-            $stmt->execute([$sample['id'], $sample['tenant_id'], json_encode($sample, JSON_THROW_ON_ERROR)]);
+        $statement = $this->pdo->prepare('INSERT INTO specimens
+            (specimen_id,lab_order_item_id,received_by_user_ref_id,local_patient_id,care_episode_id,
+             request_key,request_hash,volume,temperature,status,reason,code,received_at)
+            VALUES (:id,:item_id,:actor_id,:local_patient_id,:care_episode_id,
+             :request_key,:request_hash,:volume,:temperature,:status,:reason,:code,:received_at)');
+        try {
+            $statement->execute($sample);
+        } catch (\PDOException $error) {
+            if ($error->getCode() === '23505' && str_contains($error->getMessage(), 'specimens_code_unique')) {
+                throw new CodeCollision('Código duplicado', 0, $error);
+            }
+            if ($error->getCode() === '23505') {
+                throw new ReceptionError('REQUEST_CONFLICT', 'Solicitud o ítem ya recibido', 409);
+            }
+            throw $error;
         }
+        $this->event($sample, $sample['id']);
+    }
+
+    protected function event(array $sample, string $eventId): void
+    {
+        $payload = array_intersect_key($sample, array_flip(['id', 'item_id', 'status', 'reason', 'code']));
+        $statement = $this->pdo->prepare("INSERT INTO outbox_events
+            (event_id,correlation_id,aggregate_type,aggregate_id,event_type,payload_minimal)
+            VALUES (?,?,'specimen',?,?,?::jsonb)");
+        $statement->execute([$eventId, $eventId, $sample['id'], 'specimen.'.$sample['status'], json_encode($payload, JSON_THROW_ON_ERROR)]);
     }
 
     public function find(string $tenant, string $code): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM reception_specimens WHERE tenant_id = ? AND code = ?');
-        $stmt->execute([$tenant, $code]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $this->lookup('code', $code);
+    }
+
+    public function byRequest(string $tenant, string $key): ?array
+    {
+        return $this->lookup('request_key', $key);
+    }
+
+    private function lookup(string $column, string $value): ?array
+    {
+        // $column solo procede de los dos métodos anteriores; la conexión ya está aislada por hospital.
+        $statement = $this->pdo->prepare('SELECT specimen_id AS id,lab_order_item_id AS item_id,
+            received_by_user_ref_id AS actor_id,local_patient_id,care_episode_id,request_key,request_hash,
+            volume,temperature,status,reason,code,received_at FROM specimens WHERE '.$column.' = ?');
+        $statement->execute([$value]);
+        $sample = $statement->fetch(PDO::FETCH_ASSOC);
+        if (! $sample) {
+            return null;
+        }
+        $sample['received_at'] = (new \DateTimeImmutable($sample['received_at']))->setTimezone(new \DateTimeZone('UTC'))->format(DATE_ATOM);
+        $sample['volume'] = (float) $sample['volume'];
+        $sample['temperature'] = (float) $sample['temperature'];
+
+        return $sample;
     }
 }
