@@ -28,7 +28,8 @@ class PrescriptionIntegrityTest extends TestCase
         $this->assertSame(10, (int) $db->scalar("SELECT numeric_precision FROM information_schema.columns WHERE table_name = 'prescriptions' AND column_name = 'dose_amount'"));
         $this->assertSame(3, (int) $db->scalar("SELECT numeric_scale FROM information_schema.columns WHERE table_name = 'prescriptions' AND column_name = 'dose_amount'"));
         $this->assertSame(0, (int) $db->scalar("SELECT count(*) FROM information_schema.columns WHERE table_name = 'prescriptions' AND column_name = 'tenant_id'"));
-        $this->assertSame(1, (int) $db->scalar("SELECT count(*) FROM pg_constraint WHERE conrelid = 'prescriptions'::regclass AND contype = 'c' AND pg_get_constraintdef(oid) ILIKE '%status%'"));
+        $this->assertSame(1, (int) $db->scalar("SELECT count(*) FROM pg_constraint WHERE conrelid = 'prescriptions'::regclass AND conname = 'prescriptions_status_check' AND contype = 'c'"));
+        $this->assertSame(1, (int) $db->scalar("SELECT count(*) FROM pg_constraint WHERE conrelid = 'prescriptions'::regclass AND conname = 'prescriptions_signing_consistency_check' AND contype = 'c'"));
         $this->assertSame(1, (int) $db->scalar("SELECT count(*) FROM pg_constraint WHERE conrelid = 'prescriptions'::regclass AND conname = 'prescriptions_allergy_check_result_check' AND contype = 'c'"));
     }
 
@@ -62,11 +63,46 @@ class PrescriptionIntegrityTest extends TestCase
         $this->assertSame('draft', $row->status);
         $this->assertSame('clear', $row->allergy_check_result);
 
-        $db->update("UPDATE prescriptions SET status = 'signed', allergy_check_result = 'warning' WHERE prescription_id = ?", [$id]);
+        $this->assertRejected('prescriptions_signing_consistency_check', fn () => $db->update("UPDATE prescriptions SET status = 'cancelled' WHERE prescription_id = ?", [$id]));
+        $this->assertRejected('prescriptions_allergy_check_result_check', fn () => $db->update("UPDATE prescriptions SET allergy_check_result = 'blocked' WHERE prescription_id = ?", [$id]));
+        $db->update("UPDATE prescriptions SET status = 'signed', signed_at = now(), signed_by_doctor_profile_id = ?, allergy_check_result = 'warning' WHERE prescription_id = ?", [
+            '00000000-0000-0000-0000-000000000102',
+            $id,
+        ]);
         $this->assertSame('signed', $db->scalar('SELECT status FROM prescriptions WHERE prescription_id = ?', [$id]));
         $this->assertSame('warning', $db->scalar('SELECT allergy_check_result FROM prescriptions WHERE prescription_id = ?', [$id]));
-        $this->assertRejected('prescriptions_status_check', fn () => $db->update("UPDATE prescriptions SET status = 'cancelled' WHERE prescription_id = ?", [$id]));
-        $this->assertRejected('prescriptions_allergy_check_result_check', fn () => $db->update("UPDATE prescriptions SET allergy_check_result = 'blocked' WHERE prescription_id = ?", [$id]));
+    }
+
+    public function test_signing_fields_are_consistent_with_prescription_status(): void
+    {
+        $this->insertGraph();
+        $id = $this->insertPrescription();
+        $db = DB::connection('hospital');
+        $doctorId = '00000000-0000-0000-0000-000000000102';
+
+        $this->assertRejected('prescriptions_signing_consistency_check', fn () => $db->update("UPDATE prescriptions SET status = 'signed' WHERE prescription_id = ?", [$id]));
+        $this->assertRejected('prescriptions_signing_consistency_check', fn () => $db->update("UPDATE prescriptions SET status = 'signed', signed_at = now() WHERE prescription_id = ?", [$id]));
+        $this->assertRejected('prescriptions_signing_consistency_check', fn () => $db->update("UPDATE prescriptions SET status = 'signed', signed_by_doctor_profile_id = ? WHERE prescription_id = ?", [$doctorId, $id]));
+        $this->assertRejected('prescriptions_signing_consistency_check', fn () => $db->update('UPDATE prescriptions SET signed_at = now() WHERE prescription_id = ?', [$id]));
+        $this->assertRejected('prescriptions_signing_consistency_check', fn () => $db->update('UPDATE prescriptions SET signed_by_doctor_profile_id = ? WHERE prescription_id = ?', [$doctorId, $id]));
+
+        $db->update("UPDATE prescriptions SET status = 'signed', signed_at = now(), signed_by_doctor_profile_id = ? WHERE prescription_id = ?", [$doctorId, $id]);
+        $this->assertSame('signed', $db->scalar('SELECT status FROM prescriptions WHERE prescription_id = ?', [$id]));
+    }
+
+    public function test_signed_prescriptions_cannot_be_updated_or_deleted(): void
+    {
+        $this->insertGraph();
+        $id = $this->insertPrescription();
+        $db = DB::connection('hospital');
+        $db->update("UPDATE prescriptions SET status = 'signed', signed_at = now(), signed_by_doctor_profile_id = ? WHERE prescription_id = ?", [
+            '00000000-0000-0000-0000-000000000102',
+            $id,
+        ]);
+
+        $this->assertRejected('prescriptions_signed_immutable', fn () => $db->update('UPDATE prescriptions SET dose_amount = 250 WHERE prescription_id = ?', [$id]));
+        $this->assertRejected('prescriptions_signed_immutable', fn () => $db->delete('DELETE FROM prescriptions WHERE prescription_id = ?', [$id]));
+        $this->assertSame('signed', $db->scalar('SELECT status FROM prescriptions WHERE prescription_id = ?', [$id]));
     }
 
     public function test_prescription_restricts_deletion_of_referenced_records(): void
@@ -89,9 +125,13 @@ class PrescriptionIntegrityTest extends TestCase
         $this->assertFalse($this->tableExists('prescriptions'));
         $this->assertFalse($this->tableExists('doctor_schedules'));
         $this->assertTrue($this->tableExists('medications'));
+        $this->assertSame(0, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM pg_proc WHERE proname = 'prevent_signed_prescription_mutation'"));
+        $this->assertSame(0, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid WHERE c.relname = 'prescriptions' AND t.tgname = 'prescriptions_signed_immutable'"));
 
         Artisan::call('migrate', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--force' => true]);
         $this->assertTrue($this->tableExists('prescriptions'));
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM pg_proc WHERE proname = 'prevent_signed_prescription_mutation'"));
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid WHERE c.relname = 'prescriptions' AND t.tgname = 'prescriptions_signed_immutable'"));
     }
 
     private function insertGraph(): array

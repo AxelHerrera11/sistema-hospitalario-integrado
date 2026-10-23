@@ -29,6 +29,10 @@ return new class extends Migration
                 signed_at timestamptz,
                 created_at timestamptz NOT NULL DEFAULT now(),
                 updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT prescriptions_signing_consistency_check CHECK (
+                    (status = 'draft' AND signed_at IS NULL AND signed_by_doctor_profile_id IS NULL)
+                    OR (status = 'signed' AND signed_at IS NOT NULL AND signed_by_doctor_profile_id IS NOT NULL)
+                ),
                 CONSTRAINT prescriptions_local_patient_id_fk FOREIGN KEY (local_patient_id) REFERENCES local_patients(local_patient_id) ON DELETE RESTRICT,
                 CONSTRAINT prescriptions_care_episode_id_fk FOREIGN KEY (care_episode_id) REFERENCES care_episodes(care_episode_id) ON DELETE RESTRICT,
                 CONSTRAINT prescriptions_medication_id_fk FOREIGN KEY (medication_id) REFERENCES medications(medication_id) ON DELETE RESTRICT,
@@ -40,11 +44,29 @@ return new class extends Migration
             CREATE INDEX prescriptions_medication_id_index ON prescriptions (medication_id);
             CREATE INDEX prescriptions_prescribed_by_doctor_profile_id_index ON prescriptions (prescribed_by_doctor_profile_id);
             CREATE INDEX prescriptions_signed_by_doctor_profile_id_index ON prescriptions (signed_by_doctor_profile_id);
+            CREATE OR REPLACE FUNCTION prevent_signed_prescription_mutation() RETURNS trigger LANGUAGE plpgsql AS $$
+            BEGIN
+                IF OLD.status = 'signed' THEN
+                    RAISE EXCEPTION 'prescriptions_signed_immutable';
+                END IF;
+                IF TG_OP = 'DELETE' THEN
+                    RETURN OLD;
+                END IF;
+                RETURN NEW;
+            END;
+            $$;
+            CREATE TRIGGER prescriptions_signed_immutable
+                BEFORE UPDATE OR DELETE ON prescriptions
+                FOR EACH ROW EXECUTE FUNCTION prevent_signed_prescription_mutation();
             SQL);
     }
 
     public function down(): void
     {
-        DB::connection($this->connection)->unprepared('DROP TABLE IF EXISTS prescriptions;');
+        DB::connection($this->connection)->unprepared(<<<'SQL'
+            DROP TRIGGER IF EXISTS prescriptions_signed_immutable ON prescriptions;
+            DROP FUNCTION IF EXISTS prevent_signed_prescription_mutation();
+            DROP TABLE IF EXISTS prescriptions;
+            SQL);
     }
 };
