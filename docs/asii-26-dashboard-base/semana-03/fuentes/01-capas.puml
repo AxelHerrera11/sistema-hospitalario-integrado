@@ -1,0 +1,32 @@
+@startuml
+title Micro-HIS Dashboard base (ASII-26) - Vista de capas
+
+skinparam componentStyle rectangle
+
+package "Presentation" #Paleturquoise {
+  [bin/resumen_dashboard.php\n(front controller CLI)] as cli
+}
+
+package "Application" #LightBlue {
+  [ResumenDashboard\n(caso de uso)] as uc
+}
+
+package "Domain" #LightYellow {
+  [Indicador\n(entidad + regla de valor)] as ent
+  [IndicadorRepository\n(puerto)] as port
+}
+
+package "Persistence" #LightGray {
+  [IndicadorRepositoryEnMemoria\n(doble de prueba)] as mem
+}
+
+cli --> uc
+uc --> ent
+uc --> port
+mem .up.|> port
+
+note right of port
+  Cada capa tiene una unica responsabilidad (SRP).
+  La dependencia apunta al Dominio.
+end note
+@enduml
