@@ -27,7 +27,7 @@ final class InMemoryAllergyChecker implements AllergyChecker
     public function activeAllergies(string $patientId): array
     {
         if ($this->shouldFail) {
-            throw new \RuntimeException('Alergias down');
+            throw new AllergyCheckUnavailable;
         }
         return $this->allergies[$patientId] ?? [];
     }

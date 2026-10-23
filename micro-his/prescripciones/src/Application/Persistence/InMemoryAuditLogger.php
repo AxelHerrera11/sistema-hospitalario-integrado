@@ -13,8 +13,13 @@ final class InMemoryAuditLogger implements AuditLogger
     /** @var list<array{event: string, payload: array}> */
     public array $logs = [];
 
+    private bool $fail = false;
+
     public function record(string $eventName, array $payload): void
     {
+        if ($this->fail) {
+            throw new AuditUnavailable;
+        }
         $this->logs[] = ['event' => $eventName, 'payload' => $payload];
     }
 
@@ -23,8 +28,6 @@ final class InMemoryAuditLogger implements AuditLogger
     {
         $this->fail = $fail;
     }
-
-    private bool $fail = false;
 
     /** Para tests: limpia logs. */
     public function clear(): void
