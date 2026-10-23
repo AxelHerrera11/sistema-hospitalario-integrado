@@ -1,0 +1,16 @@
+%% User flow — Recepción / Admisión (rol recepcion): apertura. No puede consultar (sin expediente.ver).
+flowchart TD
+    A([Inicio]) --> B[Escribe el código y pulsa «Abrir expediente…»]
+    B --> V{¿Formato válido?}
+    V -- No --> VE[Mensaje bajo el campo] --> B
+    V -- Sí --> D[Diálogo: «¿Abrir el expediente?»<br/>código + hospital + «queda registrado en auditoría»<br/>foco inicial en «Cancelar»]
+    D -- Cancelar / Esc --> A
+    D -- Sí, abrir --> L[Cargando…]
+    L --> R{Respuesta}
+    R -- 201 --> C1[Éxito: «Se abrió el expediente EXP-…»] --> Z([Fin])
+    R -- 200 created=false --> C2[Éxito: «ya tenía el expediente …; no se creó otro»] --> Z
+    R -- 403 ACCESO_DENEGADO --> DN[Denegado + código de seguimiento<br/>hoy: el permiso de apertura no está activo en RBAC] --> Z
+    R -- 404 PACIENTE_NO_ENCONTRADO --> P[Error: verifique el código en Pacientes] --> B
+    R -- 409 PACIENTE_NO_ACTIVO --> I[Error: paciente no activo; no se reintenta] --> Z
+    R -- "503 / sin conexión" --> RE["Error recuperable: «Reintentar es seguro»<br/>(apertura idempotente), máx. 3"] --> L
+    B -. "Si pulsa «Consultar»" .-> X[403 ACCESO_DENEGADO: recepción no consulta datos clínicos]
