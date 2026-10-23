@@ -31,3 +31,9 @@ Las suites de `micro-his/notas-soap` (SQLite) siguen en verde con el esquema ali
 | CIE-10 | No existe `icd10_codes`; hace falta una entidad nueva | — | Por decidir con Javier |
 
 Las dos pruebas «known» documentan el comportamiento actual de la base: cuando Javier lo corrija, deben invertirse. La mitigación de D-02 vive en mi adaptador y no sustituye el trigger.
+
+## Identidad: del token al usuario local
+
+El `sub` del JWT es el id del usuario CENTRAL (`JwtAuth` lo busca en `central_users`). Los campos `clinical_notes.author_user_ref_id` y `local_access_audits.actor_user_ref_id` son claves foráneas a `local_user_refs`, así que el controlador traduce el `sub` con `PdoLocalActorResolver` (`local_user_refs.central_user_id`, estado `active` y vigencia), igual que Traslados. Sin referencia local: `403 LOCAL_USER_NOT_FOUND`. Sin base HOSPITAL: `503 HOSPITAL_UNAVAILABLE`, sin traza.
+
+`test_end_to_end_the_api_registers_and_reads_a_note_in_postgresql` recorre token (identidad simulada) → usuario local → RBAC real → casos de uso → adaptadores PDO → PostgreSQL: registra y lee una nota, comprueba la auditoría con el actor local y confirma que asociar un diagnóstico falla seguro con `503 ICD10_UNAVAILABLE` por la tabla ausente.
