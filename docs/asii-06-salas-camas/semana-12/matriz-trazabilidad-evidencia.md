@@ -24,11 +24,11 @@ operativamente; Pendiente = no hay evidencia ejecutada de esa capacidad.
 
 ## Comandos y resultados
 
-- `npm run build` — **PASS**, Vite transformó 129 módulos.
+- `npm run build` — **PASS**, Vite transformó 134 módulos.
 - `node --test tests/Frontend/WardCatalogNavigationTest.mjs` — **PASS**,
   2 tests, 0 fallos.
 - `php vendor/phpunit/phpunit/phpunit tests/Feature/SalasCamas/WardCatalogEndpointTest.php`
-  — **PASS**, 11 tests, 48 assertions.
+  — **PASS**, 13 tests, 54 assertions (incluye tenant ausente y mismatch).
 - `php vendor/phpunit/phpunit/phpunit tests/Feature/SalasCamas/CatalogLaravelIntegrationTest.php`
   — **PASS**, 1 test, 23 assertions; utiliza transacción y rollback.
 - `php vendor/phpunit/phpunit/phpunit tests/Feature/Tenants/IdentityContextTest.php`
