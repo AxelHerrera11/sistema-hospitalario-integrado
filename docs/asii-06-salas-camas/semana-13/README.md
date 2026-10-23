@@ -9,9 +9,10 @@ entrega de Semana 13 de ASII-03 se usa solo como referencia de formato y método
 
 Esta revisión contrasta el código disponible en la rama, contratos, permisos,
 datos, documentación y pruebas de ASII-06. No es una auditoría de producción,
-una prueba de penetración ni una revisión de conformidad WCAG. No se
-implementaron funcionalidades nuevas porque no se identificó un defecto
-concreto de código que requiera corrección dentro de este alcance.
+una prueba de penetración ni una revisión de conformidad WCAG. La prueba con
+dos tenants activos confirmó acceso cruzado al catálogo antes de la
+contención temporal; no se presenta esta revisión documental como solución
+definitiva.
 
 ## Resultado ejecutivo
 
@@ -20,9 +21,11 @@ concreto de código que requiera corrección dentro de este alcance.
   reintento.
 - **Probado:** build, navegación/permisos frontend, Feature API, identidad
   tenant/JWT/RBAC en fixture aislada y persistencia PostgreSQL con rollback.
-- **Riesgo de integración que bloquea afirmar aislamiento multi-tenant:** el
-  middleware valida el hospital, pero el provider ASII-06 usa conexión
-  `hospital` fija y `wards`/`beds` no tienen `tenant_id`.
+- **Aislamiento cruzado confirmado y contenido temporalmente:** antes de la
+  mitigación, dos tenants válidos con `camas.ver` recibían HTTP 200 desde la
+  misma conexión `hospital`. El PR #1154 limita estas rutas al hospital
+  explícitamente asignado a la instancia; la resolución dinámica por hospital
+  sigue pendiente.
 - **Pendiente:** login y recorrido visual manual con hospital y usuario de
   pruebas autorizados. No se dispuso de esas credenciales ni se inspeccionaron
   registros reales.
@@ -42,7 +45,9 @@ concreta del intento local no pudo confirmarse porque no se inspeccionó el
 valor almacenado ni se recibió un hospital autorizado. El diagnóstico seguro
 está en [evidencia de Semana 12](../semana-12/diagnostico-integracion-local.md).
 
-No se modificaron aplicación, migraciones, permisos, configuración o `.env`.
-El siguiente paso para cerrar la integración es proporcionar por canal seguro
-un UUID de hospital activo y una cuenta de prueba con membresía vigente y
-`camas.ver`, y ejecutar la navegación autenticada sin omitir middleware.
+Esta entrega de Semana 13 es documental y no modifica aplicación, migraciones,
+permisos, configuración o `.env`. La contención de código se integró aparte en
+#1154; no equivale a resolver la asignación dinámica de una base por hospital.
+Para cerrar esa integración se requiere acordar cómo se resuelve y provisiona
+de forma segura cada base, además de una identidad autorizada para validar el
+recorrido visual sin omitir middleware.

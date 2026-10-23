@@ -1,25 +1,33 @@
 # Hallazgos — revisión técnica ASII-06
 
-Los hallazgos separan riesgos ya documentados de defectos nuevos. No se
-identificó en esta revisión un error reproducible de código que justifique un
-cambio funcional inmediato.
+Los hallazgos separan riesgos ya documentados de defectos nuevos. REV-01 fue
+reproducido como un defecto de aislamiento y cuenta con una contención temporal
+en #1154; la asignación dinámica definitiva continúa pendiente.
 
-## REV-01 — La conexión del catálogo no se selecciona por tenant
+## REV-01 — Acceso cruzado al catálogo por conexión fija (confirmado)
 
-- **Prioridad:** Alta para integración multi-hospital; no es una prueba de
-  exposición explotable en este entorno.
+- **Prioridad:** Alta; contención temporal integrada en #1154, solución
+  definitiva pendiente.
 - **Evidencia:** `TenantMiddleware` busca y valida el hospital en CENTRAL. El
   `SalasCamasServiceProvider` resuelve siempre `DB::connection('hospital')`.
-  Las tablas `wards` y `beds` no contienen `tenant_id`.
-- **Impacto:** una petición puede tener tenant autenticado y autorizado, pero
-  el catálogo no deriva una base/conjunto de registros distinto según ese
-  hospital. No se debe presentar la validación del header como aislamiento de
-  datos.
-- **Recomendación:** antes de habilitar varios hospitales, diseñar y probar
-  selección de conexión hospitalaria conforme al registro central, o una
-  estrategia explícita de aislamiento en esquema/base. Mantener la decisión
-  fuera del frontend; usar tests de aislamiento cross-tenant y no cambiar
-  silenciosamente migraciones en esta entrega.
+  Las tablas `wards` y `beds` no contienen `tenant_id`. Antes de #1154, una
+  prueba con Hospital A y B activos, tokens válidos y `camas.ver` obtuvo HTTP
+  200 para ambos y el mismo catálogo al enviar cada tenant sobre la conexión
+  fija.
+- **Impacto:** el tenant autenticado no seleccionaba una base/conjunto de
+  registros distinto; la validación de header/JWT no proporcionaba aislamiento
+  físico.
+- **Contención:** #1154 añade `HOSPITAL_DB_TENANT_ID`; tenant distinto recibe
+  403 y asignación ausente 503 antes del acceso al catálogo, conservando JWT y
+  RBAC. La prueba actual usa esquemas PostgreSQL separados en una base de test
+  transaccional para comprobar la denegación en ambas direcciones.
+- **Recomendación definitiva:** la arquitectura documentada establece una base
+  HOSPITAL por hospital. Resolver dinámicamente esa base desde un mapeo
+  autenticado por `hospital_id`, con política de credenciales y provisión
+  acordada. `hospitals.clinical_endpoint` no tiene un contrato de resolución
+  documentado y `RegisterHospital` lo crea como `null`; no inventar valores ni
+  asignar datos existentes. No sustituir esta arquitectura por `tenant_id`
+  compartido sin una decisión formal.
 
 ## REV-02 — Recorrido autenticado local aún no verificado
 
@@ -61,7 +69,9 @@ cambio funcional inmediato.
 
 ## Decisión de cambios
 
-No se hicieron cambios de aplicación: los cuatro hallazgos son brechas de
-integración/evidencia o limitaciones ya conocidas, no un bug concreto
-reproducido que deba corregirse en Semana 13. Se proponen acciones verificables
-en lugar de expandir el CRUD o debilitar controles.
+Este PR de Semana 13 mantiene alcance documental. REV-01 sí es un defecto
+reproducido; la corrección temporal de las dos rutas se integró por separado
+en #1154. La asignación dinámica definitiva requiere el contrato y los datos
+de conexión que faltan, por lo que no se modifica el esquema ni se inventa un
+enrutamiento en esta entrega. Los otros hallazgos siguen siendo brechas de
+evidencia o integración.

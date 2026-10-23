@@ -18,13 +18,13 @@ Riesgo = limitación relevante; Pendiente = no se ejecutó o implementó.
 | RT-10 | Adaptación y accesibilidad | Layout responsive, controles nativos, foco visible y anuncios `status`/`alert`; no se realizó prueba manual o WCAG. | Parcial |
 | RT-11 | Capas backend | Ruta/provider → controlador → servicio → repositorios → adaptadores PDO. Sin SQL duplicado en controlador. | Conforme |
 | RT-12 | Persistencia | Integración PostgreSQL del catálogo verifica consultas/relación en transacción y rollback. | Conforme en prueba de integración |
-| RT-13 | Aislamiento por tenant | `TenantMiddleware` valida hospital, pero el provider usa `DB::connection('hospital')` fija y wards/beds carecen de `tenant_id`. | Riesgo; no afirmar aislamiento completo |
+| RT-13 | Aislamiento por tenant | Se confirmó cruce antes de #1154. Guard temporal `HOSPITAL_DB_TENANT_ID` deniega tenant distinto o asignación ausente; conexión dinámica por hospital sigue pendiente. | Contención temporal; no afirmar aislamiento completo |
 | RT-14 | Login real y recorrido visual | No se facilitó cuenta de pruebas autorizada ni se inspeccionó navegador autenticado. Suites de tenant son aisladas. | Pendiente |
 
 ## Interpretación
 
 “Conforme” se limita a la evidencia indicada y no equivale a aprobación formal
 del docente/reviewer. “Parcial” y “Pendiente” no significan necesariamente
-defecto de código. El hallazgo de tenant es una limitación arquitectónica
-documentada que debe resolverse antes de prometer separación de catálogo por
-hospital.
+defecto de código. El cruce por conexión fija se confirmó y se bloqueó
+temporalmente para estas rutas; la asignación de una base por hospital según
+la arquitectura acordada sigue sin implementarse.

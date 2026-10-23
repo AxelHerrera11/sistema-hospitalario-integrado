@@ -5,25 +5,30 @@
 `ASII06_SEMANA13_BASE`:
 `d22eb9e84e7a7148500d5f93445af6c970de8d42`.
 
-Rama: `feature/asii-06-semana-13-salas-camas-madelinceron`. Worktree limpio
-al inicio. La plantilla oficial identifica Semana 13 como revisión técnica
-formal; issue #11 no amplía ese alcance.
+Rama de entrega original: `feature/asii-06-semana-13-salas-camas-madelinceron`.
+Se actualizó mediante merge normal de `origin/develop`, que incluye #1064,
+#1072 y la contención de #1154. La plantilla oficial identifica Semana 13 como
+revisión técnica formal; issue #11 no amplía ese alcance.
 
 ## Pruebas ejecutadas en esta rama
 
-- `npm run build` — **PASS**, Vite transformó 129 módulos.
+- `npm run build` — **PASS**, Vite transformó 134 módulos.
 - `node --test tests/Frontend/WardCatalogNavigationTest.mjs` — **PASS**,
   2 tests, 0 fallos.
-- `php vendor/phpunit/phpunit/phpunit tests/Feature/SalasCamas/WardCatalogEndpointTest.php`
-  — **PASS**, 11 tests, 48 assertions.
-- `php vendor/phpunit/phpunit/phpunit tests/Feature/SalasCamas/CatalogLaravelIntegrationTest.php`
-  — **PASS**, 1 test, 23 assertions; transacción y rollback.
-- `php vendor/phpunit/phpunit/phpunit tests/Feature/Tenants/IdentityContextTest.php`
-  — **PASS**, 11 tests, 75 assertions; central de pruebas SQLite en memoria.
+- `php vendor/phpunit/phpunit/phpunit --configuration phpunit.xml tests/Feature/SalasCamas/WardCatalogEndpointTest.php tests/Feature/SalasCamas/CatalogHospitalIsolationTest.php tests/Feature/SalasCamas/CatalogLaravelIntegrationTest.php tests/Feature/Tenants/IdentityContextTest.php`
+  — **PASS**, 28 tests, 189 assertions: endpoint (13/54), aislamiento
+  (3/37), integración PostgreSQL (1/23) e identidad tenant (11/75).
 - `php micro-his/salas-camas/tests/run.php` — **PASS**, 4 escenarios.
 - `php artisan route:list --path=api` — **PASS**, 25 rutas; incluye ambas rutas
   GET del catálogo.
 - `git diff --check` — **PASS**.
+
+La prueba de aislamiento reprodujo primero la condición anterior a #1154:
+Hospital B, con sesión y `camas.ver` válidos, recibió HTTP 200 y el catálogo
+de la conexión asignada a A. Con el guard, cada tenant solo puede consultar
+el esquema asignado; los cruces reciben 403 y una asignación sin configurar
+recibe 503. Los esquemas se crean dentro de una transacción en la base de test
+y se revierten; no se ejecutan migraciones destructivas.
 
 La integración PostgreSQL usa la configuración de prueba del repositorio y
 revierte datos ficticios creados dentro de la transacción. El test de identidad
@@ -49,7 +54,8 @@ configuración.
 - Existencia/estado de un hospital concreto o asignación RBAC de una cuenta
   concreta.
 - Inspección de lector de pantalla, contraste, zoom/reflow o conformidad WCAG.
-- Selección de base de datos del catálogo por tenant; sigue fija.
+- Selección dinámica de base de datos por tenant; la contención temporal limita
+  la instancia a `HOSPITAL_DB_TENANT_ID`, pero no resuelve el mapeo central.
 
 No se ejecutaron migraciones, `migrate:fresh`, cambios a `.env` ni operaciones
 de escritura sobre bases reales fuera del test PostgreSQL protegido por

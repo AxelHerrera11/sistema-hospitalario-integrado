@@ -42,7 +42,9 @@ la autorización, tenant, persistencia, migraciones o lógica clínica.
 La revisión es defendible si distingue implementado, probado y pendiente;
 proporciona evidencia por criterio; no presenta tests aislados como E2E; y no
 declara aislamiento multi-tenant completo mientras la conexión del catálogo
-sea fija y sus tablas carezcan de `tenant_id`.
+sea fija y no exista selección dinámica por hospital. La contención
+`HOSPITAL_DB_TENANT_ID` limita una instancia a un hospital, pero no sustituye
+esa resolución.
 
 ## Participación
 
