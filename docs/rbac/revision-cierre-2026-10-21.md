@@ -6,7 +6,7 @@
 
 ## Publicación posterior de esta revisión
 
-Por instrucción de la usuaria se publicó la corrección de permisos de acción en #858, commit `0bd73f06`. Este informe y sus evidencias se publican por separado desde `feature/asii-02-semana-17-rbac-evidencia-cierre-mar-03`, basada en develop `070a255c`, para respetar 400 líneas por PR. Los resultados de pruebas que siguen pertenecen al snapshot `0926ad98` con las correcciones indicadas, no a una nueva ejecución sobre `070a255c`. Se mantienen los PR en borrador y sin merge. Las referencias a cambios «locales» y «sin publicar» describen el momento de la revisión, anterior a esta publicación.
+Por instrucción de la usuaria se publicó la corrección de permisos de acción en #858, commit `0bd73f06`. Este informe y sus evidencias se publican por separado desde `feature/asii-02-semana-17-rbac-evidencia-cierre-mar-03`, basada en develop `070a255c`, para respetar 400 líneas por PR. Los resultados de pruebas que siguen pertenecen al snapshot `0926ad98` con las correcciones indicadas, no a una nueva ejecución sobre `070a255c`. Estado al 23 de octubre de 2026: #848, #858 y #917 están fusionados en develop y promovidos a main. Se mantiene la distinción entre la validación local rellenada aquí y lo que debe repetirse en el entorno de entrega. Las referencias a cambios «locales» y «sin publicar» describen el momento de la revisión, anterior a esta publicación.
 
 No se realizó merge, push, aprobación ni cambio de estado de los PR. Los cambios locales de Pacientes encontrados al iniciar la revisión se conservaron. Este informe distingue pruebas automatizadas locales de demostraciones con usuarios en navegador y de staging.
 
@@ -58,7 +58,7 @@ Todos los endpoints siguientes se entienden bajo `/api/v1`. El hospital se obtie
 | GET `/patients/{code}` | API de consulta | `pacientes.ver` | medico / admin_hospital según matriz | `PatientApiTest` con PDO SQLite e identidad simulada | La pantalla `/patients` no consume esta API |
 | Sin POST/PATCH de Pacientes registrados | `/patients/new`, `/patients/edit` | `pacientes.registrar`, `pacientes.editar` | recepcion / medico de solo lectura | `permissions.test.mjs`; `PatientPermissionsTest` prueba middleware aislado | Prototipos ficticios; no hay alta/edición persistida acreditada |
 | Login/me/refresh/logout | `/login`, cierre y hospital activo | Autenticación/membresía; no permiso clínico adicional | Membresía vigente / inactiva, token válido / revocado | `IdentityContextTest`, `SessionLifecycleTest`, `CindyContextTest` | No hay selector de cambio de hospital en sesión acreditado; probar salida y nuevo login |
-| Gobernanza: consulta/exportación | Sin ruta Laravel acreditada en esta copia | Según contrato de gobernanza | Pendiente prueba HTTP con autorizado/no autorizado | `RbacDenialAuditTest` valida lector PDO y filtro denied | Provider de gobernanza no aparece en `bootstrap/providers.php` |
+| Gobernanza: consulta/exportación | `GET /api/v1/audit-events` registrado por #917, ya integrado en develop | Según contrato de gobernanza | Prueba pendiente contra el entorno de entrega; la local está en `cierre-local-2026-10-21.md` | `RbacDenialAuditTest` valida lector PDO y filtro denied | Provider de gobernanza registrado en `bootstrap/providers.php` desde su integración |
 
 Médicos, citas, laboratorio/órdenes/resultados, SOAP, signos vitales, admisión/camas, alertas, alergias, prescripciones, muestras y reportes tienen contratos/permisos o código micro-HIS; esto no acredita endpoints Laravel y pantallas integradas para todos ellos. El listado real debe regenerarse al incorporar cada módulo. Las pruebas que construyen `Request` y llaman middleware con una ruta ficticia no prueban que ese endpoint esté registrado.
 
@@ -66,24 +66,24 @@ Médicos, citas, laboratorio/órdenes/resultados, SOAP, signos vitales, admisió
 
 Los cambios locales encontrados asignan `pacientes.registrar` a `patients-new` y `pacientes.editar` a `patients-edit`, y ocultan enlaces/botones sin permiso. Se añadieron comprobaciones de comportamiento que impiden a un lector acceder por decisión de ruta a ambas acciones, verifican cada permiso por separado y rechazan un usuario ausente. El backend de consulta conserva `pacientes.ver`. No se añadieron endpoints clínicos de escritura ni se convirtió el prototipo en un módulo funcional.
 
-## Acuerdo #679: confirmado, integración pendiente
+## Acuerdo #679: confirmado e integrado en el repositorio
 
 Mar-03 eligió la opción a): `NULL`, `success`, `failure`, `denied`, `already_revoked`, `unknown`. Cualquier valor nuevo exige migración coordinada con prueba antes de habilitar el escritor.
 
 Fuente: https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/679#issuecomment-6329752822
 
-La respuesta corresponde al 21 de octubre a las 18:34 de Guatemala (22 de octubre 00:34 UTC). #679 sigue OPEN en la consulta realizada. El acuerdo no equivale a merge, aprobación formal ni aplicación de la migración. RBAC usa `denied`, que ya está comprendido en el catálogo aceptado.
+La respuesta corresponde al 21 de octubre a las 18:34 de Guatemala (22 de octubre 00:34 UTC). Estado actualizado al 23 de octubre: #679 está fusionado y su migración forma parte del árbol de develop; separar "integrado en el repositorio" de "desplegado en el entorno". El despliegue en entorno de entrega sigue pendiente. RBAC usa `denied`, que ya está comprendido en el catálogo aceptado.
 
 ## Gobernanza y entorno de entrega
 
-La activación de gobernanza es una dependencia compartida: no registrar un provider por conjetura ni duplicar un escritor para hacer pasar la demostración. Tras integrar su provider real y contrato de autenticación, ejecutar:
+La activación de gobernanza ya está resuelta en el repositorio: el provider real está registrado en `bootstrap/providers.php` y `GET /api/v1/audit-events` está publicado en develop. El siguiente recorrido se ejecuta cuando el entorno de entrega esté disponible, con su contrato de autenticación real:
 
 1. Iniciar sesión con usuario sin permiso para `/permissions` y producir 403 con `trace_id`.
 2. Iniciar sesión con usuario autorizado para consultar auditoría, en el mismo hospital.
-3. Consultar el endpoint real publicado por gobernanza con filtro `denied`; cotejar actor, hospital, recurso permission, criticidad security y trace_id. No inventar la URL del endpoint.
+3. Consultar el endpoint real publicado por gobernanza con filtro `denied`; cotejar actor, hospital, recurso permission, criticidad security y trace_id. Es la misma URL validada localmente: no inventar la URL del endpoint.
 4. Repetir sin permiso de auditoría y desde otro hospital; no deben exponerse registros ajenos. Probar exportación si la asignación la exige.
 
-No se recibió URL ni acceso de staging y no se realizó un recorrido de navegador en esta revisión. No se declara cumplimiento del punto 3 de la solicitud ni del despliegue. Para cerrarlos:
+No se recibió URL ni acceso de staging: el despliegue y el recorrido de navegador contra el entorno real siguen pendientes y no se declara cumplimiento del punto 3 de la solicitud. Para cerrarlos:
 
 1. Registrar SHA desplegado que incluya ambas correcciones y los permisos de acción, versión PHP/Node/PostgreSQL, migraciones aplicadas, configuración de tenant/JWT y comando de build; no incluir secretos.
 2. Preparar usuarios de prueba con roles opuestos en hospitales A/B y datos ficticios. No usar datos clínicos reales en capturas.

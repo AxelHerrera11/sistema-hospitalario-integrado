@@ -6,7 +6,7 @@
 - #858, `6be4848c`: permisos por acción de Pacientes y revalidación de `/auth/me` antes de entrar a cada pantalla protegida. Revocar roles o sesión lleva al login; un fallo de red bloquea el acceso y retira la identidad de la navegación. Cambiar el hospital seleccionado limpia la sesión local anterior.
 - #917, `8da19f17`: registra el provider existente de gobernanza después de RBAC/Tenants. Activa `GET /api/v1/audit-events` con JWT, hospital y `auditoria.ver`. No amplía concesiones ni añade escritores.
 
-Los PR permanecen en borrador, sin merge; su aprobación e integración siguen a cargo de revisión. Las ramas utilizan `feature/asii-02-…-mar-03`, base develop y menos de 400 líneas por PR.
+Estado al 23 de octubre de 2026: #848, #858 y #917 están integrados en el repositorio (merge en develop y promovidos a main). Este texto describe el cierre local del 21 de octubre, cuando seguían en revisión; la historia no se reescribe, el estado se actualiza. Las ramas utilizan `feature/asii-02-…-mar-03`, base develop y menos de 400 líneas por PR.
 
 ## Composición y entorno probado
 
@@ -35,7 +35,7 @@ Evidencia: `evidencias-cierre/http-local.txt`, `jwt-integracion.txt` y las captu
 
 ## Cobertura y límites actualizados
 
-La consulta HTTP de gobernanza deja de ser una dependencia de código pendiente; ahora requiere integrar #917 junto con #848 y validar el entorno real. #679 ya tiene decisión de Mar-03; no se da por fusionado ni aplicada su migración.
+La consulta HTTP de gobernanza ya no es una dependencia pendiente de código: #917 está integrado y `GET /api/v1/audit-events` aparece registrado en el provider de gobernanza de develop. Lo que sigue pendiente es la validación contra el entorno real, distinta de la integración en repositorio. #679 está fusionado: su catálogo de valores de resultado y su migración forman parte del árbol de develop; el despliegue en entorno sigue pendiente.
 
 En develop a3925260 también se registran POST `/traslados`, POST `/altas` y GET `/estancias/{estancia}/internacion`. Sus permisos `traslados.registrar`, `altas.registrar` y `traslados.ver` siguen en `config/rbac.php.pending`: no se activaron sin el acuerdo del módulo. La política los deniega aunque las rutas existan. Ver `TrasladosAltasApiTest`; no confundir registro de endpoint con flujo clínico habilitado.
 
@@ -45,6 +45,6 @@ Se contrastó la matriz semanal con la tabla **Plan semanal ASII** del README ra
 
 ## Para el entorno de entrega
 
-Integrar los PR revisados, aplicar las migraciones CENTRAL/HOSPITAL correspondientes, reconstruir configuración y frontend, reiniciar workers y repetir los casos anteriores con usuarios de prueba del entorno. Registrar SHA desplegado, fecha, versiones, respuestas saneadas y capturas. Comprobar que el login, selección de hospital, refresh/logout y lectura de auditoría usan los servicios y datos del entorno.
+Integrar los PR revisados está resuelto del lado del repositorio. El pendiente real es el despliegue: aplicar las migraciones CENTRAL/HOSPITAL correspondientes, reconstruir configuración y frontend, reiniciar workers y repetir los casos anteriores con usuarios de prueba del entorno. Registrar SHA desplegado, fecha, versiones, respuestas saneadas y capturas. Comprobar que el login, selección de hospital, refresh/logout y lectura de auditoría usan los servicios y datos del entorno.
 
-Falta URL y acceso al entorno de entrega. No se hizo merge, despliegue ni se certificaron las 17 semanas. La evidencia de navegador y HTTP local sí está completada.
+Falta URL y acceso al entorno de entrega: la integración en el repositorio no equivale a un despliegue y no se certifica el entorno de entrega ni las 17 semanas. La evidencia de navegador y HTTP local sí está completada.
