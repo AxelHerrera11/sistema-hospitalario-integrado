@@ -35,8 +35,8 @@
             <h2 id="doc-reg-title">Registrar médico</h2>
             <template v-for="field in registerFields" :key="field.name">
                 <label :for="`doc-reg-${field.name}`">{{ field.label }}</label>
-                <input :id="`doc-reg-${field.name}`" v-model="register[field.name]" autocomplete="off" :aria-invalid="Boolean(registerErrors[field.name])">
-                <span v-if="registerErrors[field.name]" class="doc__msg doc__msg--error" role="alert">{{ registerErrors[field.name] }}</span>
+                <input :id="`doc-reg-${field.name}`" v-model="register[field.name]" autocomplete="off" :aria-invalid="Boolean(registerErrors[field.name])" :aria-describedby="registerErrors[field.name] ? `doc-reg-${field.name}-error` : undefined">
+                <span v-if="registerErrors[field.name]" :id="`doc-reg-${field.name}-error`" class="doc__msg doc__msg--error" role="alert">{{ registerErrors[field.name] }}</span>
             </template>
             <p v-if="registerMessage.text" :class="['doc__msg', `doc__msg--${registerMessage.kind}`]" :role="registerMessage.kind === 'error' ? 'alert' : 'status'">{{ registerMessage.text }}</p>
             <button type="submit" :disabled="saving === 'register'">{{ saving === 'register' ? 'Guardando…' : 'Registrar' }}</button>
@@ -46,8 +46,8 @@
             <h2 id="doc-assoc-title">Asociar especialidad</h2>
             <template v-for="field in associateFields" :key="field.name">
                 <label :for="`doc-assoc-${field.name}`">{{ field.label }}</label>
-                <input :id="`doc-assoc-${field.name}`" v-model="associate[field.name]" autocomplete="off" :aria-invalid="Boolean(associateErrors[field.name])">
-                <span v-if="associateErrors[field.name]" class="doc__msg doc__msg--error" role="alert">{{ associateErrors[field.name] }}</span>
+                <input :id="`doc-assoc-${field.name}`" v-model="associate[field.name]" autocomplete="off" :aria-invalid="Boolean(associateErrors[field.name])" :aria-describedby="associateErrors[field.name] ? `doc-assoc-${field.name}-error` : undefined">
+                <span v-if="associateErrors[field.name]" :id="`doc-assoc-${field.name}-error`" class="doc__msg doc__msg--error" role="alert">{{ associateErrors[field.name] }}</span>
             </template>
             <label class="doc__check"><input v-model="associate.is_primary" type="checkbox"> Especialidad principal</label>
             <p v-if="associateMessage.text" :class="['doc__msg', `doc__msg--${associateMessage.kind}`]" :role="associateMessage.kind === 'error' ? 'alert' : 'status'">{{ associateMessage.text }}</p>
@@ -155,7 +155,7 @@ async function submit(name) {
 .doc label { font-weight: 600; }
 .doc__card { display: flex; flex-direction: column; gap: 0.4rem; max-width: 28rem; margin: 1rem 0; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; }
 .doc input:not([type="checkbox"]) { min-height: 44px; padding: 0.5rem 0.65rem; border: 1px solid #64748b; border-radius: 6px; background: #fff; font: inherit; width: 100%; }
-.doc input[type="checkbox"] { width: 1.25rem; height: 1.25rem; }
+.doc input[type="checkbox"] { width: 1.5rem; height: 1.5rem; } /* 24 px: tamaño mínimo del objetivo (WCAG 2.5.8) */
 .doc input[aria-invalid="true"] { border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
 .doc button { min-height: 44px; padding: 0.55rem 1rem; border: 1px solid #1d4ed8; border-radius: 6px; background: #1d4ed8; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
 .doc button:disabled { opacity: 0.6; cursor: progress; }
