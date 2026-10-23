@@ -1,0 +1,10 @@
+{
+  "app/Rbac/AuditDenials.php": "67dfceceaa0af1d1f54c33844b8fb61120adecfd686614da4b2c5282c27df154",
+  "resources/js/router/index.js": "9dbf39f4aedcf7ee1c367999b1ef54b9e11f394eab82d43110e97926ea69c137",
+  "resources/js/router/guards.js": "46fd329b711e2929c27266adffd390a7bc46dc2bc981c435e1320c3df54123ab",
+  "resources/js/router/permissions.js": "21084931959dfa09d81b6dc2424f7636c5f840655284a75f1334bca0077deeae",
+  "resources/js/router/permissions.test.mjs": "0213d9e025b59331f657b2f8093bc673392c62db9fabb48c1571fdee1b8ceaa9",
+  "resources/js/modules/patients/pages/PatientsPage.vue": "3ec2c434c142de256e4292cdf4b6c20f68174fcc7547bcda3074070e60cc0e4c",
+  "resources/js/shared/components/AppLayout.vue": "1e215b2ab1380173efe01216e69f08fd3c30a1dae9dde99e67a103bbabae7031",
+  "resources/js/stores/auth.js": "db95ac5969f786a88acf4e6d8f11c856ceef6b68b61dc7c0e358c1b901a05070"
+}
