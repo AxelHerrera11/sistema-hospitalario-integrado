@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: Micro-HIS Centro de documentacion (ASII-24) - API REST
+  version: 0.5.0
+  description: >
+    Contrato de la Semana 5. Borde REST sobre el Micro-HIS MVC + Repository de la Semana 4.
+    En el HIS real el prefijo es /api/v1 detras del API Gateway, con JWT (Authorization: Bearer)
+    y X-Tenant-ID; el sobre de respuesta sigue el formato comun de ASII-24.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+    tenantHeader: []
+paths:
+/documentos:
+  get:
+    summary: Catalogo de documentos visible para un rol
+    parameters:
+      - { name: rol, in: query, required: true, schema: { type: string, example: enfermeria } }
+    responses:
+      '200':
+        description: "`data.documentos[]` con id, titulo y roles"
+        content: { application/json: { schema: { properties: { data: { properties: { documentos: { type: array, items: { $ref: '#/components/schemas/Documento' } } } } } } } }
+      '422': { $ref: '#/components/responses/Error' }
+  post:
+    summary: Publicar documento o manual para uno o mas roles
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [titulo, roles]
+            properties:
+              titulo: { type: string }
+              roles: { type: array, items: { type: string }, minItems: 1 }
+    responses:
+      '201': { description: Documento publicado (`data.id`) }
+      '422': { $ref: '#/components/responses/Error' }
+      '404': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    tenantHeader: { type: apiKey, in: header, name: X-Tenant-ID }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, description: Codigo estable del error }
+        message: { type: string }
+        errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+  responses:
+    Error:
+      description: Sobre comun de error (ASII-24)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+Documento:
+  type: object
+  properties:
+    id: { type: string }
+    titulo: { type: string }
+    roles: { type: array, items: { type: string } }
