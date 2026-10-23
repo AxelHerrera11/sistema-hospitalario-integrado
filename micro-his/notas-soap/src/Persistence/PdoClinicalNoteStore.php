@@ -80,6 +80,9 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
             $this->pdo->commit();
         } catch (\RuntimeException $e) { // PDOException o la bitácora caída de cualquier adaptador
             $this->pdo->inTransaction() && $this->pdo->rollBack();
+            // R-06 (ASII-09): la restricción única (expediente, versión) deja una sola nota por expediente; se informa como conflicto y no como caída.
+            $e instanceof \PDOException && ((string) $e->getCode()) === '23505' && str_contains($e->getMessage(), 'clinical_notes_record_version_unique')
+                && throw new SoapRuleViolation('RECORD_ALREADY_HAS_NOTE', 409);
             throw new \RuntimeException('persistencia_no_disponible', 0, $e);
         } catch (SoapRuleViolation $e) { // regla de dominio comprobada dentro de la transacción: se revierte y se propaga tal cual
             $this->pdo->inTransaction() && $this->pdo->rollBack();
