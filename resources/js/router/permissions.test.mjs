@@ -74,6 +74,12 @@ const grantedSoon = visibleNavigation({ permissions: ['citas.ver'] }, NAVIGATION
 assert.deepEqual(grantedSoon.map((entry) => entry.label), ['Citas']);
 assert.equal(visibleNavigation(null).filter((entry) => entry.to === null).length, 0);
 
+// Regresion ASII-08: /traslados existe como ruta, asi que el menu debe ofrecerla a quien tenga traslados.ver,
+// y solo a quien lo tenga (el permiso sigue en rbac.pending hasta que RBAC lo active).
+const conTraslados = visibleNavigation({ permissions: ['traslados.ver'] }, NAVIGATION);
+assert.deepEqual(conTraslados.filter((entry) => entry.to === '/traslados').map((entry) => entry.label), ['Traslados y altas']);
+assert.equal(visibleNavigation(sessionUser).some((entry) => entry.to === '/traslados'), false);
+
 // Cada entrada de navegacion declara un permiso del catalogo del backend
 // o es una ruta publica sin permiso (con `to` definido).
 const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');

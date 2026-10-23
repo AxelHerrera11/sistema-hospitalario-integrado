@@ -11,7 +11,11 @@ flowchart TD
   i(( )):::ini --> m1["Técnico escanea o busca la orden<br/>y el ítem (UC-MUE-02)"]
   m1 --> m2{"¿Rol con permiso<br/>muestras.recibir<br/>en el tenant? (UC-MUE-09)"}:::dec
   m2 -- No --> m403["401/403 + denegación<br/>registrada por RBAC"]:::err
-  m2 -- Sí --> m3{"¿Orden e ítem existen<br/>y esperan muestra?"}:::dec
+  m2 -- Sí --> payload{"¿Payload válido?"}:::dec
+  payload -- No --> invalid["422 sin invocar ReceiveSpecimen"] --> f
+  payload -- Sí --> available{"¿Puerto de órdenes disponible?"}:::dec
+  available -- No --> unavailable["503 LAB_ORDER_UNAVAILABLE; sin escritura"] --> f
+  available -- Sí --> m3{"¿Orden e ítem existen<br/>y esperan muestra?"}:::dec
   m3 -- No --> m404["404 Orden no encontrada /<br/>409 Ítem cancelado o ya recibido"]:::err
   m3 -- Sí --> m4["Verificar identidad con dos identificadores:<br/>nombre completo + fecha de nacimiento<br/>o código de paciente (UC-MUE-03)"]
   m4 --> m5{"¿La etiqueta coincide<br/>con la orden?"}:::dec
@@ -24,7 +28,7 @@ flowchart TD
   m9 -- No --> m9b{"¿Menos de<br/>3 intentos?"}:::dec
   m9b -- Sí --> m8
   m9b -- No --> m500["500 No se acepta<br/>una muestra sin código"]:::err
-  m9 -- Sí --> m10["Guardar muestra accepted<br/>con usuario y hora"]
+  m9 -- Sí --> m10["Transacción: specimens accepted +<br/>outbox_events; usuario y hora"]
   m10 --> mok["201 Muestra aceptada<br/>y lista para análisis"]:::ok
   mok --> m11["Imprimir etiqueta<br/>(después del 201)"]
   m11 --> m12{"¿Impresión<br/>correcta?"}:::dec
@@ -33,11 +37,11 @@ flowchart TD
   m13 -- Sí --> m14["Reimprimir el mismo código<br/>(no se genera otro)"]
   m14 --> m11
   m13 -- No --> mpend["Muestra registrada;<br/>etiqueta pendiente de reimpresión"]
-  mr0 --> mr2["Registrar rechazo (UC-MUE-06): motivo,<br/>usuario y hora; el ítem vuelve a<br/>pendiente de nueva muestra"]
+  mr0 --> mr2["Registrar rechazo (UC-MUE-06): motivo,<br/>usuario y hora en specimens + outbox_events;<br/>orden externa sin modificar"]
   mr1 --> mr2
-  mr2 --> mr3["Notificar al solicitante (UC-MUE-08)"]
+  mr2 --> mr3["Publicador externo consume<br/>outbox_events (UC-MUE-08, PROPUESTO)"]
   mr3 --> mr4{"¿Notificación<br/>entregada?"}:::dec
-  mr4 -- No --> mr5["Dejar en cola de reintento;<br/>el rechazo ya quedó registrado"]
+  mr4 -- No --> mr5["Evento pending; reintento externo PROPUESTO;<br/>rechazo ya registrado"]
   mr4 -- Sí --> mrok["201 Rechazo registrado"]:::ok
   mr5 --> mrok
   m403 --> f((( ))):::fin
