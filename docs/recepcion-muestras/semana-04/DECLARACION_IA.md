@@ -1,8 +1,6 @@
-# Declaración de IA — semana 4
+# Declaración de IA — S04
 
-- Herramienta: Codex (OpenAI).
-- Propósito: revisar la matriz ASII-18 y corregir coherencia de código, documentación y pruebas según Javier.
-- Instrucciones relevantes: completar semanas 1–15, conservar Resultados de Gerson, PR menores de 400 líneas y no publicar cambios.
-- Contenido generado o modificado: documentación y correcciones de esta semana; evidencia solo de comandos realmente ejecutados.
-- Validación técnica: consultar semana 15 y el informe local; las pruebas automatizadas no sustituyen revisión clínica.
-- Validación humana: pendiente de María y de los revisores; no se declara aceptación docente ni de otros módulos.
+- Codex (OpenAI) revisó el respaldo S04 y adaptó composición MVC, vista JSON y demo PDO del mismo micro.
+- Se generaron fuente Mermaid y SVG y se prepararon pruebas reales, sin copiar otro dominio ni dependencias del respaldo.
+- Instrucciones: PR menores de 400 líneas propias a develop; conservar historial; solo Yamilet mergea.
+- Evidencia técnica en EVIDENCIA.md y #691. Validación humana y clínica pendiente.
