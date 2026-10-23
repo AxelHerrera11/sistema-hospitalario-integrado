@@ -6,4 +6,4 @@
 
 **Revisado y ajustado:** los resultados salen de ejecutar las pruebas sobre el código de las ramas del módulo y de levantar PostgreSQL 16 en contenedores efímeros. Las amenazas sin prueba (MED-12, MED-13, MED-14 y MED-15) se declaran como verificadas por lectura o abiertas, no como mitigadas, y salen de leer el código y la plataforma (`TenantMiddleware`, rutas, `RegisterDoctor`). No se desplegó nada fuera del equipo local.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar y aprobar esta entrega antes de solicitar revisión.
+**Validación humana:** realizada el 2026-10-22. Josué Fernando Hicho García revisó esta entrega y la aprueba.
