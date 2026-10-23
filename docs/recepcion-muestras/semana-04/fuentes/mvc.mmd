@@ -1,9 +1,0 @@
-flowchart LR
-    demo --> ReceptionController
-    ReceptionController --> ReceiveSpecimen
-    ReceptionController --> JsonView
-    ReceiveSpecimen --> ReceptionRepository
-    ReceptionRepository --> InMemoryReceptionRepository
-    ReceptionRepository --> PdoReceptionRepository
-    PdoReceptionRepository --> PostgreSQL
-    ReceiveSpecimen --> OrderGatewayDoble
