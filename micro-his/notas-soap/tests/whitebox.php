@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use MicroHis\NotasSoap\Application\AssociateDiagnosis;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
+use MicroHis\NotasSoap\Application\SignSoapNote;
 use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
+use MicroHis\NotasSoap\Domain\SignaturePolicy;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
 use MicroHis\NotasSoap\Persistence\InMemoryAuditTrail;
@@ -63,7 +65,8 @@ check('W-08', 'Condiciones del guardia · sin autor y tratante pasa; sin autor y
 
 // D-02: entre la lectura de la nota y la escritura otra sesión puede firmarla; el repositorio lo vuelve a comprobar al escribir y rechaza.
 [, $repo, $id] = flow();
-$firmaEnMedio = new class($repo) implements ClinicalNoteRepository {
+final class FirmaEnMedio implements ClinicalNoteRepository
+{
     public function __construct(private readonly InMemoryClinicalNoteRepository $inner)
     {
     }
@@ -84,9 +87,22 @@ $firmaEnMedio = new class($repo) implements ClinicalNoteRepository {
     {
         $this->inner->addDiagnosis($note, $diagnosis, $description);
     }
-};
+
+    public function sign(ClinicalNote $note): void
+    {
+        $this->inner->sign($note);
+    }
+}
+
+$firmaEnMedio = new FirmaEnMedio($repo);
 $carrera = new AssociateDiagnosis(new TreatingPhysicianGuard(new InMemoryCareAssignmentReader(['ep1' => ['dra.lopez']])), new InMemoryIcd10Catalog(['J18.9' => ['Neumonía', true]]), new DiagnosisPolicy(), $firmaEnMedio);
 $rechazo = outcome(fn () => $carrera->execute('dra.lopez', $id, new Diagnosis('J18.9', 'primary')));
 check('W-09', 'Una nota firmada entre la lectura y la escritura no recibe el diagnóstico y responde NOTE_SIGNED (D-02)', $rechazo === 'NOTE_SIGNED' && ($repo->diagnoses[$id] ?? []) === []);
+
+// UC-SOAP-05: la firma también pierde la carrera si otra sesión firma entre la lectura y el UPDATE; no se audita dos veces.
+[, $repo, $id] = flow();
+$repo->addDiagnosis($repo->find($id), new Diagnosis('J18.9', 'primary'), 'Neumonía');
+$firmaCarrera = new SignSoapNote(new TreatingPhysicianGuard(new InMemoryCareAssignmentReader(['ep1' => ['dra.lopez']])), new SignaturePolicy(), new FirmaEnMedio($repo));
+check('W-10', 'Una nota firmada entre la lectura y el UPDATE responde NOTE_SIGNED y no registra otra auditoría de firma (UC-SOAP-05)', outcome(fn () => $firmaCarrera->execute('dra.lopez', $id)) === 'NOTE_SIGNED');
 
 summary();
