@@ -1,0 +1,19 @@
+{
+    "_comentario": "Suites que el workflow .github/workflows/qa-ci-e2e.yml publica en qa-evidence/. required=false = informativa hasta que el grupo apruebe volverla obligatoria (docs/CI-E2E/semana-14).",
+    "tenant_id": "hospital-pruebas-e2e",
+    "ci_actor": "ci-bot",
+    "suites": [
+        { "name": "sintaxis-php", "kind": "syntax", "required": true, "junit": "syntax/php-lint.xml", "evidence": [{ "kind": "log", "path": "syntax/php-lint.log" }] },
+        { "name": "pint-archivos-cambiados", "kind": "lint", "required": false, "junit": "lint/pint.xml", "evidence": [{ "kind": "log", "path": "lint/pint.log" }] },
+        { "name": "phpunit-unit", "kind": "unit", "required": true, "junit": "phpunit/unit.xml" },
+        { "name": "micro-his", "kind": "unit", "required": true, "junit": "micro-his/micro-his.xml" },
+        { "name": "frontend-node", "kind": "unit", "required": true, "junit": "frontend/node.xml" },
+        { "name": "phpunit-feature", "kind": "integration", "required": true, "junit": "phpunit/feature.xml" },
+        { "name": "phpunit-integration", "kind": "integration", "required": true, "junit": "phpunit/integration.xml" },
+        { "name": "contrato-rutas-rbac", "kind": "contract", "required": true, "junit": "contract/route-guard.xml", "evidence": [{ "kind": "log", "path": "contract/routes.json" }] },
+        { "name": "build-frontend", "kind": "build", "required": true, "junit": "build/vite.xml", "evidence": [{ "kind": "log", "path": "build/vite.log" }] },
+        { "name": "e2e-qa-calidad", "kind": "e2e", "required": true, "junit": "e2e/qa-calidad.xml" },
+        { "name": "phpunit-database-pg", "kind": "integration", "required": false, "junit": "phpunit/database.xml" },
+        { "name": "e2e-auth-rbac", "kind": "e2e", "required": false, "junit": "e2e/auth-rbac.xml", "evidence": [{ "kind": "log", "path": "e2e/laravel-server.log" }] }
+    ]
+}
