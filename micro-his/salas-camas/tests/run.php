@@ -13,6 +13,11 @@ final class FakeCatalogRepository implements WardRepository, BedRepository
     public array $beds = [];
 
     public function __construct(private bool $fail = false) {}
+    public function listAll(): array
+    {
+        if ($this->fail) throw new PersistenceFailure('fake failure');
+        return array_values($this->wards);
+    }
     public function findByCode(string $code): ?Ward
     {
         if ($this->fail) throw new PersistenceFailure('fake failure');

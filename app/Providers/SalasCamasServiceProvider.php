@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Controllers\Api\V1\WardCatalogController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use MicroHis\SalasCamas\Application\BedRepository;
 use MicroHis\SalasCamas\Application\CatalogService;
@@ -23,11 +25,11 @@ final class SalasCamasServiceProvider extends ServiceProvider
 
         $this->app->scoped(
             WardRepository::class,
-            fn (): WardRepository => new PdoWardRepository($this->hospitalConnection()),
+            fn (): WardRepository => new PdoWardRepository(fn (): PDO => $this->hospitalConnection()),
         );
         $this->app->scoped(
             BedRepository::class,
-            fn (): BedRepository => new PdoBedRepository($this->hospitalConnection()),
+            fn (): BedRepository => new PdoBedRepository(fn (): PDO => $this->hospitalConnection()),
         );
         $this->app->scoped(
             CatalogService::class,
@@ -36,6 +38,14 @@ final class SalasCamasServiceProvider extends ServiceProvider
                 $app->make(BedRepository::class),
             ),
         );
+    }
+
+    public function boot(): void
+    {
+        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
+            Route::get('wards', [WardCatalogController::class, 'index'])
+                ->middleware('rbac:camas.ver');
+        });
     }
 
     private function hospitalConnection(): PDO

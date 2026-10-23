@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use MicroHis\SalasCamas\Application\BedRepository;
 use MicroHis\SalasCamas\Application\CatalogService;
 use MicroHis\SalasCamas\Application\WardRepository;
+use MicroHis\SalasCamas\Domain\Ward;
 use MicroHis\SalasCamas\Persistence\PdoBedRepository;
 use MicroHis\SalasCamas\Persistence\PdoWardRepository;
 use PDO;
@@ -61,6 +62,10 @@ final class CatalogLaravelIntegrationTest extends TestCase
         $this->assertNotNull($ward->id);
         $this->assertNotNull($bed->id);
         $this->assertSame($ward->id, $bed->wardId);
+        $this->assertContains($ward->id, array_map(
+            static fn (Ward $listed): ?string => $listed->id,
+            $catalog->listWards(),
+        ));
         $this->assertSame('available', $bed->status);
         $bedQuery = $this->pdo->prepare('SELECT ward_id FROM beds WHERE bed_id = :bed_id');
         $bedQuery->execute([':bed_id' => $bed->id]);
