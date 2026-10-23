@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="VM01 plan válido no tiene errores; producción y SHA corto sí" time="0.001915" classname="test"/>
+	<testcase name="VM02 plan sin E2E obligatoria o con nombres repetidos se marca" time="0.001702" classname="test"/>
+	<testcase name="VM03 resultado: límites de conteo y huella" time="0.001381" classname="test"/>
+	<testcase name="VM04 acciones: el observador no ve botones de escritura; running sin pendientes no ofrece registrar" time="0.000276" classname="test"/>
+	<testcase name="VM05 mensajes de error: 503 permite reintentar, 403 no" time="0.000232" classname="test"/>
+	<testcase name="VM07 cambio de la semana 12: motivo principal, bloqueo antes que rechazo; aprobado sin motivo" time="0.000134" classname="test"/>
+	<testcase name="VM06 veredictos y hallazgos tienen texto para la persona usuaria" time="0.000132" classname="test"/>
+	<!-- tests 7 -->
+	<!-- suites 0 -->
+	<!-- pass 7 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 112.3333 -->
+</testsuites>

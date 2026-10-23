@@ -105,6 +105,10 @@ return [
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
         'alertas.ver' => ['enfermeria'],
         'alertas.acusar' => ['enfermeria'],
+        // ASII-08 (propuesta de la Semana 16, sin activar): enfermería traslada, el médico tratante da el alta y ambos consultan.
+        'traslados.registrar' => ['enfermeria'],
+        'altas.registrar' => ['medico'],
+        'traslados.ver' => ['enfermeria', 'medico'],
     ],
     'catalog' => [
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
@@ -130,5 +134,6 @@ return [
         'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
         'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
         'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
+        'traslados.registrar', 'altas.registrar', 'traslados.ver',
     ],
 ];

@@ -1,0 +1,218 @@
+
+######## unit ########
+
+== Plan de pruebas (RF-01) ==
+OK    [U01] Versión SemVer válida y con prerelease
+OK    [U02] Versión no SemVer → version_invalida
+OK    [U03] Commit abreviado (7) → commit_invalido
+OK    [U04] Nombres de suite repetidos → suite_duplicada
+OK    [U05] Plan sin E2E obligatoria → plan_incompleto
+OK    [U06] Ambiente "production" no existe → ambiente_no_permitido (RNF-02)
+OK    [U07] Nombre de suite con mayúsculas/espacios → nombre_suite_invalido
+
+== Evidencia (RF-04, RNF-03) ==
+OK    [U08] La evidencia reconoce su contenido original
+OK    [U09] Un byte alterado invalida la evidencia
+OK    [U10] Ruta de evidencia rechazada: escapa con ..
+OK    [U10] Ruta de evidencia rechazada: ruta absoluta
+OK    [U10] Ruta de evidencia rechazada: unidad Windows
+OK    [U10] Ruta de evidencia rechazada: URL
+OK    [U11] SHA-256 en mayúsculas o corto → evidencia_sin_huella
+OK    [U12] Evidencia de 0 bytes → evidencia_vacia
+
+== Resultado de suite ==
+OK    [U13] Fallidas + omitidas > total → conteo_inconsistente
+OK    [U14] Duración negativa → conteo_negativo
+OK    [U15] Tasa sobre ejecutadas: 7 de 8 = 0.875
+OK    [U16] Todo omitido → tasa null (no hay qué medir)
+
+== Ciclo de vida de la ejecución (RF-02, RF-03) ==
+OK    [U17] Registrar antes de iniciar → estado_invalido (409)
+OK    [U18] Suite que no está en el plan → suite_no_planificada
+OK    [U19] Segundo resultado de la misma suite → resultado_duplicado (no se sobrescribe)
+OK    [U20] Iniciar dos veces → estado_invalido
+OK    [U21] Completar fija estado y hora de cierre
+OK    [U22] Abortar una ejecución completada → ejecucion_finalizada
+OK    [U23] Abortar sin motivo → motivo_invalido
+OK    [U24] Abortar desde planned guarda el motivo
+
+== Política del gate ==
+OK    [U25] Umbral 1.5 → umbral_invalido
+OK    [U26] Umbral para tipo inexistente → tipo_suite_invalido
+OK    [U27] Política sin versión → politica_version_invalida
+OK    [U28] Tipo sin umbral explícito usa 1.0 (lo más estricto)
+
+[unit] 31 pruebas, 0 fallos.
+
+######## whitebox ########
+
+== evaluate(): rama por estado de la ejecución ==
+OK    [W01] Estado planned → RUN_NOT_COMPLETED blocker → blocked
+OK    [W02] Estado aborted → RUN_ABORTED (no evalúa suites)
+
+== suiteFindings(): ausente / vacía / sin evidencia ==
+OK    [W03] Todas las obligatorias verdes y opcional ausente → approved con warning
+OK    [W04] Obligatoria ausente → SUITE_MISSING blocker
+OK    [W05] executed()=0 por total 0 → SUITE_EMPTY blocker (vacío no es éxito)
+OK    [W06] executed()=0 por todo omitido → SUITE_EMPTY blocker
+OK    [W07] require_evidence=true y sin evidencia → EVIDENCE_MISSING blocker
+OK    [W08] require_evidence=false → la misma entrada no genera hallazgo de evidencia
+
+== rateFindings(): umbral, fallos tolerados y omitidas ==
+OK    [W09] rate 0.95 < min 1.0 en obligatoria → SUITE_BELOW_THRESHOLD rejection
+OK    [W10] Límite exacto rate 0.95 = min 0.95 → FAILURES_TOLERATED warning (no rechaza)
+OK    [W11] Opcional por debajo del umbral → warning, la versión se aprueba
+OK    [W12] Omitida en obligatoria y allow_skipped=false → SKIPPED_IN_REQUIRED rejection
+OK    [W13] allow_skipped=true → la omitida no cuenta contra la tasa (9/9) → approved
+
+== Duración E2E y precedencia del veredicto ==
+OK    [W14] E2E 60001 ms > 60000 → E2E_SLOW warning (no bloquea)
+OK    [W15] E2E 60000 ms = límite → sin E2E_SLOW
+OK    [W16] rejection (unit) + blocker (e2e ausente) → blocked: falta evidencia para decidir
+OK    [W17] verdictFor([]) → approved
+OK    [W18] verdictFor([warning]) → approved
+
+[whitebox] 18 pruebas, 0 fallos.
+
+######## blackbox ########
+
+== Permisos y tenant ==
+OK    [BN01] Sin identidad → 401 AUTH_REQUIRED
+OK    [BN02] Sin X-Tenant-ID → 400 TENANT_REQUIRED
+OK    [BN03] X-Tenant-ID distinto al del token → 403 TENANT_MISMATCH
+OK    [BN04] Observador (solo ver) intenta planificar → 403 RBAC_DENIED
+OK    [BN05] Observador puede listar → 200
+
+== Equivalencia: camino feliz completo ==
+OK    [BN06] Plan válido → 201 con status planned y 3 suites
+OK    [BN07] Respuesta no cacheable y con el mismo X-Request-ID
+OK    [BN08] Registrar resultado → 201 con passed calculado
+OK    [BN09] Gate de ejecución verde → 201 verdict approved
+OK    [BN10] Detalle incluye la última decisión del gate
+
+== Errores: 404, 409, 422, 400, 413 ==
+OK    [BN11] Ejecución de otro hospital → 404 (no revela que existe)
+OK    [BN12] Resultado sobre ejecución completada → 409 QA_RUN_STATE_CONFLICT
+OK    [BN13] Ambiente production → 422 ambiente_no_permitido
+OK    [BN14] required como texto "false" → 422 (no se vuelve opcional en silencio)
+OK    [BN15] JSON mal formado → 400 INVALID_JSON
+OK    [BN16] Cuerpo de 64 KiB + 1 byte → 413 PAYLOAD_TOO_LARGE
+OK    [BN17] Método no soportado → 404 ROUTE_NOT_FOUND (no hay borrado de evidencia)
+
+== Valores límite del plan ==
+OK    [BN18] Exactamente 30 suites → 201
+OK    [BN19] 31 suites → 422 suites_invalidas
+OK    [BN20] 0 suites → 422 suites_invalidas
+OK    [BN21] Listado respeta el tenant: H1 ve sus 2 ejecuciones
+
+== Dependencias caídas ==
+OK    [BN22] RBAC no disponible → 503 RBAC_UNAVAILABLE (falla cerrado)
+OK    [BN23] Almacén caído → 503 QA_STORAGE_UNAVAILABLE sin detalle técnico
+
+[blackbox] 23 pruebas, 0 fallos.
+
+######## application ########
+
+== Flujo y auditoría (RF-05) ==
+OK    [A01] Flujo completo verde → approved y persistido
+OK    [A02] Cada paso deja un evento de auditoría en orden
+OK    [A03] El evento del gate guarda veredicto y versión de política
+OK    [A04] Reevaluar agrega una decisión nueva (no reescribe la anterior)
+
+== Permisos (RNF-04) ==
+OK    [A05] Observador no puede evaluar el gate → AccessDenied
+OK    [A06] La denegación queda auditada con el permiso faltante
+OK    [A07] Si la auditoría falla, la denegación se mantiene (403, nunca 200)
+OK    [A08] Otro tenant no encuentra la ejecución → RunNotFound
+OK    [A09] Id con caracteres no válidos → RunNotFound sin consultar
+OK    [A10] Límite del listado acotado a 50
+
+== Errores de persistencia y auditoría ==
+OK    [A11] Almacén caído al planificar → QaStorageFailure y sin auditoría de éxito
+OK    [A12] Auditoría caída después de guardar → la operación informa QaStorageFailure
+
+== Integración real con Gobernanza (RecordAuditEvent) ==
+OK    [A13] Los 6 eventos llegan a Gobernanza con módulo qa_calidad, sin rechazos
+OK    [A14] Gobernanza no expone eventos QA de H1 a H2
+OK    [A15] Evento Security (gate) con Gobernanza caída → QaStorageFailure
+OK    [A16] Evento Informational con Gobernanza caída → se reporta y no detiene
+
+[application] 16 pruebas, 0 fallos.
+
+######## pdo ########
+
+== Ida y vuelta (camino feliz) ==
+OK    [P01] El agregado se reconstruye con estado, plan y resultado
+OK    [P02] La evidencia conserva ruta y huella
+OK    [P03] find() de otro tenant devuelve null (aislamiento por consulta)
+
+== Solo inserción y decisiones ==
+OK    [P04] Un resultado ya guardado no se sobrescribe aunque se fuerce el objeto
+OK    [P05] latestDecision devuelve la última insertada; las anteriores se conservan
+OK    [P06] latestDecision de otro tenant → null
+OK    [P07] Hallazgos sobreviven la serialización
+
+== Sentencias preparadas ==
+OK    [P08] Un id con comillas se trata como dato, no como SQL
+OK    [P09] listByTenant con LIMIT ligado como entero
+
+== Error de persistencia ==
+OK    [P10] Tabla ausente → QaStorageFailure (no PDOException)
+OK    [P11] La API responde 503 QA_STORAGE_UNAVAILABLE
+OK    [P12] Fila corrupta (plan_json inválido) → QaStorageFailure
+OK    [P13a] El esquema rechaza un status fuera del enum (CHECK)
+OK    [P13] Plan vacío guardado (viola regla de dominio) → QaStorageFailure (no 422)
+OK    [P14] Fallo a mitad de la transacción → rollback, sin resultado parcial
+
+[pdo] 15 pruebas, 0 fallos.
+
+######## ci ########
+
+== Lectura de JUnit ==
+OK    [CI01] PHPUnit real (--log-junit): 5 casos, 0 fallos
+OK    [CI02] node --test real: cuenta casos anidados, 1 fallo y 1 omitida
+OK    [CI03] Archivo inexistente → RuntimeException
+OK    [CI04] XML que no es JUnit (p. ej. página de error) → RuntimeException
+OK    [CI05] Reporte con entidad externa (XXE) → rechazado sin leer el archivo referido
+
+== Evidencia ==
+OK    [CI06] JUnitWriter produce XML que el lector reconoce (y escapa caracteres)
+OK    [CI07] collect() calcula SHA-256 y tamaño reales
+OK    [CI08] Archivo existente pero fuera de la raíz (../fuera.txt) → null
+OK    [CI09] collect() fuera de la raíz lanza en vez de registrar
+
+== Guardia de rutas (contrato RBAC) ==
+OK    [CI10] Pública y solo-autenticada por lista explícita → OK
+OK    [CI11] tenant + JWT + permiso del catálogo → OK (GET|HEAD normalizado)
+OK    [CI12] Sin tenant / sin JWT / sin RBAC → FALLO cada una
+OK    [CI13] Permiso que no está en el catálogo (usuarios.crear) → FALLO
+
+== CLI del quality gate (códigos de salida) ==
+OK    [CI14] Obligatorias verdes → exit 0 y resumen APROBADO
+OK    [CI15] gate-decision.json guarda veredicto y huellas de evidencia
+OK    [CI16] Con --db el registro queda en SQLite (adaptador PDO real)
+OK    [CI17] E2E obligatoria con un fallo y una omitida → exit 1 RECHAZADO
+OK    [CI18] Etapa E2E que no publicó reporte → exit 2 BLOQUEADO con nota
+OK    [CI19] Sin --sha → exit 3 (error de configuración, nunca aprobado)
+OK    [CI20] Ambiente production → exit 3
+OK    [CI21] Log adicional vacío → se descarta con nota y el gate decide (exit 0), no aborta
+
+[ci] 21 pruebas, 0 fallos.
+
+######## architecture ########
+
+== Dependencias entre capas ==
+OK    [AR01] Domain solo importa Domain
+OK    [AR02] Domain no usa PDO ni SQL
+OK    [AR03] Application solo importa Domain y Application
+OK    [AR04] Presentation sin SQL ni PDO
+OK    [AR05] Presentation no importa Persistence ni Ci
+OK    [AR06] El controlador no decide veredictos ni valida reglas (sin GateVerdict/QualityGate/InvalidQaInput)
+OK    [AR07] Solo Integration/ y Ci/ conocen a Gobernanza (contrato público)
+
+== Tamaño de archivos ==
+OK    [AR08] Ningún archivo del módulo supera 400 líneas
+
+[architecture] 8 pruebas, 0 fallos.
+
+TODAS LAS SUITES APROBADAS

@@ -1,0 +1,15 @@
+flowchart TD
+    A[Entrar al dashboard] --> B{Sesion, tenant y permiso validos?}
+    B -- No --> C[Limpiar datos y mostrar acceso restringido]
+    B -- Si --> D[Mostrar carga sin cifras antiguas]
+    D --> E{Respuesta}
+    E -- 200 --> F[Mostrar corte, frescura y resumen]
+    F --> G[Filtrar sala]
+    G --> H[Leer tarjeta y discrepancias]
+    H --> I[Actualizar]
+    I --> D
+    E -- 503 con fotografia --> J[Rotular dato desactualizado]
+    E -- 503 sin fotografia --> K[Ocultar cifras y explicar falla]
+    J --> L[Reintentar]
+    K --> L
+    L --> D

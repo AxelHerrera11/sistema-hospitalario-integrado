@@ -1,0 +1,43 @@
+@startuml
+title Micro-HIS Citas - arquitectura en capas (PHP 8.2+ vanilla, sin framework)
+
+package "Presentation" #Paleturquoise {
+  [bin/agendar_cita.php\n(front controller CLI)] as cli
+}
+
+package "Application" #LightGoldenRodYellow {
+  [AgendarCita\n(caso de uso)] as appUC
+  [EntradaCita / ResultadoCita\n(DTOs)] as appDto
+}
+
+package "Domain" #LightGreen {
+  [Cita\n(entidad)] as domEnt
+  [EstadoCita\n(scheduled/confirmed/cancelled)] as domEstado
+  interface "CitaRepository\n(puerto)" as domRepoPort
+}
+
+package "Persistence" #LightSalmon {
+  [CitaRepositoryPDO] as perRepo
+  [ConexionPDO] as perConn
+}
+
+database "SQLite\n(citas)" as bd
+
+cli --> appUC
+appUC --> appDto
+appUC --> domEnt
+appUC --> domEstado
+appUC --> domRepoPort
+
+perRepo ..|> domRepoPort
+perRepo --> perConn
+perConn --> bd
+
+note bottom of domRepoPort
+  El Dominio define el contrato;
+  Persistence lo implementa.
+  Application depende solo del
+  contrato (Inversion de Dependencias).
+end note
+
+@enduml
