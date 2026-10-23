@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="route-guard" tests="17" failures="0">
+    <testcase name="DELETE api/v1/admin/sessions/{session}" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/admin/tenants" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/admin/users" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/admin/users/{user}/deactivate" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/admin/users/{user}/roles" classname="route-guard" time="0.000"/>
+    <testcase name="DELETE api/v1/admin/users/{user}/roles/{role}" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/auth/login" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/auth/logout" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/auth/me" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/auth/refresh" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/medications" classname="route-guard" time="0.000"/>
+    <testcase name="POST api/v1/medications" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/medications/{medication}" classname="route-guard" time="0.000"/>
+    <testcase name="PATCH api/v1/medications/{medication}/validity" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/occupancy" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/patients/{code}" classname="route-guard" time="0.000"/>
+    <testcase name="GET api/v1/permissions" classname="route-guard" time="0.000"/>
+  </testsuite>
+</testsuites>

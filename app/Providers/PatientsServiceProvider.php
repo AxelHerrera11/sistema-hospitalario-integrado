@@ -29,6 +29,10 @@ final class PatientsServiceProvider extends ServiceProvider
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
             Route::get('patients/{code}', [PatientApiController::class, 'show'])
                 ->middleware('rbac:pacientes.ver');
+            Route::post('patients', [PatientApiController::class, 'store'])
+                ->middleware('rbac:pacientes.registrar');
+            Route::patch('patients/{code}', [PatientApiController::class, 'update'])
+                ->middleware('rbac:pacientes.editar');
         });
     }
 }

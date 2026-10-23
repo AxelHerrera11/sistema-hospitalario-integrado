@@ -1,0 +1,22 @@
+# 21/10/2026 — php artisan serve (develop a392526) con CENTRAL his_central_smoke (55431) y HOSPITAL his_hospital_traslados_e2e16_test (55433), PostgreSQL 17.10.
+# Usuarios ficticios: enfermera@prueba.local (enfermeria) y medico@prueba.local (medico) del hospital A, con local_user_refs sembradas a mano.
+
+## Fase «pendiente»: config/rbac.php tal como está integrado
+PASS  sin token → 401                                              esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403             esperado 403, obtenido 403
+PASS  enfermería traslada con el permiso en pending → 403         esperado 403, obtenido 403
+PASS  médico consulta con el permiso en pending → 403             esperado 403, obtenido 403
+# HOSPITAL: bed_stays sigue con 1 fila. CENTRAL audit_log: rbac.access_denied traslados.registrar (1) y traslados.ver (1).
+
+## Fase «activada»: ACTIVACIÓN SIMULADA LOCAL de la propuesta en el árbol de trabajo; se restauró con git checkout y no se versionó
+PASS  sin token → 401                                              esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403             esperado 403, obtenido 403
+PASS  enfermería traslada → 201                                   esperado 201, obtenido 201
+PASS  enfermería repite el traslado (estancia ya no vigente) → 409 esperado 409, obtenido 409
+PASS  enfermería intenta el alta (rol propuesto: médico) → 403   esperado 403, obtenido 403
+PASS  médico da el alta de la nueva estancia → 200                esperado 200, obtenido 200
+PASS  médico repite el alta → 409                                 esperado 409, obtenido 409
+# HOSPITAL después:
+#   A|cerrada|Enfermera de demostración   B|cerrada|Enfermera de prueba (referencia local del usuario del JWT)
+#   origen.ended_at = destino.started_at → t;  care_episodes: closed, ended_at = cierre de B → t
+#   beds: A available, B available, C maintenance (sin cambios)
