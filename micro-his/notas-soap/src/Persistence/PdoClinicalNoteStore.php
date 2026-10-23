@@ -26,10 +26,10 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
         if (!PostgresIds::usable($this->pdo, $noteId)) {
             return null;
         }
-        $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status, content FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
+        $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status, content, version_no, supersedes_id FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
         $diagnoses = $this->rows("SELECT code, type FROM diagnoses WHERE clinical_note_id = ? AND status = 'active'", [$noteId]);
         return $note === null ? null : new ClinicalNote($noteId, $note['care_episode_id'], $note['author_user_ref_id'], $note['status'],
-            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $diagnoses), SoapSections::fromJson($note['content']));
+            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $diagnoses), SoapSections::fromJson($note['content']), (int) $note['version_no'], $note['supersedes_id']);
     }
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string
@@ -53,6 +53,22 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
                 ->execute([$id, $note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
             $this->audit->record($note->authorId, 'diagnostico.asociado', 'diagnosis', $id, $note->episodeId, ['clinical_note_id' => $note->id, 'code' => $diagnosis->code, 'type' => $diagnosis->type]);
         });
+    }
+
+    public function correct(ClinicalNote $note, SoapSections $sections, string $reason): string
+    {
+        $id = Uuid::v4();
+        $this->transaction(function () use ($id, $note, $sections, $reason): void {
+            // La fila original se bloquea: dos correcciones simultáneas se serializan y la segunda ve a la primera (cada nota se reemplaza una sola vez).
+            $lock = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql' ? ' FOR UPDATE' : '';
+            $original = $this->rows('SELECT medical_record_id, version_no FROM clinical_notes WHERE clinical_note_id = ?' . $lock, [$note->id])[0] ?? throw new SoapRuleViolation('NOTE_NOT_FOUND', 404);
+            $this->rows('SELECT 1 FROM clinical_notes WHERE supersedes_id = ?', [$note->id]) === [] || throw new SoapRuleViolation('NOTE_ALREADY_CORRECTED', 409);
+            $version = (int) $original['version_no'] + 1;
+            $this->pdo->prepare("INSERT INTO clinical_notes (clinical_note_id, medical_record_id, care_episode_id, author_user_ref_id, note_type, content, version_no, supersedes_id, correction_reason) VALUES (?, ?, ?, ?, 'soap', ?, ?, ?, ?)")
+                ->execute([$id, $original['medical_record_id'], $note->episodeId, $note->authorId, $sections->toJson(), $version, $note->id, $reason]);
+            $this->audit->record($note->authorId, 'nota_soap.corregida', 'clinical_note', $id, $note->episodeId, ['version_no' => $version, 'supersedes_id' => $note->id]);
+        });
+        return $id;
     }
 
     public function sign(ClinicalNote $note): void
