@@ -9,12 +9,12 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 **Incluido**
 
 - Localizar la orden y el ítem de laboratorio que esperan muestra (por escaneo o búsqueda).
-- Verificar la identidad con **dos identificadores**: nombre completo y fecha de nacimiento o código de paciente, comparados con el paciente de la orden.
+- Verificar la identidad con **dos identificadores implementados**: nombre completo y código de paciente, comparados con la orden confiable.
 - Validar los requisitos de la prueba: tipo de muestra, contenedor, volumen mínimo, tiempo máximo desde la toma (estabilidad) y temperatura de transporte.
 - Aceptar la muestra y generar el código identificador.
-  - Formato propuesto: `<hospital>-<AAMMDD>-<secuencia>-<dígito verificador>`, por ejemplo `H01-261009-00042-7`.
+  - Decisión implementada: 24 caracteres hexadecimales aleatorios (96 bits), guion y dígito decimal de comprobación.
   - El dígito verificador detecta errores de lectura o digitación.
-  - El código es único por hospital y **nunca se reutiliza**.
+  - El índice UNIQUE impide repetir el código; no hay edición ni reutilización de la muestra. El formato hospital-fecha-secuencia fue una propuesta inicial sustituida en semana 2.
 - Imprimir y reimprimir la etiqueta. La impresión ocurre **después** de que la API responde `201` con el código, y una reimpresión nunca genera otro código: si la impresora falla, la muestra ya quedó guardada (sin rollback) y se imprime de nuevo el mismo código.
 - Rechazar con un motivo del catálogo:
   - hemolizada
@@ -25,7 +25,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
   - fuera de tiempo de estabilidad
   - temperatura inadecuada
   - derramada
-- Notificar el rechazo al médico solicitante.
+- Registrar un evento para la notificación externa PROPUESTA.
 - Consultar una muestra por código, por ejemplo desde *Ingreso de resultados*.
 
 **Fuera de alcance**
@@ -39,7 +39,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 - Solo se recibe contra un ítem en estado "pendiente de muestra". Un ítem cancelado o con muestra ya aceptada responde `409`.
 - La identidad discordante **siempre** se rechaza: es el error más peligroso del laboratorio y no admite excepción.
 - El código se genera solo al aceptar. El rechazo queda registrado contra el ítem de la orden, con motivo, técnico y hora.
-- Si la notificación falla, el rechazo ya está guardado y la notificación queda en cola de reintento. El registro nunca depende del canal de aviso.
+- La transacción inserta specimens y outbox_events; el publicador externo PROPUESTO puede reintentar sin revertir el rechazo. El registro nunca depende del canal de aviso.
 - La etiqueta se imprime solo después del `201` con el código. La falla de la impresora no revierte el registro: la muestra sigue aceptada y queda pendiente la impresión o reimpresión de la etiqueta con el mismo código.
 
 ## Trazabilidad entre los diagramas
@@ -53,7 +53,7 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 | UC-MUE-05 | Aceptar y generar código | "Generar código…", "¿Código único?" (reintento por colisión), "Guardar muestra accepted", "201…", "Imprimir etiqueta", "¿Reintentar impresión?" | 26–40 |
 | UC-MUE-06 | Rechazar muestra con motivo | "Elegir motivo…" / "Motivo obligatorio…" → "Registrar rechazo" | 17–18, 23–25 |
 | UC-MUE-07 | Consultar muestra por código | Fuera del flujo de recepción: lo usa *Ingreso de resultados* | Nota final (`GET /lab/specimens/{código}`) |
-| UC-MUE-08 | Notificar rechazo al solicitante | "Notificar al solicitante…" y "¿Notificación entregada?" | 19–22 |
+| UC-MUE-08 | Notificar rechazo al solicitante | Evento en outbox_events; publicación externa PROPUESTA | 19–22 |
 | UC-MUE-09 | Validar acceso (rol y tenant) | "¿Rol con permiso muestras.recibir…?" | 2–3 |
 
 ### Caminos y excepciones transversales
@@ -73,13 +73,13 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 3. **Orden (UC-MUE-02):** si el ítem no existe, `404`; si está cancelado o ya tiene muestra aceptada, `409`.
 4. **Identidad (UC-MUE-03):** se comparan dos identificadores. Si no coinciden, se rechaza con el motivo "identificación discordante".
 5. **Requisitos (UC-MUE-04):** el validador del tipo de muestra compara lo observado con lo que exige el catálogo. Si algo falla, se rechaza con el motivo correspondiente.
-6. **Rechazo (UC-MUE-06/08):** se guarda el rechazo, el ítem vuelve a "pendiente de nueva muestra" y se notifica al solicitante. Respuesta: `201` con `estado = rejected` y el motivo.
-7. **Aceptación (UC-MUE-05):** se genera el código dentro de un `loop` de hasta 3 intentos que **solo se reintenta por colisión**; si el guardado es exitoso, termina. Se guarda la muestra `accepted` con técnico y hora, se marca el ítem como recibido y la API responde `201` con `estado = accepted` y el código. La etiqueta se imprime **después de ese `201`**; si la impresora falla, la muestra ya quedó guardada (sin rollback) y se reimprime el mismo código.
+6. **Rechazo (UC-MUE-06/08):** se guarda el rechazo, se publica un evento en outbox_events; la actualización externa de la orden y la notificación son PROPUESTAS. Respuesta: `201` con `estado = rejected` y el motivo.
+7. **Aceptación (UC-MUE-05):** se genera el código dentro de un `loop` de hasta 3 intentos que **solo se reintenta por colisión**; si el guardado es exitoso, termina. Se guarda la muestra `accepted` con técnico y hora, se inserta el evento en la misma transacción y la API responde `201` con `estado = accepted` y el código. La etiqueta se imprime **después de ese `201`**; si la impresora falla, la muestra ya quedó guardada (sin rollback) y se reimprime el mismo código.
 8. **Excepción:** sin código único tras 3 intentos se responde `500` y la muestra no se acepta.
 
 ## Dependencias con otros módulos
 
-- **Depende de:** *Órdenes de laboratorio* (ítem y paciente), *Catálogo de pruebas* (requisitos), *Alertas críticas y notificaciones* (aviso de rechazo) y *RBAC*. Para avanzar sin esperar, se consumen a través de las interfaces `LabOrderGateway`, `LabTestRequirements` y `Notifier`, con implementación en memoria hasta la integración.
+- **Depende de:** órdenes (ítem/paciente), catálogo (requisitos), notificaciones (aviso) y RBAC. La implementación usa OrdersGateway de solo lectura, Repository, outbox_events; publicador externo PROPUESTO. LabOrderGateway/LabTestRequirements/Notifier fueron nombres propuestos, no interfaces que se afirme haber implementado.
 - **Dependen de este módulo:** *Ingreso de resultados* y *Validación por bioquímico*, que solo trabajan sobre muestras `accepted` identificadas por su código.
 
 ## Archivos relacionados
