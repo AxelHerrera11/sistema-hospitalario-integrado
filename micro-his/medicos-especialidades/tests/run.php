@@ -146,7 +146,7 @@ $horarios = new PDO('sqlite::memory:');
 $horarios->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
 $horarios->exec("INSERT INTO doctor_schedules VALUES ('doc-ana', 'sp-neuro', 1, 480, 570, 30, '2026-01-01', '2026-12-01', 'active'), ('doc-ana', 'sp-neuro', 1, 840, 900, 30, '2026-01-01', NULL, 'inactive')");
 $horario = new PdoScheduleProvider($horarios);
-check('doctor_schedules: lunes 08:00-09:30 vigente; martes sin franjas ([]); médico sin horario null', $horario->scheduleFor('doc-ana', '2026-10-19') === [['08:00', '09:30']]
+check('doctor_schedules: lunes 08:00-09:30 vigente; martes sin franjas ([]); médico sin horario null', $horario->scheduleFor('doc-ana', '2026-10-19') === [['08:00', '09:30', 30]]
     && $horario->scheduleFor('doc-ana', '2026-10-20') === [] && $horario->scheduleFor('doc-beto', '2026-10-19') === null);
 check('doctor_schedules: fuera de vigencia (valid_to exclusivo) y horario inactivo no cuentan', $horario->scheduleFor('doc-ana', '2026-12-01') === null);
 

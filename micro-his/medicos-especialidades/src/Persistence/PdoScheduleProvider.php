@@ -9,7 +9,7 @@ use PDO;
 
 /**
  * Horario semanal leído de `doctor_schedules` (migración 000900, mantenida por ASII-09). Solo lectura.
- * Las franjas se parten en bloques fijos de `SlotPlanner`: `slot_minutes` por horario queda pendiente (issue #207).
+ * Cada franja informa su `slot_minutes`, con el que `SlotPlanner` parte el horario en bloques.
  */
 final class PdoScheduleProvider implements DoctorScheduleProvider
 {
@@ -24,8 +24,8 @@ final class PdoScheduleProvider implements DoctorScheduleProvider
             return null;
         }
         $weekday = (int) date('N', strtotime($date));
-        $windows = $this->rows("SELECT start_minute, end_minute FROM doctor_schedules WHERE $vigente AND weekday = ? ORDER BY start_minute", [$doctorId, $date, $date, $weekday]);
-        return array_map(static fn (array $w): array => [self::clock((int) $w['start_minute']), self::clock((int) $w['end_minute'])], $windows);
+        $windows = $this->rows("SELECT start_minute, end_minute, slot_minutes FROM doctor_schedules WHERE $vigente AND weekday = ? ORDER BY start_minute", [$doctorId, $date, $date, $weekday]);
+        return array_map(static fn (array $w): array => [self::clock((int) $w['start_minute']), self::clock((int) $w['end_minute']), (int) $w['slot_minutes']], $windows);
     }
 
     private static function clock(int $minute): string

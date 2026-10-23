@@ -11,18 +11,22 @@ final class SlotPlanner
      * Un bloque [t, t + minutos) queda libre solo si ningún intervalo ocupado [inicio, fin) lo solapa,
      * aunque la cita no empiece justo en la rejilla (D-02).
      *
-     * @param list<array{0: string, 1: string}> $windows
+     * Cada franja puede traer su propio tamaño de bloque (`slot_minutes` del horario); sin él se usa `$minutes`.
+     *
+     * @param list<array{0: string, 1: string, 2?: int}> $windows
      * @param list<array{0: string, 1: string}> $busy
      * @return list<string>
      */
     public function freeSlots(array $windows, array $busy, int $minutes = 30): array
     {
-        $minutes > 0 || throw new \InvalidArgumentException('SLOT_MINUTES_MUST_BE_POSITIVE');
         $occupied = array_map(static fn (array $b): array => [self::minute($b[0]), self::minute($b[1])], $busy);
         $free = [];
-        foreach ($windows as [$start, $end]) {
-            for ($t = self::minute($start); $t + $minutes <= self::minute($end); $t += $minutes) {
-                $taken = array_filter($occupied, static fn (array $b): bool => $b[0] < $t + $minutes && $t < $b[1]);
+        foreach ($windows as $window) {
+            [$start, $end] = $window;
+            $block = $window[2] ?? $minutes;
+            $block > 0 || throw new \InvalidArgumentException('SLOT_MINUTES_MUST_BE_POSITIVE');
+            for ($t = self::minute($start); $t + $block <= self::minute($end); $t += $block) {
+                $taken = array_filter($occupied, static fn (array $b): bool => $b[0] < $t + $block && $t < $b[1]);
                 $taken === [] && $free[] = sprintf('%02d:%02d', intdiv($t, 60), $t % 60);
             }
         }
