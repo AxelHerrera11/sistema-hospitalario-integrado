@@ -98,7 +98,7 @@ $nota = $client->registerNote('ep1', ...array_values(SOAP));
 $client->associateDiagnosis($nota, 'J18.9', 'primary');
 $leida = (new SoapNoteApiClient(new KernelTransport($api), 'enf.ruiz'))->note($nota);
 check('cliente: registra, asocia J18.9 y enfermería con notas_soap.ver lee secciones y diagnósticos', $leida['sections']['plan'] === 'Amoxicilina' && $leida['diagnoses'] === [['code' => 'J18.9', 'type' => 'primary']]);
-check('seguridad: lectura con permiso pero sin asignación activa -> 403 NOT_TREATING_PHYSICIAN', $status(send($api, 'GET', "/api/v1/soap-notes/$nota", 'dr.perez')) === '403 NOT_TREATING_PHYSICIAN');
+check('seguridad: lectura con permiso pero sin asignación activa -> 404 NOTE_NOT_FOUND (no revela que la nota existe)', $status(send($api, 'GET', "/api/v1/soap-notes/$nota", 'dr.perez')) === '404 NOTE_NOT_FOUND');
 try {
     $client->associateDiagnosis($nota, 'J18.9', 'secondary');
     check('cliente: código repetido -> SoapNoteApiError 409 con código y trace_id del servidor', false);
