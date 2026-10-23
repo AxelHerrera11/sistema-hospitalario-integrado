@@ -30,6 +30,7 @@ export const NAVIGATION = [
     { label: 'Pacientes', to: '/patients', permission: ROUTE_PERMISSIONS.patients },
     { label: 'Salas y camas', to: '/wards', permission: ROUTE_PERMISSIONS.wards },
     { label: 'Medicamentos', to: '/medicamentos', permission: ROUTE_PERMISSIONS.medicamentos },
+    { label: 'Traslados y altas', to: '/traslados', permission: ROUTE_PERMISSIONS.traslados },
     { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
     { label: 'Admisión y camas', to: null, permission: 'admision.ver', soon: true },
