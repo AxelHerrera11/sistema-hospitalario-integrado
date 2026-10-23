@@ -49,23 +49,43 @@ final class CatalogLaravelIntegrationTest extends TestCase
         $this->assertInstanceOf(PdoBedRepository::class, $beds);
 
         $wardCode = 'INTEGRATION-'.Str::uuid();
+        $bedCode = 'BED-'.Str::uuid();
         $ward = $catalog->createWard([
             'code' => $wardCode,
             'name' => 'Ward de prueba',
             'location' => 'Entorno de pruebas',
         ]);
         $bed = $catalog->createBed($wardCode, [
-            'code' => 'BED-'.Str::uuid(),
+            'code' => $bedCode,
+            'type' => 'standard',
+        ]);
+        $otherWardCode = 'INTEGRATION-'.Str::uuid();
+        $otherBedCode = 'BED-'.Str::uuid();
+        $otherWard = $catalog->createWard([
+            'code' => $otherWardCode,
+            'name' => 'Otra ward de prueba',
+            'location' => 'Entorno de pruebas',
+        ]);
+        $otherBed = $catalog->createBed($otherWardCode, [
+            'code' => $otherBedCode,
             'type' => 'standard',
         ]);
 
         $this->assertNotNull($ward->id);
         $this->assertNotNull($bed->id);
+        $this->assertNotNull($otherWard->id);
+        $this->assertNotNull($otherBed->id);
         $this->assertSame($ward->id, $bed->wardId);
+        $this->assertSame($otherWard->id, $otherBed->wardId);
         $this->assertContains($ward->id, array_map(
             static fn (Ward $listed): ?string => $listed->id,
             $catalog->listWards(),
         ));
+        $wardBeds = $catalog->listBedsForWard((string) $ward->id);
+        $this->assertCount(1, $wardBeds);
+        $this->assertSame($bed->id, $wardBeds[0]->id);
+        $this->assertSame($ward->id, $wardBeds[0]->wardId);
+        $this->assertNotSame($otherBed->id, $wardBeds[0]->id);
         $this->assertSame('available', $bed->status);
         $bedQuery = $this->pdo->prepare('SELECT ward_id FROM beds WHERE bed_id = :bed_id');
         $bedQuery->execute([':bed_id' => $bed->id]);
@@ -76,8 +96,15 @@ final class CatalogLaravelIntegrationTest extends TestCase
         );
 
         $this->pdo->rollBack();
-        $wardQuery = $this->pdo->prepare('SELECT count(*) FROM wards WHERE code = :code');
-        $wardQuery->execute([':code' => $wardCode]);
-        $this->assertSame(0, (int) $wardQuery->fetchColumn());
+        foreach ([$wardCode, $otherWardCode] as $code) {
+            $wardQuery = $this->pdo->prepare('SELECT count(*) FROM wards WHERE code = :code');
+            $wardQuery->execute([':code' => $code]);
+            $this->assertSame(0, (int) $wardQuery->fetchColumn());
+        }
+        foreach ([$bedCode, $otherBedCode] as $code) {
+            $bedQuery = $this->pdo->prepare('SELECT count(*) FROM beds WHERE code = :code');
+            $bedQuery->execute([':code' => $code]);
+            $this->assertSame(0, (int) $bedQuery->fetchColumn());
+        }
     }
 }

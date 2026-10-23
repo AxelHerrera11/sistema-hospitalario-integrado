@@ -17,6 +17,15 @@ final class CatalogService
         return $this->wards->listAll();
     }
 
+    public function listBedsForWard(string $wardId): array
+    {
+        if ($this->wards->findById($wardId) === null) {
+            throw new CatalogOperationFailure('WARD_NOT_FOUND', 'La ward solicitada no existe.');
+        }
+
+        return $this->beds->listByWardId($wardId);
+    }
+
     public function createWard(array $data): Ward
     {
         try {

@@ -32,6 +32,18 @@ final class PdoWardRepository implements WardRepository
         }
     }
 
+    public function findById(string $id): ?Ward
+    {
+        try {
+            $s = $this->pdo()->prepare('SELECT ward_id, code, name, location, status FROM wards WHERE ward_id = :id');
+            $s->execute([':id' => $id]);
+            $r = $s->fetch(PDO::FETCH_ASSOC);
+            return $r ? new Ward((string) $r['ward_id'], (string) $r['code'], (string) $r['name'], (string) $r['location'], (string) $r['status']) : null;
+        } catch (PDOException $e) {
+            throw new PersistenceFailure('Error al consultar ward.', 0, $e);
+        }
+    }
+
     public function findByCode(string $code): ?Ward
     {
         try {

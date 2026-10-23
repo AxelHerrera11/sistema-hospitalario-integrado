@@ -38,7 +38,12 @@ final class WardCatalogEndpointTest extends RbacTestCase
         }
 
         $this->repository = new FakeWardCatalogRepository([
-            new Ward('ward-1', 'UCI', 'Cuidados intensivos', 'Piso 2', 'active'),
+            new Ward('c6a30000-0000-4000-8000-000000000001', 'UCI', 'Cuidados intensivos', 'Piso 2', 'active'),
+            new Ward('c6a30000-0000-4000-8000-000000000002', 'PED', 'Pediatría', 'Piso 1', 'active'),
+        ], [
+            new Bed('bed-1', 'c6a30000-0000-4000-8000-000000000001', 'UCI-01', 'standard', 'available'),
+            new Bed('bed-2', 'c6a30000-0000-4000-8000-000000000001', 'UCI-02', 'isolation', 'maintenance'),
+            new Bed('bed-3', 'c6a30000-0000-4000-8000-000000000002', 'PED-01', 'standard', 'available'),
         ]);
         $this->app->instance(
             CatalogService::class,
@@ -53,6 +58,7 @@ final class WardCatalogEndpointTest extends RbacTestCase
     {
         $route = Route::getRoutes()->match(Request::create('/api/v1/wards', 'GET'));
 
+        $this->assertContains('api', $route->gatherMiddleware());
         $this->assertContains('tenant', $route->gatherMiddleware());
         $this->assertContains('jwt.auth', $route->gatherMiddleware());
         $this->assertContains('rbac:camas.ver', $route->gatherMiddleware());
@@ -60,15 +66,89 @@ final class WardCatalogEndpointTest extends RbacTestCase
         $response = $this->getJson('/api/v1/wards', ['X-Request-ID' => 'asii06-test-1']);
 
         $response->assertOk()
-            ->assertJsonPath('data.0.ward_id', 'ward-1')
+            ->assertJsonPath('data.0.ward_id', 'c6a30000-0000-4000-8000-000000000001')
             ->assertJsonPath('data.0.code', 'UCI')
             ->assertJsonPath('data.0.status', 'active')
-            ->assertJsonPath('meta.count', 1)
+            ->assertJsonPath('meta.count', 2)
             ->assertJsonPath('meta.request_id', 'asii06-test-1');
         $this->assertSame(
             ['ward_id', 'code', 'name', 'location', 'status'],
             array_keys($response->json('data.0')),
         );
+    }
+
+    public function test_ward_beds_route_returns_only_beds_of_the_requested_ward(): void
+    {
+        $route = Route::getRoutes()->match(Request::create(
+            '/api/v1/wards/c6a30000-0000-4000-8000-000000000001/beds',
+            'GET',
+        ));
+
+        $this->assertContains('api', $route->gatherMiddleware());
+        $this->assertContains('tenant', $route->gatherMiddleware());
+        $this->assertContains('jwt.auth', $route->gatherMiddleware());
+        $this->assertContains('rbac:camas.ver', $route->gatherMiddleware());
+
+        $response = $this->getJson('/api/v1/wards/c6a30000-0000-4000-8000-000000000001/beds');
+
+        $response->assertOk()
+            ->assertJsonPath('meta.ward_id', 'c6a30000-0000-4000-8000-000000000001')
+            ->assertJsonPath('meta.count', 2)
+            ->assertJsonCount(2, 'data');
+        foreach ($response->json('data') as $bed) {
+            $this->assertSame('c6a30000-0000-4000-8000-000000000001', $bed['ward_id']);
+        }
+        $this->assertSame(
+            ['bed_id', 'ward_id', 'code', 'type', 'status'],
+            array_keys($response->json('data.0')),
+        );
+        $this->assertSame(['UCI-01', 'UCI-02'], array_column($response->json('data'), 'code'));
+    }
+
+    public function test_existing_ward_without_beds_returns_empty_list(): void
+    {
+        $this->repository->wards[] = new Ward(
+            'c6a30000-0000-4000-8000-000000000003',
+            'OBS',
+            'Observación',
+            'Piso 3',
+            'active',
+        );
+
+        $this->getJson('/api/v1/wards/c6a30000-0000-4000-8000-000000000003/beds')
+            ->assertOk()
+            ->assertJsonPath('data', [])
+            ->assertJsonPath('meta.count', 0);
+    }
+
+    public function test_missing_or_invalid_ward_identifier_returns_not_found(): void
+    {
+        $this->getJson('/api/v1/wards/c6a30000-0000-4000-8000-000000000099/beds')
+            ->assertNotFound()
+            ->assertJsonPath('error.code', 'WARD_NOT_FOUND');
+
+        $this->getJson('/api/v1/wards/not-a-uuid/beds')
+            ->assertNotFound()
+            ->assertJsonPath('error.code', 'WARD_NOT_FOUND');
+    }
+
+    public function test_user_without_bed_catalog_permission_is_denied(): void
+    {
+        TestIdentity::$user = new GenericUser(['id' => 'other-user']);
+
+        $this->getJson('/api/v1/wards/c6a30000-0000-4000-8000-000000000001/beds')
+            ->assertForbidden()
+            ->assertJsonPath('code', 'RBAC_DENIED');
+    }
+
+    public function test_bed_repository_failure_returns_safe_unavailable_response(): void
+    {
+        $this->repository->fail = true;
+
+        $this->getJson('/api/v1/wards/c6a30000-0000-4000-8000-000000000001/beds')
+            ->assertStatus(503)
+            ->assertJsonPath('error.code', 'BED_CATALOG_UNAVAILABLE')
+            ->assertDontSee('private persistence detail');
     }
 
     public function test_empty_catalog_returns_an_empty_list(): void
@@ -126,7 +206,7 @@ final class FakeWardCatalogRepository implements WardRepository, BedRepository
 {
     public bool $fail = false;
 
-    public function __construct(public array $wards)
+    public function __construct(public array $wards, public array $beds = [])
     {
     }
 
@@ -144,6 +224,21 @@ final class FakeWardCatalogRepository implements WardRepository, BedRepository
         return null;
     }
 
+    public function findById(string $id): ?Ward
+    {
+        if ($this->fail) {
+            throw new PersistenceFailure('private persistence detail');
+        }
+
+        foreach ($this->wards as $ward) {
+            if ($ward->id === $id) {
+                return $ward;
+            }
+        }
+
+        return null;
+    }
+
     public function insertWard(Ward $ward): Ward
     {
         throw new \LogicException('Not used by the read-only endpoint test.');
@@ -152,5 +247,17 @@ final class FakeWardCatalogRepository implements WardRepository, BedRepository
     public function insertBed(Bed $bed): Bed
     {
         throw new \LogicException('Not used by the read-only endpoint test.');
+    }
+
+    public function listByWardId(string $wardId): array
+    {
+        if ($this->fail) {
+            throw new PersistenceFailure('private persistence detail');
+        }
+
+        return array_values(array_filter(
+            $this->beds,
+            static fn (Bed $bed): bool => $bed->wardId === $wardId,
+        ));
     }
 }
