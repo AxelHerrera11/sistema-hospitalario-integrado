@@ -1,0 +1,17 @@
+{
+  "base": "a3925260",
+  "audit": "f568eb903da31065578838e83fa82926be9f4095",
+  "ui": "6be4848c16e86bd9bc62585de85288c2c8f7dc9c",
+  "gobernanza": "8da19f17",
+  "sha256": {
+    "bootstrap/providers.php": "2991fb9e2841862864f79701c0c9472693ce593d8fe1bd33dec9f5c3f065f566",
+    "app/Rbac/AuditDenials.php": "67dfceceaa0af1d1f54c33844b8fb61120adecfd686614da4b2c5282c27df154",
+    "app/GobernanzaAuditoria/GobernanzaAuditoriaServiceProvider.php": "d678a9c40ec6fc6146148fcb46d8fe39356329b7148cab13c37daa11b4b9d8c8",
+    "tests/Feature/Rbac/GovernanceHttpTest.php": "6a0401fc78e79dd926bfaa6fd59815c0e140939d9b35ada999f1bb5b2e64c6ec",
+    "resources/js/router/guards.js": "6f77879ebadb8f1f329490f8ce230ffd1330f64cc0d85d5c5be2bc2a92871596",
+    "resources/js/router/navigation.js": "9f533b7372a0b8d4044fc30aab2dc9235f838ea7ce7c9d6b43503d836d4dcf80",
+    "resources/js/router/navigation.test.mjs": "e393c1190df1ce83103c56f0ed0dbfc32f667099b937ca0406dba80733a1e996",
+    "resources/js/router/permissions.js": "21084931959dfa09d81b6dc2424f7636c5f840655284a75f1334bca0077deeae",
+    "resources/js/stores/auth.js": "877cec4925d6905a6d19ea13a3562c602ec5926f0d19484f9d89d8d820e9e4c8"
+  }
+}

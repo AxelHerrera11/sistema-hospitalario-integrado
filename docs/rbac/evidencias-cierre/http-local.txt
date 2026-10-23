@@ -1,0 +1,11 @@
+OK login lector: 200
+OK catalogo lector denegado: 403
+OK auditoria lector denegada: 403
+OK login autorizado: 200
+OK catalogo autorizado: 200
+OK consulta denegacion real por HTTP: 200
+OK denegacion preserva resultado y correlacion
+OK token A no accede a B: 403
+OK query no selecciona hospital ajeno: 403
+OK logout: 200
+OK token revocado tras logout: 401
