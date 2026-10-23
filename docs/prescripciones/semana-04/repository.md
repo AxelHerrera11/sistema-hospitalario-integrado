@@ -5,6 +5,10 @@ con el caso de uso.
 
 ## Responsabilidades
 
+- `PrescriptionRepository`: `PROPUESTO`; representa el límite de persistencia
+  previsto y no se declara integrado.
+- `PrescriptionService`: `PROPUESTO`; el caso de uso y sus reglas requieren
+  validación antes de considerarse integrados.
 - Definir el límite de lectura/escritura de prescripciones sin acoplar la
   aplicación a SQL o a una conexión concreta.
 - Ofrecer adaptadores PDO e InMemory con semántica observable equivalente para
@@ -28,3 +32,6 @@ con el caso de uso.
 
 InMemory es un adaptador de prueba, no una alternativa que se seleccione
 silenciosamente ante un fallo de PDO.
+
+La propuesta relacionada está **en revisión en #900**. Este estado no implica
+que sus cambios estén integrados en `develop`.
