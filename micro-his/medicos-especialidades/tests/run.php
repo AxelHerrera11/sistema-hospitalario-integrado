@@ -44,7 +44,7 @@ function pdoApp(bool $storageDown = false): array
     $pdo->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 08:30:00', 'confirmed'), ('doc-ana', '2026-10-19 09:00:00', 'cancelled')");
     $storageDown && $pdo->exec('DROP TABLE local_access_audits');
     $store = new PdoDoctorStore($pdo);
-    return [medicos_router($store, $store, schedule()), $store, fn (): array => $pdo->query('SELECT event FROM local_access_audits')->fetchAll(PDO::FETCH_COLUMN)];
+    return [medicos_router($store, $store, schedule()), $store, fn (): array => array_map(static fn (string $action): string => substr($action, strlen('medicos.')), $pdo->query('SELECT action FROM local_access_audits')->fetchAll(PDO::FETCH_COLUMN))];
 }
 
 /** Adaptador InMemory con los mismos datos; Citas se reemplaza por un doble con la cita confirmada de las 08:30. */
@@ -115,6 +115,16 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     [$router, $repository] = $make(true);
     check($t('error de persistencia: base caída -> 500 y sin perfil a medias'), $status(call($router, 'POST', '/doctors', ALTA)) === '500 DOCTOR_PERSISTENCE_ERROR' && !$repository->licenseExists('COL-1'));
 }
+
+[$router, $store] = pdoApp();
+$nuevo = call($router, 'POST', '/doctors', ALTA)['body']['doctor_profile_id'];
+check('PostgreSQL: el id del perfil nuevo es un uuid v4 (doctor_profile_id es uuid en HOSPITAL)', preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $nuevo) === 1);
+$zonas = new PDO('sqlite::memory:');
+$zonas->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+$zonas->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 14:30:00', 'confirmed'), ('doc-ana', '2026-10-20 05:30:00', 'confirmed')");
+check('PostgreSQL: las citas se leen en la zona del hospital (UTC-6: 14:30Z es 08:30 del 19 y 05:30Z del 20 cae el 19 a las 23:30)',
+    (new PdoDoctorStore($zonas, 'America/Guatemala'))->busySlots('doc-ana', '2026-10-19') === ['08:30', '23:30']
+    && (new PdoDoctorStore($zonas))->busySlots('doc-ana', '2026-10-19') === ['14:30']);
 
 try {
     (new SpecialtyAssignmentPolicy())->assertCanAssociate(new Period('2026-01-01'), [new SpecialtyLink('x', true, new Period('2026-01-01'))], new SpecialtyLink('y', true, new Period('2026-05-01', '2026-06-01')));
