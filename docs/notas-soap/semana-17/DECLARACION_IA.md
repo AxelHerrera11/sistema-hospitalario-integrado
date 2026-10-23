@@ -13,6 +13,6 @@
 - Se registró que los checks de GitHub no arrancan por un problema de facturación de la cuenta, ajeno al código.
 - No se probaron cifrado, expiración de tokens ni otros roles con token real; no hay staging.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el código de #1077 y #1080, la evidencia y este documento antes de aprobarlo.
+**Validación humana:** realizada el 2026-10-23. Josué Fernando Hicho García revisó el código de #1077 y #1080, la evidencia y este documento, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
