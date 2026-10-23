@@ -26,7 +26,17 @@ Las flechas apuntan hacia adentro (Presentation → Application → Domain ← P
 - Los valores siempre van como parámetros de `prepare()` y `execute([...])`.
 - Los nombres de columna del `INSERT` salen de `VitalSigns::LIMITS`, una lista blanca validada en el dominio, nunca de la entrada.
 - `PDO::ERRMODE_EXCEPTION` está activo. Un `PDOException` dentro de la transacción hace `rollBack()` y se traduce a `500 VITAL_SIGN_PERSISTENCE_ERROR` sin notificar.
-- `database/schema.sql` es un subconjunto de la migración hospital `000401` adaptado a SQLite. Los `CHECK` de plausibilidad se replican en `VitalSigns`.
+- `database/schema.sql` es un **esquema local simplificado para SQLite, no un subconjunto de la migración `000401`**. Los `CHECK` de plausibilidad sí se replican en `VitalSigns`. Las divergencias con el esquema HOSPITAL quedan como pendientes de integración (adaptador PostgreSQL):
+
+| Tema | Esquema local (SQLite) | HOSPITAL (migraciones `000200` y `000401`) |
+|---|---|---|
+| Asignación del médico | `care_assignments.user_ref_id`, estados `active`/`ended` | `doctor_profile_id` → `doctor_profiles.local_user_ref_id`, estados `active`/`closed`/`revoked` |
+| Fecha de nacimiento | Copia en `care_episodes.patient_birth_date` (supuesto declarado) | `local_patients.birth_date`; el episodio también admite `cancelled` |
+| Autor de la medición | `vital_signs.recorded_by` | `recorded_by_user_ref_id` |
+| Expediente | El `INSERT` no envía `medical_record_id` | `medical_record_id` es `NOT NULL` |
+| Estado inicial | `validated` por defecto | `draft` por defecto; `validated` exige `validated_at` |
+| Tipos | ids `TEXT`, signos `REAL`, `measured_at` `TEXT` | ids `uuid`; FC, FR y presión `integer`; `measured_at` `timestamptz` |
+| Auditoría | `local_access_audits` mínima | No existe en `develop` (slice H8) |
 
 ## Dependencias externas y supuestos
 
