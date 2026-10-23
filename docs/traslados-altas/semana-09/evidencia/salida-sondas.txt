@@ -1,0 +1,12 @@
+# node sondas-ux.mjs http://127.0.0.1:8793 — 21/10/2026, Chrome 155 sin interfaz, PostgreSQL 17.10 desechable (demo.sql)
+CUMPLE  S1 Teclado: actor → estancia → Consultar → actor → estancia → BUTTON
+NO CUMPLE  S2 Error de actor faltante lleva el foco al campo → foco en BUTTON; mensaje «La estancia no existe.»
+NO CUMPLE  S3 La situación se anuncia o recibe el foco → foco en BUTTON; anuncio «»
+NO CUMPLE  S4 Campo con error marcado aria-invalid o mensaje con role=alert → aria-invalid=null; role=null
+NO CUMPLE  S5 Cama y motivo declarados obligatorios → cama:false motivo:false
+CUMPLE  S6 Contraste ≥ 4,5:1 en ayuda, error y botones → {"ayuda":8.81,"error":6.47,"primario":6.7,"secundario":11.89}
+NO CUMPLE  S7 La cama destino se elige de opciones, no se teclea un uuid → INPUT libre
+NO CUMPLE  S8 El éxito muestra la nueva estancia y la hora de la operación → «Traslado confirmado. La cama de origen quedó liberada.»
+NO CUMPLE  S9 El formulario se limpia tras una operación confirmada → motivo residual «Requiere aislamiento»
+CUMPLE  S10 El título de la página identifica el contenido → «Traslados y altas (prototipo)»
+10 sondas: 3 cumplen, 7 no cumplen

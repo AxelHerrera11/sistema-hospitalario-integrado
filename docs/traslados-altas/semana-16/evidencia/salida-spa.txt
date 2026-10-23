@@ -1,0 +1,17 @@
+# 21/10/2026 — SPA compilada (npm run build) servida por php artisan serve; login real con JWT de CENTRAL his_central_smoke;
+# HOSPITAL his_hospital_traslados_e2e16_test (PostgreSQL 17.10) con las referencias locales de enfermera y médico sembradas a mano.
+
+## node spa-traslados.mjs … pendiente   (config/rbac.php tal como está integrado)
+PASS  permiso pending: la página avisa que falta traslados.ver y no muestra el formulario
+1/1 comprobaciones
+
+## node spa-traslados.mjs … activada    (ACTIVACIÓN SIMULADA LOCAL, restaurada con git checkout; no se versionó)
+PASS  enfermería ve «Trasladar» y no «Dar de alta» (roles propuestos)
+PASS  traslado desde la SPA → confirmado con la nueva estancia
+PASS  alta desde la SPA a 375 px por el médico → confirmada
+PASS  tras el alta, episodio cerrado y sin acciones
+PASS  sin desplazamiento horizontal a 375 px
+5/5 comprobaciones
+# HOSPITAL después: A cerrada (Enfermera de demostración), B cerrada (Enfermera de prueba = usuario del JWT); care_episodes: closed.
+# Nota: la primera ejecución de la fase «activada» falló por selectores ambiguos del script (tomaba el formulario de consulta);
+# se corrigió el script, no la aplicación.
