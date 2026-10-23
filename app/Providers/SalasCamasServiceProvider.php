@@ -45,6 +45,8 @@ final class SalasCamasServiceProvider extends ServiceProvider
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
             Route::get('wards', [WardCatalogController::class, 'index'])
                 ->middleware('rbac:camas.ver');
+            Route::get('wards/{ward}/beds', [WardCatalogController::class, 'beds'])
+                ->middleware('rbac:camas.ver');
         });
     }
 

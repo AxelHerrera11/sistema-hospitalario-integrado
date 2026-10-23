@@ -23,6 +23,14 @@ final class FakeCatalogRepository implements WardRepository, BedRepository
         if ($this->fail) throw new PersistenceFailure('fake failure');
         return $this->wards[$code] ?? null;
     }
+    public function findById(string $id): ?Ward
+    {
+        if ($this->fail) throw new PersistenceFailure('fake failure');
+        foreach ($this->wards as $ward) {
+            if ($ward->id === $id) return $ward;
+        }
+        return null;
+    }
     public function insertWard(Ward $item): Ward
     {
         if ($this->fail) throw new PersistenceFailure('fake failure');
@@ -37,6 +45,11 @@ final class FakeCatalogRepository implements WardRepository, BedRepository
         $this->beds[] = $saved;
         return $saved;
     }
+    public function listByWardId(string $wardId): array
+    {
+        if ($this->fail) throw new PersistenceFailure('fake failure');
+        return array_values(array_filter($this->beds, static fn (Bed $bed): bool => $bed->wardId === $wardId));
+    }
 }
 
 $check = static function (bool $ok, string $message): void {
@@ -48,6 +61,19 @@ $ward = $controller->createWard(['code' => 'W-1', 'name' => 'Pediatría', 'locat
 $check($ward['status'] === 201, 'ward creation failed');
 $bed = $controller->createBed('W-1', ['code' => 'B-1', 'type' => 'standard']);
 $check($bed['status'] === 201 && $bed['body']['item']->status === 'available', 'bed creation/default status failed');
+$listedBeds = (new CatalogService($repo, $repo))->listBedsForWard($ward['body']['item']->id);
+$check(count($listedBeds) === 1 && $listedBeds[0]->id === $bed['body']['item']->id, 'ward bed listing failed');
+$emptyWard = new Ward('ward-2', 'W-2', 'Observación', 'Piso 3');
+$repo->wards[$emptyWard->code] = $emptyWard;
+$check((new CatalogService($repo, $repo))->listBedsForWard('ward-2') === [], 'empty ward bed listing failed');
+$notFound = false;
+try {
+    (new CatalogService($repo, $repo))->listBedsForWard('ward-missing');
+} catch (\MicroHis\SalasCamas\Application\CatalogOperationFailure $failure) {
+    $notFound = $failure->errorCode === 'WARD_NOT_FOUND';
+}
+$check($notFound, 'missing ward was not reported');
+echo "PASS consulta de camas por ward (incluye ward sin camas)\n";
 echo "PASS camino feliz (sala, cama y estado inicial)\n";
 
 $invalid = $controller->createBed('W-1', ['code' => 'B-2', 'type' => 'standard', 'status' => 'broken']);

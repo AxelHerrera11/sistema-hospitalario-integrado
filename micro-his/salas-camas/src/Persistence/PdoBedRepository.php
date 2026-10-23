@@ -13,6 +13,28 @@ final class PdoBedRepository implements BedRepository
 {
     public function __construct(private readonly PDO|Closure $connection) {}
 
+    public function listByWardId(string $wardId): array
+    {
+        try {
+            $s = $this->pdo()->prepare(
+                'SELECT bed_id, ward_id, code, type, status FROM beds WHERE ward_id = :ward_id ORDER BY code, bed_id',
+            );
+            $s->execute([':ward_id' => $wardId]);
+            return array_map(
+                static fn (array $r): Bed => new Bed(
+                    (string) $r['bed_id'],
+                    (string) $r['ward_id'],
+                    (string) $r['code'],
+                    (string) $r['type'],
+                    (string) $r['status'],
+                ),
+                $s->fetchAll(PDO::FETCH_ASSOC),
+            );
+        } catch (PDOException $e) {
+            throw new PersistenceFailure('Error al consultar camas de la ward.', 0, $e);
+        }
+    }
+
     public function insertBed(Bed $bed): Bed
     {
         try {
