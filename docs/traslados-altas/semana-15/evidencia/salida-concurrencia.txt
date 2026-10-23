@@ -1,0 +1,37 @@
+# Después de la corrección (develop 159de67): php micro-his/traslados-altas/tests/concurrencia.php 10 — 21/10/2026, PostgreSQL 17.10
+PASS  C1 ronda 1: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [RechazoConfirmado(ESTANCIA_NO_VIGENTE) + ExitoConfirmado]
+PASS  C2 ronda 1: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + RechazoConfirmado(DESTINO_OCUPADO)]
+PASS  C1 ronda 2: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 2: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 3: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 3: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 4: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 4: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 5: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 5: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + RechazoConfirmado(DESTINO_OCUPADO)]
+PASS  C1 ronda 6: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 6: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 7: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [RechazoConfirmado(ESTANCIA_NO_VIGENTE) + ExitoConfirmado]
+PASS  C2 ronda 7: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + RechazoConfirmado(DESTINO_OCUPADO)]
+PASS  C1 ronda 8: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [RechazoConfirmado(ESTANCIA_NO_VIGENTE) + ExitoConfirmado]
+PASS  C2 ronda 8: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + RechazoConfirmado(DESTINO_OCUPADO)]
+PASS  C1 ronda 9: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 9: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 10: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [RechazoConfirmado(ESTANCIA_NO_VIGENTE) + ExitoConfirmado]
+PASS  C2 ronda 10: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + RechazoConfirmado(DESTINO_OCUPADO)]
+
+OK: 20 verificaciones aprobadas
+
+# Antes de la corrección (rama de #895, commit de la prueba): php micro-his/traslados-altas/tests/concurrencia.php 5 — 21/10/2026
+PASS  C1 ronda 1: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 1: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 2: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [RechazoConfirmado(ESTANCIA_NO_VIGENTE) + ExitoConfirmado]
+PASS  C2 ronda 2: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [RechazoConfirmado(DESTINO_OCUPADO) + ExitoConfirmado]
+PASS  C1 ronda 3: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+FAIL  C2 ronda 3: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + FalloConfirmado]
+PASS  C1 ronda 4: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [RechazoConfirmado(ESTANCIA_NO_VIGENTE) + ExitoConfirmado]
+FAIL  C2 ronda 4: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + FalloConfirmado]
+PASS  C1 ronda 5: misma estancia a dos camas → un éxito y ESTANCIA_NO_VIGENTE; una sola estancia abierta [ExitoConfirmado + RechazoConfirmado(ESTANCIA_NO_VIGENTE)]
+PASS  C2 ronda 5: dos episodios a la misma cama → un éxito y DESTINO_OCUPADO; un solo ocupante [ExitoConfirmado + RechazoConfirmado(DESTINO_OCUPADO)]
+
+ERROR: 2 de 10 verificaciones fallaron

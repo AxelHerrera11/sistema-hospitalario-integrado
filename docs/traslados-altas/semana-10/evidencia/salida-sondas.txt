@@ -1,0 +1,12 @@
+# node sondas-ux.mjs http://127.0.0.1:8794 — 21/10/2026, después de #866 (Chrome 155 sin interfaz, PostgreSQL 17.10 desechable)
+CUMPLE  S1 Teclado: actor → estancia → Consultar → actor → estancia → BUTTON
+CUMPLE  S2 Error de actor faltante lleva el foco al campo → foco en actor; mensaje «Indique una referencia de usuario válida.»
+CUMPLE  S3 La situación se anuncia o recibe el foco → foco en titulo-estado; anuncio «Situación actualizada.»
+CUMPLE  S4 Campo con error marcado aria-invalid o mensaje con role=alert → aria-invalid=true; role=alert
+CUMPLE  S5 Cama y motivo declarados obligatorios → cama:true motivo:true
+CUMPLE  S6 Contraste ≥ 4,5:1 en ayuda, error y botones → {"ayuda":8.81,"error":6.47,"primario":6.7,"secundario":11.89}
+NO CUMPLE  S7 La cama destino se elige de opciones, no se teclea un uuid → INPUT libre
+CUMPLE  S8 El éxito muestra la nueva estancia y la hora de la operación → «Traslado confirmado. La cama de origen quedó liberada. Nueva estancia: 2bf84b2c-ff9d-45fe-af1f-8ea208186ea0. Hora: 22:05.»
+CUMPLE  S9 El formulario se limpia tras una operación confirmada → motivo residual «»
+CUMPLE  S10 El título de la página identifica el contenido → «Traslados y altas (prototipo)»
+10 sondas: 9 cumplen, 1 no cumplen

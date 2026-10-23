@@ -24,10 +24,9 @@ use MicroHis\Rbac\Application\Authorize;
 /**
  * Conecta micro-his/gobernanza-auditoria con Laravel.
  *
- * NO está registrado en bootstrap/providers.php (archivo compartido). Para
- * activarlo se requiere, en este orden: RbacServiceProvider (develop), las
- * migraciones de audit_log en CENTRAL y el permiso auditoria.ver aprobado en
- * config/rbac.php. Ver docs/gobernanza-auditoria/semana-05/contrato-api.md.
+ * Registrado después de RBAC y Tenants en bootstrap/providers.php. Requiere
+ * las migraciones de audit_log en CENTRAL y auditoria.ver de config/rbac.php.
+ * Ver docs/gobernanza-auditoria/semana-05/contrato-api.md.
  */
 final class GobernanzaAuditoriaServiceProvider extends ServiceProvider
 {
