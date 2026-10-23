@@ -57,10 +57,10 @@ final class ReceiveSpecimen
                 'item_id' => $input['item_id'], 'actor_id' => $actor,
                 'local_patient_id' => $order['local_patient_id'] ?? null, 'care_episode_id' => $order['care_episode_id'] ?? null,
                 'request_key' => $input['request_key'], 'request_hash' => $hash,
-                'volume' => $input['volume'], 'temperature' => $input['temperature'],
+                'volume' => (float) $input['volume'], 'temperature' => (float) $input['temperature'],
                 'status' => $reason ? 'rejected' : 'accepted', 'reason' => $reason,
                 'code' => $reason ? null : ($this->generate ? ($this->generate)() : SpecimenCode::generate()),
-                'received_at' => $now->format(DATE_ATOM),
+                'received_at' => $now->setTimezone(new \DateTimeZone('UTC'))->format(DATE_ATOM),
             ];
             $this->repository->save($sample);
 
