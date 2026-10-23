@@ -17,8 +17,6 @@ use MicroHis\Prescripciones\Domain\PrescriptionRuleViolation;
 use MicroHis\Prescripciones\Domain\PrescriptionStatus;
 use MicroHis\Prescripciones\Domain\Severity;
 
-require_once __DIR__.'/../bootstrap.php';
-
 // --- Dominio base (tests existentes) ---
 
 // La severidad replica los valores admitidos por la columna allergies.severity.
@@ -194,5 +192,3 @@ check('prescripción: guarda conflictos al firmar', $signedMild->allergyConflict
 // Assessment confirma que conflicto no grave admite excepción.
 $allowedToSign = (new AllergyAssessment)->assess($mildConflicts);
 check('prescripción: assessment dice que conflicto no grave admite excepción', $allowedToSign['exceptionAllowed'] === true);
-
-finish();
