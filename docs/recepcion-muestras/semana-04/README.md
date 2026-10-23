@@ -25,3 +25,5 @@ Del respaldo de S04 se reutilizó el análisis conceptual de responsabilidades; 
 [Fuente MVC](./fuentes/mvc.mmd) · [Diagrama](./mvc.svg) · [Evidencia](./EVIDENCIA.md) · [IA](./DECLARACION_IA.md).
 
 SD-REC-01: fixtures y umbrales requieren validación clínica. El esquema de la demo es didáctico y no sustituye las FK clínicas de S05 ni acredita una integración externa real.
+
+Esta entrega incorpora la alineación de diagramas de S01 con el MVC implementado. Semana 1 ya fue mergeada en #7; #688 permanece cerrado por indicación de Josué y sus correcciones documentales se revisan aquí.
