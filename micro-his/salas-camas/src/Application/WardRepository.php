@@ -7,6 +7,7 @@ use MicroHis\SalasCamas\Domain\Ward;
 
 interface WardRepository
 {
+    public function listAll(): array;
     public function findByCode(string $code): ?Ward;
     public function insertWard(Ward $ward): Ward;
 }

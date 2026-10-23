@@ -12,6 +12,11 @@ final class CatalogService
         private readonly BedRepository $beds
     ) {}
 
+    public function listWards(): array
+    {
+        return $this->wards->listAll();
+    }
+
     public function createWard(array $data): Ward
     {
         try {
