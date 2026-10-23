@@ -57,5 +57,8 @@ check('camino feliz: alta válida llega a createDoctor()', $register->execute('a
 $planner = new SlotPlanner();
 check('franjas: tamaño 0 se rechaza en vez de entrar en bucle', fails(fn () => $planner->freeSlots([['08:00', '09:00']], [], 0), InvalidArgumentException::class));
 check('franjas: tamaño negativo se rechaza', fails(fn () => $planner->freeSlots([['08:00', '09:00']], [], -30), InvalidArgumentException::class));
-check('franjas: 30 minutos sigue funcionando', $planner->freeSlots([['08:00', '09:00']], ['08:30']) === ['08:00']);
+check('franjas: 30 minutos sigue funcionando', $planner->freeSlots([['08:00', '09:00']], [['08:30', '09:00']]) === ['08:00']);
+check('D-02: una cita 08:15-08:45 bloquea 08:00 y 08:30 aunque empiece fuera de la rejilla', $planner->freeSlots([['08:00', '09:30']], [['08:15', '08:45']]) === ['09:00']);
+check('D-02: una cita larga 08:00-09:30 bloquea todos los bloques que cubre; 09:30 queda libre', $planner->freeSlots([['08:00', '10:00']], [['08:00', '09:30']]) === ['09:30']);
+check('D-02: intervalo semiabierto: una cita que termina a las 08:30 no bloquea 08:30', $planner->freeSlots([['08:00', '09:00']], [['07:30', '08:30']]) === ['08:30']);
 echo 'Todas las pruebas pasaron.' . PHP_EOL;

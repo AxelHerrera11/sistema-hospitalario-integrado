@@ -42,7 +42,7 @@ function pdoApp(bool $storageDown = false): array
         $pdo->prepare("INSERT INTO doctor_profiles VALUES (?, ?, ?, 'active', '2026-01-01', ?)")->execute([$id, $user, $license, $validTo]);
         $pdo->prepare("INSERT INTO doctor_specialties VALUES (?, 'sp-neuro', 1, '2026-01-01', NULL, 'active')")->execute([$id]);
     }
-    $pdo->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 08:30:00', 'confirmed'), ('doc-ana', '2026-10-19 09:00:00', 'cancelled')");
+    $pdo->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 08:30:00', '2026-10-19 09:00:00', 'confirmed'), ('doc-ana', '2026-10-19 09:00:00', '2026-10-19 09:30:00', 'cancelled')");
     $storageDown && $pdo->exec('DROP TABLE local_access_audits');
     $store = new PdoDoctorStore($pdo);
     return [medicos_router($store, $store, schedule()), $store, fn (): array => array_map(static fn (string $action): string => substr($action, strlen('medicos.')), $pdo->query('SELECT action FROM local_access_audits')->fetchAll(PDO::FETCH_COLUMN))];
@@ -57,7 +57,7 @@ function memoryApp(bool $storageDown = false): array
         $links[$id] = [new SpecialtyLink('sp-neuro', true, new Period('2026-01-01'))];
     }
     $repository = new InMemoryDoctorRepository(SPECIALTIES, $profiles, $links, $storageDown);
-    $appointments = new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => ['08:30']]]);
+    $appointments = new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => [['08:30', '09:00']]]]);
     return [medicos_router($repository, $appointments, schedule()), $repository, fn (): array => array_column($repository->audits, 'event')];
 }
 
@@ -122,10 +122,25 @@ $nuevo = call($router, 'POST', '/doctors', ALTA)['body']['doctor_profile_id'];
 check('PostgreSQL: el id del perfil nuevo es un uuid v4 (doctor_profile_id es uuid en HOSPITAL)', preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $nuevo) === 1);
 $zonas = new PDO('sqlite::memory:');
 $zonas->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
-$zonas->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 14:30:00', 'confirmed'), ('doc-ana', '2026-10-20 05:30:00', 'confirmed')");
+$zonas->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 14:30:00', '2026-10-19 15:00:00', 'confirmed'), ('doc-ana', '2026-10-20 05:30:00', '2026-10-20 06:00:00', 'confirmed')");
 check('PostgreSQL: las citas se leen en la zona del hospital (UTC-6: 14:30Z es 08:30 del 19 y 05:30Z del 20 cae el 19 a las 23:30)',
-    (new PdoDoctorStore($zonas, 'America/Guatemala'))->busySlots('doc-ana', '2026-10-19') === ['08:30', '23:30']
-    && (new PdoDoctorStore($zonas))->busySlots('doc-ana', '2026-10-19') === ['14:30']);
+    (new PdoDoctorStore($zonas, 'America/Guatemala'))->busyIntervals('doc-ana', '2026-10-19') === [['08:30', '09:00'], ['23:30', '24:00']]
+    && (new PdoDoctorStore($zonas))->busyIntervals('doc-ana', '2026-10-19') === [['14:30', '15:00']]);
+$zonas->exec("INSERT INTO appointments VALUES ('doc-beto', '2026-10-19 23:45:00', '2026-10-20 00:15:00', 'confirmed'), ('doc-beto', '2026-10-19 10:00:00', '2026-10-19 10:30:00', 'cancelled')");
+check('D-02: una cita que cruza la medianoche ocupa su parte de cada día y la cancelada no cuenta',
+    (new PdoDoctorStore($zonas))->busyIntervals('doc-beto', '2026-10-19') === [['23:45', '24:00']]
+    && (new PdoDoctorStore($zonas))->busyIntervals('doc-beto', '2026-10-20') === [['00:00', '00:15']]);
+
+foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
+    [$router, $repository] = $make();
+    $d01 = $make()[0];
+    check("[$adapter] D-01: la licencia ' col-9 ' es la misma COL-9 -> 409, y un alta se guarda normalizada",
+        call($d01, 'POST', '/doctors', ['license_number' => ' col-9 '] + ALTA)['body']['code'] === 'LICENSE_ALREADY_REGISTERED'
+        && call($router, 'POST', '/doctors', ['license_number' => ' col-77 '] + ALTA)['status'] === 201 && $repository->licenseExists('COL-77') && !$repository->licenseExists(' col-77 '));
+    check("[$adapter] D-04: disponibilidad sin specialty -> 422 PAYLOAD_INVALID y con fecha imposible sigue siendo INVALID_DATE_RANGE",
+        $status(call($router, 'GET', '/availability', [], ['date' => '2026-10-19'])) === '422 PAYLOAD_INVALID'
+        && $status(call($router, 'GET', '/availability', [], ['date' => '2026-02-30'])) === '422 INVALID_DATE_RANGE');
+}
 
 $horarios = new PDO('sqlite::memory:');
 $horarios->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));

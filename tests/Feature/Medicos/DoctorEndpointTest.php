@@ -52,7 +52,7 @@ final class DoctorEndpointTest extends TestCase
         );
         $this->app->bind(Router::class, fn () => medicos_router(
             $this->doctors,
-            new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => ['08:30']]]),
+            new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => [['08:30', '09:00']]]]),
             new ConfigScheduleProvider(['doc-ana' => [1 => [['08:00', '09:30']]]]),
         ));
         $this->app->instance(HospitalActors::class, new class extends HospitalActors {
