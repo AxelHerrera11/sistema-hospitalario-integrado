@@ -1,0 +1,21 @@
+▶ E2E-QA: planificación → ejecución → evidencia → quality gate
+  ✔ E2E-QA-01 camino feliz: suites verdes con evidencia → approved y visible en el detalle (164.5596ms)
+  ✔ E2E-QA-02 una prueba E2E obligatoria en rojo → rejected con la regla SUITE_BELOW_THRESHOLD (117.5834ms)
+  ✔ E2E-QA-03 la etapa E2E no reportó → blocked (falta evidencia, no se aprueba por omisión) (96.7806ms)
+✔ E2E-QA: planificación → ejecución → evidencia → quality gate (406.8602ms)
+▶ E2E-QA: permisos, tenant y errores
+  ✔ E2E-QA-04 sin sesión → 401; observador no planifica → 403 RBAC_DENIED (23.7548ms)
+  ✔ E2E-QA-05 una ejecución del hospital 1 no existe para el hospital 2 (404) y no aparece en su listado (131.6501ms)
+  ✔ E2E-QA-06 X-Tenant-ID ajeno → 403 TENANT_MISMATCH (10.9817ms)
+  ✔ E2E-QA-07 almacén o RBAC caídos → 503 con código, sin detalle técnico (21.8013ms)
+  ✔ E2E-QA-08 una ejecución completada no admite más resultados (409) (132.9702ms)
+  ✔ E2E-QA-09 el prototipo navegable se sirve y respeta la cabecera de idioma (3.8338ms)
+✔ E2E-QA: permisos, tenant y errores (325.7001ms)
+ℹ tests 9
+ℹ suites 2
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 864.1298

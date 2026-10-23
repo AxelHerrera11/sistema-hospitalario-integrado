@@ -1,0 +1,91 @@
+
+==> Sintaxis PHP
+[sintaxis-php] exit 0 en 62.58 s; log: /tmp/x
+
+==> Pint en archivos cambiados respecto de origin/develop (informativo)
+[pint-archivos-cambiados] exit 0 en 1.99 s; log: /tmp/x
+
+==> Build del frontend
+[build-frontend] exit 0 en 3.44 s; log: /tmp/x
+
+==> PHPUnit Unit / Feature / Integration
+Time: 00:00.022, Memory: 10.00 MB
+
+[30;42mOK (5 tests, 16 assertions)[0m
+Time: 00:08.026, Memory: 56.00 MB
+
+[30;42mOK (102 tests, 4200 assertions)[0m
+Time: 00:00.420, Memory: 38.00 MB
+
+[30;42mOK (4 tests, 23 assertions)[0m
+
+==> micro-his
+OK         catalogo-medicamentos (0.11 s)
+OK         gobernanza-auditoria (1.14 s)
+SIN SUITE  ingreso-resultados-lab
+OK         medicos-especialidades (0.1 s)
+SIN SUITE  nativephp-extension-prototype
+OK         notas-soap (0.1 s)
+OK         ocupacion-hospitalaria (0.09 s)
+OK         pacientes (0.08 s)
+OK         qa-calidad-versiones (1.7 s)
+OK         rbac (0.09 s)
+OK         salas-camas (0.08 s)
+SIN SUITE  signos-vitales
+OK         traslados-altas (0.12 s)
+SIN SUITE  validacion-resultados-bioquimico
+
+==> Frontend (node --test)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 129.0059
+
+==> Contrato de rutas
+OK    GET api/v1/occupancy                                         RBAC: ocupacion.ver
+OK    GET api/v1/patients/{code}                                   RBAC: pacientes.ver
+OK    GET api/v1/permissions                                       RBAC: rbac.permisos.ver
+
+==> E2E del módulo QA en servidor aislado (puerto 8094)
+ℹ tests 9
+ℹ suites 2
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 862.2839
+
+==> Quality gate
+## Quality gate: ❌ RECHAZADO
+
+Versión `0.0.0-local` · commit `5e6f0044beb0` · ambiente `local` · política `qg-0.1-propuesta`
+
+| Suite | Tipo | Obligatoria | Total | Aprobadas | Fallidas | Omitidas | ms | Evidencias |
+|---|---|---|---:|---:|---:|---:|---:|---:|
+| sintaxis-php | syntax | sí | 1 | 1 | 0 | 0 | 62585 | 2 |
+| pint-archivos-cambiados | lint | no | 1 | 1 | 0 | 0 | 1989 | 2 |
+| phpunit-unit | unit | sí | 5 | 5 | 0 | 0 | 13 | 1 |
+| micro-his | unit | sí | 14 | 10 | 0 | 4 | 3610 | 1 |
+| frontend-node | unit | sí | 11 | 11 | 0 | 0 | 188 | 1 |
+| phpunit-feature | integration | sí | 102 | 102 | 0 | 0 | 7868 | 1 |
+| phpunit-integration | integration | sí | 4 | 4 | 0 | 0 | 406 | 1 |
+| contrato-rutas-rbac | contract | sí | 17 | 17 | 0 | 0 | 0 | 2 |
+| build-frontend | build | sí | 1 | 1 | 0 | 0 | 3435 | 2 |
+| e2e-qa-calidad | e2e | sí | 9 | 9 | 0 | 0 | 733 | 1 |
+| phpunit-database-pg | integration | no | — | — | — | — | — | — |
+| e2e-auth-rbac | e2e | no | — | — | — | — | — | — |
+
+### Hallazgos
+- **rejection** `SKIPPED_IN_REQUIRED` (micro-his): 4 pruebas omitidas en una suite obligatoria.
+- **warning** `SUITE_MISSING` (phpunit-database-pg): No se registró resultado para la suite.
+- **warning** `SUITE_MISSING` (e2e-auth-rbac): No se registró resultado para la suite.
+
+### Notas de recolección
+- phpunit-database-pg: no se encontró phpunit/database.xml (la etapa no corrió o no publicó su reporte).
+- e2e-auth-rbac: no se encontró e2e/auth-rbac.xml (la etapa no corrió o no publicó su reporte).
+quality-gate exit=1 (0 aprobado, 1 rechazado, 2 bloqueado, 3 configuración)

@@ -80,6 +80,9 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `alertas.ver` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.acusar` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.cerrar` | Sí | — | Sí | — | — | — | — | — |
+| `traslados.registrar` | — | — | — | — | — | — | — | — |
+| `altas.registrar` | — | — | — | — | — | — | — | — |
+| `traslados.ver` | — | — | — | — | — | — | — | — |
 
 ## Contratos conciliados y decisiones
 
@@ -99,6 +102,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
 | NativePHP, `docs/nativephp/semana-05/contrato-api.md` | consume lab-results.read/correct; no recibe permisos por ser cliente |
+| Traslados y altas, `docs/traslados-altas` | traslados.registrar, altas.registrar y traslados.ver catalogados solo como **pending** (propuesta: enfermería traslada, médico da el alta, ambos consultan); ningún rol activo los recibe hasta que RBAC los apruebe |
 | Prescripciones y alertas | conserva permisos activos y la política pendiente de excepción de alergia |
 | Usuarios/tenants/RBAC | conserva usuarios.*, tenants.crear, sesiones.revocar_ajenas y operaciones RBAC existentes |
 

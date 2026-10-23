@@ -25,6 +25,7 @@ S16 se divide en tres entregas para respetar el límite de 400 líneas, porque l
 | Filtrar DSN/token por error | Solo code y trace_id | IntegrationTest + SecurityTest |
 | Cachear una respuesta autorizada | no-store en respuestas propias | SecurityTest |
 | Usar membresía revocada/expirada | Consulta CENTRAL activa y vigente | Código implementado; prueba PostgreSQL pendiente con Javier |
+| Ofrecer en la navegación secciones que el usuario no puede usar | La navegación y el enrutador exigen el permiso efectivo de la sesión | permissions.test.mjs + `npm run build` |
 
 ## Despliegue propuesto, todavía no ejecutado
 
@@ -40,5 +41,17 @@ S16 se divide en tres entregas para respetar el límite de 400 líneas, porque l
 2026-10-19: implementación local y validación aislada; resultados exactos en `evidencia.txt`. La matriz de 22 permisos × 5 roles está publicada; 21 están activos para `superadmin` y los pares `pending` se deniegan. Auth y tenant simulados **solo en tests**, sin E2E JWT ni conexión PostgreSQL. Las suites vanilla ya usaban SQLite de prueba; no se incorporó SQLite a Laravel ni otra migración. S16 se dividió en S16a `ce4fda1`, S16b `650780f` y S16c `f41be9b` para respetar el límite de 400 líneas por entrega.
 No se afirma staging, despliegue final, QA del sistema completo, aprobación de permisos ni revisión de Yamilet. PR/issue y evidencia visual pendientes; no se publicaron cambios ni se mergearon PR de terceros. Las dos guías enlazadas desde README no estaban disponibles; se consultaron README, plantillas, plan Word y aportes de Axel.
 IA: Codex generó código, pruebas y documentación; quedan revisión humana, confirmación de contratos y defensa individual.
+
+## Corrección de seguridad (2026-10-21): la interfaz consume los permisos efectivos
+
+Defecto reproducible: la navegación ofrecía "Usuarios", "Pacientes" y "Medicamentos" a cualquier usuario con token, y "Ocupación" a cualquiera, porque `AppLayout.vue` solo miraba `auth.token`; el enrutador (`guards.js`) solo comprobaba `requiresAuth`. El frontend ignoraba el conjunto `user.permissions` que publica la entrega de Cindy en login, `/auth/me` y renovación, en contra de `docs/rbac/catalogo-modulos.md` ("el frontend consume ese conjunto"). El servidor sí exigía el permiso, de modo que el efecto era ofrecer secciones y dejar que la navegación terminara en 403.
+
+Corrección: `resources/js/router/permissions.js` declara `ROUTE_PERMISSIONS` (el mismo permiso literal que exige el backend en cada ruta) y `NAVIGATION`; `resources/js/router/index.js` declara `meta.permission` en cada ruta protegida; `resources/js/router/guards.js` bloquea la ruta cuando el permiso falta y deja el aviso "No tiene permiso para ver esta sección."; `resources/js/shared/components/AppLayout.vue` solo ofrece los enlaces permitidos. Sin `user.permissions` se deniega (falla segura). El backend sigue siendo la autoridad: el gating de la interfaz no sustituye la validación del servidor ni altera códigos HTTP.
+
+Pruebas: `resources/js/router/permissions.test.mjs` cubre `requiredPermissions`, `allowsRoute` y `visibleNavigation`, y comprueba que toda ruta protegida del enrutador declara su permiso; `node resources/js/router/permissions.test.mjs` y `npm run build` quedan en `evidencia.txt`. No hay evidencia de navegador: el alcance de la corrección es la navegación, no el flujo clínico de cada módulo.
+
+Pendiente: captura de pantalla y prueba manual por hospital y por rol; la evidencia de staging sigue pendiente.
+
+Actualización 2026-10-21: rama `feature/asii-02-semana-17-rbac-seguridad-despliegue-mar-03` desde `origin/develop` (`3afc782`). Corrige el gating de la interfaz y el comentario obsoleto de `permissions.js`; no cambia backend, rutas HTTP, permisos ni la matriz de roles.
 
 Actualización 2026-10-20: S16 incorpora el adaptador y cuatro permisos administrativos. Las pruebas nuevas SQL/JWT/auditoría se entregan en la rama adicional `feature/asii-02-semana-17-rbac-pruebas-mar-03` para mantener cada diff por debajo de 400 líneas. La validación con Cindy local pasó (26 pruebas/241 aserciones, SQLite); su publicación y PostgreSQL real siguen pendientes.

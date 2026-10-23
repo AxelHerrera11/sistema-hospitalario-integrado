@@ -1,60 +1,70 @@
-# Semana 11 — Prototipo Navegable: Desktop + Mobile
-## Entregables Generados (`docs/tenants/semana-11/`)
-| Archivo                              | Tipo     | Descripción                                                                                                      |
-|--------------------------------------|----------|------------------------------------------------------------------------------------------------------------------|
-| `prototype-spec.md`                  | Markdown | **Especificación Técnica Completa**: Stack, arquitectura, rutas, layouts, estado global, API, SW, testing, CI/CD |
-| `prototype-navigation-map.mmd`       | Mermaid  | **Mapa Navegación Completo**: Todos los flujos, pantallas, conexiones                                            |
-| `prototype-happy-path.mmd`           | Mermaid  | **Happy Path Flow**: Login → MFA → Dashboard → Admin → Force-Revoke                                              |
-| `prototype-error-path.mmd`           | Mermaid  | **Critical Error Path**: Refresh Reuse → Revocación Total → Re-login                                             |
-| `prototype-happy-path.md`            | Markdown | **Happy Path Detallado**: 5 pasos con capturas Desktop/Mobile                                                    |
-| `prototype-error-path.md`            | Markdown | **Error Crítico Detallado**: Refresh Reuse → Revocación → Re-login                                               |
-| `prototype-screens-desktop.md`       | Markdown | **Capturas Desktop**: Login, MFA, Dashboard Admin, Force-Revoke, Auditoría                                       |
-| `prototype-screens-mobile.md`        | Markdown | **Capturas Mobile**: Login, MFA, Admin, Auditoría, Paciente                                                      |
-| `prototype-consistency-checklist.md` | Markdown | **Checklist Consistencia**: Roles, Estados, Accesibilidad, Responsive                                            |
-| `prototype-spec.md`                  | Markdown | **Especificación Técnica Completa** (este documento)                                                             |
-| `README.md`                          | Markdown | Este índice                                                                                                      |
+# Semana 11 — Prototipo: escritorio + móvil
 
-## Resumen del Prototipo
-### Happy Path (5 pasos principales)
-1. **Login** → Email/Password + Tenant auto-select
-2. **MFA Challenge** → TOTP/WebAuthn + Countdown 30s/60s
-3. **Dashboard** → Role-based UI (Paciente/Clínico/Admin)
-4. **Admin → Force-Revoke** → 2-paso + Toast "Deshacer 5s"
-5. **Auditoría** → Tabla filtrable + Detalle expandible + Hash chain
+**Tipo de entrega:** diseño con mockups estáticos (ASCII y Mermaid) más un prototipo navegable
+parcial en el SPA Vue (`/prototipos/tenants-responsive`, Semana 10). Los documentos v1.1 marcan cada
+pantalla como **[Implementado]** (existe en `develop`) o **[Propuesto]** (diseño sin contrato).
 
-### Critical Error Path (5 pasos)
-1. **POST /auth/refresh** con token reutilizado
-2. **Detección** → Hash mismatch → REUSE_DETECTED
-3. **Revocación Total Automática** → Blocklist + DEL Redis + Auditoría CRITICAL
-4. **Modal Crítico Full-Screen** → Focus auto + Focus trap + No dismissible
-5. **Forced Re-login** → MFA obligatorio → Nuevos tokens
+## Entregables (`docs/tenants/semana-11/`)
 
-## Métricas de Validación
-| Métrica                    | Objetivo         | Happy Path | Error Crítico        |
-|----------------------------|------------------|------------|----------------------|
-| **Tiempo Total**           | < 15s / < 45s    | ~12s       | ~25s                 |
-| **Tasa Éxito 1er Intento** | > 95%            | 98%        | N/A (forzado)        |
-| **Errores Críticos**       | 0                | 0          | 0 (manejados)        |
-| **Recuperación Error**     | < 15s            | N/A        | < 10s (con Deshacer) |
-| **Accesibilidad (axe)**    | 0 violaciones AA | 0          | 0                    |
-| **Touch Targets**          | ≥ 44px           | ✅          | ✅                    |
+| Archivo | Tipo | Contenido |
+|---|---|---|
+| `prototype-spec.md` | Markdown v1.1 | Mapa de navegación, camino feliz y error crítico con su estado real |
+| `prototype-spec1.md` | Markdown v1.1 | Roles canónicos, componentes, stack Vue, entregables y plan de pruebas |
+| `prototype-screens-mobile.md` | Markdown v1.1 | Móvil parte 1: acceso, MFA (propuesto) y alta de usuario (propuesto) |
+| `prototype-screens-mobile1.md` | Markdown v1.1 | Móvil parte 2: usuarios, cerrar sesión ajena y auditoría (propuesta) |
+| `prototype-screens-desktop.md`, `prototype-screens-desktop1.md` | Markdown v1.0 | Pantallas de escritorio |
+| `prototype-happy-path.md`, `prototype-happy-path1.md` | Markdown v1.0 | Camino feliz detallado |
+| `prototype-error-path.md` | Markdown v1.0 | Error crítico detallado |
+| `prototype-consistency-checklist.md` | Markdown v1.0 | Checklist de consistencia |
+| `prototype-navigation-map.mmd`, `prototype-happy-path.mmd`, `prototype-error-path.mmd` | Mermaid | Diagramas |
 
-## Cobertura Accesibilidad (WCAG 2.1 AA)
-| Principio          | Criterios | Pass   | Fail  | %         |
-|--------------------|-----------|--------|-------|-----------|
-| **Perceivable**    | 16        | 14     | 2     | 87.5%     |
-| **Operable**       | 10        | 8      | 2     | 80%       |
-| **Understandable** | 7         | 5      | 2     | 71.4%     |
-| **Robust**         | 3         | 2      | 1     | 66.7%     |
-| **TOTAL**          | **36**    | **29** | **7** | **80.6%** |
-**Gap: 7 violaciones AA pendientes (Sprint 2 fix)**
+Los archivos v1.0 todavía mencionan «Deshacer», WebAuthn y roles en mayúsculas. Ante cualquier
+diferencia prevalecen los documentos v1.1.
 
-## Testing Matrix
-| Test                  | Dispositivos                            | Navegadores             | Checklist                 |
-|-----------------------|-----------------------------------------|-------------------------|---------------------------|
-| **Visual Regression** | iPhone SE, 13, 14, 15, iPad, Galaxy S23 | Chrome, Safari, Firefox | Percy/Chromatic           |
-| **Accessibility**     | NVDA, VoiceOver, TalkBack               | Chrome, Safari          | axe-core + manual         |
-| **Performance**       | iPhone SE (throttled 3G)                | Chrome DevTools         | Lighthouse ≥ 90           |
-| **Touch Testing**     | iPhone 13, iPad, Galaxy Tab             | Safari, Chrome          | Touch targets, gestures   |
-| **Offline**           | Flight mode + throttled                 | Chrome DevTools         | Service Worker, Queue     |
-| **Orientation**       | Portrait + Landscape                    | Todos                   | Lock/Unlock, layout shift |
+## Resumen
+
+### Camino feliz
+1. **Inicio de sesión** con UUID del hospital (`X-Tenant-ID`), correo y contraseña. [Implementado]
+2. **MFA TOTP** para `superadmin` y `admin_hospital`. [Propuesto en el HIS; probado en el micro-HIS de Semana 3]
+3. **Inicio** con el menú según los permisos de la sesión. [Implementado]
+4. **Usuarios del hospital** (`usuarios.ver`) → cerrar **una** sesión ajena (`sesiones.revocar_ajenas`) con confirmación explícita. [Implementado]
+5. **Auditoría** (`auditoria.ver`). [Propuesto: sin vista ni endpoint]
+
+No existe «Deshacer» una revocación: al revocar se invalidan los tokens y el acceso se recupera
+solo con un nuevo inicio de sesión (ver `prototype-screens-mobile1.md`, sección 6).
+
+### Error crítico (reutilización de refresh token)
+1. `POST /api/v1/auth/refresh` con un refresh ya consumido. [Implementado]
+2. Se revoca la familia de refresh y su sesión, y se audita `auth.refresh_reuse_detected` como crítico. [Implementado]
+3. Respuesta 401 `REFRESH_TOKEN_REUSED`; el SPA limpia la sesión y vuelve a `/login`. [Implementado]
+4. Aviso «Sesión cerrada por seguridad». [Propuesto]
+
+## Objetivos de validación (no medidos)
+
+Son **metas de diseño**. No hubo pruebas con usuarios ni corridas de axe/Lighthouse, así que no
+se informan resultados. La v1.0 mostraba cifras (98 % de éxito, 0 violaciones axe, tiempos de
+~12 s y ~25 s) que no provenían de ninguna medición; se retiraron.
+
+| Métrica | Objetivo | Cómo se medirá | Resultado |
+|---|---|---|---|
+| Tiempo del camino feliz | < 15 s | Prueba con usuarios, 5 participantes | Sin medir |
+| Éxito al primer intento | > 95 % | Misma prueba | Sin medir |
+| Violaciones AA (axe) | 0 | axe-core sobre las pantallas implementadas | Sin medir |
+| Objetivos táctiles | ≥ 44 px | Inspección del CSS | **Cumple** en los componentes de Semana 10 (`BaseButton`, `FormField`) |
+| Diseño responsive | Sin desplazamiento horizontal a 375 px | Captura con Chrome headless | **Cumple** (`docs/tenants/semana-10/evidencias/`) |
+
+## Accesibilidad (WCAG 2.1 AA)
+
+La revisión manual del diseño de Semana 9 dejó hallazgos abiertos (tabla de `docs/tenants/semana-09/README.md`,
+entre ellos H-003, H-004 y H-005). Siguen pendientes y no hay una medición automatizada posterior.
+La v1.0 resumía «36 criterios, 29 pasan, 80,6 %», pero esas cifras no tenían respaldo de ninguna
+corrida y contradecían la meta de «0 violaciones»; se retiraron.
+
+## Pruebas
+
+| Prueba | Estado |
+|---|---|
+| Lógica de formularios y cola offline (`node *.test.mjs`) | Ejecutada (Semana 10) |
+| Capturas responsive a 375, 768 y 1280 px | Ejecutada (Semana 10) |
+| Rotación y reutilización de refresh (`SessionLifecycleTest`) | Ejecutada en la suite del backend |
+| Teclado, lectores de pantalla, axe-core, Lighthouse, orientación | Pendiente (plan en `prototype-spec1.md`, sección 7) |
