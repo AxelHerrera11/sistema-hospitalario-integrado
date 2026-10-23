@@ -81,6 +81,7 @@ Un campo con tipo incorrecto (número, arreglo, `null`, booleano) o un JSON malf
 | `409` | `DIAGNOSIS_DUPLICATED` / `PRIMARY_DIAGNOSIS_EXISTS` | Código ya asociado / segundo principal (RF-SOAP-05) |
 | `409` | `NOTE_SIGNED` | La nota firmada no acepta diagnósticos (RF-SOAP-07) |
 | `409` | `MEDICAL_RECORD_NOT_FOUND` | El paciente del episodio no tiene un expediente abierto; este módulo no lo crea |
+| `409` | `RECORD_ALREADY_HAS_NOTE` | El expediente ya tiene una nota SOAP: la restricción `clinical_notes_record_version_unique` de la base solo admite una (R-06, pendiente en ASII-09) |
 | `403` | `LOCAL_USER_NOT_FOUND` | El usuario autenticado no tiene una referencia activa y vigente en `local_user_refs` de este hospital |
 | `503` | `HOSPITAL_UNAVAILABLE` | La base HOSPITAL no responde; no se abrió ninguna transacción |
 | `422` | `PAYLOAD_INVALID` | JSON malformado o campo con tipo incorrecto |
