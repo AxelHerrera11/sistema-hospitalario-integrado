@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\NotasSoap;
 
+use App\NotasSoap\LocalActorResolver;
 use MicroHis\NotasSoap\Application\CareAssignmentReader;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Application\Icd10Catalog;
@@ -27,7 +28,7 @@ final class SoapNoteApiTest extends TestCase
         CatalogTestIdentity::install($this->app);
         $this->app->instance(ClinicalNoteRepository::class, new InMemoryClinicalNoteRepository(new InMemoryAuditTrail()));
         // Laravel reutiliza el controlador entre peticiones de una misma prueba: las asignaciones se leen por referencia.
-        $this->assigned = ['ep1' => ['user-medico']];
+        $this->assigned = ['ep1' => ['local-medico']];
         $assigned = &$this->assigned;
         $this->app->instance(CareAssignmentReader::class, new class($assigned) implements CareAssignmentReader {
             public function __construct(private array &$active)
@@ -40,6 +41,13 @@ final class SoapNoteApiTest extends TestCase
             }
         });
         $this->app->instance(Icd10Catalog::class, new InMemoryIcd10Catalog(['J18.9' => ['Neumonía no especificada', true]]));
+        // El sub del token (user-<rol>) se traduce a su referencia local (local-<rol>); un usuario sin referencia local no pasa.
+        $this->app->instance(LocalActorResolver::class, new class implements LocalActorResolver {
+            public function reference(string $centralUserId): ?string
+            {
+                return str_starts_with($centralUserId, 'user-') && $centralUserId !== 'user-sin-referencia' ? 'local-' . substr($centralUserId, 5) : null;
+            }
+        });
         CatalogTestIdentity::as('medico');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
@@ -59,7 +67,7 @@ final class SoapNoteApiTest extends TestCase
         $id = $created->json('clinical_note_id');
         $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertCreated();
         $this->getJson("/api/v1/soap-notes/$id")->assertOk()->assertJsonPath('sections.plan', 'Amoxicilina')->assertJsonPath('diagnoses.0.code', 'J18.9')
-            ->assertJsonPath('author_user_ref_id', 'user-medico')->assertJsonStructure(['trace_id']);
+            ->assertJsonPath('author_user_ref_id', 'local-medico')->assertJsonStructure(['trace_id']);
     }
 
     public function test_permissions_follow_the_real_rbac_matrix(): void
@@ -79,7 +87,7 @@ final class SoapNoteApiTest extends TestCase
         CatalogTestIdentity::as('enfermeria');
         $this->getJson("/api/v1/soap-notes/$id")->assertNotFound()->assertJsonPath('code', 'NOTE_NOT_FOUND');
         $this->getJson('/api/v1/soap-notes/no-existe')->assertNotFound()->assertJsonPath('code', 'NOTE_NOT_FOUND');
-        $this->assigned = ['ep1' => ['user-medico', 'user-enfermeria']];
+        $this->assigned = ['ep1' => ['local-medico', 'local-enfermeria']];
         $this->getJson("/api/v1/soap-notes/$id")->assertOk();
         CatalogTestIdentity::as('medico');
         $this->assigned = [];
@@ -97,7 +105,7 @@ final class SoapNoteApiTest extends TestCase
     public function test_actor_comes_from_the_token_and_not_from_a_header(): void
     {
         $this->withHeaders(['X-User-ID' => 'user-ajeno'])->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertCreated();
-        $this->getJson('/api/v1/soap-notes/' . $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id'))->assertJsonPath('author_user_ref_id', 'user-medico');
+        $this->getJson('/api/v1/soap-notes/' . $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id'))->assertJsonPath('author_user_ref_id', 'local-medico');
     }
 
     public function test_unavailable_catalog_fails_closed_with_503(): void
@@ -105,5 +113,23 @@ final class SoapNoteApiTest extends TestCase
         $id = $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id');
         $this->app->instance(Icd10Catalog::class, new InMemoryIcd10Catalog([], true));
         $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertStatus(503)->assertJsonPath('code', 'ICD10_UNAVAILABLE');
+    }
+    public function test_a_central_user_without_a_local_reference_is_refused_before_touching_notes(): void
+    {
+        CatalogTestIdentity::as('medico');
+        CatalogTestIdentity::$user = new \Illuminate\Auth\GenericUser(['id' => 'user-sin-referencia']);
+        $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertForbidden()->assertJsonPath('code', 'LOCAL_USER_NOT_FOUND')->assertJsonStructure(['trace_id']);
+    }
+
+    public function test_hospital_database_down_answers_503_without_a_stack_trace(): void
+    {
+        $this->app->instance(LocalActorResolver::class, new class implements LocalActorResolver {
+            public function reference(string $centralUserId): ?string
+            {
+                throw new \PDOException('SQLSTATE[08006] connection refused');
+            }
+        });
+        $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertStatus(503)->assertJsonPath('code', 'HOSPITAL_UNAVAILABLE')
+            ->assertJsonMissingPath('message')->assertHeader('X-Trace-Id');
     }
 }

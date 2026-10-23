@@ -4,6 +4,8 @@ namespace Tests\Database\Hospital;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use App\NotasSoap\PdoLocalActorResolver;
+use Illuminate\Auth\GenericUser;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
@@ -12,6 +14,7 @@ use MicroHis\NotasSoap\Persistence\PdoCareAssignmentReader;
 use MicroHis\NotasSoap\Persistence\PdoClinicalNoteStore;
 use PDO;
 use PHPUnit\Framework\Attributes\Group;
+use Tests\Feature\MedicationCatalog\CatalogTestIdentity;
 use Tests\TestCase;
 
 /** Adaptadores PDO de Notas SOAP contra el esquema real de la migración hospital (PostgreSQL), no contra el SQLite simplificado. */
@@ -19,6 +22,7 @@ use Tests\TestCase;
 class NotasSoapPostgresTest extends TestCase
 {
     private const DOCTOR = '11111111-1111-4111-8111-111111111111';
+    private const DOCTOR_CENTRAL = '99999999-9999-4999-8999-999999999999';
     private const NURSE = '22222222-2222-4222-8222-222222222222';
     private const EPISODE = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
@@ -112,12 +116,38 @@ class NotasSoapPostgresTest extends TestCase
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM diagnoses WHERE clinical_note_id = ?', [$id]));
     }
 
+    public function test_the_central_user_resolves_to_the_active_local_reference_only(): void
+    {
+        $resolver = new PdoLocalActorResolver(fn () => $this->pdo);
+        $this->assertSame(self::DOCTOR, $resolver->reference(self::DOCTOR_CENTRAL));
+        $this->assertNull($resolver->reference('00000000-0000-4000-8000-000000000000'));
+        $this->assertNull($resolver->reference("' OR 1=1 --"));
+        DB::connection('hospital')->update("UPDATE local_user_refs SET status = 'inactive' WHERE local_user_ref_id = ?", [self::DOCTOR]);
+        $this->assertNull($resolver->reference(self::DOCTOR_CENTRAL));
+    }
+
+    /** Recorrido real: token (identidad simulada) → usuario local → permisos RBAC reales → casos de uso → adaptadores PDO → PostgreSQL. */
+    public function test_end_to_end_the_api_registers_and_reads_a_note_in_postgresql(): void
+    {
+        CatalogTestIdentity::install($this->app);
+        CatalogTestIdentity::as('medico');
+        CatalogTestIdentity::$user = new GenericUser(['id' => self::DOCTOR_CENTRAL]);
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
+        $soap = ['subjective' => 'Tos', 'objective' => 'Fiebre 38', 'assessment' => 'Neumonía', 'plan' => 'Amoxicilina'];
+
+        $id = $this->postJson('/api/v1/care-episodes/' . self::EPISODE . '/soap-notes', $soap)->assertCreated()->assertJsonPath('status', 'draft')->json('clinical_note_id');
+        $this->getJson("/api/v1/soap-notes/$id")->assertOk()->assertJsonPath('sections.plan', 'Amoxicilina')->assertJsonPath('author_user_ref_id', self::DOCTOR);
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM local_access_audits WHERE resource_id = ? AND actor_user_ref_id = ?", [$id, self::DOCTOR]));
+        // Falta la tabla icd10_codes (entidad de ASII-09): asociar un diagnóstico falla seguro con 503, sin 500.
+        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertStatus(503)->assertJsonPath('code', 'ICD10_UNAVAILABLE');
+    }
+
     private function seedCare(): void
     {
         $db = DB::connection('hospital');
         $db->unprepared(<<<'SQL'
             INSERT INTO local_user_refs (local_user_ref_id, central_user_id, membership_id, display_name, role_code, synced_at) VALUES
-              ('11111111-1111-4111-8111-111111111111', gen_random_uuid(), gen_random_uuid(), 'Dra. López', 'medico', now()),
+              ('11111111-1111-4111-8111-111111111111', '99999999-9999-4999-8999-999999999999', gen_random_uuid(), 'Dra. López', 'medico', now()),
               ('22222222-2222-4222-8222-222222222222', gen_random_uuid(), gen_random_uuid(), 'Enf. Ruiz', 'enfermeria', now());
             INSERT INTO doctor_profiles (doctor_profile_id, local_user_ref_id, license_number, valid_from) VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '11111111-1111-4111-8111-111111111111', 'LIC-1', '2020-01-01');
             INSERT INTO specialties (specialty_id, code, name) VALUES ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'MG', 'Medicina general');
