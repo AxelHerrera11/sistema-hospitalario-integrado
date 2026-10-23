@@ -23,6 +23,10 @@ agregan `rooms`, CRUD, cambios de estado ni funcionalidades clínicas.
 
 ## Archivos de esta semana
 
+- `resources/js/modules/salas-camas/components/WardCatalogWardCard.vue`:
+  tarjeta de ward reutilizable (selección, aria-pressed, foco visible).
+- `resources/js/modules/salas-camas/components/WardCatalogBedCard.vue`:
+  tarjeta de cama reutilizable (código, tipo y estado del contrato).
 - `resources/js/modules/salas-camas/pages/WardCatalogPage.vue`: consulta de
   wards/camas, estados de interfaz y diseño adaptable.
 - `resources/js/router/index.js`: ruta autenticada `/wards`.

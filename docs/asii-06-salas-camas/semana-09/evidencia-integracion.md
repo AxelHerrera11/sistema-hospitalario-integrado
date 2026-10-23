@@ -45,7 +45,7 @@ visual WCAG.
   — sin fallos: 11 tests, 48 assertions; el wrapper reportó 11 advertencias
   `file_get_contents(...)`. PHPUnit directo confirmó PASS.
 - `php micro-his/salas-camas/tests/run.php` — PASS: 4 escenarios.
-- `php artisan route:list --path=api` — PASS: 25 rutas; contiene
+- `php artisan route:list --path=api` — PASS: 11 rutas; contiene
   `GET|HEAD api/v1/wards` y `GET|HEAD api/v1/wards/{ward}/beds`.
 - `php -l` en los PHP de ASII-06 relevantes — sin errores; no se modificaron
   archivos PHP.

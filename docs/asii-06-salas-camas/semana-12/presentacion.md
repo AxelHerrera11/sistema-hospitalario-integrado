@@ -58,9 +58,9 @@ Vue /wards
 
 ## Diapositiva 5 — Estado comprobado de pruebas
 
-- Build de frontend: `npm run build` — PASS, 129 módulos Vite.
+- Build de frontend: `npm run build` — PASS, 134 módulos Vite.
 - Navegación/permisos: Node — PASS, 2 tests.
-- Feature API: PHPUnit — PASS, 11 tests, 48 assertions.
+- Feature API: PHPUnit — PASS, 13 tests, 54 assertions, incluidos errores de tenant.
 - Integración PDO: PostgreSQL — PASS, 1 test, 23 assertions y rollback.
 - Identidad tenant/JWT/RBAC: PHPUnit — PASS, 11 tests, 75 assertions con
   almacenamiento SQLite en memoria.
