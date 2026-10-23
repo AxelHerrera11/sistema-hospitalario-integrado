@@ -12,6 +12,6 @@
 - Al abrir este PR la persistencia real no se había probado. Después se ejecutaron los adaptadores PDO contra PostgreSQL 16 con las migraciones de `develop` (#1067), se corrigieron tres desalineaciones propias, se resolvió el mapeo de identidad (#1075) y se verificó un recorrido de extremo a extremo; el estado vigente está en el [README](./README.md#bloqueos-y-limitaciones-no-se-declaran-completados).
 - D-02 se mitigó dentro del módulo (#1074) pero sigue abierto en la base; firma, corrección y versionado no se implementaron.
 
-**Validación humana:** pendiente. Josué Fernando Hicho García debe revisar el código de #1049 y #1059, los resultados y este documento antes de aprobarlo.
+**Validación humana:** realizada el 2026-10-23. Josué Fernando Hicho García revisó el código de #1049 y #1059, los resultados y este documento, y aprueba el documento.
 
 **Responsable:** Josué Fernando Hicho García es responsable de esta entrega.
