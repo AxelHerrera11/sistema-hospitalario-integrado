@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\SoapNoteController;
+use App\NotasSoap\LocalActorResolver;
+use App\NotasSoap\PdoLocalActorResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +34,7 @@ final class NotasSoapServiceProvider extends ServiceProvider
             new PdoClinicalNoteStore(DB::connection('hospital')->getPdo(), $app->make(AuditTrail::class)));
         $this->app->bind(CareAssignmentReader::class, static fn (): CareAssignmentReader => new PdoCareAssignmentReader(DB::connection('hospital')->getPdo()));
         $this->app->bind(Icd10Catalog::class, static fn (): Icd10Catalog => new PdoIcd10Catalog(DB::connection('hospital')->getPdo()));
+        $this->app->bind(LocalActorResolver::class, static fn (): LocalActorResolver => new PdoLocalActorResolver(static fn () => DB::connection('hospital')->getPdo()));
         $this->app->bind(SoapRouter::class, static fn ($app): SoapRouter =>
             notas_soap_router($app->make(ClinicalNoteRepository::class), $app->make(CareAssignmentReader::class), $app->make(Icd10Catalog::class)));
     }
