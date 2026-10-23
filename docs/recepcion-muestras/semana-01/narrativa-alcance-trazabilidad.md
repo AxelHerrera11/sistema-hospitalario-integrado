@@ -73,13 +73,13 @@ Garantizar que toda muestra que llega al laboratorio corresponda **inequívocame
 3. **Orden (UC-MUE-02):** si el ítem no existe, `404`; si está cancelado o ya tiene muestra aceptada, `409`.
 4. **Identidad (UC-MUE-03):** se comparan dos identificadores. Si no coinciden, se rechaza con el motivo "identificación discordante".
 5. **Requisitos (UC-MUE-04):** el validador del tipo de muestra compara lo observado con lo que exige el catálogo. Si algo falla, se rechaza con el motivo correspondiente.
-6. **Rechazo (UC-MUE-06/08):** se guarda el rechazo, el ítem vuelve a "pendiente de nueva muestra" y se notifica al solicitante. Respuesta: `201` con `estado = rejected` y el motivo.
-7. **Aceptación (UC-MUE-05):** se genera el código dentro de un `loop` de hasta 3 intentos que **solo se reintenta por colisión**; si el guardado es exitoso, termina. Se guarda la muestra `accepted` con técnico y hora, se marca el ítem como recibido y la API responde `201` con `estado = accepted` y el código. La etiqueta se imprime **después de ese `201`**; si la impresora falla, la muestra ya quedó guardada (sin rollback) y se reimprime el mismo código.
+6. **Rechazo (UC-MUE-06/08):** se guarda el rechazo, se publica un evento en outbox_events; la actualización externa de la orden y la notificación son PROPUESTAS. Respuesta: `201` con `estado = rejected` y el motivo.
+7. **Aceptación (UC-MUE-05):** se genera el código dentro de un `loop` de hasta 3 intentos que **solo se reintenta por colisión**; si el guardado es exitoso, termina. Se guarda la muestra `accepted` con técnico y hora, se inserta el evento en la misma transacción y la API responde `201` con `estado = accepted` y el código. La etiqueta se imprime **después de ese `201`**; si la impresora falla, la muestra ya quedó guardada (sin rollback) y se reimprime el mismo código.
 8. **Excepción:** sin código único tras 3 intentos se responde `500` y la muestra no se acepta.
 
 ## Dependencias con otros módulos
 
-- **Depende de:** órdenes (ítem/paciente), catálogo (requisitos), notificaciones (aviso) y RBAC. La implementación usa OrdersGateway de solo lectura, Repository, outbox y DeliverRejections. LabOrderGateway/LabTestRequirements/Notifier fueron nombres propuestos, no interfaces que se afirme haber implementado.
+- **Depende de:** órdenes (ítem/paciente), catálogo (requisitos), notificaciones (aviso) y RBAC. La implementación usa OrdersGateway de solo lectura, Repository, outbox_events; publicador externo PROPUESTO. LabOrderGateway/LabTestRequirements/Notifier fueron nombres propuestos, no interfaces que se afirme haber implementado.
 - **Dependen de este módulo:** *Ingreso de resultados* y *Validación por bioquímico*, que solo trabajan sobre muestras `accepted` identificadas por su código.
 
 ## Archivos relacionados
