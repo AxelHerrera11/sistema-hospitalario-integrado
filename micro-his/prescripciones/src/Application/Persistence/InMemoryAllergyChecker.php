@@ -29,6 +29,7 @@ final class InMemoryAllergyChecker implements AllergyChecker
         if ($this->shouldFail) {
             throw new AllergyCheckUnavailable;
         }
+
         return $this->allergies[$patientId] ?? [];
     }
 

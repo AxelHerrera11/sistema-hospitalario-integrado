@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MicroHis\Prescripciones\Application\Persistence;
 
 use MicroHis\Prescripciones\Application\Exception\MedicationNotFound;
-use MicroHis\Prescripciones\Application\Exception\PersistenceFailure;
 use MicroHis\Prescripciones\Application\MedicationCatalog;
 use MicroHis\Prescripciones\Domain\MedicationSnapshot;
 
@@ -31,6 +30,7 @@ final class InMemoryMedicationCatalog implements MedicationCatalog
         if (! $med->active) {
             throw new MedicationNotFound($medicationId);
         }
+
         return $med;
     }
 

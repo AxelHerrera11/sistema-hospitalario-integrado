@@ -16,6 +16,7 @@ interface AllergyChecker
      * Devuelve las alergias activas del paciente.
      *
      * @return list<Allergy>
+     *
      * @throws AllergyCheckUnavailable si el servicio de alergias no responde
      */
     public function activeAllergies(string $patientId): array;
