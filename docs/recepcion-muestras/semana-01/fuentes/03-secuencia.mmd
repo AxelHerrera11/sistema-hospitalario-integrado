@@ -6,13 +6,13 @@ sequenceDiagram
   actor T as Técnico de laboratorio
   participant UI as Vue SPA<br/>(RecepcionMuestras)
   participant MW as Middleware Laravel<br/>(tenant · jwt.auth · permission)
-  participant C as ReceptionController
-  participant S as ReceiveSpecimen
+  participant C as SpecimenController
+  participant S as ReceiveSpecimenService
   participant ORD as LabOrderGateway<br/>«interfaz»
   participant REQ as LabTestRequirements<br/>«interfaz»
   participant GEN as SpecimenCodeGenerator
-  participant R as ReceptionRepository<br/>(specimens + outbox_events)
-  participant N as outbox_events<br/>(misma transacción)
+  participant R as SpecimenRepository<br/>(HOSPITAL)
+  participant N as Notifier<br/>«interfaz»
 
   T->>UI: escanea la orden y registra lo observado en el tubo
   UI->>MW: POST /api/v1/lab/specimens<br/>{lab_order_item_id, identificadores, contenedor,<br/>volumen, hora_toma, temperatura}
@@ -26,10 +26,7 @@ sequenceDiagram
       C->>S: recibir(técnico, datos)
       S->>ORD: obtenerItem(lab_order_item_id) (UC-MUE-02)
       ORD-->>S: ítem + paciente + prueba + estado
-      alt puerto de órdenes no disponible
-        S-->>C: LAB_ORDER_UNAVAILABLE
-        C-->>UI: 503 sin escritura
-      else ítem inexistente
+      alt ítem inexistente
         S-->>C: OrdenNoEncontrada
         C-->>UI: 404
       else ítem cancelado o con muestra ya aceptada
@@ -42,12 +39,12 @@ sequenceDiagram
         S->>S: validador del tipo de muestra (sangre, orina, hisopado...)
         alt identidad discordante o requisito incumplido
           S->>R: guardarRechazo(ítem, motivo, técnico, hora) (UC-MUE-06)
-          Note over ORD: Puerto de lectura, no modifica la orden externa
-          S->>N: insertar evento UUID idempotente y confirmar transacción
-          alt publicación externa pendiente (PROPUESTO)
-            N-->>S: status pending
-            Note over S,N: Reintento del publicador fuera de esta API
-          else publicación externa completada (PROPUESTO)
+          S->>ORD: marcarPendienteNuevaMuestra(ítem)
+          S->>N: notificarRechazo(solicitante, motivo) (UC-MUE-08)
+          alt notificación falla
+            N-->>S: error
+            S->>S: encolar reintento (el rechazo ya está guardado)
+          else notificación entregada
             N-->>S: ok
           end
           S-->>C: rechazo registrado
@@ -61,27 +58,21 @@ sequenceDiagram
             alt colisión de código (violación de unicidad)
               R-->>S: reintentar con otro código
             else guardado exitoso
-              R-->>S: specimens + evento guardados
-              break primer guardado exitoso
-                S->>S: terminar reintentos
-              end
+              R-->>S: ok
             end
           end
           alt sin código único tras 3 intentos
             S-->>C: CodigoNoGenerado
             C-->>UI: 500 (no se acepta sin código)
           else código guardado
-            Note over R,N: specimens accepted y evento en una transacción
+            S->>ORD: marcarMuestraRecibida(ítem)
             S-->>C: muestra aceptada
             C-->>UI: 201 {estado: accepted, código}
             UI->>UI: imprime la etiqueta con el código (el 201 ya respondió)
             alt la impresora falla
               UI-->>T: error de impresión (la muestra ya quedó guardada)
               T->>UI: reimprimir con el mismo código (no se genera otro)
-              loop decisión del usuario: reintentar o dejar pendiente
-                UI->>UI: reimprime el mismo código
-                Note over UI,T: Salida al imprimir o cancelar, sin regenerar código
-              end
+              UI->>UI: reimprime la etiqueta
             else impresión correcta
               UI-->>T: etiqueta impresa y colocada en el tubo
             end
