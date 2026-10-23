@@ -1,0 +1,11 @@
+flowchart LR
+  Beds[ASII-06<br/>salas y camas] -->|escribe| DB[(Base HOSPITAL por hospital)]
+  Admission[ASII-07<br/>admisión] -->|escribe estancias| DB
+  Transfers[ASII-08<br/>traslados y altas] -->|cierra/abre estancias| DB
+  DB -->|solo lectura atómica| Reader[PdoBedSnapshotReader]
+  Reader --> Dashboard[ASII-09<br/>dashboard]
+
+  Owner1[Propietario: wards / beds] -.-> Beds
+  Owner2[Propietario: bed_stays] -.-> Admission
+  Owner2 -.-> Transfers
+  Dashboard -. no modifica .-> DB

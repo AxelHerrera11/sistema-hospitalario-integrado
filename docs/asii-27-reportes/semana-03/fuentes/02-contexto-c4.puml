@@ -1,0 +1,14 @@
+@startuml
+!include <C4/C4_Context>
+
+title Contexto C4 - Reportes operativos (ASII-27)
+
+Person(admin, "Administrador", "Solicita reportes operativos por rango de fechas")
+System(reportes, "Reportes operativos", "Filtra y exporta un reporte reproducible")
+System_Ext(datos, "Datos operativos del HIS", "Citas, atenciones y documentacion")
+System_Ext(rbac, "RBAC del HIS", "Valida permisos administrativos")
+
+Rel(admin, reportes, "Solicita el reporte en un formato")
+Rel(reportes, datos, "Lee las filas del periodo")
+Rel(reportes, rbac, "Valida el acceso administrativo")
+@enduml

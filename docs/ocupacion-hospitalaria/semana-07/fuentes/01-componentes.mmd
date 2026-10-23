@@ -1,0 +1,37 @@
+flowchart LR
+  subgraph FE["Frontend Vue - implementado en la semana 16"]
+    View["OccupancyPage.vue"]
+    Utils["ocupacion.js (utilidades puras)"]
+    Router["router/index.js ruta /ocupacion"]
+    View --> Utils
+  end
+
+  subgraph HIS["HIS Laravel - implementado en la semana 16"]
+    Middleware["tenant + jwt.auth + rbac:ocupacion.ver"]
+    Ctrl["OccupancyController (Api/V1)"]
+    Provider["OcupacionServiceProvider"]
+  end
+
+  subgraph BE["Micro-HIS PHP - existente desde la semana 3"]
+    Query["ConsultOccupancy"]
+    Domain["OccupancyCalculator"]
+    Port{{BedSnapshotReader}}
+    Pdo["PdoBedSnapshotReader"]
+    Memory["Doble en memoria (verificaciones)"]
+    Query --> Domain
+    Query --> Port
+    Port -. implementa .-> Pdo
+    Port -. implementa .-> Memory
+  end
+
+  Router --> View
+  View -->|"GET /api/v1/occupancy"| Middleware --> Ctrl
+  Provider -. cablea .-> Query
+  Provider -. cablea .-> Pdo
+  Pdo --> DB[(PostgreSQL HOSPITAL)]
+  Owners[ASII-06/07/08] -->|escrituras| DB
+
+  classDef existing fill:#eaf8ef,stroke:#26734d
+  classDef implemented fill:#e8f1ff,stroke:#245a9b
+  class Query,Domain,Port,Pdo,Memory existing
+  class View,Utils,Router,Middleware,Ctrl,Provider implemented
