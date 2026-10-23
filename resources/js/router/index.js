@@ -20,6 +20,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.medicamentos },
         },
         {
+            path: '/medicos',
+            name: 'medicos',
+            component: () => import('@/modules/medicos/pages/DoctorsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.medicos },
+        },
+        {
             path: '/traslados',
             name: 'traslados',
             component: () => import('@/modules/traslados/pages/TrasladosPage.vue'),

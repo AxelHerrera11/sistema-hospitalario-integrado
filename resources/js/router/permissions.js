@@ -18,6 +18,7 @@ export const ROUTE_PERMISSIONS = {
     'patients-new': 'pacientes.registrar',
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
+    medicos: 'medicos.ver_disponibilidad',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
@@ -28,6 +29,7 @@ export const NAVIGATION = [
     { label: 'Usuarios', to: '/admin/users', permission: ROUTE_PERMISSIONS['admin-users'] },
     { label: 'Pacientes', to: '/patients', permission: ROUTE_PERMISSIONS.patients },
     { label: 'Medicamentos', to: '/medicamentos', permission: ROUTE_PERMISSIONS.medicamentos },
+    { label: 'Médicos', to: '/medicos', permission: ROUTE_PERMISSIONS.medicos },
     { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
     { label: 'Admisión y camas', to: null, permission: 'admision.ver', soon: true },
