@@ -162,6 +162,23 @@ $horarios->exec("INSERT INTO doctor_schedules VALUES ('doc-ana', 'sp-neuro', 1, 
 $horario = new PdoScheduleProvider($horarios);
 check('doctor_schedules: lunes 08:00-09:30 vigente; martes sin franjas ([]); médico sin horario null', $horario->scheduleFor('doc-ana', '2026-10-19') === [['08:00', '09:30', 30]]
     && $horario->scheduleFor('doc-ana', '2026-10-20') === [] && $horario->scheduleFor('doc-beto', '2026-10-19') === null);
+$horarios->exec("INSERT INTO doctor_schedules VALUES ('doc-beto', 'sp-neuro', 2, 600, 660, 15, '2026-01-01', NULL, 'active')");
+$ids = ['doc-ana', 'doc-beto', 'doc-nadie'];
+$lote = $horario->schedulesFor($ids, '2026-10-19');
+check('RNF-MED-04: schedulesFor() en lote da lo mismo que scheduleFor() de uno en uno (lunes: Ana con franja, Beto solo martes -> [], desconocido -> null)',
+    $lote === array_combine($ids, array_map(fn (string $id) => $horario->scheduleFor($id, '2026-10-19'), $ids))
+    && $lote === ['doc-ana' => [['08:00', '09:30', 30]], 'doc-beto' => [], 'doc-nadie' => null]
+    && $horario->schedulesFor([], '2026-10-19') === []
+    && $horario->schedulesFor($ids, '2026-10-20')['doc-beto'] === [['10:00', '11:00', 15]]);
+$citas = new PDO('sqlite::memory:');
+$citas->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+$citas->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 08:30:00', '2026-10-19 09:00:00', 'confirmed'), ('doc-beto', '2026-10-19 10:00:00', '2026-10-19 10:30:00', 'scheduled'), ('doc-beto', '2026-10-19 11:00:00', '2026-10-19 11:30:00', 'cancelled')");
+$lector = new PdoDoctorStore($citas);
+$ocupadas = $lector->busyIntervalsFor($ids, '2026-10-19');
+check('RNF-MED-04: busyIntervalsFor() en lote da lo mismo que busyIntervals() de uno en uno, incluye a todo médico pedido y no cuenta las canceladas',
+    $ocupadas === array_combine($ids, array_map(fn (string $id) => $lector->busyIntervals($id, '2026-10-19'), $ids))
+    && $ocupadas === ['doc-ana' => [['08:30', '09:00']], 'doc-beto' => [['10:00', '10:30']], 'doc-nadie' => []]
+    && $lector->busyIntervalsFor([], '2026-10-19') === []);
 check('doctor_schedules: fuera de vigencia (valid_to exclusivo) y horario inactivo no cuentan', $horario->scheduleFor('doc-ana', '2026-12-01') === null);
 
 try {
