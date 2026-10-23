@@ -107,7 +107,7 @@ Evidencia agregada por los PR posteriores (se ejecutó en la rama de cada uno):
 #            archivo ajeno a este módulo, no investigado; confirmar en CI
 # php vendor/bin/phpunit tests/Feature/Medicos
 # resultado: OK (11 tests, 42 assertions)
-# node resources/js/modules/medicos/medicos.test.mjs
+# node <archivo de pruebas de utilidades de la pantalla, en la carpeta modules del frontend de médicos>
 # resultado: OK: aserciones de la pantalla de médicos aprobadas
 # npm run build
 # resultado: ✓ 130 modules transformed; DoctorsPage-B-lfS94Z.js 8.91 kB
