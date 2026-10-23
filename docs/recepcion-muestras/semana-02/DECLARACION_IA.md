@@ -1,8 +1,8 @@
 # Declaración de IA — semana 2
 
 - Herramienta: Codex (OpenAI).
-- Propósito: revisar la matriz ASII-18 y corregir coherencia de código, documentación y pruebas según Javier.
-- Instrucciones relevantes: completar semanas 1–15, conservar Resultados de Gerson, PR menores de 400 líneas y no publicar cambios.
-- Contenido generado o modificado: documentación y correcciones de esta semana; evidencia solo de comandos realmente ejecutados.
-- Validación técnica: consultar semana 15 y el informe local; las pruebas automatizadas no sustituyen revisión clínica.
-- Validación humana: pendiente de María y de los revisores; no se declara aceptación docente ni de otros módulos.
+- Propósito: RF/RNF verificables, un solo dominio vanilla y demostración ejecutable de LSP.
+- Instrucciones: preservar PR existentes, base develop, menos de 400 líneas propias y solo Yamilet mergea.
+- Contenido modificado: puertos, dominio, cargador Laravel, prueba LSP, requisitos y diagramas.
+- Validación: Pint, prueba LSP y PostgreSQL; resultados en EVIDENCIA.md y PR #689.
+- Validación humana y supuestos clínicos SD-REC-01: pendientes; no se afirma aceptación docente.
