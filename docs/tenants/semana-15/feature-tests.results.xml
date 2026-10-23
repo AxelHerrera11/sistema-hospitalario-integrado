@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reporte generado por PHPUnit (formato JUnit), no editado a mano salvo esta cabecera
+  y las rutas, que se volvieron relativas a la raíz del repositorio.
+  Comando: vendor/bin/phpunit [filter MicroHisSmokeTest|RegisterUserFeatureTest|RevokeSessionFeatureTest|MultiTenantIsolationFeatureTest|RefreshTokenFeatureTest|LoginMfaFeatureTest] [log-junit docs/tenants/semana-15/feature-tests.results.xml]
+  Entorno: PHP 8.2.12 · PHPUnit 11.5.55 · Windows 11 · 2026-10-21T17:16Z
+  Base: micro-HIS de Semana 3 (16f68b0) + pruebas de Semana 15 (#344 a #348).
+-->
+<testsuites>
+  <testsuite name="phpunit.xml" tests="33" assertions="139" errors="0" failures="0" skipped="0" time="0.211990">
+    <testsuite name="Feature" tests="33" assertions="139" errors="0" failures="0" skipped="0" time="0.211990">
+      <testsuite name="Tests\Feature\Tenants\LoginMfaFeatureTest" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" tests="7" assertions="28" errors="0" failures="0" skipped="0" time="0.087662">
+        <testcase name="test_login_without_mfa_returns_tokens" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="28" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="5" time="0.062197"/>
+        <testcase name="test_login_with_totp_needs_a_valid_single_use_challenge" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="41" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="6" time="0.006362"/>
+        <testcase name="test_three_wrong_codes_lock_the_account" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="58" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="5" time="0.005032"/>
+        <testcase name="test_unknown_email_and_wrong_password_give_the_same_answer" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="71" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="3" time="0.003307"/>
+        <testcase name="test_inactive_user_cannot_log_in" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="83" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="1" time="0.002608"/>
+        <testcase name="test_five_failures_lock_and_a_correct_password_is_still_refused" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="91" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="7" time="0.006395"/>
+        <testcase name="test_login_requires_the_hospital_header" file="tests/Feature/Tenants/LoginMfaFeatureTest.php" line="104" class="Tests\Feature\Tenants\LoginMfaFeatureTest" classname="Tests.Feature.Tenants.LoginMfaFeatureTest" assertions="1" time="0.001761"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\MicroHisSmokeTest" file="tests/Feature/Tenants/MicroHisSmokeTest.php" tests="6" assertions="51" errors="0" failures="0" skipped="0" time="0.043306">
+        <testcase name="test_admin_needs_totp_and_each_challenge_is_single_use" file="tests/Feature/Tenants/MicroHisSmokeTest.php" line="31" class="Tests\Feature\Tenants\MicroHisSmokeTest" classname="Tests.Feature.Tenants.MicroHisSmokeTest" assertions="6" time="0.002252"/>
+        <testcase name="test_refresh_rotates_and_reusing_an_old_refresh_revokes_the_session" file="tests/Feature/Tenants/MicroHisSmokeTest.php" line="52" class="Tests\Feature\Tenants\MicroHisSmokeTest" classname="Tests.Feature.Tenants.MicroHisSmokeTest" assertions="9" time="0.005444"/>
+        <testcase name="test_logout_invalidates_the_access_token_immediately" file="tests/Feature/Tenants/MicroHisSmokeTest.php" line="70" class="Tests\Feature\Tenants\MicroHisSmokeTest" classname="Tests.Feature.Tenants.MicroHisSmokeTest" assertions="5" time="0.004414"/>
+        <testcase name="test_same_user_in_two_hospitals_keeps_roles_and_revocations_isolated" file="tests/Feature/Tenants/MicroHisSmokeTest.php" line="81" class="Tests\Feature\Tenants\MicroHisSmokeTest" classname="Tests.Feature.Tenants.MicroHisSmokeTest" assertions="12" time="0.007301"/>
+        <testcase name="test_failed_logins_lock_the_membership_and_errors_use_real_http_status" file="tests/Feature/Tenants/MicroHisSmokeTest.php" line="103" class="Tests\Feature\Tenants\MicroHisSmokeTest" classname="Tests.Feature.Tenants.MicroHisSmokeTest" assertions="17" time="0.008586"/>
+        <testcase name="test_state_survives_between_requests_through_the_state_file" file="tests/Feature/Tenants/MicroHisSmokeTest.php" line="124" class="Tests\Feature\Tenants\MicroHisSmokeTest" classname="Tests.Feature.Tenants.MicroHisSmokeTest" assertions="2" time="0.015309"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" tests="5" assertions="16" errors="0" failures="0" skipped="0" time="0.028588">
+        <testcase name="test_token_of_hospital_a_cannot_be_used_against_hospital_b" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="23" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="3" time="0.003830"/>
+        <testcase name="test_user_list_only_shows_the_admin_hospital" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="36" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="1" time="0.005573"/>
+        <testcase name="test_same_user_and_device_keep_roles_and_sessions_per_hospital" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="47" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="8" time="0.007071"/>
+        <testcase name="test_failed_logins_lock_only_the_membership_of_that_hospital" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="69" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="2" time="0.009523"/>
+        <testcase name="test_suspended_hospital_blocks_login" file="tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php" line="84" class="Tests\Feature\Tenants\MultiTenantIsolationFeatureTest" classname="Tests.Feature.Tenants.MultiTenantIsolationFeatureTest" assertions="2" time="0.002590"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\RefreshTokenFeatureTest" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" tests="4" assertions="14" errors="0" failures="0" skipped="0" time="0.017562">
+        <testcase name="test_refresh_rotates_both_tokens_and_keeps_the_session" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="28" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="5" time="0.006263"/>
+        <testcase name="test_invalid_or_missing_refresh_token_is_rejected" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="40" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="2" time="0.003810"/>
+        <testcase name="test_reusing_a_rotated_refresh_token_revokes_the_session" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="46" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="6" time="0.003643"/>
+        <testcase name="test_access_token_stays_valid_only_while_its_session_is_alive" file="tests/Feature/Tenants/RefreshTokenFeatureTest.php" line="61" class="Tests\Feature\Tenants\RefreshTokenFeatureTest" classname="Tests.Feature.Tenants.RefreshTokenFeatureTest" assertions="1" time="0.003845"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\RegisterUserFeatureTest" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" tests="7" assertions="16" errors="0" failures="0" skipped="0" time="0.021004">
+        <testcase name="test_admin_registers_a_user_in_its_own_hospital" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="23" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="5" time="0.004401"/>
+        <testcase name="test_privileged_role_gets_totp_enrollment_once" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="36" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="2" time="0.003222"/>
+        <testcase name="test_inactive_hospital_rejects_registration" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="46" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="1" time="0.001924"/>
+        <testcase name="test_quota_exceeded_rejects_registration" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="54" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="2" time="0.002120"/>
+        <testcase name="test_duplicate_email_in_same_hospital_is_rejected" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="68" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="1" time="0.002660"/>
+        <testcase name="test_weak_password_and_non_canonical_roles_are_rejected" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="76" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="3" time="0.002338"/>
+        <testcase name="test_only_admin_hospital_can_register_users" file="tests/Feature/Tenants/RegisterUserFeatureTest.php" line="88" class="Tests\Feature\Tenants\RegisterUserFeatureTest" classname="Tests.Feature.Tenants.RegisterUserFeatureTest" assertions="2" time="0.004339"/>
+      </testsuite>
+      <testsuite name="Tests\Feature\Tenants\RevokeSessionFeatureTest" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" tests="4" assertions="14" errors="0" failures="0" skipped="0" time="0.013868">
+        <testcase name="test_logout_revokes_own_session_immediately" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="23" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="4" time="0.004120"/>
+        <testcase name="test_admin_force_revokes_every_session_of_a_user" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="37" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="7" time="0.004456"/>
+        <testcase name="test_revoking_an_unknown_user_returns_404" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="57" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="1" time="0.001894"/>
+        <testcase name="test_non_admin_cannot_force_revoke" file="tests/Feature/Tenants/RevokeSessionFeatureTest.php" line="66" class="Tests\Feature\Tenants\RevokeSessionFeatureTest" classname="Tests.Feature.Tenants.RevokeSessionFeatureTest" assertions="2" time="0.003397"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

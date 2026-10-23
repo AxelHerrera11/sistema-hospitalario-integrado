@@ -1,0 +1,18 @@
+▶ E2E-AUTH: autenticación, tenant y RBAC de punta a punta
+  ﹣ E2E-AUTH-01 login sin X-Tenant-ID → 400 TENANT_REQUIRED (1.1816ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-02 contraseña incorrecta → 401 INVALID_CREDENTIALS (0.1201ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-03 login válido de admin_hospital y medico → 200 con access_token (0.2061ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-04 /auth/me con token → 200 y roles del hospital; sin token → 401 (0.1012ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-05 RBAC: admin_hospital lista usuarios (200); medico → 403 RBAC_DENIED (0.0803ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-06 medico sin ocupacion.ver → 403 en /occupancy (0.1722ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-07 token del hospital 1 con X-Tenant-ID del hospital 2 → 403 TENANT_MISMATCH (0.0774ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+  ﹣ E2E-AUTH-08 logout revoca la sesión: el mismo token → 401 SESSION_REVOKED (0.1464ms) # E2E_API_BASE no definido: requiere el ambiente aislado del job e2e
+✔ E2E-AUTH: autenticación, tenant y RBAC de punta a punta (3.3006ms)
+ℹ tests 8
+ℹ suites 1
+ℹ pass 0
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 8
+ℹ todo 0
+ℹ duration_ms 91.0107

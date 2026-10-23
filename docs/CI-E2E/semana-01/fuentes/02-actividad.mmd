@@ -1,0 +1,28 @@
+flowchart TD
+    %% Actividad: del PR a la decisión del quality gate (con decisiones, excepciones y resultado)
+    A([PR hacia develop o push a develop]) --> B[Instalación controlada: composer install + npm ci con lockfiles]
+    B --> C{¿Dependencias instaladas?}
+    C -- no --> X1[Etapa falla: no publica reporte] --> G
+    C -- sí --> D[Etapas en paralelo: sintaxis, lint, build / unitarias, integración, contratos / E2E aislado]
+    D --> E{¿La etapa publicó su reporte JUnit?}
+    E -- no --> N1[Nota: suite sin resultado] --> G
+    E -- sí --> F[Subir paquete de evidencias como artefacto con retención]
+    F --> G[Job quality-gate: descargar evidencias]
+    G --> P{¿Plan válido? SemVer, SHA de 40, ambiente aislado, unit y E2E obligatorias}
+    P -- no --> X2[[422: error de configuración, exit 3]] --> Z
+    P -- sí --> R{¿RBAC concede qa.ejecuciones.registrar?}
+    R -- no --> X3[[403 y denegación auditada]] --> Z
+    R -- RBAC caído --> X4[[503: falla cerrado, nada se guarda]] --> Z
+    R -- sí --> S[Planificar y iniciar ejecución]
+    S --> T[Por cada suite: leer JUnit, calcular SHA-256 de cada evidencia, registrar resultado]
+    T --> U{¿Almacén disponible?}
+    U -- no --> X5[[503 QA_STORAGE_UNAVAILABLE, rollback]] --> Z
+    U -- sí --> V[Completar ejecución]
+    V --> W{Reglas del gate por suite}
+    W -->|obligatoria ausente, vacía o sin evidencia| BL[Veredicto BLOQUEADO, exit 2]
+    W -->|obligatoria bajo el umbral u omitidas| RE[Veredicto RECHAZADO, exit 1]
+    W -->|todas las obligatorias cumplen| AP[Veredicto APROBADO, exit 0]
+    BL --> Y[Guardar decisión, auditar qa.gate.evaluado, publicar resumen y gate-decision.json]
+    RE --> Y
+    AP --> Y
+    Y --> Z([Fin: check del PR verde o rojo con evidencia conservada])
