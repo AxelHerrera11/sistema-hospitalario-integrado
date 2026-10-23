@@ -1,0 +1,89 @@
+
+######## unit ########
+
+== Plan de pruebas (RF-01) ==
+OK    [U01] Versión SemVer válida y con prerelease
+OK    [U02] Versión no SemVer → version_invalida
+OK    [U03] Commit abreviado (7) → commit_invalido
+OK    [U04] Nombres de suite repetidos → suite_duplicada
+OK    [U05] Plan sin E2E obligatoria → plan_incompleto
+OK    [U06] Ambiente "production" no existe → ambiente_no_permitido (RNF-02)
+OK    [U07] Nombre de suite con mayúsculas/espacios → nombre_suite_invalido
+
+== Evidencia (RF-04, RNF-03) ==
+OK    [U08] La evidencia reconoce su contenido original
+OK    [U09] Un byte alterado invalida la evidencia
+OK    [U10] Ruta de evidencia rechazada: escapa con ..
+OK    [U10] Ruta de evidencia rechazada: ruta absoluta
+OK    [U10] Ruta de evidencia rechazada: unidad Windows
+OK    [U10] Ruta de evidencia rechazada: URL
+OK    [U11] SHA-256 en mayúsculas o corto → evidencia_sin_huella
+OK    [U12] Evidencia de 0 bytes → evidencia_vacia
+
+== Resultado de suite ==
+OK    [U13] Fallidas + omitidas > total → conteo_inconsistente
+OK    [U14] Duración negativa → conteo_negativo
+OK    [U15] Tasa sobre ejecutadas: 7 de 8 = 0.875
+OK    [U16] Todo omitido → tasa null (no hay qué medir)
+
+== Ciclo de vida de la ejecución (RF-02, RF-03) ==
+OK    [U17] Registrar antes de iniciar → estado_invalido (409)
+OK    [U18] Suite que no está en el plan → suite_no_planificada
+OK    [U19] Segundo resultado de la misma suite → resultado_duplicado (no se sobrescribe)
+OK    [U20] Iniciar dos veces → estado_invalido
+OK    [U21] Completar fija estado y hora de cierre
+OK    [U22] Abortar una ejecución completada → ejecucion_finalizada
+OK    [U23] Abortar sin motivo → motivo_invalido
+OK    [U24] Abortar desde planned guarda el motivo
+
+== Política del gate ==
+OK    [U25] Umbral 1.5 → umbral_invalido
+OK    [U26] Umbral para tipo inexistente → tipo_suite_invalido
+OK    [U27] Política sin versión → politica_version_invalida
+OK    [U28] Tipo sin umbral explícito usa 1.0 (lo más estricto)
+
+[unit] 31 pruebas, 0 fallos.
+
+######## whitebox ########
+NO ENTREGADA TODAVÍA: tests/whitebox.php
+
+######## blackbox ########
+NO ENTREGADA TODAVÍA: tests/blackbox.php
+
+######## application ########
+NO ENTREGADA TODAVÍA: tests/application.php
+
+######## pdo ########
+
+== Ida y vuelta (camino feliz) ==
+OK    [P01] El agregado se reconstruye con estado, plan y resultado
+OK    [P02] La evidencia conserva ruta y huella
+OK    [P03] find() de otro tenant devuelve null (aislamiento por consulta)
+
+== Solo inserción y decisiones ==
+OK    [P04] Un resultado ya guardado no se sobrescribe aunque se fuerce el objeto
+OK    [P05] latestDecision devuelve la última insertada; las anteriores se conservan
+OK    [P06] latestDecision de otro tenant → null
+OK    [P07] Hallazgos sobreviven la serialización
+
+== Sentencias preparadas ==
+OK    [P08] Un id con comillas se trata como dato, no como SQL
+OK    [P09] listByTenant con LIMIT ligado como entero
+
+== Error de persistencia ==
+OK    [P10] Tabla ausente → QaStorageFailure (no PDOException)
+OK    [P11] La API responde 503 QA_STORAGE_UNAVAILABLE
+OK    [P12] Fila corrupta (plan_json inválido) → QaStorageFailure
+OK    [P13a] El esquema rechaza un status fuera del enum (CHECK)
+OK    [P13] Plan vacío guardado (viola regla de dominio) → QaStorageFailure (no 422)
+OK    [P14] Fallo a mitad de la transacción → rollback, sin resultado parcial
+
+[pdo] 15 pruebas, 0 fallos.
+
+######## ci ########
+NO ENTREGADA TODAVÍA: tests/ci.php
+
+######## architecture ########
+NO ENTREGADA TODAVÍA: tests/architecture.php
+
+TODAS LAS SUITES APROBADAS
