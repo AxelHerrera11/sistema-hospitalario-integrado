@@ -8,7 +8,7 @@
 - **Issue:** Refs #22
 - **PR de código:** #1049 (corrección de defectos) y #1059 (integración en Laravel). Este PR solo agrega documentación.
 
-**La Semana 16 no se declara completa:** la persistencia real contra PostgreSQL y el despliegue dependen de terceros (ver [bloqueos](#bloqueos-y-limitaciones-no-se-declaran-completados)).
+**La Semana 16 no se declara completa:** la persistencia real contra PostgreSQL no se ha probado (en parte por desalineaciones de mis propios adaptadores) y el despliegue depende de terceros (ver [bloqueos](#bloqueos-y-limitaciones-no-se-declaran-completados)).
 
 ## Qué se integró
 
@@ -43,11 +43,11 @@ cd micro-his/notas-soap && php tests/unit.php && php tests/whitebox.php && php t
 
 | # | Bloqueo | Por qué | Quién |
 |---|---|---|---|
-| 1 | **Persistencia real no probada** | Los adaptadores PDO no coinciden con el esquema de `develop`: `clinical_notes.medical_record_id` es obligatorio y el adaptador no lo envía; no existe `icd10_codes`; `local_access_audits` no está en las migraciones. Las pruebas usan adaptadores InMemory | Javier (ASII-09) |
-| 2 | **D-02 abierto** | Una nota firmada entre la lectura y la escritura recibe el diagnóstico. Exige repetir la comprobación en la transacción y un trigger en `diagnoses` (el trigger actual de `clinical_notes` solo protege la nota firmada) | Javier (ASII-09) |
-| 3 | **Mapeo de identidad** | El id del token se usa como `user_ref_id`; falta confirmar su relación con `local_user_refs` | Javier y María (ASII-02) |
+| 1 | **Adaptadores PDO desalineados con el esquema de `develop`** (corrección propia) | Verificado el 2026-10-22 contra `develop` y todas las ramas remotas. (a) `clinical_notes.medical_record_id` es `NOT NULL` y `PdoClinicalNoteStore` no lo envía. (b) `PdoCareAssignmentReader` consulta `care_assignments.user_ref_id`, columna que no existe: la asignación cuelga de `doctor_profile_id` (el usuario está en `doctor_profiles.local_user_ref_id`) y exige `status = 'active'` y `valid_to IS NULL`. (c) Las pruebas usan adaptadores InMemory, así que no lo detectaron | Autor (este módulo) |
+| 2 | **D-02 abierto (confirmado)** | `enforce_diagnosis_integrity` en `develop` no comprueba que la nota esté sin firmar, y ninguna rama ni PR toca `diagnoses` ni `clinical_notes`. Exige repetir la comprobación en la transacción y un trigger en `diagnoses` | Javier (ASII-09) |
+| 3 | **Mapeo de identidad** | El id del token se usa como `user_ref_id`; falta confirmar su relación con `local_user_refs` (el FK de `clinical_notes.author_user_ref_id` y de `local_access_audits.actor_user_ref_id`) | Javier y María (ASII-02) |
 | 4 | **Firma, corrección y versionado** | Los permisos `notas_soap.firmar` y `notas_soap.corregir` existen en RBAC, pero no hay rutas ni código | Pendiente de semanas posteriores |
-| 5 | **Auditoría local (Anexo A, R-02)** | `local_access_audits` y `correlation_id` sin cerrar | Javier |
+| 5 | **Catálogo CIE-10 inexistente** | `PdoIcd10Catalog` lee `icd10_codes`, que no está en `develop` ni en ninguna rama remota; `diagnoses.code` y `description` son texto libre. Hay que decidir quién aporta el catálogo | Por decidir con Javier |
 | 6 | **Staging u on-premise** | No hay acceso a ningún entorno; solo ejecución local | Equipo |
 | 7 | **R-06** | `clinical_notes_record_version_unique` choca con el riesgo R1 de la Semana 1 | Javier |
 
