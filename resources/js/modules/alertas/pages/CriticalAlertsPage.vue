@@ -45,7 +45,9 @@ async function acusar(alerta) {
     }
     enviando.value = true;
     try {
-        await api.post(`/critical-alerts/${alerta.critical_alert_id}/acknowledge`, cuerpoAcuse(alerta, lectura));
+        // La jefatura acusa las alertas sin médico tratante por su propia ruta (alertas.supervisar).
+        const ruta = bandeja.value === 'jefatura' ? 'acknowledge-as-service-head' : 'acknowledge';
+        await api.post(`/critical-alerts/${alerta.critical_alert_id}/${ruta}`, cuerpoAcuse(alerta, lectura));
         abierta.value = null;
         await cargar();
         aviso.value = 'Alerta acusada. El escalamiento se detuvo.';
