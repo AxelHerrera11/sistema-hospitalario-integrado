@@ -19,6 +19,7 @@ export const ROUTE_PERMISSIONS = {
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
     wards: 'camas.ver',
+    reportes: 'reportes.ver',
     alergias: 'alergias.ver',
 };
 
@@ -41,7 +42,7 @@ export const NAVIGATION = [
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
     { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
-    { label: 'Reportes', to: null, permission: 'reportes.ver', soon: true },
+    { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
     { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
     { label: 'Documentación', to: null, permission: 'documentacion.ver', soon: true },
 ];
