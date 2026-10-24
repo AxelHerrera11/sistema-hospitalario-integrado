@@ -31,7 +31,7 @@ todos los PR del modulo hasta la entrega final.
 | M-04 | Densidad de defectos RTF | hallazgos criticos+mayores / KLOC revisadas | <= 15 | revision RTF (Semana 13) | cada revision |
 | M-05 | PR dentro del limite | PR <= 400 lineas / PR totales | 100 % | `git diff --numstat` | cada PR |
 | M-06 | Tiempo de cierre de criticos | dias habiles desde el registro | <= 2 | issue #208 | semanal |
-| M-07 | Accesibilidad automatica | chequeos sin observacion / total | 12/12 | `auditoria.php` (Semana 9) | cada PR de UI |
+| M-07 | Accesibilidad automatica | chequeos sin observacion / total | 12/12 | `auditoria-accesibilidad.php` (Semana 9) | cada PR de UI |
 
 ### Medicion actual (linea base)
 
