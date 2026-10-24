@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AlergiasServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
@@ -22,4 +23,6 @@ return [
     // Ocupación al final: solo cablea el adaptador PDO del Micro-HIS, no altera el binding de RBAC.
     OcupacionServiceProvider::class,
     TrasladosAltasServiceProvider::class,
+    // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
+    AlergiasServiceProvider::class,
 ];
