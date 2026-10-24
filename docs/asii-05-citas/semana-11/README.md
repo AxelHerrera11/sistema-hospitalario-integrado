@@ -53,7 +53,7 @@ Los codigos coinciden con el contrato API (Semana 5) y el formato comun de error
 **Re-auditoria:** la auditoria automatica de la Semana 9 sobre este prototipo da **12 chequeos, 0 a revisar**:
 
 ```bash
-php ../semana-09/evidencia/auditoria.php prototipo/index.html
+php ../semana-09/evidencia/auditoria-accesibilidad.php prototipo/index.html
 ```
 
 ## Como revisarlo
