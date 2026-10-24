@@ -11,6 +11,7 @@
 /** Permiso que exige cada ruta protegida; el backend aplica el mismo permiso. */
 export const ROUTE_PERMISSIONS = {
     ocupacion: 'ocupacion.ver',
+    admision: 'admisiones.registrar',
     medicamentos: 'medicamentos.ver',
     rbac: 'rbac.permisos.ver',
     'admin-users': 'usuarios.ver',
@@ -33,7 +34,7 @@ export const NAVIGATION = [
     { label: 'Traslados y altas', to: '/traslados', permission: ROUTE_PERMISSIONS.traslados },
     { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
-    { label: 'Admisión y camas', to: null, permission: 'admision.ver', soon: true },
+    { label: 'Admisión y camas', to: '/admision', permission: ROUTE_PERMISSIONS.admision },
     { label: 'Expediente', to: null, permission: 'expediente.ver', soon: true },
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
