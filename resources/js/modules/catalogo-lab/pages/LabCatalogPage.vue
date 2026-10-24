@@ -68,10 +68,8 @@ onMounted(consultar);
         <h1 id="lab-titulo">Catálogo de pruebas de laboratorio</h1>
 
         <form class="lab__card lab__filtros" role="search" @submit.prevent="consultar">
-            <label for="lab-busqueda">Código o nombre</label>
-            <input id="lab-busqueda" v-model="busqueda" autocomplete="off">
-            <label for="lab-fecha">Vigente al</label>
-            <input id="lab-fecha" v-model="fecha" type="date" required>
+            <label>Código o nombre <input id="lab-busqueda" v-model="busqueda" autocomplete="off"></label>
+            <label>Vigente al <input id="lab-fecha" v-model="fecha" type="date" required></label>
             <button type="submit">Consultar</button>
         </form>
 
@@ -127,7 +125,7 @@ onMounted(consultar);
 .lab__card { display: grid; gap: 0.5rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #fff; }
 .lab__filtros { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); align-items: end; }
 .lab__grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
-.lab__grid label { display: grid; gap: 0.25rem; }
+.lab__grid label, .lab__filtros label { display: grid; gap: 0.25rem; }
 .lab__card input, .lab__card select { padding: 0.5rem; border: 1px solid #94a3b8; border-radius: 0.375rem; }
 .lab__card [aria-invalid='true'] { border-color: #b91c1c; }
 .lab__card button { justify-self: start; padding: 0.5rem 1rem; border-radius: 0.375rem; background: #1d4ed8; color: #fff; }
