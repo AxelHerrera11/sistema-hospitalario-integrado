@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\AllergyController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -34,10 +35,10 @@ final class AlergiasServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso; alergias.ver y alergias.registrar ya están activos.
+        // tenant y jwt.auth antes del permiso (ya activos); después, el guard de #1154: solo el hospital dueño de la base HOSPITAL.
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
-            Route::post('patients/{patient}/allergies', [AllergyController::class, 'store'])->middleware('rbac:alergias.registrar');
-            Route::get('patients/{patient}/allergy-alert', [AllergyController::class, 'alert'])->middleware('rbac:alergias.ver');
+            Route::post('patients/{patient}/allergies', [AllergyController::class, 'store'])->middleware(['rbac:alergias.registrar', EnsureHospitalDatabaseTenant::class]);
+            Route::get('patients/{patient}/allergy-alert', [AllergyController::class, 'alert'])->middleware(['rbac:alergias.ver', EnsureHospitalDatabaseTenant::class]);
         });
     }
 }

@@ -30,7 +30,7 @@ final class AllergyApiTest extends TestCase
         parent::setUp();
         $this->app->make(Kernel::class);
         $this->app['router']->aliasMiddleware('tenant', TrasladosTestIdentity::class);
-        $this->app['router']->aliasMiddleware('jwt.auth', TrasladosTestIdentity::class);
+        $this->app['router']->aliasMiddleware('jwt.auth', HospitalTenantIdentity::class);
         $this->app->instance(RoleResolver::class, new TrasladosTestIdentity);
         $this->app->instance(DenialRecorder::class, new TrasladosTestIdentity);
         $this->hospital = new InMemoryAllergyRepository([self::PACIENTE]);
@@ -42,6 +42,8 @@ final class AllergyApiTest extends TestCase
                 return $centralUserId === '00000000-0000-4000-8000-00000000c0a1' ? '00000000-0000-4000-8000-0000000000f1' : null;
             }
         });
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        config()->set('tenants.hospital_database_tenant_id', 'hospital-a');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
 
@@ -61,6 +63,18 @@ final class AllergyApiTest extends TestCase
         TrasladosTestIdentity::como('recepcion');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a'])->registrar()->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
         $this->getJson('/api/v1/patients/'.self::PACIENTE.'/allergy-alert')->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        $this->assertSame([], $this->hospital->rows);
+    }
+
+    public function test_hospital_database_guard_fails_closed(): void
+    {
+        TrasladosTestIdentity::como('medico');
+        TrasladosTestIdentity::$hospital = 'hospital-b';
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b'])->getJson('/api/v1/patients/'.self::PACIENTE.'/allergy-alert')
+            ->assertStatus(403)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_MISMATCH');
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        config()->set('tenants.hospital_database_tenant_id', null);
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a'])->registrar()->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
         $this->assertSame([], $this->hospital->rows);
     }
 
