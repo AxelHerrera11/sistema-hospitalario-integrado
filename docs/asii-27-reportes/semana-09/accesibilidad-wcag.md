@@ -38,7 +38,7 @@
 12 pares evaluados, 0 por debajo del minimo.
 ```
 
-## Auditoria automatica del prototipo (`php evidencia/auditoria.php`)
+## Auditoria automatica del prototipo (`php evidencia/auditoria-accesibilidad.php`)
 
 ```text
   [CUMPLE] 3.1.1 idioma de la pagina (lang)

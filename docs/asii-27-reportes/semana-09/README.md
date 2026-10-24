@@ -13,7 +13,7 @@
 
 - [Informe de evaluacion de usabilidad](./informe-usabilidad.md): recorrido cognitivo y analisis heuristico.
 - [Cumplimiento de accesibilidad WCAG 2.2 AA](./accesibilidad-wcag.md) con 16 criterios.
-- Evidencia ejecutable: [`evidencia/contraste.php`](./evidencia/contraste.php) y [`evidencia/auditoria.php`](./evidencia/auditoria.php).
+- Evidencia ejecutable: [`evidencia/contraste.php`](./evidencia/contraste.php) y [`evidencia/auditoria-accesibilidad.php`](./evidencia/auditoria-accesibilidad.php).
 
 ## Resumen de resultados
 
@@ -26,7 +26,7 @@
 ```bash
 cd docs/asii-27-reportes/semana-09
 php evidencia/contraste.php
-php evidencia/auditoria.php      # audita ../semana-08/prototipo/index.html (PR de la Semana 8)
+php evidencia/auditoria-accesibilidad.php      # audita ../semana-08/prototipo/index.html (PR de la Semana 8)
 ```
 
 La salida completa de ambos comandos esta en [accesibilidad-wcag.md](./accesibilidad-wcag.md).
