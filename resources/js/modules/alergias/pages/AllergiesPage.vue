@@ -124,6 +124,10 @@ async function registrar() {
 
 <style scoped>
 .alg { display: grid; gap: 1rem; max-width: 42rem; }
+.alg h1 { font-size: 1.5rem; font-weight: 700; }
+.alg h2, .alg h3 { font-size: 1.125rem; font-weight: 600; }
+.alg__card button { justify-self: start; padding: 0.5rem 1rem; border-radius: 0.375rem; background: #1d4ed8; color: #fff; }
+.alg__card button:disabled { opacity: 0.6; }
 .alg__card { display: grid; gap: 0.5rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #fff; }
 .alg__card input, .alg__card select { padding: 0.5rem; border: 1px solid #94a3b8; border-radius: 0.375rem; }
 .alg__card [aria-invalid='true'] { border-color: #b91c1c; }
