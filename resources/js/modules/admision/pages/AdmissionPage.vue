@@ -5,7 +5,7 @@ import { campoInvalido, codigoDeError, cuerpoAdmision, debeRecargarCamas, mensaj
 
 const codigo = ref('');
 const paciente = ref(null);
-const camas = ref([]);
+const camas = ref(null); // null = cargando; nunca «no hay camas» antes de la respuesta
 const tipos = ref([]);
 const tipo = ref('');
 const form = reactive({ bed_id: '', reason: '' });
@@ -15,11 +15,12 @@ const invalido = ref(null);
 const errorCampo = ref('');
 const ingreso = ref(null);
 const titulo = ref(null);
-const camaElegida = computed(() => camas.value.find((cama) => cama.bed_id === form.bed_id));
+const camaElegida = computed(() => camas.value?.find((cama) => cama.bed_id === form.bed_id));
 
 const fallo = (e) => mensajeDeError(codigoDeError(e.response?.data), e.response?.status);
 
 async function cargarCamas() {
+    camas.value = null;
     try {
         const { data } = await api.get('/beds/available', { params: tipo.value ? { type: tipo.value } : {} });
         camas.value = data.data.beds;
@@ -107,7 +108,8 @@ async function admitir() {
 
                 <fieldset :aria-invalid="String(invalido === 'bed_id')">
                     <legend>Cama disponible</legend>
-                    <p v-if="!camas.length">No hay camas disponibles{{ tipo ? ' de este tipo' : '' }}.</p>
+                    <p v-if="camas === null" role="status">Cargando camas…</p>
+                    <p v-else-if="!camas.length">No hay camas disponibles{{ tipo ? ' de este tipo' : '' }}.</p>
                     <label v-for="cama in camas" :key="cama.bed_id" class="adm__cama">
                         <input v-model="form.bed_id" type="radio" name="cama" :value="cama.bed_id">
                         {{ cama.code }} <span class="adm__tipo">{{ cama.type }}</span>
