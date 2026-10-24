@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import api from '@/plugins/axios';
 import { campoInvalido, codigoDeError, cuerpoAdmision, debeRecargarCamas, mensajeDeCampo, mensajeDeError, tiposDeCama } from '@/modules/admision/admision';
 
@@ -16,6 +16,13 @@ const errorCampo = ref('');
 const ingreso = ref(null);
 const titulo = ref(null);
 const camaElegida = computed(() => camas.value?.find((cama) => cama.bed_id === form.bed_id));
+
+// Al corregir el formulario desaparece el error anterior.
+watch(form, () => {
+    invalido.value = null;
+    errorCampo.value = '';
+});
+const hora = (iso) => new Date(iso).toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' });
 
 const fallo = (e) => mensajeDeError(codigoDeError(e.response?.data), e.response?.status);
 
@@ -96,7 +103,7 @@ async function admitir() {
             <h2 ref="titulo" tabindex="-1">{{ paciente.given_name }} {{ paciente.family_name }} · {{ paciente.code }}</h2>
 
             <p v-if="ingreso" class="adm__exito" role="status">
-                Ingreso registrado en la cama <strong>{{ ingreso.codigoCama }}</strong> el <time :datetime="ingreso.started_at">{{ new Date(ingreso.started_at).toLocaleString() }}</time>.
+                Ingreso registrado en la cama <strong>{{ ingreso.codigoCama }}</strong> el <time :datetime="ingreso.started_at">{{ hora(ingreso.started_at) }}</time>.
             </p>
 
             <form v-else class="adm__card" novalidate @submit.prevent="admitir">
