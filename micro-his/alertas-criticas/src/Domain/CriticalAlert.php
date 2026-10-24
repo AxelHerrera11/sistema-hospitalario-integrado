@@ -13,7 +13,7 @@ final class CriticalAlert
         public readonly string $id, public readonly string $resultVersionId, public readonly string $patientId,
         public readonly string $labTestId, public readonly float $value, public readonly string $direction,
         public readonly string $recipient, public readonly int $level, public readonly string $dueAt,
-        public string $status = 'open', public ?string $acknowledgedBy = null,
+        public string $status = 'open', public ?string $acknowledgedBy = null, public readonly ?string $episodeId = null,
     ) {}
 
     /** Null si la prueba no define umbrales o el valor no los supera. Sin médico tratante, va a la jefatura (nivel 1). */
@@ -26,13 +26,15 @@ final class CriticalAlert
             default => null,
         };
         return $direction === null ? null : new self($id, $event['result_version_id'], $event['patient_id'], $event['lab_test_id'],
-            (float) $event['value'], $direction, $attending ?? self::SERVICE_HEAD, $attending === null ? 1 : 0, $now->modify('+15 minutes')->format(DATE_ATOM));
+            (float) $event['value'], $direction, $attending ?? self::SERVICE_HEAD, $attending === null ? 1 : 0, $now->modify('+15 minutes')->format(DATE_ATOM),
+            episodeId: $event['episode_id']);
     }
 
     public static function fromRow(array $r): self
     {
         return new self($r['critical_alert_id'], $r['lab_result_version_id'], $r['local_patient_id'], $r['lab_test_id'], (float) $r['measured_value'],
-            $r['direction'], $r['current_recipient'], (int) $r['escalation_level'], $r['due_at'], $r['status'], $r['acknowledged_by_user_ref_id']);
+            $r['direction'], $r['current_recipient'], (int) $r['escalation_level'], $r['due_at'], $r['status'], $r['acknowledged_by_user_ref_id'],
+            $r['care_episode_id'] ?? null);
     }
 
     /** Acuse con lectura de verificación de paciente, prueba y valor. @param array<string, mixed> $readBack */
