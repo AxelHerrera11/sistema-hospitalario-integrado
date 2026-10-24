@@ -66,6 +66,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
         },
         {
+            path: '/reportes',
+            name: 'reportes',
+            component: () => import('@/modules/reportes/pages/ReportsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.reportes },
+        },
+        {
             path: '/admision',
             name: 'admision',
             component: () => import('@/modules/admision/pages/AdmissionPage.vue'),
