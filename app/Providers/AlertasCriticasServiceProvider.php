@@ -43,6 +43,8 @@ final class AlertasCriticasServiceProvider extends ServiceProvider
             Route::get('/', [CriticalAlertController::class, 'inbox'])->middleware(['rbac:alertas.ver', EnsureHospitalDatabaseTenant::class]);
             Route::get('service-head', [CriticalAlertController::class, 'serviceHeadInbox'])->middleware(['rbac:alertas.supervisar', EnsureHospitalDatabaseTenant::class]);
             Route::post('{alert}/acknowledge', [CriticalAlertController::class, 'acknowledge'])->middleware(['rbac:alertas.acusar', EnsureHospitalDatabaseTenant::class]);
+            Route::post('{alert}/acknowledge-as-service-head', [CriticalAlertController::class, 'acknowledgeAsServiceHead'])
+                ->middleware(['rbac:alertas.supervisar', EnsureHospitalDatabaseTenant::class]);
         });
     }
 }

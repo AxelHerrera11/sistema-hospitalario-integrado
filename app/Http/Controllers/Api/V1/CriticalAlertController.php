@@ -56,14 +56,20 @@ final class CriticalAlertController extends Controller
         return $this->run($request, fn (): JsonResponse => $this->json(['alerts' => array_map($this->present(...), $this->inbox->execute(CriticalAlert::SERVICE_HEAD))], 200, $request));
     }
 
-    public function acknowledge(Request $request, string $alert): JsonResponse
+    public function acknowledge(Request $request, string $alert, bool $supervisesService = false): JsonResponse
     {
         if (! Str::isUuid($alert)) {
             return $this->error('ALERT_NOT_FOUND', 'La alerta no existe en este hospital.', 404, $request, 'alert_id');
         }
 
         return $this->run($request, fn (string $actor): JsonResponse => $this->json(['alert' => $this->present(
-            $this->acknowledge->execute($alert, $actor, (array) $request->input('read_back', [])))], 200, $request));
+            $this->acknowledge->execute($alert, $actor, (array) $request->input('read_back', []), $supervisesService))], 200, $request));
+    }
+
+    /** Solo por la ruta con rbac:alertas.supervisar: la jefatura acusa las alertas que no tienen médico tratante. */
+    public function acknowledgeAsServiceHead(Request $request, string $alert): JsonResponse
+    {
+        return $this->acknowledge($request, $alert, true);
     }
 
     /** Resuelve el actor y traduce las reglas y las fallas de la base a respuestas HTTP. */

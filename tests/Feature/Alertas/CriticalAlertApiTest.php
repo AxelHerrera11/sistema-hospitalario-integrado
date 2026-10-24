@@ -109,8 +109,15 @@ final class CriticalAlertApiTest extends TestCase
         TrasladosTestIdentity::como('bioquimico', '00000000-0000-4000-8000-00000000c0b2');
         $this->detectar(['episode_id' => '00000000-0000-4000-8000-0000000000c9', 'value' => 500])->assertStatus(201)
             ->assertJsonPath('data.alert.recipient_user_ref_id', null)->assertJsonPath('data.alert.escalation_level', 1);
-        TrasladosTestIdentity::como('jefatura_medica');
-        $this->getJson('/api/v1/critical-alerts/service-head')->assertOk()->assertJsonCount(1, 'data.alerts')->assertJsonPath('data.alerts.0.direction', 'high');
+        TrasladosTestIdentity::como('jefatura_medica', '00000000-0000-4000-8000-00000000c0b2'); // no es la médica tratante
+        $id = $this->getJson('/api/v1/critical-alerts/service-head')->assertOk()->assertJsonCount(1, 'data.alerts')->assertJsonPath('data.alerts.0.direction', 'high')
+            ->json('data.alerts.0.critical_alert_id');
+        $lectura = ['read_back' => ['patient_id' => self::PACIENTE, 'lab_test_id' => self::PRUEBA, 'value' => 500]];
+        // Por la ruta común la jefatura no es destinataria ni cuida al paciente; por la de supervisión sí puede acusar.
+        $this->postJson("/api/v1/critical-alerts/{$id}/acknowledge", $lectura)->assertStatus(403)->assertJsonPath('error.code', 'NO_CARE_RELATION');
+        $this->postJson("/api/v1/critical-alerts/{$id}/acknowledge-as-service-head", $lectura)->assertOk()->assertJsonPath('data.alert.status', 'acknowledged');
+        TrasladosTestIdentity::como('medico');
+        $this->postJson("/api/v1/critical-alerts/{$id}/acknowledge-as-service-head", $lectura)->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
     }
 
     public function test_invalid_events_and_unknown_alerts_are_rejected(): void
