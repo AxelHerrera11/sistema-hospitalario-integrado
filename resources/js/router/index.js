@@ -14,6 +14,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.ocupacion },
         },
         {
+            path: '/laboratorio/catalogo',
+            name: 'catalogo-lab',
+            component: () => import('@/modules/catalogo-lab/pages/LabCatalogPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['catalogo-lab'] },
+        },
+        {
             path: '/medicamentos',
             name: 'medicamentos',
             component: () => import('@/modules/medicamentos/pages/MedicationsPage.vue'),
