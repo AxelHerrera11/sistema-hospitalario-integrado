@@ -18,10 +18,6 @@ use RuntimeException;
  */
 final class ReportesIndicatorController extends Controller
 {
-    public function __construct(private readonly CalculateCancellationRate $useCase)
-    {
-    }
-
     public function calcular(Request $request): JsonResponse
     {
         $payload = $request->only(['from', 'until', 'service_code']);
@@ -38,7 +34,9 @@ final class ReportesIndicatorController extends Controller
         }
 
         try {
-            $reading = $this->useCase->execute([
+            /* Se resuelve dentro del try: si la base HOSPITAL no responde en
+             * la conexion perezosa, el endpoint responde 503 y no 500. */
+            $reading = app(CalculateCancellationRate::class)->execute([
                 'from' => $payload['from'],
                 'until' => $payload['until'],
                 'service_code' => is_string($service) ? $service : '',
