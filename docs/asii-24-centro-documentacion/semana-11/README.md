@@ -27,7 +27,7 @@ Catalogo -> Buscar -> Detalle -> Descargar; Publicar -> Revisar y publicar -> Do
 |---|---|---|---|---|
 | Sin roles | se intenta publicar sin rol destinatario | `#err-roles` | 422 `documento_sin_roles` | error en linea antes de enviar; el boton explica que falta |
 | Busqueda vacia | no hay coincidencias | `#sin-resultados` | 200 con lista vacia | sugerencias de terminos |
-| Sin permiso | rol sin `documentacion.publicar` | `#err-permiso` | 403 `forbidden` | mensaje neutro (no revela permisos) y vuelta al catalogo |
+| Sin permiso | rol sin permiso de publicacion | `#err-permiso` | 403 `forbidden` | mensaje neutro (no revela permisos) y vuelta al catalogo |
 | Sesion expirada | JWT vencido | `#err-sesion` | 401 `unauthenticated` | borrador local del formulario |
 
 Los codigos coinciden con el contrato API (Semana 5) y el formato comun de errores de ASII-24.
@@ -54,7 +54,7 @@ Los codigos coinciden con el contrato API (Semana 5) y el formato comun de error
 **Re-auditoria:** la auditoria automatica de la Semana 9 sobre este prototipo da **12 chequeos, 0 a revisar**:
 
 ```bash
-php ../semana-09/evidencia/auditoria.php prototipo/index.html
+php ../semana-09/evidencia/auditoria-accesibilidad.php prototipo/index.html
 ```
 
 ## Como revisarlo
