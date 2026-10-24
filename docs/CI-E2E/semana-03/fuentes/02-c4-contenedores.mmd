@@ -1,0 +1,32 @@
+flowchart TB
+    %% C4 nivel 2 - Contenedores del módulo y dependencias
+    subgraph GHA["GitHub Actions - .github/workflows/qa-ci-e2e.yml"]
+        J1[Job static<br/>sintaxis, Pint informativo, build]
+        J2[Job tests<br/>PHPUnit Unit/Feature/Integration,<br/>micro-his, node --test, contrato de rutas]
+        J3[Job e2e<br/>PostgreSQL efímero, migraciones,<br/>seed ficticio, artisan serve, E2E]
+        J4[Job quality-gate<br/>needs: static, tests, e2e]
+        ART[(Artefactos qa-evidence-*<br/>retención 30 días; decisión 90)]
+    end
+    subgraph QA["micro-his/qa-calidad-versiones (PHP 8.2 vanilla)"]
+        CLI[bin/quality-gate.php<br/>bin/junit-command.php<br/>bin/micro-his-suites.php<br/>bin/route-guard.php]
+        API[public/index.php<br/>API /api/v1/qa/runs + prototipo]
+        CORE[Domain + Application<br/>QualityGate, casos de uso]
+        DB[(SQLite de la ejecución<br/>qa-runs.sqlite, esquema de prueba)]
+    end
+    E2E[tests/E2E/*.e2e.mjs<br/>node:test + fetch]
+    LARA[Laravel HIS<br/>TenantMiddleware → JwtAuth → RBAC]
+    GOBM[micro-his/gobernanza-auditoria<br/>RecordAuditEvent]
+
+    J1 --> ART
+    J2 --> ART
+    J3 --> ART
+    ART --> J4
+    J4 --> CLI
+    J2 --> CLI
+    J3 --> E2E
+    E2E --> API
+    E2E --> LARA
+    CLI --> CORE
+    API --> CORE
+    CORE --> DB
+    CORE --> GOBM

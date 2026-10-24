@@ -1,0 +1,13 @@
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.12
+Configuration: C:\Users\anyi4\Documents\semestre8\Analisis de sistemas 2\Hospital final\.review-validation\rbac-entrega\app\phpunit.xml
+
+...............................................................  63 / 230 ( 27%)
+............................................................... 126 / 230 ( 54%)
+............................................................... 189 / 230 ( 82%)
+.........................................                       230 / 230 (100%)
+
+Time: 03:57.369, Memory: 70.00 MB
+
+OK (230 tests, 5624 assertions)
