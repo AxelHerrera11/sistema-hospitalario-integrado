@@ -13,10 +13,10 @@ final class AcknowledgeAlert
     public function __construct(private readonly AlertRepository $store) {}
 
     /** @param array<string, mixed> $readBack */
-    public function execute(string $alertId, string $user, array $readBack): CriticalAlert
+    public function execute(string $alertId, string $user, array $readBack, bool $supervisesService = false): CriticalAlert
     {
         $alert = $this->store->find($alertId) ?? throw new DomainRuleViolation('ALERT_NOT_FOUND', 'alert_id');
-        $alert->acknowledge($user, $readBack, $this->store->caresFor($user, $alert->patientId));
+        $alert->acknowledge($user, $readBack, $this->store->caresFor($user, $alert->patientId), $supervisesService);
         try {
             $this->store->save($alert, 'alerta.acusada', $user);
         } catch (PersistenceFailure $failure) {

@@ -37,12 +37,15 @@ final class CriticalAlert
             $r['care_episode_id'] ?? null);
     }
 
-    /** Acuse con lectura de verificación de paciente, prueba y valor. @param array<string, mixed> $readBack */
-    public function acknowledge(string $user, array $readBack, bool $caresForPatient): void
+    /**
+     * Acuse con lectura de verificación de paciente, prueba y valor. Puede acusar el destinatario, quien cuida al paciente o,
+     * si la alerta está en la jefatura del servicio, quien la supervisa. @param array<string, mixed> $readBack
+     */
+    public function acknowledge(string $user, array $readBack, bool $caresForPatient, bool $supervisesService = false): void
     {
         $rule = match (true) {
             $this->status !== 'open' => ['ALERT_ALREADY_ACKNOWLEDGED', 'status'],
-            $user !== $this->recipient && !$caresForPatient => ['NO_CARE_RELATION', 'user'],
+            $user !== $this->recipient && !$caresForPatient && !($supervisesService && $this->recipient === self::SERVICE_HEAD) => ['NO_CARE_RELATION', 'user'],
             ($readBack['patient_id'] ?? null) !== $this->patientId || ($readBack['lab_test_id'] ?? null) !== $this->labTestId
                 || !is_numeric($readBack['value'] ?? null) || (float) $readBack['value'] !== $this->value => ['READ_BACK_MISMATCH', 'read_back'],
             default => null,
