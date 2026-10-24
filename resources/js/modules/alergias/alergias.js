@@ -74,6 +74,13 @@ const MENSAJES = {
     HOSPITAL_DATABASE_TENANT_MISMATCH: 'Este hospital no está disponible en esta instancia.',
 };
 
+const REGLA_POR_CAMPO = { allergen_name: 'ALLERGEN_REQUIRED', allergy_type: 'ALLERGY_TYPE_INVALID', severity: 'SEVERITY_INVALID' };
+
+/** Mensaje de la validación local para el campo que devolvió campoInvalido. */
+export function mensajeDeCampo(campo) {
+    return MENSAJES[REGLA_POR_CAMPO[campo]] ?? 'Revise el formulario.';
+}
+
 /** Mensaje seguro por código de error; nunca muestra el detalle del servidor. */
 export function mensajeDeError(codigo, estado) {
     if (MENSAJES[codigo]) {

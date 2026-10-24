@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, 'alergias.js'), 'utf8');
-const { banner, campoInvalido, codigoDeError, cuerpoRegistro, etiqueta, mensajeDeError, SEVERIDADES } =
+const { banner, campoInvalido, codigoDeError, cuerpoRegistro, etiqueta, mensajeDeCampo, mensajeDeError, SEVERIDADES } =
     await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 // Falla segura: un nivel desconocido o ausente se muestra como «no disponible» con role="alert".
@@ -21,6 +21,7 @@ assert.equal(campoInvalido({ ...valido, allergen_name: '   ' }), 'allergen_name'
 assert.equal(campoInvalido({ ...valido, allergen_name: '', allergen_code: 'J01CA' }), null);
 assert.equal(campoInvalido({ ...valido, allergy_type: 'grave' }), 'allergy_type');
 assert.equal(campoInvalido({ ...valido, severity: '' }), 'severity');
+assert.equal(mensajeDeCampo('severity'), 'Seleccione la severidad.');
 
 // El cuerpo recorta y omite vacíos; nunca envía actor ni hospital.
 assert.deepEqual(cuerpoRegistro({ ...valido, allergen_name: ' Penicilina ', reaction: '', actor: 'x' }),
@@ -41,4 +42,4 @@ assert.ok(! mensajeDeError(null, 503).includes('Sin alergias'));
 assert.ok(mensajeDeError('RBAC_DENIED', 403).includes('permiso'));
 assert.equal(mensajeDeError(null, 500), 'No se pudo completar la operación.');
 
-console.log('OK: 20 aserciones de la pantalla de alergias aprobadas');
+console.log('OK: 21 aserciones de la pantalla de alergias aprobadas');

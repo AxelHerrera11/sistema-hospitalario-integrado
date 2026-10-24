@@ -3,7 +3,7 @@ import { computed, nextTick, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 import { can } from '@/router/permissions';
 import { useAuthStore } from '@/stores/auth';
-import { banner, campoInvalido, codigoDeError, cuerpoRegistro, etiqueta, mensajeDeError, SEVERIDADES, TIPOS } from '@/modules/alergias/alergias';
+import { banner, campoInvalido, codigoDeError, cuerpoRegistro, etiqueta, mensajeDeCampo, mensajeDeError, SEVERIDADES, TIPOS } from '@/modules/alergias/alergias';
 
 const auth = useAuthStore();
 const puedeRegistrar = computed(() => can(auth.user, 'alergias.registrar'));
@@ -14,6 +14,7 @@ const cargando = ref(false);
 const error = ref('');
 const aviso = ref('');
 const invalido = ref(null);
+const errorCampo = ref('');
 const titulo = ref(null);
 const vacio = () => ({ allergen_code: '', allergen_name: '', reaction: '', allergy_type: 'allergy', severity: '' });
 const form = reactive(vacio());
@@ -52,6 +53,7 @@ async function buscar() {
 async function registrar() {
     aviso.value = '';
     invalido.value = campoInvalido(form);
+    errorCampo.value = invalido.value ? mensajeDeCampo(invalido.value) : '';
     if (invalido.value) {
         return;
     }
@@ -59,11 +61,13 @@ async function registrar() {
     try {
         await api.post(`/patients/${paciente.value.patient_id}/allergies`, cuerpoRegistro(form));
         Object.assign(form, vacio());
-        aviso.value = 'Alergia registrada.';
         await cargarAlerta();
+        aviso.value = 'Alergia registrada.';
     } catch (e) {
+        // El mensaje sale del código del servidor (p. ej. 409 en allergen_name), no de la validación local.
         invalido.value = e.response?.data?.error?.field ?? null;
-        aviso.value = fallo(e);
+        errorCampo.value = invalido.value ? fallo(e) : '';
+        aviso.value = invalido.value ? '' : fallo(e);
     } finally {
         cargando.value = false;
     }
@@ -110,7 +114,7 @@ async function registrar() {
                     <option value="" disabled>Seleccione…</option>
                     <option v-for="s in SEVERIDADES" :key="s.valor" :value="s.valor">{{ s.etiqueta }}</option>
                 </select>
-                <p v-if="invalido" class="alg__error" role="alert">{{ mensajeDeError({ allergen_name: 'ALLERGEN_REQUIRED', allergen_code: 'ALLERGEN_REQUIRED', allergy_type: 'ALLERGY_TYPE_INVALID', severity: 'SEVERITY_INVALID' }[invalido]) }}</p>
+                <p v-if="errorCampo" class="alg__error" role="alert">{{ errorCampo }}</p>
                 <button type="submit" :disabled="cargando">{{ cargando ? 'Guardando…' : 'Registrar' }}</button>
             </form>
             <p class="alg__aviso" role="status" aria-live="polite">{{ aviso }}</p>
