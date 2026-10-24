@@ -21,7 +21,7 @@ con hallazgos reales ya cerrados en PRs.
 | TEST-01 | Pruebas | ¿Se pueden ejecutar con un comando? | `run.php` (11), phpunit Feature (14), a11y node (11). |
 | DOC-01 | Documentación | ¿Semana→evidencia→PR trazable? | Manual del módulo (`docs/reportes-analytics/README.md`). |
 
-## Hallazgos resueltos durante la construcción (registro Boise)
+## Hallazgos resueltos durante la construcción (registro del proceso)
 
 - TypeError por firma de `Exception` con code string → contrato con mensaje
   como código (PR Semana 3).

@@ -5,7 +5,7 @@ promocionada en #1254) y las decisiones de experiencia que se defenderán.
 
 ## Iteraciones y hallazgos de usabilidad
 
-| Iteración | Halalejo | Cómo se resolvió |
+| Iteración | Hallazgo | Cómo se resolvió |
 |---|---|---|
 | Filtros ambiguos | El usuario no sabía qué período se enviaba al servidor | Etiquetas `Desde`/`Hasta` + validación local antes de llamar (`errorDeFiltros`) y un solo mensaje visible con `role="status"`. |
 | Resultados sin explicación | Un 25.00 % no dice qué mide | Leyenda fija "Cancelados sobre hospitalizaciones finalizadas (TCI-1.0)" y traza `IND-RA-01 · calculado <instante>`. |
@@ -15,7 +15,7 @@ promocionada en #1254) y las decisiones de experiencia que se defenderán.
 ## Decisiones de autoridad
 
 - El cálculo y la autorización residen en el servidor; la pantalla solo
-  colecciona filtros y muestra el resultado del contrato.
+  recolecta filtros y muestra el resultado del contrato.
 - El permiso es el mismo en backend (`rbac:reportes.ver`) y frontend
   (`ROUTE_PERMISSIONS.reportes`); la navegación oculta la entrada sin él.
 - Sin datos personales en pantalla: solo agregados y trazabilidad.
