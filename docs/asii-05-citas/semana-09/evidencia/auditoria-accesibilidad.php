@@ -3,7 +3,7 @@
 declare(strict_types=1);
 /*
  * Auditoria automatica de accesibilidad del prototipo (Semana 8) con DOMDocument.
- * Ejecutar: php evidencia/auditoria.php [ruta-al-html]   (por defecto ../semana-08/prototipo/index.html)
+ * Ejecutar: php evidencia/auditoria-accesibilidad.php [ruta-al-html]   (por defecto ../semana-08/prototipo/index.html)
  */
 
 $ruta = $argv[1] ?? __DIR__ . '/../../semana-08/prototipo/index.html';
