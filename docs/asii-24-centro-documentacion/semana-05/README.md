@@ -42,7 +42,7 @@ El centro de documentacion es un **servicio de soporte** de baja escritura y alt
 | Rol | Modulo | Contrato | Uso |
 |---|---|---|---|
 | Proveedor | ASII-01 Usuarios/tenants | `GET /auth/me` | obtener el rol de la sesion (no se acepta el rol del cliente en produccion) |
-| Proveedor | ASII-02 RBAC | permiso `documentacion.publicar` | autorizar la publicacion |
+| Proveedor | ASII-02 RBAC | permiso de publicacion (pendiente de catalogar en ASII-02) | autorizar la publicacion |
 | Consumidor | Todos los modulos | `openapi.yaml` + coleccion Postman | contrato unico del API v1 |
 | Consumidor | ASII-26 Dashboard base | `GET /documentos?rol=` | enlace "Ayuda" contextual del menu |
 
