@@ -63,9 +63,11 @@ final class IndicatorHospitalIntegrationTest extends TestCase
         ];
 
         try {
-            $this->seedEpisode($pdo, $service, 'inpatient', 'cancelled', '2026-01-06 10:00:00-06');
-            $this->seedEpisode($pdo, $service, 'inpatient', 'closed', '2026-01-12 10:00:00-06');
-            $this->seedEpisode($pdo, $service, 'inpatient', 'closed', '2026-01-20 10:00:00-06');
+            $patientId = $this->seedSyntheticPatient($pdo);
+
+            $this->seedEpisode($pdo, $patientId, $service, 'inpatient', 'cancelled', '2026-01-06 10:00:00-06');
+            $this->seedEpisode($pdo, $patientId, $service, 'inpatient', 'closed', '2026-01-12 10:00:00-06');
+            $this->seedEpisode($pdo, $patientId, $service, 'inpatient', 'closed', '2026-01-20 10:00:00-06');
 
             $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', $request)
                 ->assertOk()
@@ -136,12 +138,33 @@ final class IndicatorHospitalIntegrationTest extends TestCase
         }
     }
 
-    private function seedEpisode(\PDO $pdo, string $service, string $type, string $status, string $endedAt): void
+    private function seedSyntheticPatient(\PDO $pdo): string
+    {
+        $patientCode = 'ASII23-'.bin2hex(random_bytes(4));
+
+        $insert = $pdo->prepare(
+            'INSERT INTO local_patients (global_id, code, given_name, family_name, birth_date, sex)
+             VALUES (:global, :code, :given, :family, :birth, :sex) RETURNING local_patient_id',
+        );
+        $insert->execute([
+            ':global' => (string) Str::uuid(),
+            ':code' => $patientCode,
+            ':given' => 'Episodio',
+            ':family' => 'Sintetico '.$patientCode,
+            ':birth' => '1990-01-01',
+            ':sex' => 'other',
+        ]);
+
+        return (string) $insert->fetchColumn();
+    }
+
+    private function seedEpisode(\PDO $pdo, string $patientId, string $service, string $type, string $status, string $endedAt): void
     {
         $pdo->prepare(
             'INSERT INTO care_episodes (local_patient_id, type, status, started_at, ended_at, reason, service_code)
-             VALUES ((SELECT local_patient_id FROM local_patients LIMIT 1), :type, :status, :started, :ended, :reason, :service)',
+             VALUES (:patient, :type, :status, :started, :ended, :reason, :service)',
         )->execute([
+            ':patient' => $patientId,
             ':type' => $type,
             ':status' => $status,
             ':started' => str_replace('10:00:00', '09:00:00', $endedAt),

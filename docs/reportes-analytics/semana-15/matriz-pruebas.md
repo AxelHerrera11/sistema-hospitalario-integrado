@@ -21,6 +21,12 @@ resultado real de ejecución (todos ejecutados localmente el 2026-10-23/24).
 | R12 401 sin sesión | `IndicatorEndpointTest` | #1245 | OK |
 | R13 403 sin permiso, tenant distinto | `IndicatorEndpointTest` | #1245 | OK |
 | R14 Base real HOSPITAL (55433) | `IndicatorHospitalIntegrationTest` (33.33 % con rollback) | #1269 | OK |
+
+Nota de trazabilidad (2026-10-26): R14 se re-ejecutó en un entorno aislado
+reproducible (PostgreSQL efímero 55431/55433, bases `*_test` migradas desde
+cero) y reveló dependencia ambiental de filas preexistentes de
+`local_patients`; corregida con semilla sintética propia dentro de la
+transacción (14 pruebas, 64 aserciones OK).
 | R15 Base inexistente → 503 no 500 | `IndicatorHospitalIntegrationTest` | #1269 | OK |
 | R16 Accesibilidad ARIA/teclado persistente | `reportes.a11y.test.mjs` (11 comprobaciones) | #1283 | OK |
 | R17 Mensajes seguros de UI | `reportes.test.mjs` (15 aserciones) | #1248 | OK |
