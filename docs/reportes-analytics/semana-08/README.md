@@ -26,3 +26,9 @@ promocionada en #1254) y las decisiones de experiencia que se defenderán.
   aserciones verificadoras de los mensajes/estados).
 - `resources/js/modules/reportes/pages/ReportsPage.vue`.
 - `resources/js/router/{index.js,permissions.js}` (ruta y navegación).
+- `01-flujo-por-rol.svg` — flujo por rol (con/sin `reportes.ver`) desde login
+  hasta los cuatro caminos de resultado (200/422/403/503).
+- `02-wireframe-estados.svg` — wireframe de los cuatro estados de la pantalla:
+  resultado, N/A sin datos, error de periodo y sin permiso (estática del
+  componente real; sin capturas: las capturas del dispositivo quedan en S10/S18
+  como acción presencial del estudiante).
