@@ -30,6 +30,11 @@ con hallazgos reales ya cerrados en PRs.
   explícitamente y las pruebas cambian a 25.00 %/33.33 %.
 - GET a ruta POST no redirige a 405 si el fallback web la atrapa → la
   prueba usa DELETE (405 garantizado por la colección).
+- El test de integración HOSPITAL atribuía los episodios con
+  `SELECT ... LIMIT 1` de `local_patients`: con la base migrada desde cero
+  la filas no existían y la not-null de `care_episodes` reventaba. La
+  prueba sembró su expediente sintético propio dentro de la transacción
+  con rollback (2026-10-26, 14/14 OK en entorno aislado reproducible).
 
 ## Pendientes aceptados y justificados
 
