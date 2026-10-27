@@ -65,6 +65,24 @@ const router = createRouter({
             component: () => import('@/modules/salas-camas/pages/WardCatalogPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
         },
+        {
+            path: '/lab-results',
+            name: 'lab-results',
+            component: () => import('@/modules/laboratorio/pages/LabResultsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-results'] },
+        },
+        {
+            path: '/lab-validation',
+            name: 'lab-validation',
+            component: () => import('@/modules/laboratorio/pages/ValidationPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-validation'] },
+        },
+        {
+            path: '/nativephp',
+            name: 'nativephp',
+            component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
+        },
         ...Object.entries({
             new: ROUTE_PERMISSIONS['patients-new'],
             detail: ROUTE_PERMISSIONS.patients,
