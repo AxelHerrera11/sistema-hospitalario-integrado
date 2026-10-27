@@ -20,6 +20,8 @@ return [
     GobernanzaAuditoriaServiceProvider::class,
     MedicationCatalogServiceProvider::class,
     PatientsServiceProvider::class,
+    // Admisión (ASII-07): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
+    \App\Providers\AdmisionServiceProvider::class,
     SalasCamasServiceProvider::class,
     // Ocupación al final: solo cablea el adaptador PDO del Micro-HIS, no altera el binding de RBAC.
     OcupacionServiceProvider::class,
