@@ -77,6 +77,12 @@ const router = createRouter({
             component: () => import('@/modules/reportes/pages/ReportsPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.reportes },
         },
+        {
+            path: '/admision',
+            name: 'admision',
+            component: () => import('@/modules/admision/pages/AdmissionPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.admision },
+        },
         ...Object.entries({
             new: ROUTE_PERMISSIONS['patients-new'],
             detail: ROUTE_PERMISSIONS.patients,
