@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AlergiasServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
@@ -24,4 +25,6 @@ return [
     OcupacionServiceProvider::class,
     ReportesServiceProvider::class,
     TrasladosAltasServiceProvider::class,
+    // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
+    AlergiasServiceProvider::class,
 ];
