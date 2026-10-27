@@ -20,6 +20,7 @@ export const ROUTE_PERMISSIONS = {
     traslados: 'traslados.ver',
     wards: 'camas.ver',
     reportes: 'reportes.ver',
+    alergias: 'alergias.ver',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
@@ -38,7 +39,7 @@ export const NAVIGATION = [
     { label: 'Expediente', to: null, permission: 'expediente.ver', soon: true },
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
-    { label: 'Alergias', to: null, permission: 'alergias.ver', soon: true },
+    { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
     { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },

@@ -26,6 +26,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.traslados },
         },
         {
+            path: '/alergias',
+            name: 'alergias',
+            component: () => import('@/modules/alergias/pages/AllergiesPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.alergias },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),
