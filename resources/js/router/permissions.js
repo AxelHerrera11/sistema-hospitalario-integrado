@@ -19,6 +19,10 @@ export const ROUTE_PERMISSIONS = {
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
     wards: 'camas.ver',
+    
+    'lab-results': 'lab-results.read',
+    'lab-validation': 'lab-results.validate',
+    nativephp: 'lab-results.read',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
@@ -39,7 +43,9 @@ export const NAVIGATION = [
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: null, permission: 'alergias.ver', soon: true },
     { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
-    { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
+    { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
+    { label: 'Validación bioquímica', to: '/lab-validation', permission: ROUTE_PERMISSIONS['lab-validation'] },
+    { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
     { label: 'Reportes', to: null, permission: 'reportes.ver', soon: true },
     { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
     { label: 'Documentación', to: null, permission: 'documentacion.ver', soon: true },
