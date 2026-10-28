@@ -10,6 +10,7 @@
 
 /** Permiso que exige cada ruta protegida; el backend aplica el mismo permiso. */
 export const ROUTE_PERMISSIONS = {
+    prescripciones: 'prescripciones.ver',
     ocupacion: 'ocupacion.ver',
     admision: 'admisiones.registrar',
     medicamentos: 'medicamentos.ver',
@@ -41,7 +42,7 @@ export const NAVIGATION = [
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
-    { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
+    { label: 'Prescripciones', to: '/prescripciones', permission: ROUTE_PERMISSIONS.prescripciones },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
     { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
