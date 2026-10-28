@@ -26,7 +26,7 @@ return new class extends Migration
                 id text NOT NULL, tenant_id uuid NOT NULL, actor_id text NOT NULL,
                 kind text NOT NULL, payload text NOT NULL, status text NOT NULL,
                 failure_reason text, created_at timestamptz NOT NULL DEFAULT now(),
-                updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (id, tenant_id)
+                updated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY (id)
             );
         SQL);
     }

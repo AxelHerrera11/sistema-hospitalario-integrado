@@ -46,7 +46,6 @@ export const NAVIGATION = [
     { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
     { label: 'Validación bioquímica', to: null, permission: 'lab-results.validate', soon: true },
     { label: 'Extensión NativePHP', to: null, permission: 'lab-results.read', soon: true },
-    { label: 'Reportes', to: null, permission: 'reportes.ver', soon: true },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
     { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
