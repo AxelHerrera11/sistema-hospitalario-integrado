@@ -1,16 +1,19 @@
 # Semana 5 — Contrato API y frontera de microservicio
 
-Complementa la persistencia de este PR con lo que pide la matriz del [README](../../../README.md) para la semana 5: contrato de API y evaluación razonada de una frontera de microservicio. Contrato ejecutable: [openapi.yaml](openapi.yaml). Diagrama: [fuentes/frontera.mmd](fuentes/frontera.mmd).
+Complementa la persistencia de este PR con lo que pide la matriz del [README](../../../README.md) para la semana 5: contrato de API y evaluación razonada de una frontera de microservicio. Contrato documentado para las entregas posteriores #693/#694: [openapi.yaml](openapi.yaml). Diagrama: [fuentes/frontera.mmd](fuentes/frontera.mmd).
 
 ## Estado: qué existe y qué es propuesta
 
-| Aspecto | Implementado | Propuesta (no construida) |
-|---|---|---|
-| API | `POST /lab/specimens`, `GET /lab/specimens/pending-orders`, `GET /lab/specimens/{code}`, `GET /lab/specimens/{code}/label` | Evento hacia un publicador institucional |
-| Datos | `specimens` y `reception_order_items` en la base HOSPITAL; eventos en `outbox_events` en la misma transacción | Base propia del servicio |
-| Órdenes | Proyección local alimentada por `reception:import-order` | Consumo del contrato de ASII-16 cuando exista |
+Estado contrastado con develop adb128d3, después de #841 y #692. #1315 solo añade documentación.
 
-## Contrato, permisos y errores
+| Aspecto | Integrado en develop de referencia | Entrega posterior o propuesta |
+|---|---|---|
+| Dominio | ReceiveSpecimen y puertos de Laravel (#841) | UI Vue en #695 |
+| API | Sin endpoints de recepción en esta base | #693: POST /lab/specimens y GET de consulta, etiqueta y pending-orders; la consulta usa la proyección de #694 |
+| Datos | specimens (#692); eventos en outbox_events de 000700 | #694: reception_order_items; base propia del servicio es propuesta |
+| Órdenes | UnavailableOrders devuelve LAB_ORDER_UNAVAILABLE (503) | #694: OrderProjection y reception:import-order; consumidor remoto de ASII-16 pendiente |
+
+## Contrato, permisos y errores de #693/#694 (pendientes de integración)
 
 | Endpoint | Permiso | Respuestas |
 |---|---|---|
@@ -21,7 +24,9 @@ Complementa la persistencia de este PR con lo que pide la matriz del [README](..
 
 Seguridad: JWT, `X-Tenant-ID` que debe coincidir con el hospital configurado y actor clínico activo en `local_user_refs`. Un rechazo por regla clínica (volumen, temperatura, hemólisis, identificación discordante…) es un resultado de negocio: HTTP 201 con `status: rejected` y `reason`.
 
-## Evaluación de la frontera
+## Evaluación de la frontera de la pila completa
+
+La tabla siguiente evalúa el diseño que completan #693–#695; los componentes posteriores no se atribuyen al develop de referencia.
 
 La frontera candidata sería «recepción de muestras» como servicio con su propia base y API.
 
@@ -38,7 +43,7 @@ La frontera candidata sería «recepción de muestras» como servicio con su pro
 
 ## Migración razonada (si se justificara)
 
-1. Mantener la API actual y el outbox como contrato de eventos.
+1. Tras integrar #693/#694, mantener su API y el outbox como contrato de eventos.
 2. Sustituir `OrderProjection` por un adaptador del contrato de ASII-16.
 3. Publicar `outbox_events` mediante el publicador institucional y reconciliar.
 4. Solo entonces separar el esquema `specimens` a una base propia, con réplica de las referencias de paciente.

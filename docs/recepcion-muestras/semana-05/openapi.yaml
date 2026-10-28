@@ -3,7 +3,8 @@ info:
   title: Recepción de muestras — API HIS (ASII-18)
   version: 1.0.0
   description: |
-    Contrato de los cuatro endpoints implementados en `app/Providers/ReceptionServiceProvider.php`
+    Contrato de los cuatro endpoints de las entregas posteriores #693/#694; no están en develop adb128d3 ni los incorpora #1315.
+    #693 define las rutas en `app/Providers/ReceptionServiceProvider.php`
     y `app/Http/Controllers/Api/V1/ReceptionController.php`. Todo es ficticio y de ejercicio académico.
     Las respuestas públicas exponen solo id, item_id, status, reason, code y received_at.
     SD-REC-01: los rangos numéricos son supuestos técnicos pendientes de validación clínica.

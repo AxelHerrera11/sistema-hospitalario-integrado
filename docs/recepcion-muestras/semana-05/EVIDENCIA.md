@@ -1,14 +1,20 @@
 # Evidencia — Semana 5: persistencia clínica
 
-Ejecución local del 23 de octubre de 2026, PHP 8.2.12 y PostgreSQL 16. Base hospital de pruebas en 127.0.0.1:55433.
+## Ejecución histórica del 23 de octubre de 2026
 
-- php artisan test --filter=SpecimenIntegrityTest --no-ansi: 5 passed (74 assertions), 24.22s.
-- php micro-his/recepcion-muestras/tests/run.php: 39 comprobaciones aprobadas.
-- php micro-his/recepcion-muestras/tests/lsp.php: 2 adaptadores, 6 comprobaciones aprobadas.
-- RECEPTION_TEST_PORT=55433; php micro-his/recepcion-muestras/tests/postgres.php: 13 comprobaciones PostgreSQL aprobadas.
-- Pint sobre micro, adaptador, migración y SpecimenIntegrityTest: passed.
-- migrate:status confirma 000601 antes de 000700 y 000900. Los pasos de rollback son 9/5/4/7/1.
+PHP 8.2.12 y PostgreSQL 16, HOSPITAL de pruebas en 127.0.0.1:55433. Estos resultados corresponden al árbol anterior a la reescritura de la pila; no acreditan el head c53aa59d de #692 ni el SHA actual de #1315. Se conservan como registro histórico.
 
-php artisan test --group=database-integrity --no-ansi: 130 passed (1466 assertions), 678.70s. La suite incluye los cinco tests de rollback y los cinco tests nuevos de specimens. Las rutas HTTP y sus pruebas se completan en la parte siguiente; esta entrega no acredita todavía un módulo íntegro.
+- SpecimenIntegrityTest: 5 pruebas, 74 aserciones.
+- Micro independiente: run.php, 39 comprobaciones; lsp.php, 6 comprobaciones con 2 adaptadores; postgres.php, 13 comprobaciones.
+- Pint sobre micro, adaptador, migración y SpecimenIntegrityTest: aprobado en esa ejecución.
+- Grupo database-integrity: 130 pruebas, 1466 aserciones, 678.70 s en ese árbol histórico.
 
-Los fallos de conexión por restricciones del sandbox se resolvieron ejecutando las pruebas con acceso autorizado al PostgreSQL local. El puerto de órdenes real falla explícitamente con LAB_ORDER_UNAVAILABLE (503), sin inventar órdenes ni tablas externas.
+Los pasos numéricos de rollback de esa versión quedaron reemplazados por hospitalRollbackSteps($desde). No deben copiarse a la versión integrada. El helper cuenta las migraciones posteriores hasta el prefijo objetivo inclusive; véase [README](README.md).
+
+## Verificación reportada por la revisora sobre la versión integrada
+
+La [revisión de Yamilet1235 en #1315](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1315) informa 105 pruebas y 1142 aserciones de integridad y rollback con PostgreSQL 17.10 para el contexto de #692 integrado (c53aa59d, merge adb128d3). Es evidencia reportada por la revisora; no una ejecución nueva realizada por Codex. La revisión se identifica también por su fecha UTC 2026-10-28 04:06:46 y head revisado 9c50ab57 de #1315.
+
+## Alcance de esta corrección documental
+
+Se contrastaron rutas, namespaces, migración y cálculo de rollback con develop adb128d3. #1315 solo modifica documentación y diagramas; no se reejecutaron PostgreSQL ni la suite HTTP para esta corrección. Las rutas llegan con #693 y la proyección de órdenes con #694. No se afirma CI remoto aprobado.

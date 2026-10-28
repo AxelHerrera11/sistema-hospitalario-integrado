@@ -1,12 +1,13 @@
+%% Pila posterior: API #693, proyeccion y CLI #694, UI #695; no todo esta integrado en develop adb128d3.
 flowchart LR
-  UI[Vue ReceptionPage] -->|JWT + X-Tenant-ID| API[ReceptionController]
+  UI[Vue ReceptionPage - #695] -->|JWT + X-Tenant-ID| API[ReceptionController - #693]
   API --> UC[ReceiveSpecimen]
-  UC --> GW[OrderGateway: OrderProjection]
+  UC --> GW[OrderProjection - #694]
   UC --> REPO[ReceptionRepository: HospitalReceptionRepository]
   GW --> ORD[(reception_order_items)]
   REPO --> SPEC[(specimens)]
   REPO --> OUT[(outbox_events)]
-  CLI[reception:import-order] --> GW
+  CLI[reception:import-order - #694] --> GW
   OUT -.->|propuesta| PUB[Publicador institucional]
   subgraph Monolito Laravel - base HOSPITAL
     API
