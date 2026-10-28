@@ -8,7 +8,7 @@ distribución NativePHP para escritorio o móvil.
 
 ### Criterio de cierre
 
-- [x] Flujo local y sincronización simulada comprobados.
+- [ ] Flujo integrado y sincronización simulada comprobados.
 - [x] Regla offline y error de persistencia comprobados.
 - [ ] Build frontend ejecutado en este checkout.
 - [ ] Ejecutar la aplicación NativePHP real.
