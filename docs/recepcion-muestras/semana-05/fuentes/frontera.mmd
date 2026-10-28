@@ -1,0 +1,19 @@
+flowchart LR
+  UI[Vue ReceptionPage] -->|JWT + X-Tenant-ID| API[ReceptionController]
+  API --> UC[ReceiveSpecimen]
+  UC --> GW[OrderGateway: OrderProjection]
+  UC --> REPO[ReceptionRepository: HospitalReceptionRepository]
+  GW --> ORD[(reception_order_items)]
+  REPO --> SPEC[(specimens)]
+  REPO --> OUT[(outbox_events)]
+  CLI[reception:import-order] --> GW
+  OUT -.->|propuesta| PUB[Publicador institucional]
+  subgraph Monolito Laravel - base HOSPITAL
+    API
+    UC
+    GW
+    REPO
+    ORD
+    SPEC
+    OUT
+  end

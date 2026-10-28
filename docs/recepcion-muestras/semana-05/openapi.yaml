@@ -1,0 +1,156 @@
+openapi: 3.1.0
+info:
+  title: Recepción de muestras — API HIS (ASII-18)
+  version: 1.0.0
+  description: |
+    Contrato de los cuatro endpoints implementados en `app/Providers/ReceptionServiceProvider.php`
+    y `app/Http/Controllers/Api/V1/ReceptionController.php`. Todo es ficticio y de ejercicio académico.
+    Las respuestas públicas exponen solo id, item_id, status, reason, code y received_at.
+    SD-REC-01: los rangos numéricos son supuestos técnicos pendientes de validación clínica.
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Desarrollo local
+security:
+  - BearerAuth: []
+    TenantHeader: []
+paths:
+  /lab/specimens:
+    post:
+      operationId: receiveSpecimen
+      summary: Recibir una muestra; la acepta o la rechaza con motivo
+      description: |
+        Idempotente por `request_key`. Misma clave y mismo contenido devuelven el resultado original;
+        misma clave con otro contenido o actor produce 409 REQUEST_CONFLICT.
+        Un rechazo por reglas clínicas es un resultado válido (201 con status `rejected`), no un error HTTP.
+      x-permission: muestras.recibir
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReceiveRequest' }
+      responses:
+        '201':
+          description: Muestra aceptada (con código) o rechazada (con motivo).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { $ref: '#/components/schemas/Specimen' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: 'ORDER_NOT_FOUND', content: { application/json: { schema: { $ref: '#/components/schemas/DomainError' } } } }
+        '409': { description: 'REQUEST_CONFLICT u ORDER_CONFLICT', content: { application/json: { schema: { $ref: '#/components/schemas/DomainError' } } } }
+        '422': { $ref: '#/components/responses/Validation' }
+        '503': { description: 'RECEPTION_UNAVAILABLE o LAB_ORDER_UNAVAILABLE; reintentar con la misma clave.', content: { application/json: { schema: { $ref: '#/components/schemas/DomainError' } } } }
+  /lab/specimens/pending-orders:
+    get:
+      operationId: searchPendingOrders
+      summary: Buscar ítems de orden pendientes por código de paciente o id de ítem
+      x-permission: muestras.recibir
+      parameters:
+        - { name: search, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 100 } }
+      responses:
+        '200':
+          description: Hasta 20 ítems pendientes sin muestra aceptada, ordenados por item_id.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/PendingItem' } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Validation' }
+  /lab/specimens/{code}:
+    get:
+      operationId: getSpecimen
+      summary: Consultar una muestra por su código identificador
+      x-permission: muestras.ver
+      parameters: [ { $ref: '#/components/parameters/Code' } ]
+      responses:
+        '200':
+          description: Muestra encontrada.
+          content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/Specimen' } } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Código con formato inválido o inexistente en este hospital. }
+  /lab/specimens/{code}/label:
+    get:
+      operationId: getSpecimenLabel
+      summary: Datos para reimprimir la etiqueta sin repetir la recepción
+      x-permission: muestras.etiquetar
+      parameters: [ { $ref: '#/components/parameters/Code' } ]
+      responses:
+        '200':
+          description: Mismos datos públicos de la muestra.
+          content: { application/json: { schema: { type: object, properties: { data: { $ref: '#/components/schemas/Specimen' } } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { description: Código inválido o inexistente. }
+components:
+  securitySchemes:
+    BearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    TenantHeader: { type: apiKey, in: header, name: X-Tenant-ID, description: Debe coincidir con RECEPTION_HOSPITAL_ID del despliegue. }
+  parameters:
+    Code:
+      name: code
+      in: path
+      required: true
+      description: 24 hexadecimales en mayúscula, guion y un dígito verificador (suma hexadecimal módulo 10).
+      schema: { type: string, pattern: '^[A-F0-9]{24}-[0-9]$' }
+  responses:
+    Unauthenticated: { description: JWT ausente o inválido. }
+    Forbidden: { description: 'Sin permiso, hospital no configurado, o actor clínico no sincronizado o revocado en local_user_refs.' }
+    Validation:
+      description: Error de validación Laravel.
+      content: { application/json: { schema: { type: object, properties: { message: { type: string }, errors: { type: object } } } } }
+  schemas:
+    ReceiveRequest:
+      type: object
+      required: [request_key, item_id, type, container, volume, temperature, collected_at]
+      properties:
+        request_key: { type: string, format: uuid, description: Clave de idempotencia generada por el cliente. }
+        item_id: { type: string, format: uuid }
+        patient_code: { type: [string, 'null'], maxLength: 100, description: Obligatorio salvo sin_etiqueta=true. }
+        patient_name: { type: [string, 'null'], maxLength: 200, description: Obligatorio salvo sin_etiqueta=true. }
+        type: { type: string, enum: [blood, urine, swab] }
+        container: { type: string, maxLength: 100 }
+        volume: { type: number, minimum: 0, maximum: 1000 }
+        temperature: { type: number, minimum: -80, maximum: 100 }
+        collected_at: { type: string, format: date-time, description: 'Formato Y-m-d\TH:i:sP.' }
+        hemolizada: { type: boolean }
+        coagulada: { type: boolean }
+        derramada: { type: boolean }
+        sin_etiqueta: { type: boolean }
+    Specimen:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        status: { type: string, enum: [accepted, rejected] }
+        reason:
+          type: [string, 'null']
+          enum: [sin_etiqueta, identificacion_discordante, tipo_incorrecto, contenedor_incorrecto, volumen_insuficiente, fuera_de_estabilidad, temperatura_inadecuada, hemolizada, coagulada, derramada, null]
+        code: { type: [string, 'null'], description: Solo presente cuando status=accepted. }
+        received_at: { type: string, format: date-time }
+    PendingItem:
+      type: object
+      description: Fila de la proyección local reception_order_items.
+      properties:
+        item_id: { type: string, format: uuid }
+        patient_code: { type: string }
+        patient_name: { type: string }
+        type: { type: string, enum: [blood, urine, swab] }
+        container: { type: string }
+        min_volume: { type: number }
+        max_minutes: { type: integer }
+        min_temperature: { type: number }
+        max_temperature: { type: number }
+        status: { type: string, enum: [pending, pending_new_sample] }
+    DomainError:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string, enum: [REQUEST_CONFLICT, ORDER_NOT_FOUND, ORDER_CONFLICT, LAB_ORDER_UNAVAILABLE, RECEPTION_UNAVAILABLE] }
+        message: { type: string }

@@ -1,0 +1,10 @@
+flowchart LR
+  Laravel --> HospitalReceptionRepository
+  HospitalReceptionRepository -->|PDO tras tenant| PdoReceptionRepository
+  MicroPHP --> PdoReceptionRepository
+  PdoReceptionRepository -->|transaccion| specimens
+  PdoReceptionRepository -->|misma transaccion| outbox_events
+  specimens -->|FK RESTRICT| local_patients
+  specimens -->|FK RESTRICT| care_episodes
+  specimens -->|FK RESTRICT| local_user_refs
+  specimens -. referencia sin FK .-> ASII16[ASII-16 pendiente]
