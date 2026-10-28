@@ -8,6 +8,11 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
+            path: '/recepcion-muestras', name: 'recepcion-muestras',
+            component: () => import('@/modules/recepcion-muestras/ReceptionPage.vue'),
+            meta: { requiresAuth: true, permission: 'muestras.ver' },
+        },
+        {
             path: '/ocupacion',
             name: 'ocupacion',
             component: () => import('@/modules/ocupacion/pages/OccupancyPage.vue'),
