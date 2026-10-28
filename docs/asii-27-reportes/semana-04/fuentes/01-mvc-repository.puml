@@ -1,0 +1,26 @@
+@startuml
+title Micro-HIS Reportes (ASII-27) - MVC y patron Repository
+
+skinparam componentStyle rectangle
+package "Presentation (MVC)" #Paleturquoise {
+  [public/index.php (router)] as router
+  [ReporteController] as ctrl
+}
+package "Application" #LightBlue {
+  [GenerarReporte (caso de uso)] as uc
+}
+package "Domain" #LightYellow {
+  [Reporte (entidad)] as ent
+  [ReporteRepository (interfaz)] as repo
+}
+package "Infrastructure" #LightGray {
+  [ReporteRepositoryPDO] as pdo
+  [ReporteRepositoryInMemory] as mem
+}
+router --> ctrl
+ctrl --> uc
+uc --> ent
+uc --> repo
+pdo ..|> repo
+mem ..|> repo
+@enduml
