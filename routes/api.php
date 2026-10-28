@@ -49,8 +49,3 @@ Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (
     Route::post('/reports/indicators/IND-RA-01/calculate', [ReportesIndicatorController::class, 'calcular']);
 });
 
-Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
-    Route::get('/nativephp/actions', [LabModulesController::class, 'nativeActions'])->middleware('rbac:lab-results.read');
-    Route::post('/nativephp/actions', [LabModulesController::class, 'prepareAction'])->middleware('rbac:lab-results.create');
-    Route::post('/nativephp/sync', [LabModulesController::class, 'syncActions'])->middleware('rbac:lab-results.create');
-});
