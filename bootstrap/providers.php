@@ -13,6 +13,7 @@ use App\Providers\TenantsServiceProvider;
 use App\Providers\TrasladosAltasServiceProvider;
 
 return [
+    \App\Providers\PrescriptionsServiceProvider::class,
     AppServiceProvider::class,
     RbacServiceProvider::class,
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
