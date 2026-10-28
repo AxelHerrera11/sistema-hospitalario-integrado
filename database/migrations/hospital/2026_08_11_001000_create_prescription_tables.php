@@ -29,6 +29,9 @@ return new class extends Migration
                 signed_at timestamptz,
                 created_at timestamptz NOT NULL DEFAULT now(),
                 updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT prescriptions_dose_amount_positive_check CHECK (dose_amount > 0),
+                CONSTRAINT prescriptions_frequency_times_positive_check CHECK (frequency_times > 0),
+                CONSTRAINT prescriptions_duration_value_positive_check CHECK (duration_value > 0),
                 CONSTRAINT prescriptions_signing_consistency_check CHECK (
                     (status = 'draft' AND signed_at IS NULL AND signed_by_doctor_profile_id IS NULL)
                     OR (status = 'signed' AND signed_at IS NOT NULL AND signed_by_doctor_profile_id IS NOT NULL)

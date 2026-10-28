@@ -5,6 +5,7 @@ namespace Tests\Database\Hospital;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
 
@@ -120,7 +121,7 @@ class PrescriptionIntegrityTest extends TestCase
     {
         $this->insertGraph();
         $this->insertPrescription();
-        Artisan::call('migrate:rollback', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--step' => 2, '--force' => true]);
+        Artisan::call('migrate:rollback', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--step' => $this->hospitalRollbackSteps('2026_08_11_000900'), '--force' => true]);
 
         $this->assertFalse($this->tableExists('prescriptions'));
         $this->assertFalse($this->tableExists('doctor_schedules'));
@@ -132,6 +133,42 @@ class PrescriptionIntegrityTest extends TestCase
         $this->assertTrue($this->tableExists('prescriptions'));
         $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM pg_proc WHERE proname = 'prevent_signed_prescription_mutation'"));
         $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid WHERE c.relname = 'prescriptions' AND t.tgname = 'prescriptions_signed_immutable'"));
+    }
+
+    #[DataProvider('nonPositivePrescriptionValues')]
+    public function test_non_positive_values_are_rejected_in_drafts_and_when_signing(string $column, int $value): void
+    {
+        $this->insertGraph();
+        $id = $this->insertPrescription();
+        $db = DB::connection('hospital');
+
+        foreach (['draft', 'signed'] as $status) {
+            try {
+                $db->table('prescriptions')->where('prescription_id', $id)->update([
+                    $column => $value,
+                    'status' => $status,
+                    'signed_at' => $status === 'signed' ? now() : null,
+                    'signed_by_doctor_profile_id' => $status === 'signed' ? '00000000-0000-0000-0000-000000000102' : null,
+                ]);
+                $this->fail('Se esperaba CHECK para '.$column.' en '.$status);
+            } catch (QueryException $error) {
+                $this->assertSame('23514', $error->errorInfo[0]);
+                $this->assertStringContainsString('prescriptions_'.$column.'_positive_check', $error->getMessage());
+            }
+            $this->assertSame('draft', $db->scalar('SELECT status FROM prescriptions WHERE prescription_id = ?', [$id]));
+        }
+    }
+
+    public static function nonPositivePrescriptionValues(): array
+    {
+        return [
+            'zero dose' => ['dose_amount', 0],
+            'negative dose' => ['dose_amount', -5],
+            'zero frequency' => ['frequency_times', 0],
+            'negative frequency' => ['frequency_times', -1],
+            'zero duration' => ['duration_value', 0],
+            'negative duration' => ['duration_value', -1],
+        ];
     }
 
     private function insertGraph(): array
