@@ -8,7 +8,7 @@ real mientras falten las pruebas de permisos y entorno autorizado.
 
 ### Criterio de cierre
 
-- [x] Flujo funcional local comprobado.
+- [ ] Flujo funcional integrado comprobado.
 - [x] Pruebas del micro-HIS ejecutadas.
 - [ ] Build frontend ejecutado en este checkout.
 - [ ] Revisión humana y aceptación del PR.
