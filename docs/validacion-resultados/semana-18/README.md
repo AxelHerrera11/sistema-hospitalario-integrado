@@ -11,6 +11,6 @@ la denegación de un rol sin permiso.
 - [x] Validación local comprobada.
 - [x] Regla de decisión única comprobada.
 - [x] Pruebas del micro-HIS ejecutadas.
-- [x] Build frontend exitoso.
+- [ ] Build frontend ejecutado en este checkout.
 - [ ] Revisión humana y aceptación del PR.
 - [ ] Evidencia de despliegue autorizado.
