@@ -72,6 +72,7 @@ final class ReceptionController extends Controller
         $data = $request->validate(['search' => ['required', 'string', 'min:2', 'max:100']]);
         $search = $data['search'];
         $rows = DB::connection('hospital')->table('reception_order_items')->whereIn('status', ['pending', 'pending_new_sample'])
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('specimens')->whereColumn('specimens.lab_order_item_id', 'reception_order_items.item_id')->where('specimens.status', 'accepted'))
             ->where(function ($query) use ($search) { $query->where('patient_code', $search)->orWhereRaw('item_id::text = ?', [$search]); })
             ->orderBy('item_id')->limit(20)->get();
         return response()->json(['data' => $rows]);
