@@ -14,6 +14,8 @@ use Tests\TestCase;
 #[Group('database-integrity')]
 class SpecimenIntegrityTest extends TestCase
 {
+    private string $schema;
+
     private string $patient;
 
     private string $episode;
@@ -24,6 +26,11 @@ class SpecimenIntegrityTest extends TestCase
     {
         parent::setUp();
         $this->assertPostgreSqlIntegrityPrerequisites();
+        $this->schema = 'specimen_'.bin2hex(random_bytes(6));
+        if (!str_ends_with(config('database.connections.hospital.database'), '_test')) throw new \RuntimeException('Solo bases *_test');
+        DB::connection('hospital')->statement('CREATE SCHEMA '.$this->schema);
+        config(['database.connections.hospital.search_path' => $this->schema.',public']);
+        DB::purge('hospital');
         Artisan::call('migrate:fresh', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--force' => true]);
         $this->patient = (string) Str::uuid();
         $this->episode = (string) Str::uuid();
@@ -33,9 +40,18 @@ class SpecimenIntegrityTest extends TestCase
         DB::connection('hospital')->table('care_episodes')->insert(['care_episode_id' => $this->episode, 'local_patient_id' => $this->patient, 'type' => 'outpatient', 'started_at' => now(), 'reason' => 'Fixture ficticio']);
     }
 
+    protected function tearDown(): void
+    {
+        if (isset($this->schema)) {
+            DB::connection('hospital')->statement('DROP SCHEMA '.$this->schema.' CASCADE');
+            DB::purge('hospital');
+        }
+        parent::tearDown();
+    }
+
     public function test_types_uuid_numeric_timestamp_and_no_tenant_column(): void
     {
-        $types = array_column(DB::connection('hospital')->select("SELECT column_name,data_type FROM information_schema.columns WHERE table_schema='public' AND table_name='specimens'"), 'data_type', 'column_name');
+        $types = array_column(DB::connection('hospital')->select("SELECT column_name,data_type FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='specimens'"), 'data_type', 'column_name');
         foreach (['specimen_id', 'lab_order_item_id', 'local_patient_id', 'care_episode_id', 'received_by_user_ref_id', 'request_key'] as $column) {
             $this->assertSame('uuid', $types[$column]);
         }

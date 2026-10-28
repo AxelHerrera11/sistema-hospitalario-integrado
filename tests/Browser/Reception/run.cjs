@@ -8,7 +8,7 @@ const output = path.resolve('docs/recepcion-muestras/evidencias');
 fs.mkdirSync(output, { recursive: true });
 
 (async () => {
-    const browser = await chromium.launch({ channel: 'msedge', headless: true });
+    const browser = await chromium.launch({ channel: process.env.RECEPTION_BROWSER_CHANNEL || undefined, headless: true });
     const context = await browser.newContext({ timezoneId: 'America/Guatemala' });
     const page = await context.newPage();
     const results = [];
