@@ -4,7 +4,7 @@
 |---|---|---|
 | Acción sin permiso | RBAC antes de preparar o sincronizar | Pendiente de prueba negativa |
 | Datos de otro hospital | tenant autenticado | Pendiente de prueba con dos tenants |
-| Falsa sincronización | estado simulado sin gateway | Cubierto por Semana 16 |
+| Falsa sincronización | estado simulado sin gateway | Verificado en el micro; integración HTTP pendiente |
 | Secretos locales | configuración fuera del repositorio | Revisión local, sin secretos |
 
 Comandos reproducibles:
