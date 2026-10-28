@@ -5,7 +5,8 @@ use App\Http\Controllers\Api\V1\Admin\HospitalUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\OccupancyController;
 use App\Http\Controllers\Api\V1\LabModulesController;
-use App\Http\Controllers\Api\V1\LabModulesController;
+use App\Http\Controllers\Api\V1\ReportesIndicatorController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('tenant')->group(function (): void {
@@ -38,13 +39,17 @@ Route::middleware(['tenant', 'jwt.auth', 'rbac:ocupacion.ver'])->group(function 
     Route::get('/occupancy', [OccupancyController::class, 'index']);
 });
 
-Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
+Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
     Route::get('/lab-validation/results', [LabModulesController::class, 'reviews'])->middleware('rbac:lab-results.read');
     Route::post('/lab-validation/results/{resultId}/validate', [LabModulesController::class, 'validateResult'])->middleware('rbac:lab-results.validate');
     Route::post('/lab-validation/results/{resultId}/reject', [LabModulesController::class, 'reject'])->middleware('rbac:lab-results.validate');
 });
 
-Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
+Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (): void {
+    Route::post('/reports/indicators/IND-RA-01/calculate', [ReportesIndicatorController::class, 'calcular']);
+});
+
+Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
     Route::get('/lab-validation/results', [LabModulesController::class, 'reviews'])->middleware('rbac:lab-results.read');
     Route::post('/lab-validation/results/{resultId}/validate', [LabModulesController::class, 'validateResult'])->middleware('rbac:lab-results.validate');
     Route::post('/lab-validation/results/{resultId}/reject', [LabModulesController::class, 'reject'])->middleware('rbac:lab-results.validate');
