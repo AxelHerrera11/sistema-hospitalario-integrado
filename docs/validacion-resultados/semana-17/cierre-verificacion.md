@@ -4,7 +4,7 @@
 |---|---|---|
 | Rol no bioquímico | permiso y membresía activa | Pendiente de prueba negativa |
 | Tenant ajeno | tenant autenticado en API | Pendiente de prueba con dos tenants |
-| Decisión repetida | estado persistido y auditoría | Cubierto por Semana 16 |
+| Decisión repetida | estado persistido y auditoría | Pendiente de evidencia HTTP integrada |
 | Secreto expuesto | configuración fuera del repositorio | Revisión local, sin secretos |
 
 Comandos reproducibles:
