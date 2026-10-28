@@ -23,7 +23,7 @@ class DoctorScheduleIntegrityTest extends TestCase
     {
         $this->insertSchedule('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-000000000002', 1, 480, 720, 30);
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM doctor_schedules'));
-        $this->assertSame('2026-10-01', DB::connection('hospital')->scalar('SELECT valid_from::text FROM doctor_schedules'));
+        $this->assertSame('2026-10-01', DB::connection('hospital')->scalar("SELECT valid_from::text FROM doctor_schedules"));
     }
 
     public function test_overlapping_block_for_the_same_doctor_and_weekday_is_rejected(): void
@@ -147,7 +147,7 @@ class DoctorScheduleIntegrityTest extends TestCase
         $this->assertTrue($this->tableExists('doctor_schedules'));
         $this->assertTrue($this->tableExists('bed_stays'));
 
-        Artisan::call('migrate:rollback', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--step' => 2, '--force' => true]);
+        Artisan::call('migrate:rollback', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--step' => $this->hospitalRollbackSteps('2026_08_11_000900'), '--force' => true]);
 
         $this->assertFalse($this->tableExists('doctor_schedules'));
         $this->assertTrue($this->tableExists('bed_stays'));

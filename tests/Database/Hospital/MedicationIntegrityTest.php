@@ -63,8 +63,8 @@ class MedicationIntegrityTest extends TestCase
     public function test_rollback_removes_only_the_medication_slice(): void
     {
         $this->insertMedication('AMX-500');
-        // En el orden descendente de un mismo lote, 000500 es la cuarta migración tras 001000, 000900 y 000700.
-        Artisan::call('migrate:rollback', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--step' => 4, '--force' => true]);
+        // Revierte desde la última migración hasta 000500 inclusive, cualquiera sea el número de migraciones posteriores.
+        Artisan::call('migrate:rollback', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--step' => $this->hospitalRollbackSteps('2026_08_11_000500'), '--force' => true]);
 
         $tables = array_column(DB::connection('hospital')->select("SELECT tablename FROM pg_tables WHERE schemaname = 'public'"), 'tablename');
         $this->assertNotContains('medications', $tables);

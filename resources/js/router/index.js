@@ -26,6 +26,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.traslados },
         },
         {
+            path: '/alergias',
+            name: 'alergias',
+            component: () => import('@/modules/alergias/pages/AllergiesPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.alergias },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),
@@ -58,6 +64,24 @@ const router = createRouter({
             name: 'patients',
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.patients },
+        },
+        {
+            path: '/wards',
+            name: 'wards',
+            component: () => import('@/modules/salas-camas/pages/WardCatalogPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
+        },
+        {
+            path: '/reportes',
+            name: 'reportes',
+            component: () => import('@/modules/reportes/pages/ReportsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.reportes },
+        },
+        {
+            path: '/admision',
+            name: 'admision',
+            component: () => import('@/modules/admision/pages/AdmissionPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.admision },
         },
         ...Object.entries({
             new: ROUTE_PERMISSIONS['patients-new'],
