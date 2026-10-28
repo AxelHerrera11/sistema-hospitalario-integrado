@@ -21,8 +21,6 @@ export const ROUTE_PERMISSIONS = {
     wards: 'camas.ver',
     
     'lab-results': 'lab-results.read',
-    'lab-validation': 'lab-results.validate',
-    nativephp: 'lab-results.read',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se

@@ -11,7 +11,7 @@ los casos de uso existentes de `micro-his/ingreso-resultados-lab`.
 - API: `GET /api/v1/lab-results`.
 - Captura de un resultado pendiente con valor y unidad.
 - Corrección controlada posterior a la captura.
-- Registro de auditoría en el flujo.
+- Registro de auditoría persistente en `local_access_audits`, dentro de la misma transacción que el cambio.
 - Tenant y JWT/RBAC aplicados por middleware.
 
 ### Validación local
@@ -21,5 +21,5 @@ php micro-his/ingreso-resultados-lab/tests/run.php
 OK: camino feliz, regla de dominio y error de persistencia verificados.
 ```
 
-La evidencia corresponde al entorno local de integración. No se declara
-staging ni producción hasta contar con un entorno autorizado.
+La evidencia corresponde al entorno local de integración con PostgreSQL. No se
+declara staging ni producción hasta contar con un entorno autorizado.
