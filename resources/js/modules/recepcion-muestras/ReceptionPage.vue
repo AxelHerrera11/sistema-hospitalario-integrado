@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, onUnmounted, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 import { useAuthStore } from '@/stores/auth';
 
@@ -21,6 +21,11 @@ const validation = ref({});
 const uncertain = ref(false);
 const pending = ref(null);
 const errorSummary = ref(null);
+function preventLostReception(event) {
+    if (uncertain.value || busy.value) { event.preventDefault(); event.returnValue = ''; }
+}
+window.addEventListener('beforeunload', preventLostReception);
+onUnmounted(() => window.removeEventListener('beforeunload', preventLostReception));
 
 async function perform(action, mayHaveSaved = false) {
     busy.value = true;
@@ -57,7 +62,7 @@ function lookup() {
     perform(async () => { sample.value = (await api.get(`/lab/specimens/${encodeURIComponent(code.value.trim())}`)).data.data; });
 }
 function findOrders() {
-    if (busy.value || orderSearch.value.trim().length < 2) return;
+    if (busy.value || uncertain.value || orderSearch.value.trim().length < 2) return;
     perform(async () => {
         orders.value = (await api.get('/lab/specimens/pending-orders', { params: { search: orderSearch.value.trim() } })).data.data;
     });
