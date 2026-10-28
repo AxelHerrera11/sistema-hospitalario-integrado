@@ -19,6 +19,8 @@ export const ROUTE_PERMISSIONS = {
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
     wards: 'camas.ver',
+    nativephp: 'lab-results.read',
+    nativephp: 'lab-results.read',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se

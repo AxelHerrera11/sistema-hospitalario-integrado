@@ -65,6 +65,18 @@ const router = createRouter({
             component: () => import('@/modules/salas-camas/pages/WardCatalogPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
         },
+        {
+            path: '/nativephp',
+            name: 'nativephp',
+            component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
+        },
+        {
+            path: '/nativephp',
+            name: 'nativephp',
+            component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
+        },
         ...Object.entries({
             new: ROUTE_PERMISSIONS['patients-new'],
             detail: ROUTE_PERMISSIONS.patients,
