@@ -19,6 +19,8 @@ export const ROUTE_PERMISSIONS = {
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
     wards: 'camas.ver',
+    'lab-validation': 'lab-results.validate',
+    'lab-validation': 'lab-results.validate',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se

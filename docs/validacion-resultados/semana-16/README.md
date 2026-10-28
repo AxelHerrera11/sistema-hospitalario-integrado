@@ -5,6 +5,9 @@
 Se integró la revisión de resultados en Laravel/Vue usando el caso de uso de
 `micro-his/validacion-resultados-bioquimico`.
 
+La ruta y la API se integran sobre la persistencia hospitalaria del PR #1297.
+La decisión y su auditoría se confirman en una sola transacción.
+
 ### Evidencia comprobada
 
 - Ruta de usuario: `/lab-validation`.
