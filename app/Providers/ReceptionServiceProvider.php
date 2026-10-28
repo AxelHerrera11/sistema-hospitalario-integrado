@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\V1\ReceptionController;
 use App\Modules\Reception\Application\OrderGateway;
 use App\Modules\Reception\Application\ReceptionRepository;
 use App\Modules\Reception\Infrastructure\HospitalReceptionRepository;
-use App\Modules\Reception\Infrastructure\UnavailableOrders;
+use App\Modules\Reception\Infrastructure\OrderProjection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -15,7 +15,7 @@ final class ReceptionServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(ReceptionRepository::class, HospitalReceptionRepository::class);
-        $this->app->bind(OrderGateway::class, UnavailableOrders::class);
+        $this->app->bind(OrderGateway::class, OrderProjection::class);
     }
 
     public function boot(): void
