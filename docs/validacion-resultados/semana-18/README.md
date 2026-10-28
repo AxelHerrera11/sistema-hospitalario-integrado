@@ -8,8 +8,8 @@ la denegación de un rol sin permiso.
 
 ### Criterio de cierre
 
-- [x] Validación local comprobada.
-- [x] Regla de decisión única comprobada.
+- [ ] Validación integrada comprobada sobre una captura real.
+- [x] Regla de decisión única comprobada en la suite del micro-HIS.
 - [x] Pruebas del micro-HIS ejecutadas.
 - [ ] Build frontend ejecutado en este checkout.
 - [ ] Revisión humana y aceptación del PR.
