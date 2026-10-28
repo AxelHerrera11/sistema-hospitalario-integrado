@@ -49,8 +49,3 @@ Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (
     Route::post('/reports/indicators/IND-RA-01/calculate', [ReportesIndicatorController::class, 'calcular']);
 });
 
-Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
-    Route::get('/lab-validation/results', [LabModulesController::class, 'reviews'])->middleware('rbac:lab-results.read');
-    Route::post('/lab-validation/results/{resultId}/validate', [LabModulesController::class, 'validateResult'])->middleware('rbac:lab-results.validate');
-    Route::post('/lab-validation/results/{resultId}/reject', [LabModulesController::class, 'reject'])->middleware('rbac:lab-results.validate');
-});
