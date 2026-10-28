@@ -13,6 +13,7 @@ use App\Providers\TenantsServiceProvider;
 use App\Providers\TrasladosAltasServiceProvider;
 
 return [
+    \App\Providers\ReceptionSecurityServiceProvider::class,
     App\Providers\ReceptionServiceProvider::class,
     AppServiceProvider::class,
     RbacServiceProvider::class,
