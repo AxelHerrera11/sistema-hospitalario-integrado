@@ -151,6 +151,11 @@ input, select, button { font: inherit; min-height: 2.75rem; max-width: 100%; pad
 button { cursor: pointer; margin-block: .5rem; }
 :focus-visible { outline: 3px solid #184bc2; outline-offset: 2px; }
 .label { overflow-wrap: anywhere; border: 2px solid #172033; padding: 1rem; }
+.result { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+    fieldset input, fieldset select, fieldset button { width: 100%; }
+    .orders { padding-left: 1rem; }
+}
 .orders { padding-left: 1.2rem; overflow-wrap: anywhere; }
 @media (max-width: 400px) {
     .reception { padding: .5rem; }
