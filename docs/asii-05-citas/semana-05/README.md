@@ -82,7 +82,7 @@ Prueba manual con el servidor embebido (`MICRO_HIS_DSN=sqlite:storage.sqlite` pa
 
 ```bash
 php -S localhost:8081 -t api/public
-curl -s -X POST localhost:8081/api/v1/citas -H 'Content-Type: application/json' -d '{"paciente":"P-1","doctor":"D-1","desde":"2026-11-02T09:00","hasta":"2026-11-02T09:30"}'
+curl -s -X POST localhost:8081/api/v1/citas -H 'Content-Type: application/json' -d '{"paciente":"P-1","doctor":"D-1","desde":"2026-11-02T09:00:00-06:00","hasta":"2026-11-02T09:30:00-06:00"}'
 curl -s 'localhost:8081/api/v1/citas?paciente=P-1'
 ```
 

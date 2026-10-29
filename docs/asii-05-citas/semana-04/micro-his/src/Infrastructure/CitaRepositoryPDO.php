@@ -9,9 +9,7 @@ use MicroHIS\Citas\Domain\CitaRepository;
 use MicroHIS\Citas\Domain\ErrorPersistenciaException;
 use PDO;
 
-/**
- * Adaptador Repository con PDO y sentencias preparadas. Sin reglas de negocio.
- */
+/** Adaptador Repository con PDO y sentencias preparadas. Sin reglas de negocio. */
 final class CitaRepositoryPDO implements CitaRepository
 {
     public function __construct(private readonly PDO $pdo)
@@ -27,10 +25,7 @@ final class CitaRepositoryPDO implements CitaRepository
         } catch (\PDOException $e) {
             throw new ErrorPersistenciaException('error_persistencia: ' . $e->getMessage(), 0, $e);
         }
-        return array_map(
-            static fn (array $f): Cita => Cita::agendar($f['id'], $f['paciente'], $f['doctor'], $f['desde'], $f['hasta']),
-            $filas
-        );
+        return array_map(static fn (array $f): Cita => Cita::agendar($f['id'], $f['paciente'], $f['doctor'], $f['desde'], $f['hasta']), $filas);
     }
 
     public function guardar(Cita $cita): void

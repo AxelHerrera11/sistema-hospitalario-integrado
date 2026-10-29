@@ -13,7 +13,7 @@ $pruebas['ruta desconocida responde 404 con el sobre comun'] = static function (
     $r = $construir(new CitaRepositoryInMemory())->despachar('GET', '/no-existe', []);
     assert($r['status'] === 404 && $r['body']['code'] === 'route_not_found' && isset($r['body']['message']));
 };
-$cita = ['paciente' => 'P-1', 'doctor' => 'D-1', 'desde' => '2026-11-02T09:00', 'hasta' => '2026-11-02T09:30'];
+$cita = ['paciente' => 'P-1', 'doctor' => 'D-1', 'desde' => '2026-11-02T09:00:00-06:00', 'hasta' => '2026-11-02T09:30:00-06:00'];
 $pruebas['POST /citas camino feliz responde 201 con data'] = static function () use ($construir, $cita): void {
     $r = $construir(new CitaRepositoryInMemory())->despachar('POST', '/citas', $cita);
     assert($r['status'] === 201 && $r['body']['data']['estado'] === 'scheduled' && $r['body']['data']['id'] !== '');
@@ -21,7 +21,7 @@ $pruebas['POST /citas camino feliz responde 201 con data'] = static function () 
 $pruebas['POST /citas solapada responde 409 appointments_overlap'] = static function () use ($construir, $cita): void {
     $api = $construir(new CitaRepositoryInMemory());
     $api->despachar('POST', '/citas', $cita);
-    $r = $api->despachar('POST', '/citas', ['doctor' => 'D-2', 'desde' => '2026-11-02T09:15', 'hasta' => '2026-11-02T09:45'] + $cita);
+    $r = $api->despachar('POST', '/citas', ['doctor' => 'D-2', 'desde' => '2026-11-02T09:15:00-06:00', 'hasta' => '2026-11-02T09:45:00-06:00'] + $cita);
     assert($r['status'] === 409 && $r['body']['code'] === 'appointments_overlap');
 };
 $pruebas['POST /citas sin campos responde 422 validation_failed'] = static function () use ($construir): void {
