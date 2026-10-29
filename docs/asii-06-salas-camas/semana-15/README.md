@@ -40,7 +40,8 @@ Sin cambios a código productivo, migraciones, rooms, .env, otros módulos ni
 Semanas 13/14. Sin evidencia visual autenticada ni declaración WCAG.
 
 Madelin Cerón responde por pruebas y documentación; revisión técnica,
-verificación independiente, corrección técnica y aprobación: **Pendiente de asignación**.
+verificación independiente y corrección técnica: **Pendiente de asignación**.
+La aprobación del PR se registra en GitHub según `.github/BRANCH_PROTECTION.md`.
 
 - [x] Mínimos 3 unitarias, 2 caja blanca y 4 caja negra ejecutados sin duplicar casos.
 - [x] Evidencia nueva, integridad PostgreSQL y trazabilidad documentadas.
