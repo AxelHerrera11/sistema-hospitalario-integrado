@@ -55,11 +55,11 @@ recorrido visual sin omitir middleware.
 ## Responsabilidad y revisión pendiente
 
 Madelin Cerón es la autora y responsable de las correcciones documentales y
-del seguimiento de REV-01 a REV-04. Yamilet1235 realizó la revisión del PR
-#1073 y solicitó cambios; no se registra aprobación. La moderación, la
+del seguimiento de REV-01 a REV-04. Yamilet1235 revisó el PR #1073 sobre
+`7dae7bfb` y solicitó cambios; la decisión final se registra en el PR. La moderación, la
 corrección técnica definitiva de REV-01 y la verificación independiente
 siguen pendientes de asignación autorizada, según el plan y los hallazgos.
 REV-01 permanece abierto: #1154 es una contención temporal, no la solución
-definitiva del aislamiento multi-hospital. Se requiere una nueva revisión y
-la aprobación final de una persona distinta de Yamilet1235, sin atribuirla
-a ningún integrante de antemano. Refs #11.
+definitiva del aislamiento multi-hospital. La aprobación del PR sigue lo que
+exige `.github/BRANCH_PROTECTION.md` para `develop` (una aprobación) y queda
+registrada en GitHub. Refs #11.

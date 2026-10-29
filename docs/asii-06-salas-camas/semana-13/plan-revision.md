@@ -65,6 +65,6 @@ La corrección técnica de REV-01 y su verificación son responsabilidades
 separadas: Madelin documenta su seguimiento, pero no declara resuelto el
 hallazgo por incorporar esta tabla o por la contención de #1154.
 
-Se requiere una nueva revisión. La aprobación final queda pendiente de una
-persona distinta de Yamilet1235, conforme a su observación de proceso por
-haber subido commits previos; no se atribuye esa aprobación a nadie.
+La aprobación del PR sigue lo que exige `.github/BRANCH_PROTECTION.md` para
+`develop` (una aprobación) y queda registrada en GitHub; este documento no
+atribuye aprobaciones a ningún integrante.
