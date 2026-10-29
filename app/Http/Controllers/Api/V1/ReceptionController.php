@@ -22,7 +22,8 @@ final class ReceptionController extends Controller
         // El despliegue tiene una base clínica por hospital; nunca mezclar hospitales.
         abort_unless(hash_equals((string) config('reception.hospital_id'), $tenant), 403, 'Hospital clínico no configurado');
         $actor = DB::connection('hospital')->table('local_user_refs')
-            ->where('central_user_id', $request->user()->getAuthIdentifier())->value('local_user_ref_id');
+            ->where('central_user_id', $request->user()->getAuthIdentifier())->where('status', 'active')
+            ->where(fn ($query) => $query->whereNull('valid_to')->orWhere('valid_to', '>', now()))->value('local_user_ref_id');
         abort_unless($actor, 403, 'Actor clínico no sincronizado');
         return [$tenant, (string) $actor];
     }
