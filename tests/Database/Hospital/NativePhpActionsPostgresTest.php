@@ -33,6 +33,14 @@ class NativePhpActionsPostgresTest extends TestCase
         $this->withHeaders(['X-Tenant-ID' => self::HOSPITAL]);
     }
 
+    protected function tearDown(): void
+    {
+        // Los dobles de identidad son estáticos: se restauran para no afectar a otras pruebas.
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        TrasladosTestIdentity::como(null);
+        parent::tearDown();
+    }
+
     public function test_prepared_actions_persist_and_simulated_sync_does_not_mark_them_synchronized(): void
     {
         TrasladosTestIdentity::como('tecnico_laboratorio', self::TECNICO);
