@@ -14,7 +14,12 @@ ya registrada.
 - Se corrigió la comparación de vigencia usando `CURRENT_TIMESTAMP` de la BD.
 - Build frontend ejecutado correctamente.
 
+### Evidencia ejecutada
+
+Matriz de permisos con denegación de roles no autorizados, aislamiento por
+hospital, decisión única y bitácora local en
+[cierre-verificacion.md](cierre-verificacion.md).
+
 ### Pendiente de cierre
 
-Falta ejecutar denegación con un rol no autorizado y la bitácora en staging o
-on-premise autorizado.
+Repetir la matriz en un entorno staging/on-premise autorizado.
