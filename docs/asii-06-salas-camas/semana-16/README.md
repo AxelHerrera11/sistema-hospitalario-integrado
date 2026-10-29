@@ -43,5 +43,6 @@ No se etiqueta esta ejecución como staging ni despliegue on-premise validado.
 pendiente. Creación HTTP/UI, capacidad máxima y transacciones clínicas no se
 implementan. Para Semana 17: disponer de entorno/cuenta autorizados, ejecutar
 recorrido visual y tamaños móvil/escritorio, resolver hallazgos y revisar el PR.
-Madelin Cerón mantiene corrección y evidencia; revisión, verificación independiente
-y aprobación: Pendiente de asignación. Sin cambios de .env, migraciones u otros módulos.
+Madelin Cerón mantiene corrección y evidencia; revisión técnica y verificación
+independiente: Pendiente de asignación. La aprobación del PR se registra en GitHub
+según `.github/BRANCH_PROTECTION.md`. Sin cambios de .env, migraciones u otros módulos.

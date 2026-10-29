@@ -28,5 +28,5 @@ No se atribuye una captura o inspección visual de usuario a esta prueba de scri
 No hubo otros defectos confirmados en las ejecuciones dirigidas. La nueva prueba
 HTTP→PDO amplía evidencia de integración; no se presenta como corrección de un
 fallo inexistente. Los PR #1073/#1364/#1365 conservan su estado y contenido.
-Madelin mantiene seguimiento; revisión técnica, aprobación y cierre independiente
-requieren asignación autorizada antes de aceptar la entrega.
+Madelin mantiene seguimiento; la revisión técnica y el cierre independiente de
+REV-01 requieren asignación autorizada. La aprobación del PR se registra en GitHub.
