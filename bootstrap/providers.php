@@ -14,6 +14,7 @@ use App\Providers\TrasladosAltasServiceProvider;
 use App\Providers\LabModulesServiceProvider;
 
 return [
+    App\Providers\ReceptionServiceProvider::class,
     AppServiceProvider::class,
     RbacServiceProvider::class,
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
