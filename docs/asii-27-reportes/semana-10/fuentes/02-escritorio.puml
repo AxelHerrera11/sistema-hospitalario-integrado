@@ -1,0 +1,20 @@
+@startsalt
+title ASII-27 - Escritorio (>= 1024 px)
+{
+<b>Hospital HIS</b> | . | . | Hospital Central - Lis
+{+
+<b>Filtros</b>
+Desde: "01/11/2026"
+Hasta: "30/11/2026"
+Servicio: ^Todos^
+[Aplicar]
+} | {
+<b>Citas por servicio</b> - 48 filas | [Exportar CSV]
+{#
+Fecha | Servicio | Citas | Estado
+02/11/2026 | Pediatria | 14 | Completadas
+03/11/2026 | Medicina | 9 | Completadas
+}
+}
+}
+@endsalt

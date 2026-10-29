@@ -1,0 +1,19 @@
+@startuml
+title ASII-24 - Flujo de interaccion (camino principal)
+start
+:Usuario abre **Centro de documentacion**;
+:El sistema muestra solo documentos de su rol;
+if (busca por texto?) then (si)
+  :Filtra la lista;
+endif
+:Abre el documento y lo descarga;
+partition "Administrador" {
+  :Completa titulo, tipo, roles y archivo;
+  if (selecciono al menos un rol?) then (si)
+    :Confirmacion "Documento publicado";
+  else (no)
+    :Error en linea "Seleccione al menos un rol";
+  endif
+}
+stop
+@enduml
