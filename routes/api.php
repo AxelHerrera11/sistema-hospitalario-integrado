@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Admin\HospitalController;
 use App\Http\Controllers\Api\V1\Admin\HospitalUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\OccupancyController;
+use App\Http\Controllers\Api\V1\ReportesIndicatorController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('tenant')->group(function (): void {
@@ -34,4 +35,8 @@ Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
 
 Route::middleware(['tenant', 'jwt.auth', 'rbac:ocupacion.ver'])->group(function (): void {
     Route::get('/occupancy', [OccupancyController::class, 'index']);
+});
+
+Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (): void {
+    Route::post('/reports/indicators/IND-RA-01/calculate', [ReportesIndicatorController::class, 'calcular']);
 });
