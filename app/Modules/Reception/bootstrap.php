@@ -1,5 +1,3 @@
 <?php
 
-declare(strict_types=1);
-
-require_once dirname(__DIR__, 3).'/micro-his/recepcion-muestras/bootstrap.php';
+// El módulo Laravel usa el autoload PSR-4 de Composer (App\Modules\Reception).
