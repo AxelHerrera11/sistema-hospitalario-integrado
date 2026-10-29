@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\PrescriptionController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use App\Prescripciones\PdoPrescriptionContext;
 use App\Prescripciones\PrescriptionsAdapters;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +52,8 @@ final class PrescriptionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
+        // Como los demás módulos de la base HOSPITAL (#1154): falla cerrado si la instancia no corresponde al hospital.
+        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
             Route::post('patients/{patient}/prescriptions', [PrescriptionController::class, 'store'])->middleware('rbac:prescripciones.crear');
             Route::get('patients/{patient}/prescriptions', [PrescriptionController::class, 'index'])->middleware('rbac:prescripciones.ver');
             Route::get('prescriptions/{id}', [PrescriptionController::class, 'show'])->middleware('rbac:prescripciones.ver');
