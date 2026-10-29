@@ -33,6 +33,9 @@ $pruebas['GET /reportes sin periodo responde 422 periodo_requerido'] = static fu
     assert($r['status'] === 422 && $r['body']['code'] === 'periodo_requerido');
 };
 $pruebas['el contrato declara las rutas y status probados'] = static function () use ($contrato): void {
+    // Estructura: la ruta debe estar bajo paths y el esquema bajo components.schemas (no en la raiz).
+    assert(preg_match('/^paths:\R  \/reportes:/m', $contrato) === 1, 'ruta fuera de paths');
+    assert(preg_match('/^  schemas:\R(?:    .*\R)*    Reporte:/m', $contrato) === 1, 'esquema fuera de components.schemas');
     foreach (['/reportes:', 'post:', 'get:', "'201'", "'200'", "'422'", "'404'"] as $fragmento) {
         assert(str_contains($contrato, $fragmento), $fragmento);
     }
