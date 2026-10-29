@@ -1,6 +1,6 @@
 // UI component tests with explicit HTTP doubles. Real JWT/PostgreSQL tests are in tests/Feature/Reception.
-const { chromium } = require('../../../storage/app/reception-qa/node_modules/playwright');
-const AxeBuilder = require('../../../storage/app/reception-qa/node_modules/@axe-core/playwright').default;
+const { chromium } = require('playwright');
+const AxeBuilder = require('@axe-core/playwright').default;
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
