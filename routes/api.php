@@ -43,6 +43,9 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->
     Route::get('/lab-validation/results', [LabModulesController::class, 'reviews'])->middleware('rbac:lab-results.read');
     Route::post('/lab-validation/results/{resultId}/validate', [LabModulesController::class, 'validateResult'])->middleware('rbac:lab-results.validate');
     Route::post('/lab-validation/results/{resultId}/reject', [LabModulesController::class, 'reject'])->middleware('rbac:lab-results.validate');
+    Route::get('/lab-results', [LabModulesController::class, 'results'])->middleware('rbac:lab-results.read');
+    Route::post('/lab-results/{resultId}/capture', [LabModulesController::class, 'capture'])->middleware('rbac:lab-results.create');
+    Route::post('/lab-results/{resultId}/correct', [LabModulesController::class, 'correct'])->middleware('rbac:lab-results.correct');
 });
 
 Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (): void {

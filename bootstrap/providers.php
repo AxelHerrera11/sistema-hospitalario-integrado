@@ -11,6 +11,7 @@ use App\Providers\ReportesServiceProvider;
 use App\Providers\SalasCamasServiceProvider;
 use App\Providers\TenantsServiceProvider;
 use App\Providers\TrasladosAltasServiceProvider;
+use App\Providers\LabModulesServiceProvider;
 
 return [
     AppServiceProvider::class,
@@ -27,6 +28,7 @@ return [
     OcupacionServiceProvider::class,
     ReportesServiceProvider::class,
     TrasladosAltasServiceProvider::class,
+    LabModulesServiceProvider::class,
     // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
     AlergiasServiceProvider::class,
 ];
