@@ -4,6 +4,24 @@ Los hallazgos separan riesgos ya documentados de defectos nuevos. REV-01 fue
 reproducido como un defecto de aislamiento y cuenta con una contención temporal
 en #1154; la asignación dinámica definitiva continúa pendiente.
 
+## Responsables y estados
+
+| Hallazgo | Responsable de la acción | Verificación del cierre | Estado |
+|---|---|---|---|
+| REV-01 | Madelin Cerón: seguimiento y actualización documental. Corrección técnica definitiva: rol de integración tenant/persistencia pendiente de asignación autorizada. | Rol de verificación independiente pendiente de asignación; debe comprobar la solución definitiva con hospitales distintos y evidencia reproducible. | Abierto, con contención temporal en #1154; solución definitiva y cierre pendientes. |
+| REV-02 | Madelin Cerón: gestionar la solicitud de identidad de prueba autorizada y documentar el recorrido cuando esté disponible. | Rol de verificación independiente pendiente de asignación. | Pendiente; bloqueado por falta de hospital y cuenta de prueba autorizados. |
+| REV-03 | Madelin Cerón: documentar el diagnóstico y la repetición de la prueba con un ID confirmado por canal administrativo seguro. | Rol de verificación independiente pendiente de asignación. | Pendiente de identidad autorizada y reproducción; causa local no confirmada. |
+| REV-04 | Madelin Cerón: registrar la prueba visual, de teclado y anuncios de estados cuando exista sesión autorizada. | Rol de verificación independiente pendiente de asignación. | Pendiente de sesión autorizada y evaluación visual/accesible; sin conformidad WCAG acreditada. |
+
+Para REV-01, el rol técnico pendiente debe corregir la resolución de base por
+hospital; el rol independiente pendiente debe verificar su cierre. Madelin
+Cerón mantiene el seguimiento documental y la evidencia disponible. El cierre
+requiere una asignación autorizada, el contrato de resolución/provisión y
+pruebas reproducibles de acceso al catálogo propio y rechazo del acceso
+cruzado en ambos sentidos. Las pruebas del guard temporal no bastan para
+cerrar el aislamiento multi-hospital definitivo. Ningún rol pendiente implica
+aceptación o aprobación de otro integrante.
+
 ## REV-01 — Acceso cruzado al catálogo por conexión fija (confirmado)
 
 - **Prioridad:** Alta; contención temporal integrada en #1154, solución

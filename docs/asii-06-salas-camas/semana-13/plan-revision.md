@@ -46,9 +46,25 @@ sea fija y no exista selección dinámica por hospital. La contención
 `HOSPITAL_DB_TENANT_ID` limita una instancia a un hospital, pero no sustituye
 esa resolución.
 
-## Participación
+## Participación y responsables
 
-Revisión técnica realizada en esta tarea como apoyo al módulo. Los equipos de
-identidad/tenant, persistencia y responsable funcional son dependencias
-sugeridas para atender los riesgos; no se atribuyen aprobaciones ni
-responsabilidades confirmadas.
+| Rol | Responsable | Alcance y estado |
+|---|---|---|
+| Autoría | Madelin Cerón | Autora de la documentación de ASII-06, Semana 13; responsable de mantener su trazabilidad. |
+| Moderación | Rol de moderación pendiente de asignación | Coordinar la revisión y registrar acuerdos; no se acredita una moderación realizada. |
+| Revisión | Yamilet1235 | Revisión realizada sobre `7dae7bfb`, con cambios solicitados en el PR #1073; no constituye aprobación. |
+| Corrección documental | Madelin Cerón | Atender las observaciones documentales y mantener responsables, estados y evidencia de REV-01 a REV-04. |
+| Corrección técnica definitiva de REV-01 | Rol técnico de integración tenant/persistencia pendiente de asignación | Definir e implementar la resolución segura de base por hospital mediante una asignación autorizada; #1154 es solo contención temporal. |
+| Verificación del cierre | Rol de verificación independiente pendiente de asignación | Contrastar correcciones y evidencia, especialmente el aislamiento definitivo de REV-01; no hay cierre verificado. |
+
+La revisión real de Yamilet1235 está registrada en
+[PR #1073](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1073#pullrequestreview-5678586114).
+Madelin Cerón responde por sus acciones documentales; la mención de roles
+pendientes no asigna trabajo a otros integrantes ni acredita su aceptación.
+La corrección técnica de REV-01 y su verificación son responsabilidades
+separadas: Madelin documenta su seguimiento, pero no declara resuelto el
+hallazgo por incorporar esta tabla o por la contención de #1154.
+
+Se requiere una nueva revisión. La aprobación final queda pendiente de una
+persona distinta de Yamilet1235, conforme a su observación de proceso por
+haber subido commits previos; no se atribuye esa aprobación a nadie.
