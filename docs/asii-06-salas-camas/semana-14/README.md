@@ -21,8 +21,8 @@ HEAD inicial y `origin/develop` coinciden en `3ea30faa`; upstream inicial:
 [Semana 11](../semana-11/README.md) entrega Vue de consulta;
 [Semana 12](../semana-12/README.md) documenta defensa y límites.
 El [PR #1073](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1073)
-está abierto, con corrección `b6cbafe7` y aprobación pendiente. Se consultaron
-sus hallazgos desde su rama, sin incorporarlos ni modificarlos.
+estaba abierto al medir (corrección `b6cbafe7`); se integró en develop el
+29/10/2026. Sus hallazgos se consultaron desde su rama, sin modificarlos.
 El [PR #1154](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/1154)
 está integrado: limita temporalmente una instancia a un hospital; no resuelve
 la selección dinámica de base hospitalaria.
@@ -56,8 +56,9 @@ no hay formulario Vue ni POST Laravel de alta de wards/camas. Los estados
 son dominios permitidos, no una política verificada de transiciones clínicas.
 No hay campo de capacidad máxima en `wards`: contar camas no prueba aforo
 ni disponibilidad clínica. Esas brechas pasan al seguimiento de Semana 15.
-Madelin Cerón mantiene documentación y mediciones; revisión, corrección técnica,
-verificación independiente y aprobación: **Pendiente de asignación**.
+Madelin Cerón mantiene documentación y mediciones; revisión técnica, corrección
+técnica y verificación independiente: **Pendiente de asignación**. La aprobación
+del PR se registra en GitHub según `.github/BRANCH_PROTECTION.md`.
 
 - [x] Siete métricas y diez riesgos con responsables o roles pendientes.
 - [x] Requisitos existentes y controles relacionados con evidencia.

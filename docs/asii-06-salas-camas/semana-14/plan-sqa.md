@@ -81,7 +81,7 @@ denominador y evidencia; no mezclar históricos con resultados nuevos.
 | Corrección documental | Madelin Cerón | Corregir sus documentos y registrar observaciones. |
 | Corrección técnica | Pendiente de asignación | Atender defectos con autorización en una entrega técnica separada. |
 | Verificación independiente | Pendiente de asignación | Reproducir evidencia y verificar cierre sin autoaprobación. |
-| Aprobación | Pendiente de asignación | Decidir aceptación del plan/PR tras revisión; no se presume otorgada. |
+| Aprobación del PR | Registrada en GitHub (`.github/BRANCH_PROTECTION.md`) | Aceptación documental del plan; no equivale a la aceptación funcional del módulo. |
 
 Madelin no asume aprobaciones ni asigna trabajo a otros integrantes. Los roles
 pendientes deben confirmarse antes de un cierre. Ante umbral incumplido,
