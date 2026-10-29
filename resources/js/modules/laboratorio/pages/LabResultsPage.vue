@@ -2,7 +2,7 @@
     <section class="lab-page" aria-labelledby="lab-title">
         <header class="lab-page__header">
             <div><p class="lab-page__eyebrow">ASII-19 · Ingreso de resultados</p><h1 id="lab-title">Resultados pendientes</h1><p>Captura y corrección controlada con auditoría.</p></div>
-            <span class="lab-page__status" :data-state="result?.status">{{ result?.status ?? 'cargando' }}</span>
+            <span class="lab-page__status" :data-state="result?.status">{{ result?.status ?? (loaded ? 'sin resultados' : 'cargando') }}</span>
         </header>
         <p v-if="message" class="lab-page__message" role="status">{{ message }}</p>
         <p v-if="error" class="lab-page__error" role="alert">{{ error }}</p>
@@ -12,7 +12,7 @@
                 <form v-if="result.status === 'pendiente'" @submit.prevent="capture"><h2>Capturar resultado</h2><label>Valor<input v-model="form.value" required /></label><label>Unidad<input v-model="form.unit" required /></label><label>Observación<textarea v-model="form.observation" rows="3" /></label><button :disabled="busy">Guardar captura</button></form>
                 <form v-else @submit.prevent="correct"><h2>Corrección controlada</h2><label>Nuevo valor<input v-model="form.value" required /></label><label>Unidad<input v-model="form.unit" required /></label><label>Motivo<input v-model="form.reason" required /></label><button :disabled="busy">Guardar corrección</button></form>
             </article>
-            <aside class="lab-page__card"><h2>Auditoría</h2><p v-if="! audit.length">Todavía no hay eventos.</p><ol v-else><li v-for="(event, index) in audit" :key="index"><strong>{{ event.action }}</strong> · {{ event.new_value ?? event.version }}<small>{{ event.reason ?? 'captura inicial' }}</small></li></ol></aside>
+            <aside class="lab-page__card"><h2>Auditoría</h2><p v-if="! audit.length">Todavía no hay eventos.</p><ol v-else><li v-for="(event, index) in audit" :key="index"><strong>{{ event.action }}</strong> · versión {{ event.metadata?.version }}<small>{{ event.occurred_at }}</small></li></ol></aside>
         </div>
     </section>
 </template>
@@ -21,9 +21,9 @@
 import { onMounted, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 
-const result = ref(null); const audit = ref([]); const busy = ref(false); const message = ref(''); const error = ref('');
+const result = ref(null); const audit = ref([]); const loaded = ref(false); const busy = ref(false); const message = ref(''); const error = ref('');
 const form = reactive({ value: '', unit: 'mg/dL', observation: '', reason: '' });
-async function load() { try { const { data } = await api.get('/lab-results'); result.value = data.data.result; audit.value = data.data.audit ?? []; } catch (e) { error.value = e.response?.data?.error ?? 'No fue posible cargar el resultado.'; } }
+async function load() { try { const { data } = await api.get('/lab-results'); const { audit: events = [], ...row } = data.data ?? {}; result.value = row.id ? row : null; audit.value = events; loaded.value = true; } catch (e) { error.value = e.response?.data?.error ?? 'No fue posible cargar el resultado.'; } }
 async function send(path, payload) { busy.value = true; message.value = ''; error.value = ''; try { const { data } = await api.post(path, payload); message.value = data.message; form.value = ''; form.observation = ''; form.reason = ''; await load(); } catch (e) { error.value = e.response?.data?.error ?? 'La operación fue rechazada.'; } finally { busy.value = false; } }
 function capture() { return send(`/lab-results/${result.value.id}/capture`, { value: form.value, unit: form.unit, observation: form.observation }); }
 function correct() { return send(`/lab-results/${result.value.id}/correct`, { value: form.value, unit: form.unit, reason: form.reason }); }
