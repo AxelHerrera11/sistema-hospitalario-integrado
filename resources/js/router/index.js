@@ -72,6 +72,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
         },
         {
+            path: '/lab-validation',
+            name: 'lab-validation',
+            component: () => import('@/modules/laboratorio/pages/ValidationPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-validation'] },
+        },
+        {
             path: '/lab-results',
             name: 'lab-results',
             component: () => import('@/modules/laboratorio/pages/LabResultsPage.vue'),
