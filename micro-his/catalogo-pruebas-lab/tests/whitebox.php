@@ -44,4 +44,8 @@ check('B8 vigencia de ayer → VALIDITY_INVALID', rule(['valid_from' => '2026-10
 check('B9 vigencia de hoy (límite) → válida', rule([]) === null);
 $t = LabTest::register('LT-2', ['code' => ' na ', 'name' => ' Sodio ', 'specimen_type' => 'serum', 'min_volume_ml' => '0.5', 'result_type' => 'text', 'valid_from' => '2026-12-01'], 3, '2026-10-18');
 check('B9 normaliza código y nombre, convierte números y conserva la versión', $t->code === 'NA' && $t->name === 'Sodio' && $t->minVolumeMl === 0.5 && $t->versionNo === 3);
+check('B10 nombre de 161 caracteres → TEXT_TOO_LONG; 160 con acentos es válido', rule(['name' => str_repeat('n', 161)]) === 'TEXT_TOO_LONG:name' && rule(['name' => str_repeat('é', 160)]) === null);
+check('B10 unidad de 33 caracteres → TEXT_TOO_LONG', rule(['unit' => str_repeat('u', 33)]) === 'TEXT_TOO_LONG:unit');
+check('B11 unidad numérica o arreglo → ausente (RANGES_INCOHERENT), nunca TypeError', rule(['unit' => 5]) === 'RANGES_INCOHERENT:unit' && rule(['unit' => ['mg']]) === 'RANGES_INCOHERENT:unit');
+check('B11 rango infinito (1e400) → ausente (RANGES_INCOHERENT)', rule(['critical_high' => '1e400']) === 'RANGES_INCOHERENT:unit');
 echo 'Todas las pruebas de caja blanca pasaron.' . PHP_EOL;
