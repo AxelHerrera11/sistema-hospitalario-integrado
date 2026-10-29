@@ -10,6 +10,7 @@
 
 /** Permiso que exige cada ruta protegida; el backend aplica el mismo permiso. */
 export const ROUTE_PERMISSIONS = {
+    recepcion: 'muestras.ver',
     ocupacion: 'ocupacion.ver',
     admision: 'admisiones.registrar',
     medicamentos: 'medicamentos.ver',
@@ -30,6 +31,7 @@ export const ROUTE_PERMISSIONS = {
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
  * muestran como «próximamente» hasta que su módulo registre la ruta. */
 export const NAVIGATION = [
+    { label: 'Recepción de muestras', to: '/recepcion-muestras', permission: ROUTE_PERMISSIONS.recepcion },
     { label: 'Inicio', to: '/', permission: null },
     { label: 'Ocupación', to: '/ocupacion', permission: ROUTE_PERMISSIONS.ocupacion },
     { label: 'Usuarios', to: '/admin/users', permission: ROUTE_PERMISSIONS['admin-users'] },
