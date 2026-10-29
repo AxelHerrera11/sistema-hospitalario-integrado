@@ -7,9 +7,7 @@ namespace MicroHIS\Citas\Infrastructure;
 use MicroHIS\Citas\Domain\Cita;
 use MicroHIS\Citas\Domain\CitaRepository;
 
-/**
- * Adaptador Repository en memoria (pruebas y demos sin base de datos).
- */
+/** Adaptador Repository en memoria (pruebas y demos sin base de datos). */
 final class CitaRepositoryInMemory implements CitaRepository
 {
     private array $citas = [];
