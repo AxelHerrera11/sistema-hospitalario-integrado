@@ -39,6 +39,14 @@ class LabResultsPostgresTest extends TestCase
         $this->withHeaders(['X-Tenant-ID' => self::HOSPITAL]);
     }
 
+    protected function tearDown(): void
+    {
+        // Los dobles de identidad son estáticos: se restauran para no afectar a otras pruebas.
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        TrasladosTestIdentity::como(null);
+        parent::tearDown();
+    }
+
     private function rows(string $table): int
     {
         return (int) DB::connection('hospital')->scalar("SELECT count(*) FROM {$table}");
