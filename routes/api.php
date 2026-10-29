@@ -4,7 +4,9 @@ use App\Http\Controllers\Api\V1\Admin\HospitalController;
 use App\Http\Controllers\Api\V1\Admin\HospitalUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\OccupancyController;
+use App\Http\Controllers\Api\V1\LabModulesController;
 use App\Http\Controllers\Api\V1\ReportesIndicatorController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('tenant')->group(function (): void {
@@ -35,6 +37,12 @@ Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
 
 Route::middleware(['tenant', 'jwt.auth', 'rbac:ocupacion.ver'])->group(function (): void {
     Route::get('/occupancy', [OccupancyController::class, 'index']);
+});
+
+Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
+    Route::get('/lab-results', [LabModulesController::class, 'results'])->middleware('rbac:lab-results.read');
+    Route::post('/lab-results/{resultId}/capture', [LabModulesController::class, 'capture'])->middleware('rbac:lab-results.create');
+    Route::post('/lab-results/{resultId}/correct', [LabModulesController::class, 'correct'])->middleware('rbac:lab-results.correct');
 });
 
 Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (): void {
