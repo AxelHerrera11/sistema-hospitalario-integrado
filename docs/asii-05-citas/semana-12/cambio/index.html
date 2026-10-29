@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestion de citas medicas y agenda - Cambio solicitado</title>
+<style>
+:root{--primario:#1d4ed8;--primario-osc:#1e3a8a;--texto:#0f172a;--texto-2:#475569;--fondo:#f8fafc;--superficie:#fff;--borde:#cbd5e1;--exito:#15803d;--aviso:#b45309;--error:#b91c1c}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--texto);background:var(--fondo)}
+a{color:var(--primario)}
+:focus-visible{outline:3px solid var(--primario);outline-offset:2px}
+.saltar{position:absolute;left:-999px}.saltar:focus{left:8px;top:8px;background:#fff;padding:8px;z-index:9}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;background:var(--primario-osc);color:#fff}
+header strong{font-size:1.1rem}header small{opacity:.9}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 52px)}
+nav{background:var(--superficie);border-right:1px solid var(--borde);padding:12px}
+nav a{display:block;padding:10px 12px;border-radius:6px;text-decoration:none;color:var(--texto);min-height:44px}
+nav a[aria-current]{background:#dbeafe;color:var(--primario-osc);font-weight:600}
+main{padding:24px;max-width:960px}
+.pantalla{display:none}.pantalla:target{display:block}
+h1{font-size:1.5rem;margin:0 0 4px}h2{font-size:1.15rem}
+.migas{color:var(--texto-2);font-size:.875rem;margin-bottom:16px}
+.tarjeta{background:var(--superficie);border:1px solid var(--borde);border-radius:8px;padding:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 18px;border-radius:6px;border:2px solid var(--primario);background:var(--primario);color:#fff;font-weight:600;text-decoration:none;cursor:pointer}
+.btn.sec{background:#fff;color:var(--primario)}.btn.peligro{background:var(--error);border-color:var(--error)}
+.btn[aria-disabled=true],.btn:disabled{background:#e2e8f0;border-color:#e2e8f0;color:var(--texto-2);cursor:not-allowed}
+.acciones{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.campo{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.campo label{font-weight:600}.campo .ayuda{color:var(--texto-2);font-size:.875rem}
+input,select,textarea{font:inherit;padding:10px;border:1px solid #64748b;border-radius:6px;min-height:44px;background:#fff}
+.campo.invalido input,.campo.invalido select{border:2px solid var(--error)}.campo .msj-error{color:var(--error);font-size:.875rem}
+.alerta{border-left:6px solid;padding:12px 16px;border-radius:6px;background:#fff;margin-bottom:16px}
+.alerta.exito{border-color:var(--exito)}.alerta.error{border-color:var(--error)}.alerta.aviso{border-color:var(--aviso)}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.8rem;font-weight:600;border:1px solid}
+.badge.ok{color:var(--exito)}.badge.warn{color:var(--aviso)}.badge.bad{color:var(--error)}.badge.info{color:var(--primario)}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--borde)}
+th{font-size:.875rem;color:var(--texto-2)}
+.vacio{text-align:center;padding:32px;color:var(--texto-2)}
+.esqueleto{height:16px;background:linear-gradient(90deg,#e2e8f0,#f1f5f9,#e2e8f0);border-radius:4px;margin:10px 0}
+@media (max-width:767px){
+ .app{grid-template-columns:1fr}
+ nav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--borde);padding:4px}
+ nav a{white-space:nowrap}
+ main{padding:16px}
+ .acciones .btn{flex:1 1 100%}
+ thead{display:none}tr{display:block;border:1px solid var(--borde);border-radius:8px;margin-bottom:12px}
+ td{display:flex;justify-content:space-between;gap:12px}td::before{content:attr(data-label);font-weight:600;color:var(--texto-2)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<header><strong>Hospital HIS</strong><small>Hospital Central · Lis Rosales (rol de ejemplo)</small></header>
+<div class="app">
+  <nav aria-label="Gestion de citas medicas y agenda">
+    <a href="#agenda-movil">Agenda movil</a>
+    <a href="#franjas">Franjas</a>
+    <a href="#reprogramada">Reprogramada</a>
+  </nav>
+  <main id="contenido">
+  <section class="pantalla" id="agenda-movil" tabindex="-1">
+<h1>Agenda del dia</h1>
+    <div class="tarjeta"><strong>09:00</strong> Ana Lopez · Dr. Perez <span class="badge info">Programada</span>
+      <div class="acciones"><a class="btn" href="#franjas">Reprogramar</a></div></div>
+  </section>
+  <section class="pantalla" id="franjas" tabindex="-1">
+<h1>Reprogramar cita de Ana Lopez</h1>
+    <fieldset class="campo"><legend><strong>Nueva franja con Dr. Perez</strong> (solo libres)</legend>
+      <label><input type="radio" name="f"> 10:30-11:00</label> <label><input type="radio" name="f" checked> 11:00-11:30</label></fieldset>
+    <div class="acciones"><a class="btn" href="#reprogramada">Confirmar cambio</a><a class="btn sec" href="#agenda-movil">Cancelar</a></div>
+  </section>
+  <section class="pantalla" id="reprogramada" tabindex="-1">
+<h1>Cita reprogramada</h1>
+    <div class="alerta exito" role="status">Antes: 09:00-09:30 · Ahora: <strong>11:00-11:30</strong> con Dr. Perez.</div>
+    <div class="acciones"><a class="btn sec" href="#agenda-movil">Volver a la agenda</a></div>
+  </section>
+  </main>
+</div>
+<script>
+/* Navegacion del prototipo: muestra la pantalla del hash y marca el menu activo. */
+function marcar(){if(!location.hash)location.replace('#agenda-movil');document.querySelectorAll('nav a').forEach(a=>a.toggleAttribute('aria-current',a.hash===location.hash));var s=document.querySelector(location.hash);if(s)s.focus({preventScroll:true});scrollTo(0,0);}
+addEventListener('hashchange',marcar);marcar();
+</script>
+</body>
+</html>
