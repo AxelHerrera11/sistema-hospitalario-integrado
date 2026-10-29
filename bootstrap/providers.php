@@ -11,9 +11,12 @@ use App\Providers\ReportesServiceProvider;
 use App\Providers\SalasCamasServiceProvider;
 use App\Providers\TenantsServiceProvider;
 use App\Providers\TrasladosAltasServiceProvider;
+use App\Providers\LabModulesServiceProvider;
 
 return [
     \App\Providers\PrescriptionsServiceProvider::class,
+    \App\Providers\ReceptionSecurityServiceProvider::class,
+    App\Providers\ReceptionServiceProvider::class,
     AppServiceProvider::class,
     RbacServiceProvider::class,
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
@@ -28,6 +31,7 @@ return [
     OcupacionServiceProvider::class,
     ReportesServiceProvider::class,
     TrasladosAltasServiceProvider::class,
+    LabModulesServiceProvider::class,
     // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
     AlergiasServiceProvider::class,
 ];
