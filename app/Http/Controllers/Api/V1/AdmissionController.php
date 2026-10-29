@@ -31,7 +31,8 @@ final class AdmissionController extends Controller
         $requestId = $this->requestId($request);
         $input = $request->only(['patient_id', 'bed_id', 'bed_type', 'reason']);
         foreach (['patient_id' => 'PATIENT_NOT_FOUND', 'bed_id' => 'BED_NOT_FOUND'] as $field => $code) {
-            if (! Str::isUuid((string) ($input[$field] ?? ''))) {
+            // Un arreglo u objeto en el JSON no es un identificador: 404 como cualquier otro, nunca 500.
+            if (! is_string($input[$field] ?? null) || ! Str::isUuid($input[$field])) {
                 return $this->error($code, 'El identificador no existe en este hospital.', 404, $requestId, $field);
             }
         }
