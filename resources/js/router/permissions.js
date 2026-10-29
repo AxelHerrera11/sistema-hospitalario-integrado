@@ -10,6 +10,7 @@
 
 /** Permiso que exige cada ruta protegida; el backend aplica el mismo permiso. */
 export const ROUTE_PERMISSIONS = {
+    recepcion: 'muestras.ver',
     ocupacion: 'ocupacion.ver',
     admision: 'admisiones.registrar',
     medicamentos: 'medicamentos.ver',
@@ -20,6 +21,9 @@ export const ROUTE_PERMISSIONS = {
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
     wards: 'camas.ver',
+    nativephp: 'lab-results.read',
+    'lab-validation': 'lab-results.validate',
+    'lab-results': 'lab-results.read',
     reportes: 'reportes.ver',
     alergias: 'alergias.ver',
 };
@@ -27,6 +31,7 @@ export const ROUTE_PERMISSIONS = {
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
  * muestran como «próximamente» hasta que su módulo registre la ruta. */
 export const NAVIGATION = [
+    { label: 'Recepción de muestras', to: '/recepcion-muestras', permission: ROUTE_PERMISSIONS.recepcion },
     { label: 'Inicio', to: '/', permission: null },
     { label: 'Ocupación', to: '/ocupacion', permission: ROUTE_PERMISSIONS.ocupacion },
     { label: 'Usuarios', to: '/admin/users', permission: ROUTE_PERMISSIONS['admin-users'] },
@@ -42,6 +47,9 @@ export const NAVIGATION = [
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
     { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
+    { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
+    { label: 'Validación bioquímica', to: '/lab-validation', permission: ROUTE_PERMISSIONS['lab-validation'] },
+    { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
     { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
