@@ -8,6 +8,11 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
+            path: '/recepcion-muestras', name: 'recepcion-muestras',
+            component: () => import('@/modules/recepcion-muestras/ReceptionPage.vue'),
+            meta: { requiresAuth: true, permission: 'muestras.ver' },
+        },
+        {
             path: '/ocupacion',
             name: 'ocupacion',
             component: () => import('@/modules/ocupacion/pages/OccupancyPage.vue'),
@@ -70,6 +75,24 @@ const router = createRouter({
             name: 'wards',
             component: () => import('@/modules/salas-camas/pages/WardCatalogPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
+        },
+        {
+            path: '/nativephp',
+            name: 'nativephp',
+            component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
+        },
+        {
+            path: '/lab-validation',
+            name: 'lab-validation',
+            component: () => import('@/modules/laboratorio/pages/ValidationPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-validation'] },
+        },
+        {
+            path: '/lab-results',
+            name: 'lab-results',
+            component: () => import('@/modules/laboratorio/pages/LabResultsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-results'] },
         },
         {
             path: '/reportes',
