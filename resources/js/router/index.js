@@ -77,6 +77,17 @@ const router = createRouter({
             component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
         },
+        {
+            path: '/lab-validation',
+            name: 'lab-validation',
+            component: () => import('@/modules/laboratorio/pages/ValidationPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-validation'] },
+        },
+        {
+            path: '/lab-results',
+            name: 'lab-results',
+            component: () => import('@/modules/laboratorio/pages/LabResultsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-results'] },
         },
         {
             path: '/reportes',
