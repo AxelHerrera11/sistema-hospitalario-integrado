@@ -72,6 +72,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
         },
         {
+            path: '/nativephp',
+            name: 'nativephp',
+            component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
+        },
+        {
             path: '/lab-validation',
             name: 'lab-validation',
             component: () => import('@/modules/laboratorio/pages/ValidationPage.vue'),

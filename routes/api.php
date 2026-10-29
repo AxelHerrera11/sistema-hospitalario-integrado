@@ -40,6 +40,9 @@ Route::middleware(['tenant', 'jwt.auth', 'rbac:ocupacion.ver'])->group(function 
 });
 
 Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
+    Route::get('/nativephp/actions', [LabModulesController::class, 'nativeActions'])->middleware('rbac:lab-results.read');
+    Route::post('/nativephp/actions', [LabModulesController::class, 'prepareAction'])->middleware('rbac:lab-results.create');
+    Route::post('/nativephp/sync', [LabModulesController::class, 'syncActions'])->middleware('rbac:lab-results.create');
     Route::get('/lab-validation/results', [LabModulesController::class, 'reviews'])->middleware('rbac:lab-results.read');
     Route::post('/lab-validation/results/{resultId}/validate', [LabModulesController::class, 'validateResult'])->middleware('rbac:lab-results.validate');
     Route::post('/lab-validation/results/{resultId}/reject', [LabModulesController::class, 'reject'])->middleware('rbac:lab-results.validate');
