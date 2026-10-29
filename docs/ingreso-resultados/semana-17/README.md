@@ -13,7 +13,12 @@ la autenticación JWT y permisos separados para consultar, capturar y corregir.
 - Las credenciales locales permanecen fuera del repositorio.
 - El build de frontend se genera correctamente con `npm run build`.
 
+### Evidencia ejecutada
+
+Matriz de permisos, aislamiento por hospital, auditoría y bitácora local en
+[cierre-verificacion.md](cierre-verificacion.md).
+
 ### Pendiente de cierre
 
-Falta ejecutar la matriz de permisos y la bitácora contra staging/on-premise
-autorizado. La prueba local no se presenta como despliegue final.
+Ejecutar la misma matriz contra un entorno staging/on-premise autorizado. La
+prueba local con base desechable no se presenta como despliegue final.
