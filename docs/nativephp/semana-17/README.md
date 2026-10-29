@@ -9,9 +9,14 @@ innecesarios.
 ### Controles verificados
 
 - La acción local se limita al flujo HIS acotado.
-- La sincronización diferencia estado pendiente, error y éxito.
+- La cola distingue `pendiente_sincronizar`; la sincronización de esta entrega responde `simulado` y no marca acciones como sincronizadas.
 - Los datos de conexión se configuran fuera del repositorio.
 - El build frontend se genera correctamente.
+
+### Evidencia ejecutada
+
+Matriz de permisos, aislamiento por hospital, sincronización simulada y
+bitácora local en [cierre-verificacion.md](cierre-verificacion.md).
 
 ### Pendiente de cierre
 
