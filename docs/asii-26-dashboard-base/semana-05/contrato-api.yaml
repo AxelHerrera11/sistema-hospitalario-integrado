@@ -12,18 +12,18 @@ security:
   - bearerAuth: []
     tenantHeader: []
 paths:
-/tablero:
-  get:
-    summary: Tablero de indicadores de un periodo (read model)
-    parameters:
-      - { name: periodo, in: query, required: true, schema: { type: string, example: '2026-11' } }
-    responses:
-      '200':
-        description: Read model del tablero en `data`
-        content: { application/json: { schema: { properties: { data: { $ref: '#/components/schemas/Tablero' } } } } }
-      '422': { $ref: '#/components/responses/Error' }
-      '405': { $ref: '#/components/responses/Error' }
-      '404': { $ref: '#/components/responses/Error' }
+  /tablero:
+    get:
+      summary: Tablero de indicadores de un periodo (read model)
+      parameters:
+        - { name: periodo, in: query, required: true, schema: { type: string, example: '2026-11' } }
+      responses:
+        '200':
+          description: Read model del tablero en `data`
+          content: { application/json: { schema: { properties: { data: { $ref: '#/components/schemas/Tablero' } } } } }
+        '422': { $ref: '#/components/responses/Error' }
+        '405': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -36,24 +36,24 @@ components:
         code: { type: string, description: Codigo estable del error }
         message: { type: string }
         errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+    Tablero:
+      type: object
+      properties:
+        periodo: { type: string }
+        total: { type: integer }
+        cumplen_meta: { type: integer }
+        indicadores:
+          type: array
+          items:
+            type: object
+            properties:
+              clave: { type: string }
+              valor: { type: number }
+              meta: { type: number }
+              cumple_meta: { type: boolean }
   responses:
     Error:
       description: Sobre comun de error (ASII-24)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
-Tablero:
-  type: object
-  properties:
-    periodo: { type: string }
-    total: { type: integer }
-    cumplen_meta: { type: integer }
-    indicadores:
-      type: array
-      items:
-        type: object
-        properties:
-          clave: { type: string }
-          valor: { type: number }
-          meta: { type: number }
-          cumple_meta: { type: boolean }

@@ -31,6 +31,9 @@ $pruebas['POST /tablero responde 405 (recurso de solo lectura)'] = static functi
     assert($r['status'] === 405 && $r['body']['code'] === 'method_not_allowed');
 };
 $pruebas['el contrato declara las rutas y status probados'] = static function () use ($contrato): void {
+    // Estructura: la ruta debe estar bajo paths y el esquema bajo components.schemas (no en la raiz).
+    assert(preg_match('/^paths:\R  \/tablero:/m', $contrato) === 1, 'ruta fuera de paths');
+    assert(preg_match('/^  schemas:\R(?:    .*\R)*    Tablero:/m', $contrato) === 1, 'esquema fuera de components.schemas');
     foreach (['/tablero:', 'get:', "'200'", "'422'", "'405'", "'404'"] as $fragmento) {
         assert(str_contains($contrato, $fragmento), $fragmento);
     }
