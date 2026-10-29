@@ -36,4 +36,4 @@ implementados: RF-02–08 y la cadena RNF-01–03/05 siguen pendientes.
 La sustitución probada cubre almacenamiento de casos, no acredita el contrato
 completo de registro de ejecución de RNF-04. Semana 5 deberá acordar frontera
 cliente-servidor, seguridad y propiedad de datos antes de exponer este núcleo.
-Madelin Cerón responde por código/evidencia; revisión y aprobación pendientes de asignación.
+Madelin Cerón responde por código/evidencia; revisión técnica pendiente de asignación; la aprobación del PR se registra en GitHub.
