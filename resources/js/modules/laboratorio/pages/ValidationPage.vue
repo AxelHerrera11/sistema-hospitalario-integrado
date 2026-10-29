@@ -4,7 +4,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'; import api from '@/plugins/axios';
 const result = ref(null); const reason = ref(''); const error = ref(''); const message = ref(''); const busy = ref(false);
-async function load(){ try { const { data }=await api.get('/lab-validation/results'); result.value=data.data.result; } catch(e){ error.value=e.response?.data?.error??'No fue posible cargar la revisión.'; } }
+async function load(){ try { const { data }=await api.get('/lab-validation/results'); const { audit: _events, ...row } = data.data ?? {}; result.value = row.id ? row : null; } catch(e){ error.value=e.response?.data?.error??'No fue posible cargar la revisión.'; } }
 async function decide(action){ busy.value=true; error.value=''; try { const url=`/lab-validation/results/${result.value.id}/${action}`; const payload=action==='reject'?{reason:reason.value}:{}; const {data}=await api.post(url,payload); message.value=data.message; await load(); } catch(e){ error.value=e.response?.data?.error??'La decisión fue rechazada.'; } finally { busy.value=false; } }
 onMounted(load);
 </script>

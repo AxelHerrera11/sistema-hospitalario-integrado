@@ -58,6 +58,14 @@ class LabValidationPostgresTest extends TestCase
         $this->withHeaders(['X-Tenant-ID' => self::HOSPITAL]);
     }
 
+    protected function tearDown(): void
+    {
+        // Los dobles de identidad son estáticos: se restauran para no afectar a otras pruebas.
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        TrasladosTestIdentity::como(null);
+        parent::tearDown();
+    }
+
     public function test_the_captured_result_is_validated_once_by_the_biochemist(): void
     {
         $url = '/api/v1/lab-validation/results/'.self::RESULTADO;
