@@ -14,6 +14,7 @@ use App\Providers\TrasladosAltasServiceProvider;
 use App\Providers\LabModulesServiceProvider;
 
 return [
+    \App\Providers\ReceptionSecurityServiceProvider::class,
     App\Providers\ReceptionServiceProvider::class,
     AppServiceProvider::class,
     RbacServiceProvider::class,
