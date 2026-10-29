@@ -49,6 +49,17 @@ El centro de documentacion es un **servicio de soporte** de baja escritura y alt
 Regla de integracion: ningun modulo lee las tablas de otro; toda dependencia pasa por un
 contrato API versionado (`/api/v1`) a traves del gateway, con JWT y `X-Tenant-ID`.
 
+## Resiliencia, observabilidad, consistencia y migracion (propuesta)
+
+> **Propuesta de diseno** redactada durante la integracion del PR a partir del contrato y la arquitectura de esta semana. No esta implementada ni probada y la autora no la ha confirmado como decision del modulo.
+
+| Aspecto | Propuesta para el centro de documentacion |
+|---|---|
+| Resiliencia | `GET /documentos` es lectura alta: el gateway puede servir la ultima version cacheada del catalogo (por rol, con `ETag`) si el servicio no responde. `POST /documentos` no se reintenta automaticamente salvo con una cabecera `Idempotency-Key`, para no publicar dos veces. ASII-26 consulta con timeout corto y, si falla, oculta el enlace "Ayuda" en vez de bloquear el menu. |
+| Observabilidad | Propagar `X-Correlation-ID` desde el gateway; un log estructurado por solicitud (metodo, ruta, status, `code`, rol consultado, tenant) sin el contenido de los documentos; metricas de latencia p95 de `GET /documentos` y tasa de `422 documento_sin_roles`. |
+| Consistencia | Fuerte dentro del modulo: publicar es una sola escritura en `DocumentoRepository`. Eventual hacia los consumidores: un documento nuevo puede tardar hasta el TTL de la cache en verse; se propone invalidarla al publicar (evento `documento.publicado`). |
+| Migracion razonada | Se mantiene en el monolito modular. Disparador medible para separarlo: p95 de `GET /documentos` por encima del objetivo acordado o manuales que exijan almacenamiento de archivos propio. Pasos: (1) mover `DocumentoRepository` a almacenamiento propio sin cambiar `/api/v1/documentos`; (2) el gateway enruta `/documentos` al nuevo servicio; (3) el rol se sigue obteniendo de `GET /auth/me`; (4) para revertir, el gateway vuelve a enrutar al monolito. |
+
 ## Requisitos y criterios de aceptacion
 
 - **RF-01**: exponer `POST /documentos` y `GET /documentos` sobre el Micro-HIS de la Semana 4.
