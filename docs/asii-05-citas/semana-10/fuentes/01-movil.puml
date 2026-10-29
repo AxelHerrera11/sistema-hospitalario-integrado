@@ -1,0 +1,19 @@
+@startsalt
+title ASII-05 - Movil (375 px)
+{
+<b>Hospital HIS</b> | [=]
+--
+<b>Agenda del dia</b> - Lun 02/11
+[ + Nueva cita ]
+{+
+<b>09:00</b> | Ana Lopez
+. | Dr. Perez - <i>Programada</i>
+}
+{+
+<b>09:30</b> | Luis Mendez
+. | Dr. Perez - <i>Confirmada</i>
+}
+--
+[Agenda] | [Nueva] | [Perfil]
+}
+@endsalt
