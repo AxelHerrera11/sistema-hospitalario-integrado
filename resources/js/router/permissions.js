@@ -11,6 +11,7 @@
 /** Permiso que exige cada ruta protegida; el backend aplica el mismo permiso. */
 export const ROUTE_PERMISSIONS = {
     ocupacion: 'ocupacion.ver',
+    admision: 'admisiones.registrar',
     medicamentos: 'medicamentos.ver',
     rbac: 'rbac.permisos.ver',
     'admin-users': 'usuarios.ver',
@@ -19,6 +20,11 @@ export const ROUTE_PERMISSIONS = {
     'patients-edit': 'pacientes.editar',
     traslados: 'traslados.ver',
     wards: 'camas.ver',
+    nativephp: 'lab-results.read',
+    'lab-validation': 'lab-results.validate',
+    'lab-results': 'lab-results.read',
+    reportes: 'reportes.ver',
+    alergias: 'alergias.ver',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
@@ -33,14 +39,17 @@ export const NAVIGATION = [
     { label: 'Traslados y altas', to: '/traslados', permission: ROUTE_PERMISSIONS.traslados },
     { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
-    { label: 'Admisión y camas', to: null, permission: 'admision.ver', soon: true },
+    { label: 'Admisión y camas', to: '/admision', permission: ROUTE_PERMISSIONS.admision },
     { label: 'Expediente', to: null, permission: 'expediente.ver', soon: true },
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
-    { label: 'Alergias', to: null, permission: 'alergias.ver', soon: true },
+    { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
     { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
+    { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
+    { label: 'Validación bioquímica', to: '/lab-validation', permission: ROUTE_PERMISSIONS['lab-validation'] },
+    { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
-    { label: 'Reportes', to: null, permission: 'reportes.ver', soon: true },
+    { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
     { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
     { label: 'Documentación', to: null, permission: 'documentacion.ver', soon: true },
 ];
