@@ -19,7 +19,7 @@ La prueba nueva ejecuta `APP_DEBUG=false` y confirma que el 503 no contiene `SQL
 ## Procedimiento preparado
 
 1. Fijar el SHA aprobado y ejecutar `composer install --no-interaction --prefer-dist --optimize-autoloader` y `npm ci && npm run build`.
-2. Proveer fuera del repositorio `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*` y la conexión HOSPITAL del tenant; usar `APP_DEBUG=false`.
+2. Proveer fuera del repositorio `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*`, la conexión HOSPITAL del tenant y `HOSPITAL_DB_TENANT_ID` (sin él, 503); usar `APP_DEBUG=false`.
 3. Ejecutar las migraciones CENTRAL y HOSPITAL con respaldo y una base explícitamente seleccionada; esta entrega no agrega migraciones.
 4. Ejecutar las suites Feature, Database y del micro-HIS sin usar `migrate:fresh` sobre datos compartidos.
 5. Confirmar los tres permisos activos, la referencia local del usuario y las respuestas 401, 403, 409, 503, traslado 201 y alta 200.

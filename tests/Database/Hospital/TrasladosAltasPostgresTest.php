@@ -29,6 +29,8 @@ class TrasladosAltasPostgresTest extends TestCase
         $this->assertPostgreSqlIntegrityPrerequisites();
         Artisan::call('migrate:fresh', ['--database' => 'hospital', '--path' => database_path('migrations/hospital'), '--realpath' => true, '--force' => true]);
         $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
+        TrasladosTestIdentity::$hospital = 'hospital-a';
         $this->app['router']->aliasMiddleware('tenant', TrasladosTestIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', TrasladosTestIdentity::class);
         $this->app->instance(RoleResolver::class, new TrasladosTestIdentity());

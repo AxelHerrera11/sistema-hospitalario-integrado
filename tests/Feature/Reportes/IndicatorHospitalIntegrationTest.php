@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Reportes;
 
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -41,6 +42,7 @@ final class IndicatorHospitalIntegrationTest extends TestCase
         }
 
         $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
         $this->app['router']->aliasMiddleware('tenant', IntegrationIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', IntegrationIdentity::class);
 
@@ -185,12 +187,7 @@ class IntegrationIdentity
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): ?string
-            {
-                return IntegrationIdentity::$hospital;
-            }
-        });
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
 
         return $next($request);
     }
