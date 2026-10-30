@@ -44,7 +44,9 @@ export function prescriptionList(data) {
 
 export function failureMessage(status, body = {}) {
     if (status === 422 && body?.code === 'ALLERGY_CONFLICT') return 'Conflicto de alergia; la prescripción no se guardó.';
+    // FormRequest responde `message`; los errores de dominio (problem+json) responden `title`.
     if (status === 422 && typeof body?.message === 'string') return body.message;
+    if (status === 422 && typeof body?.title === 'string') return body.title;
     if (status === 401) return 'Su sesión no es válida. Inicie sesión de nuevo.';
     if (status === 403) return 'No tiene permiso para esta operación en el hospital activo.';
     if (status === 404) return 'No se encontró el paciente o la prescripción.';

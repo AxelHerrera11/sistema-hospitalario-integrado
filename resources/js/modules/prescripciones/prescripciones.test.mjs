@@ -42,5 +42,6 @@ assert.throws(() => prescriptionList({ results: prescriptions }), TypeError);
 assert.match(failureMessage(422, { code: 'ALLERGY_CONFLICT' }), /no se guardó/);
 assert.doesNotThrow(() => failureMessage(422, null));
 assert.equal(failureMessage(409), 'La prescripción ya no está en estado borrador.');
+assert.equal(failureMessage(422, { code: 'MEDICATION_INACTIVE', title: 'Medicamento inactivo.' }), 'Medicamento inactivo.');
 
 console.log('OK: pruebas de reglas de prescripciones pasaron.');

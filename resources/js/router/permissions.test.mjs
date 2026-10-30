@@ -97,6 +97,7 @@ assert.equal(ROUTE_PERMISSIONS.patients, 'pacientes.ver');
 assert.equal(ROUTE_PERMISSIONS['patients-new'], 'pacientes.registrar');
 assert.equal(ROUTE_PERMISSIONS['patients-edit'], 'pacientes.editar');
 assert.equal(ROUTE_PERMISSIONS.prescripciones, 'prescripciones.ver');
+assert.equal(NAVIGATION.filter((entry) => entry.label === 'Prescripciones').length, 1);
 assert.deepEqual(visibleNavigation({ permissions: ['prescripciones.ver'] }).filter((entry) => entry.to === '/prescripciones').map((entry) => entry.label), ['Prescripciones']);
 
 // Un lector no puede entrar por URL a registrar o editar; cada accion es independiente.
