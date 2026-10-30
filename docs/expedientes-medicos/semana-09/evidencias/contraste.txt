@@ -1,0 +1,18 @@
+OK    Texto general                #1f2933 sobre #ffffff  14.76:1 (mín. 4.5:1)
+OK    Texto en fondo de página     #1f2933 sobre #f4f6f8  13.62:1 (mín. 4.5:1)
+OK    Ayuda bajo el campo          #4a5561 sobre #ffffff  7.60:1 (mín. 4.5:1)
+OK    Encabezado (aviso)           #ffffff sobre #0b5cad  6.67:1 (mín. 4.5:1)
+OK    Botón primario               #ffffff sobre #0b5cad  6.67:1 (mín. 4.5:1)
+OK    Botón secundario             #0b5cad sobre #ffffff  6.67:1 (mín. 4.5:1)
+OK    Estado éxito                 #145c2e sobre #e8f5ec  7.19:1 (mín. 4.5:1)
+OK    Estado denegado              #7a3e00 sobre #fff4e5  7.68:1 (mín. 4.5:1)
+OK    Estado error                 #a61b1b sobre #fdecec  6.58:1 (mín. 4.5:1)
+OK    Estado vacío/inicial         #3d4852 sobre #eef1f4  8.24:1 (mín. 4.5:1)
+OK    Error de campo               #a61b1b sobre #ffffff  7.52:1 (mín. 4.5:1)
+OK    Chip de resumen              #1f2933 sobre #eef1f4  13.02:1 (mín. 4.5:1)
+OK    Texto suave en episodio      #4a5561 sobre #ffffff  7.60:1 (mín. 4.5:1)
+OK    Borde de campo               #6b7682 sobre #ffffff  4.63:1 (mín. 3:1)
+FALLA Anillo de foco sobre blanco  #ffbf47 sobre #ffffff  1.64:1 (mín. 3:1)
+OK    Contorno oscuro del foco     #1f2933 sobre #ffffff  14.76:1 (mín. 3:1)
+
+15 de 16 pares cumplen.

@@ -189,6 +189,29 @@ final class WardCatalogEndpointTest extends RbacTestCase
             ->assertDontSee('private persistence detail');
     }
 
+    /** Regresion ASII-06 (aislamiento): el rbac real compara X-Tenant-ID con el
+     * hospital de la identidad; un catalogo mostrado con la cabecera de otro
+     * hospital no debe entregar datos ni pasar por el repositorio de camas. */
+    public function test_catalog_header_from_another_hospital_is_rejected(): void
+    {
+        $this->getJson('/api/v1/wards', ['X-Tenant-ID' => 'hospital-b'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'TENANT_MISMATCH');
+
+        $this->getJson('/api/v1/wards/c6a30000-0000-4000-8000-000000000001/beds', ['X-Tenant-ID' => 'hospital-b'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'TENANT_MISMATCH');
+    }
+
+    public function test_catalog_request_without_tenant_header_is_rejected(): void
+    {
+        $this->withoutHeader('X-Tenant-ID');
+
+        $this->getJson('/api/v1/wards')
+            ->assertStatus(400)
+            ->assertJsonPath('code', 'TENANT_REQUIRED');
+    }
+
     public function test_unavailable_hospital_connection_returns_safe_unavailable_response(): void
     {
         config(['database.connections.hospital.database' => 'missing_asii06_' . bin2hex(random_bytes(6))]);

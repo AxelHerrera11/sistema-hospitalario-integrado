@@ -74,6 +74,12 @@ const grantedSoon = visibleNavigation({ permissions: ['citas.ver'] }, NAVIGATION
 assert.deepEqual(grantedSoon.map((entry) => entry.label), ['Citas']);
 assert.equal(visibleNavigation(null).filter((entry) => entry.to === null).length, 0);
 
+// Regresion ASII-08: /traslados existe como ruta, asi que el menu debe ofrecerla a quien tenga traslados.ver,
+// y solo a quien lo tenga (el permiso sigue en rbac.pending hasta que RBAC lo active).
+const conTraslados = visibleNavigation({ permissions: ['traslados.ver'] }, NAVIGATION);
+assert.deepEqual(conTraslados.filter((entry) => entry.to === '/traslados').map((entry) => entry.label), ['Traslados y altas']);
+assert.equal(visibleNavigation(sessionUser).some((entry) => entry.to === '/traslados'), false);
+
 // Cada entrada de navegacion declara un permiso del catalogo del backend
 // o es una ruta publica sin permiso (con `to` definido).
 const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');
@@ -90,6 +96,9 @@ NAVIGATION.forEach((entry) => {
 assert.equal(ROUTE_PERMISSIONS.patients, 'pacientes.ver');
 assert.equal(ROUTE_PERMISSIONS['patients-new'], 'pacientes.registrar');
 assert.equal(ROUTE_PERMISSIONS['patients-edit'], 'pacientes.editar');
+assert.equal(ROUTE_PERMISSIONS.prescripciones, 'prescripciones.ver');
+assert.equal(NAVIGATION.filter((entry) => entry.label === 'Prescripciones').length, 1);
+assert.deepEqual(visibleNavigation({ permissions: ['prescripciones.ver'] }).filter((entry) => entry.to === '/prescripciones').map((entry) => entry.label), ['Prescripciones']);
 
 // Un lector no puede entrar por URL a registrar o editar; cada accion es independiente.
 for (const action of ['patients-new', 'patients-edit']) {
@@ -109,6 +118,7 @@ Object.values(ROUTE_PERMISSIONS).forEach((permission) => {
 
 // Toda ruta protegida del enrutador declara el permiso que exige el backend.
 const routerSource = readFileSync(join(here, 'index.js'), 'utf8');
+assert.match(routerSource, /path: '\/prescripciones'[\s\S]*?permission: ROUTE_PERMISSIONS\.prescripciones/);
 const protectedRoutes = routerSource.match(/requiresAuth: true[^\n]*/g) ?? [];
 assert.ok(protectedRoutes.length >= 6, 'el enrutador debe seguir declarando rutas protegidas');
 protectedRoutes.forEach((route) => {

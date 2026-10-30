@@ -1,0 +1,33 @@
+@startuml
+title ASII-27 - Componentes backend y frontend
+skinparam componentStyle uml2
+package "Frontend (Vue 3 + Pinia)" #Paleturquoise {
+  [ReportesView.vue] as fe0
+  [FiltrosReporte.vue] as fe1
+  [VistaPreviaTabla.vue] as fe2
+  [BotonExportar.vue] as fe3
+  [useReportesStore (Pinia)] as fe4
+  [reportesApi.js (Axios)] as fe5
+}
+package "Backend (Laravel / Micro-HIS)" #LightYellow {
+  [ReporteController] as be0
+  [GenerarReporte] as be1
+  [Reporte (entidad)] as be2
+  [Exportador (CSV/JSON/TSV)] as be3
+  [ReporteRepository (interfaz)] as be4
+  [ReporteRepositoryPDO] as be5
+}
+interface "API REST /api/v1/reportes\n(contrato Semana 5)" as api
+fe0 --> fe1
+fe1 --> fe2
+fe2 --> fe3
+fe3 --> fe4
+fe4 --> fe5
+be0 --> be1
+be1 --> be2
+be2 --> be3
+be3 --> be4
+be4 --> be5
+fe5 ..> api : JSON + JWT + X-Tenant-ID
+api - be0
+@enduml

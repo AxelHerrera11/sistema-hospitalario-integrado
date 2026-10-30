@@ -1,0 +1,17 @@
+@startuml
+title ASII-26 - Ciclo de aseguramiento de calidad
+start
+repeat
+  :Planificar (metricas, umbrales, riesgos);
+  :Controles preventivos\n(contrato, checklist, limite de PR);
+  :Desarrollar y abrir PR;
+  :Controles detectivos\n(pruebas, revision RTF, metricas);
+  if (umbral cumplido?) then (si)
+    :Integrar a develop;
+  else (no)
+    :Accion correctiva + issue;
+  endif
+  :Seguimiento semanal;
+repeat while (quedan entregas?) is (si)
+stop
+@enduml
