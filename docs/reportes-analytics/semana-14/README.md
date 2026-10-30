@@ -33,14 +33,14 @@ Atributos: exactitud del indicador, confiabilidad ante fallos, seguridad y traza
 | ID | Tipo | Control | Responsable | Momento |
 |---|---|---|---|---|
 | P1 | Preventivo | La prueba de integración usa las migraciones reales | Autora | Cada PR |
-| P2 | Preventivo | Middleware `tenant`, `jwt.auth`, guard de base y permiso | Autora; RBAC y Tenants | Cada PR |
+| P2 | Preventivo | Middleware `tenant`, `jwt.auth`, guard de base y permiso | Autora | Cada PR |
 | P3 | Preventivo | Estados sin porcentaje en el dominio | Autora | Diseño |
 | P4 | Preventivo | `limpiar()` antes de validar | Autora | Diseño |
-| P5 | Preventivo | Acordar quién cancela episodios | Autora con ASII-07 y ASII-08 | Pendiente |
+| P5 | Preventivo | Confirmar quién cancela episodios | Autora | Pendiente |
 | D1 | Detectivo | `run.php`, `tests/Feature/Reportes` | Autora | Cada PR |
 | D2 | Detectivo | `test_miembro_de_otro_hospital_…` | Autora | Cada PR |
 | D3 | Detectivo | `recorrido-e2e.mjs` | Autora | Antes de integrar la pantalla |
-| D4 | Detectivo | Ejecución local declarada; CI cuando se libere | Coordinación del repositorio | Cada PR |
+| D4 | Detectivo | Ejecución local declarada; CI cuando se libere | Autora | Cada PR |
 | D5 | Detectivo | Repetir M7 con volumen real | Autora | Cuando exista staging |
 
 ## Calendario

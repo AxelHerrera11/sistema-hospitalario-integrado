@@ -42,8 +42,8 @@ Ejecutada el 30/10/2026 en una copia aislada, con bases propias y datos ficticio
 
 ## Dependencias abiertas
 
-| Dependencia | Responsable | Acción |
+| Dependencia | Depende de | Qué falta |
 |---|---|---|
-| Entorno de staging u on-premise | Coordinación del curso | Autorizar y documentar el entorno |
-| Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Resolver `clinical_endpoint` |
-| Quién escribe `cancelled` en `care_episodes` | ASII-07 y ASII-08 | Acordar la operación |
+| Entorno de staging u on-premise | Coordinación del curso | Un entorno autorizado y documentado |
+| Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Uso de `clinical_endpoint` |
+| Quién escribe `cancelled` en `care_episodes` | ASII-07 y ASII-08 | Definir la operación |
