@@ -61,6 +61,8 @@ final class ExpedienteMedicoApiTest extends TestCase
                 return $this->locales[$centralUserId] ?? null;
             }
         });
+        ExpedienteTestIdentity::$hospital = 'hospital-demo';
+        config()->set('tenants.hospital_database_tenant_id', 'hospital-demo');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-demo']);
     }
 
@@ -90,6 +92,19 @@ final class ExpedienteMedicoApiTest extends TestCase
             $this->withHeaders(['X-Tenant-ID' => 'hospital-demo'])->getJson('/api/v1/patients/P-0001/medical-record')
                 ->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
         }
+        $this->assertSame(0, $this->audit->count());
+    }
+
+    public function test_another_hospital_or_an_unassigned_database_never_reaches_the_record(): void
+    {
+        ExpedienteTestIdentity::as('medico', self::MEDICA);
+        ExpedienteTestIdentity::$hospital = 'hospital-norte';
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-norte'])->getJson('/api/v1/patients/P-0001/medical-record')
+            ->assertStatus(403)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_MISMATCH');
+        ExpedienteTestIdentity::$hospital = 'hospital-demo';
+        config()->set('tenants.hospital_database_tenant_id', null);
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-demo'])->getJson('/api/v1/patients/P-0001/medical-record')
+            ->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
         $this->assertSame(0, $this->audit->count());
     }
 

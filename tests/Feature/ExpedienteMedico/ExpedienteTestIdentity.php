@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\ExpedienteMedico;
 
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -24,12 +25,8 @@ final class ExpedienteTestIdentity implements RoleResolver, DenialRecorder
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(static fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): string
-            {
-                return ExpedienteTestIdentity::$hospital;
-            }
-        });
+        // Modelo Hospital real: EnsureHospitalDatabaseTenant lo compara con la base HOSPITAL de la instancia.
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
 
         return $next($request);
     }

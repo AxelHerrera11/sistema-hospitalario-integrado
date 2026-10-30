@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\ExpedienteMedico;
 
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use App\TrasladosAltas\PdoResolutorActorLocal;
 use App\TrasladosAltas\ResolutorActorLocal;
 use Illuminate\Support\Facades\DB;
@@ -39,8 +40,9 @@ final class ExpedienteMedicoServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso.
-        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
+        // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso. El guard impide que otro hospital
+        // lea la base HOSPITAL de esta instancia, porque HospitalRegistry la asocia al tenant de la petición.
+        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
             Route::get('patients/{patientCode}/medical-record', [ExpedienteMedicoController::class, 'consult'])
                 ->middleware('rbac:expediente.ver');
         });
