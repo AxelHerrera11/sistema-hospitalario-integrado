@@ -65,7 +65,9 @@ try {
         await r; await admin.waitForFunction(() => !document.querySelector('form[role=search] button').disabled);
         return admin.$$eval('.meds__item', (items) => items.map((i) => i.innerText));
     };
-    check('búsqueda "ÁCIDO" encuentra el registro', (await search('ÁCIDO')).some((t) => t.includes('ASA-100')));
+    for (const termino of ['ácido', 'ÁCIDO', 'acido', 'ACIDO']) {
+        check(`búsqueda "${termino}" encuentra el registro`, (await search(termino)).some((t) => t.includes('ASA-100') && t.includes('Ácido acetilsalicílico 100 mg')));
+    }
     check('búsqueda sin coincidencias muestra estado vacío', (await search('zzz')).length === 0 && (await text(admin)).includes('No hay medicamentos'));
     await search('asa');
     await admin.click('.meds__pick');
