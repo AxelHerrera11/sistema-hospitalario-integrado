@@ -106,6 +106,16 @@ final class IndicatorEndpointTest extends TestCase
         $this->assertSame(1, $lecturas->veces);
     }
 
+    public function test_rechaza_fechas_imposibles_con_422_sin_porcentaje(): void
+    {
+        foreach (['2026-02-31T00:00:00-06:00', '2026-13-01T00:00:00-06:00', '2026-01-01T24:30:00-06:00'] as $desde) {
+            $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', ['from' => $desde, 'until' => '2027-03-05T00:00:00-06:00'])
+                ->assertStatus(422)
+                ->assertJsonPath('error.code', 'periodo_invalido')
+                ->assertJsonMissingPath('data');
+        }
+    }
+
     public function test_rechaza_periodo_invalido_con_422_sin_porcentaje(): void
     {
         $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', [

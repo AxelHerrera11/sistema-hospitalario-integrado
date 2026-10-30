@@ -86,7 +86,7 @@ usar solo `php artisan serve`).
 |---|---|
 | Desde `2026-01-01`, Hasta `2026-02-01`, Sala vacía | `25.00 %` (1 cancelado / 4 finalizadas) + trazabilidad |
 | Desde `2026-01-01`, Hasta `2026-02-01`, Sala `HOSP-UCI` | `33.33 %` (1 / 3; queda fuera HOSP-PED) |
-| Hasta `2026-01-01` (invertido) | "Revisa el periodo indicado." (422) |
+| Hasta `2026-01-01` (invertido) | "Desde debe ser anterior a hasta." Sin llamada a la API y sin cifra, aunque antes hubiera un resultado |
 | Desde `2019-01-01`, Hasta `2019-02-01` | `N/A` + leyenda `SIN_DATOS_EN_PERIODO` |
 
 El rol `superadmin` (creado en el paso 3) ya incluye `reportes.ver` en
