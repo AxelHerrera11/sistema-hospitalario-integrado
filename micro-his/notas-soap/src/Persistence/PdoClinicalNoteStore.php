@@ -22,10 +22,10 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
 
     public function find(string $noteId): ?ClinicalNote
     {
-        $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
+        $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status, content FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
         $diagnoses = $this->rows("SELECT code, type FROM diagnoses WHERE clinical_note_id = ? AND status = 'active'", [$noteId]);
         return $note === null ? null : new ClinicalNote($noteId, $note['care_episode_id'], $note['author_user_ref_id'], $note['status'],
-            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $diagnoses));
+            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $diagnoses), SoapSections::fromJson($note['content']));
     }
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string

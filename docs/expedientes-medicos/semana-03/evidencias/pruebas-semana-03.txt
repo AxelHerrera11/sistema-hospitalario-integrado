@@ -1,0 +1,11 @@
+$ php micro-his/expediente-medico/tests/run.php | grep -E "C7|U-02|U-06|C6b|P-06|N-11|Resumen"
+# 2026-10-23 09:47 · PHP 8.2.12
+OK: U-02 paciente fallecido no recibe expediente (409)
+OK: U-06 episodio de otro paciente rechaza toda la vista (500)
+OK: U-06b expediente de otro paciente rechaza la vista (500)
+OK: C6b almacén del hospital caído → PersistenceFailure
+OK: C7 camino feliz: 3 episodios, evento «consultado» Security con el id del expediente y sin datos clínicos
+OK: [pdo] N-11 almacén caído → 503 EXPEDIENTE_NO_DISPONIBLE con solo el código
+OK: [memoria] N-11 almacén caído → 503 EXPEDIENTE_NO_DISPONIBLE con solo el código
+OK: P-06 fallo del driver → PersistenceFailure("episodes_read_failed")
+Resumen: 89 OK, 0 FALLO
