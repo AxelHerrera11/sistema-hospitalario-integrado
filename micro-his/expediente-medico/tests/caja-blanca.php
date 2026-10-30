@@ -116,8 +116,8 @@ check('A2 paciente inexistente → 404 PACIENTE_NO_ENCONTRADO', outcome(fn () =>
 
 [, $open, $log] = cases();
 $again = $open->execute($ctx(RECEP_MORA), 'P-0001');
-check('A3 expediente ya existente → created=false, mismo expediente y sin evento nuevo', $again['created'] === false
-    && $again['record']->recordNumber === 'EXP-P-0001' && $log->events === []);
+check('A3 expediente ya existente → created=false, mismo expediente y evento «apertura_repetida» (S-07, Semana 17)', $again['created'] === false
+    && $again['record']->recordNumber === 'EXP-P-0001' && $log->names() === ['expediente_medico.apertura_repetida:success']);
 
 [, $open] = cases();
 check('A4 paciente fallecido → 409 PACIENTE_NO_ACTIVO', outcome(fn () => $open->execute($ctx(RECEP_MORA), 'P-0003')) === '409 PACIENTE_NO_ACTIVO');
@@ -129,7 +129,8 @@ check('A5 bitácora caída al abrir → AuditUnavailable y el expediente NO qued
 $racer = new MedicalRecord('rec-otro-proceso', P2, 'EXP-P-0002', date_utc('2026-10-23 11:59:59+00:00'));
 [, $open, $log] = cases(racer: $racer);
 $race = $open->execute($ctx(RECEP_MORA), 'P-0002');
-check('A6 carrera: otro proceso abrió primero → se devuelve ese expediente con created=false', $race['created'] === false && $race['record']->id === 'rec-otro-proceso' && $log->events === []);
+check('A6 carrera: otro proceso abrió primero → se devuelve ese expediente con created=false', $race['created'] === false && $race['record']->id === 'rec-otro-proceso'
+    && $log->names() === ['expediente_medico.apertura_repetida:success']);
 
 [, $open, $log, , $stores] = cases();
 $new = $open->execute($ctx(RECEP_MORA), 'P-0002');

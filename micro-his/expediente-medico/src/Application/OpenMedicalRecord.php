@@ -38,7 +38,7 @@ final class OpenMedicalRecord
             ?? throw new ExpedienteRuleViolation('PACIENTE_NO_ENCONTRADO', 404);
         $existing = $stores->records->findByPatient($patient->id);
         if ($existing !== null) {
-            return ['record' => $existing, 'created' => false];
+            return $this->repeated($request, $existing);
         }
 
         $candidate = MedicalRecord::open(Uuid::v4(), $patient, $this->clock->now());
@@ -46,6 +46,19 @@ final class OpenMedicalRecord
             $this->audit->record($request, ClinicalAccessAudit::OPENED, 'success', $record->id);
         });
 
-        return ['record' => $stored, 'created' => $stored->id === $candidate->id];
+        return $stored->id === $candidate->id ? ['record' => $stored, 'created' => true] : $this->repeated($request, $stored);
+    }
+
+    /**
+     * RF-EXP-05 (hallazgo S-07 de la Semana 17): repetir la apertura también entrega el número del expediente, así que
+     * queda en la bitácora; si no se puede registrar, no se devuelve nada (503, como en la consulta).
+     *
+     * @return array{record: MedicalRecord, created: false}
+     */
+    private function repeated(RequestContext $request, MedicalRecord $record): array
+    {
+        $this->audit->record($request, ClinicalAccessAudit::REPEATED_OPENING, 'success', $record->id);
+
+        return ['record' => $record, 'created' => false];
     }
 }
