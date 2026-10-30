@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AlergiasServiceProvider;
+use App\ExpedienteMedico\ExpedienteMedicoServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
@@ -36,4 +37,6 @@ return [
     // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
     AlergiasServiceProvider::class,
     MedicosServiceProvider::class,
+    // Expediente después de Traslados: reutiliza su ResolutorActorLocal (bindIf no lo redefine).
+    ExpedienteMedicoServiceProvider::class,
 ];
