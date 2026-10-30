@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, 'reportes.js'), 'utf8');
-const { porcentajeLegible, leyendaDelResultado, errorDeFiltros, trazabilidad, mensajeDeError } =
+const { AYUDA_INTERVALO, porcentajeLegible, leyendaDelResultado, errorDeFiltros, trazabilidad, mensajeDeError } =
     await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 // Un porcentaje nulo nunca se muestra como 0 %: eso ocultaría una falta de datos.
@@ -45,4 +45,10 @@ assert.equal(mensajeDeError(null, 401).includes('Inicia sesión'), true);
 assert.equal(mensajeDeError(null, 403).includes('permiso'), true);
 assert.equal(mensajeDeError(null, 500).includes('detalle'), false);
 
-console.log('OK: 15 aserciones de la pantalla de reportes aprobadas');
+assert.equal(errorDeFiltros({ desde: '2026-02-31', hasta: '2026-03-05' }), 'Las fechas deben ser válidas.');
+assert.equal(errorDeFiltros({ desde: '2026-01-01', hasta: '2026-13-01' }), 'Las fechas deben ser válidas.');
+assert.equal(errorDeFiltros({ desde: '2026-01-01', hasta: '2026-02-01' }), '');
+assert.equal(mensajeDeError('HOSPITAL_DATABASE_TENANT_MISMATCH', 403).includes('no está disponible'), true);
+assert.equal(AYUDA_INTERVALO.includes('no se incluye'), true);
+
+console.log('OK: 20 aserciones de la pantalla de reportes aprobadas');

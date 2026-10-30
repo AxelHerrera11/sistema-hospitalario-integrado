@@ -11,6 +11,9 @@ export const ESTADOS_SIN_VALOR = {
     SIN_DATOS_EN_PERIODO: 'No hubo hospitalizaciones cerradas ni canceladas en el periodo.',
 };
 
+/** Ayuda del intervalo [desde, hasta): evita que se espere incluido el día de «Hasta». */
+export const AYUDA_INTERVALO = 'Se incluye el día de «Desde». El día de «Hasta» no se incluye: para contar todo enero, indica del 01/01 al 01/02.';
+
 /** Etiqueta legible del indicador publicado por el backend. */
 export const INDICADOR = { codigo: 'IND-RA-01', formula: 'TCI-1.0' };
 
@@ -49,7 +52,9 @@ export function errorDeFiltros(filtros) {
     const inicio = new Date(desde);
     const fin = new Date(hasta);
 
-    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())) {
+    // El navegador convierte 2026-02-31 en 3 de marzo: la fecha debe volver igual.
+    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())
+        || inicio.toISOString().slice(0, 10) !== desde || fin.toISOString().slice(0, 10) !== hasta) {
         return 'Las fechas deben ser válidas.';
     }
 
@@ -73,6 +78,10 @@ export function trazabilidad(resultado) {
 export function mensajeDeError(codigo, estado) {
     if (codigo === 'entrada_invalida' || codigo === 'periodo_invalido') {
         return 'Revisa el periodo indicado.';
+    }
+
+    if (codigo === 'HOSPITAL_DATABASE_TENANT_MISMATCH') {
+        return 'Este hospital no está disponible en esta instalación.';
     }
 
     if (codigo === 'REPORTES_UNAVAILABLE') {
