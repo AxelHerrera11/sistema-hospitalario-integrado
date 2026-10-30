@@ -120,7 +120,6 @@ final class TrasladosAltasApiTest extends TestCase
 
     public function test_invalid_request_does_not_expose_console_syntax(): void
     {
-        $this->activarPropuesta();
         TrasladosTestIdentity::como('enfermeria');
         $this->postJson('/api/v1/traslados', ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => ''])
             ->assertStatus(422)->assertJsonPath('campo', 'motivo')->assertJsonMissingPath('uso');
