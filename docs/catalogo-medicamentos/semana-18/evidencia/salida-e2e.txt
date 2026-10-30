@@ -11,8 +11,20 @@ PASS  búsqueda sin coincidencias muestra estado vacío
 PASS  el diálogo repite código, nombre, principio activo y estado destino
 PASS  el foco inicial queda en Cancelar
 PASS  Cancelar no envía el cambio
+PASS  Cancelar devuelve el foco al botón de origen
 PASS  Escape cierra sin enviar el cambio
+PASS  Escape devuelve el foco al botón de origen
+  1280x420 {"dx":0,"dy":0.0078125,"margenX":416,"margenY":74.203125,"scrollY":210,"interno":false,"overflow":"auto","fondo":"rgba(15, 23, 42, 0.5)","dentro":true}
+PASS  escritorio con la página desplazada: centrado horizontal y vertical
+PASS  fondo oscuro y foco dentro del diálogo
+PASS  Tab sigue dentro del diálogo
+  375x800 {"dx":0,"dy":0.0078125,"margenX":19,"margenY":177.8125,"scrollY":90,"interno":false,"overflow":"auto","fondo":"rgba(15, 23, 42, 0.5)","dentro":true}
+PASS  375 px: centrado y con márgenes
+  375x280 {"dx":0,"dy":0,"margenX":19,"margenY":16,"scrollY":610,"interno":true,"overflow":"auto","fondo":"rgba(15, 23, 42, 0.5)","dentro":true}
+PASS  375 px sin altura suficiente: márgenes y desplazamiento interno
+PASS  375 px sin altura suficiente: el botón de confirmar se alcanza desplazando
 PASS  cambio de vigencia confirmado → 200
+PASS  confirmar devuelve el foco al botón de origen
 PASS  al volver a la pantalla, la vigencia leída del servidor es "No vigente"
   login enfermera@prueba.local: 200
 PASS  enfermería no ve alta ni cambio de vigencia
@@ -20,4 +32,4 @@ PASS  en 375 px no hay desplazamiento horizontal
   login recepcion@prueba.local: 200
 PASS  recepción no tiene el enlace del catálogo en el menú
 PASS  sin sesión del cliente la API responde 4xx
-19/19 comprobaciones
+28/28 comprobaciones

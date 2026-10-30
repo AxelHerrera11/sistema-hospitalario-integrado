@@ -9,6 +9,8 @@ pantalla Vue "Reportes".
 
 ## Qué se entrega por semana (S1–S18)
 
+**Prueba manual de la autora (30/10/2026), en 8123, con semillas ficticias:** 25.00 % sin sala, 33.33 % con `HOSP-UCI`, periodo invertido con error y sin la cifra anterior, y periodo de 2019 con N/A. No cubre revisión total, pruebas móviles ni seguridad.
+
 **Técnico** significa que el archivo y su contenido cumplen el cuadro de tareas. Eso no incluye revisión humana, exposición ni evaluación docente.
 
 | Semana | Requisito | Evidencia | Estado | Falta |

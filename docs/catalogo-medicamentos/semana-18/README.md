@@ -29,7 +29,7 @@
 | Parciales preparados | `semana-06/presentacion.pdf`, `semana-12/presentacion.pdf` |
 | Calidad | `semana-13/` a `semana-15/` |
 | Integración y seguridad | `semana-16/`, `semana-17/` |
-| Recorrido final en Chrome | [`evidencia/salida-e2e.txt`](./evidencia/salida-e2e.txt) (19/19, Chrome headless y PostgreSQL con locale C; no es revisión humana) |
+| Recorrido final en Chrome | [`evidencia/salida-e2e.txt`](./evidencia/salida-e2e.txt) (28/28, Chrome headless y PostgreSQL con locale C; no es revisión humana) |
 
 ## Preguntas de defensa
 
