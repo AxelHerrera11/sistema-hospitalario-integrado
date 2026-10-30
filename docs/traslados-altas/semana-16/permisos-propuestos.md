@@ -1,3 +1,5 @@
+> **Actualización:** este PR solicita la activación. Hasta su integración por RBAC (ASII-02), esta página sigue vigente.
+
 # Permisos propuestos para traslados y altas (pendientes de RBAC)
 
 | Permiso | Ruta prevista en la API v1 | Rol propuesto | Estado en `config/rbac.php` |
