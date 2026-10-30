@@ -20,8 +20,7 @@ final class Period
     /** @param string $from Instante ISO-8601 obligatorio con offset (ej.: 2026-01-01T00:00:00-06:00). */
     public static function create(string $from, string $until): self
     {
-        preg_match('/[+-]\d{2}:\d{2}$/', $from) === 1
-            || preg_match('/[+-]\d{2}:\d{2}$/', $until) === 1
+        (preg_match('/[+-]\d{2}:\d{2}$/', $from) === 1 && preg_match('/[+-]\d{2}:\d{2}$/', $until) === 1)
             || throw new IndicatorViolation('periodo_invalido');
         $start = self::instant($from);
         $end = self::instant($until);
@@ -32,20 +31,24 @@ final class Period
 
     private static function instant(string $value): DateTimeImmutable
     {
-        $parsed = DateTimeImmutable::createFromFormat('!Y-m-d\TH:i:sP', $value)
-            ?: DateTimeImmutable::createFromFormat('!Y-m-d H:i:sP', $value);
-        $parsed === false && throw new IndicatorViolation('periodo_invalido');
+        foreach (['Y-m-d\TH:i:sP', 'Y-m-d H:i:sP'] as $format) {
+            $parsed = DateTimeImmutable::createFromFormat('!' . $format, $value);
+            // Sin esta comparación, PHP desborda 2026-02-31 a marzo y lo acepta como fecha válida.
+            if ($parsed !== false && $parsed->format($format) === $value) {
+                return $parsed;
+            }
+        }
 
-        return $parsed;
+        throw new IndicatorViolation('periodo_invalido');
     }
 
-    /** LÃ­mite inferior inclusivo en formato comparable (ISO-8601 con offset). */
+    /** Límite inferior inclusivo en formato comparable (ISO-8601 con offset). */
     public function lower(): string
     {
         return $this->from->format('Y-m-d\TH:i:sP');
     }
 
-    /** LÃ­mite superior exclusivo. */
+    /** Límite superior exclusivo. */
     public function upper(): string
     {
         return $this->until->format('Y-m-d\TH:i:sP');
