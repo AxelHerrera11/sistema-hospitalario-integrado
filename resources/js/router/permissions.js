@@ -10,6 +10,7 @@
 
 /** Permiso que exige cada ruta protegida; el backend aplica el mismo permiso. */
 export const ROUTE_PERMISSIONS = {
+    prescripciones: 'prescripciones.ver',
     recepcion: 'muestras.ver',
     ocupacion: 'ocupacion.ver',
     admision: 'admisiones.registrar',
@@ -46,7 +47,7 @@ export const NAVIGATION = [
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
-    { label: 'Prescripciones', to: null, permission: 'prescripciones.ver', soon: true },
+    { label: 'Prescripciones', to: '/prescripciones', permission: ROUTE_PERMISSIONS.prescripciones },
     { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
     { label: 'Validación bioquímica', to: '/lab-validation', permission: ROUTE_PERMISSIONS['lab-validation'] },
     { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
