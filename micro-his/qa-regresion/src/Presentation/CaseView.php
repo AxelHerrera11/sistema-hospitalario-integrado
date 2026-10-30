@@ -8,6 +8,11 @@ final class CaseView
 {
     public static function created(ManualCase $case): array
     {
-        return ['status' => 201, 'body' => ['data' => get_object_vars($case)]];
+        return ['status' => 201, 'body' => ['data' => [
+            'purpose' => $case->purpose,
+            'steps' => $case->steps,
+            'expected' => $case->expected,
+            'id' => $case->id,
+        ]]];
     }
 }
