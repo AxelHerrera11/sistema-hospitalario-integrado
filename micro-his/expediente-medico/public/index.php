@@ -15,21 +15,35 @@ use MicroHis\ExpedienteMedico\Application\HospitalStores;
 use MicroHis\ExpedienteMedico\Persistence\HospitalRegistry;
 use MicroHis\ExpedienteMedico\Presentation\JsonView;
 use MicroHis\ExpedienteMedico\Presentation\Request;
+use MicroHis\ExpedienteMedico\Presentation\StaticAsset;
 use MicroHis\Gobernanza\Domain\AuditEvent;
 use MicroHis\Gobernanza\Domain\AuditLogger;
 use MicroHis\Gobernanza\Domain\AuditStorageFailure;
 use MicroHis\Gobernanza\Persistence\PdoAuditLog;
 
 $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-if (PHP_SAPI === 'cli-server' && str_starts_with($path, '/ui/')) {
-    return false;
-}
 if ($path === '/') {
     header('Location: /ui/', true, 302);
     return;
 }
 
 require __DIR__ . '/../app.php';
+
+/** Envía la respuesta {status, headers, body} de la vista JSON o de StaticAsset. */
+function expediente_emitir(array $response): void
+{
+    http_response_code($response['status']);
+    foreach ($response['headers'] as $name => $value) {
+        header("$name: $value");
+    }
+    echo $response['body'];
+}
+
+// DEF-EXP-10: la interfaz se sirve desde aquí (y no con `return false`) para enviar Cache-Control: no-cache.
+if (str_starts_with($path, '/ui/')) {
+    expediente_emitir((new StaticAsset(__DIR__ . '/ui'))->render(substr($path, 4)));
+    return;
+}
 
 /** Abre (y la primera vez crea) una base SQLite del prototipo a partir de los scripts indicados. */
 function expediente_demo_db(string $file, array $scripts): PDO
@@ -73,8 +87,4 @@ try {
     $response = $view->render(503, ['code' => 'EXPEDIENTE_NO_DISPONIBLE']);
 }
 
-http_response_code($response['status']);
-foreach ($response['headers'] as $name => $value) {
-    header("$name: $value");
-}
-echo $response['body'];
+expediente_emitir($response);

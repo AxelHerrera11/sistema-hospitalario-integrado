@@ -76,3 +76,11 @@ foreach (['pdo', 'memoria'] as $adapter) {
     $missing = $router->dispatch(new Request('GET', '/patients//medical-record'));
     check($t('N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404'), $delete['status'] === 405 && $missing['status'] === 404);
 }
+
+// N-14 DEF-EXP-10: la interfaz se sirve con Cache-Control: no-cache y sin salir de public/ui.
+$ui = new \MicroHis\ExpedienteMedico\Presentation\StaticAsset(__DIR__ . '/../public/ui');
+$js = $ui->render('app.js');
+check('N-14 interfaz: app.js → 200 JS con no-cache; «/» → index.html; «..», .php y archivo inexistente → 404', $js['status'] === 200
+    && $js['headers']['Cache-Control'] === 'no-cache' && str_starts_with($js['headers']['Content-Type'], 'text/javascript')
+    && str_contains($ui->render('')['body'], 'app.js') && $ui->render('../index.php')['status'] === 404
+    && $ui->render('../../app.php')['status'] === 404 && $ui->render('no-existe.js')['status'] === 404);
