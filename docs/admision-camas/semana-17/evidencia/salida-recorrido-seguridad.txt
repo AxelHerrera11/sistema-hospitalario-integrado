@@ -1,0 +1,15 @@
+PASS  D01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  D01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  D02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  D03 médico sin camas.ver → 403                                      esperado 403, obtenido 403
+PASS  D03 médico sin admisiones.registrar → 403                           esperado 403, obtenido 403
+PASS  D05 patient_id como arreglo → 404, no 500                            esperado 404, obtenido 404
+PASS  D05 reason como arreglo → 422, no 500                                esperado 422, obtenido 422
+PASS  D06 motivo de 501 caracteres → 422                                   esperado 422, obtenido 422
+      código: TEXT_TOO_LONG · campo: reason
+PASS  D04 el cuerpo pide otro autor y otra hora de inicio → 201            esperado 201, obtenido 201
+      inicio del servidor, no 1999: sí
+PASS  D08 listado de camas con X-Request-ID no confiable → 200             esperado 200, obtenido 200
+      campos por cama: bed_id,code,type · request_id: req-8ffee5cff875b463 · Cache-Control: no-store, private
+PASS  D09 HOSPITAL caído → 503                                            esperado 503, obtenido 503
+      código: ADMISSIONS_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0

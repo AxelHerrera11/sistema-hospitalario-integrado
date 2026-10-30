@@ -1,0 +1,22 @@
+@startsalt
+title ASII-27 - Movil (375 px)
+{
+<b>Hospital HIS</b> | [=]
+--
+<b>Citas por servicio</b>
+[01/11-30/11 x] | [Todos x]
+{+
+Fecha | 02/11/2026
+Servicio | Pediatria
+Citas | 14
+}
+{+
+Fecha | 03/11/2026
+Servicio | Medicina
+Citas | 9
+}
+[ Exportar CSV ]
+--
+[Reportes] | [Filtros] | [Perfil]
+}
+@endsalt

@@ -9,19 +9,23 @@ use MicroHis\Gobernanza\Persistence\AuditChainHasher;
  * mismo hash que AuditLogRepository::eventHash() de Tenants, para que ambos
  * escritores mantengan una única cadena verificable en audit_log.
  *
- * El archivo de Tenants no está en esta rama; se exporta sin cambiar de rama:
- *   git show origin/feature/asii-25-semana-16-tenants-auditoria:app/Modules/Tenants/Domain/Audit/AuditLogRepositoryInterface.php > <dir>/AuditLogRepositoryInterface.php
- *   git show origin/feature/asii-25-semana-16-tenants-auditoria:app/Modules/Tenants/Infrastructure/Audit/AuditLogRepository.php > <dir>/AuditLogRepository.php
+ * Desde la Semana 16 se usa por defecto el AuditLogRepository de Tenants que ya está en develop
+ * (app/Modules/Tenants). TENANTS_AUDIT_DIR permite comparar con otra versión, exportada sin cambiar de rama:
+ *   git show <ref>:app/Modules/Tenants/Domain/Audit/AuditLogRepositoryInterface.php > <dir>/AuditLogRepositoryInterface.php
+ *   git show <ref>:app/Modules/Tenants/Infrastructure/Audit/AuditLogRepository.php > <dir>/AuditLogRepository.php
  *   TENANTS_AUDIT_DIR=<dir> php tests/hash_compat.php
  */
+$tenants = __DIR__ . '/../../../app/Modules/Tenants';
 $dir = getenv('TENANTS_AUDIT_DIR') ?: '';
-if ($dir === '' || !is_file($dir . '/AuditLogRepository.php')) {
-    echo 'OMITIDA: defina TENANTS_AUDIT_DIR con AuditLogRepository.php de la rama de Tenants (ver encabezado).' . PHP_EOL;
+$interface = $dir !== '' ? $dir . '/AuditLogRepositoryInterface.php' : $tenants . '/Domain/Audit/AuditLogRepositoryInterface.php';
+$repository = $dir !== '' ? $dir . '/AuditLogRepository.php' : $tenants . '/Infrastructure/Audit/AuditLogRepository.php';
+if (!is_file($interface) || !is_file($repository)) {
+    echo "OMITIDA: no se encontró AuditLogRepository de Tenants en {$repository} (ver encabezado)." . PHP_EOL;
     exit(0);
 }
 require __DIR__ . '/harness.php';
-require_once $dir . '/AuditLogRepositoryInterface.php';
-require_once $dir . '/AuditLogRepository.php';
+require_once $interface;
+require_once $repository;
 
 $reference = new \App\Modules\Tenants\Infrastructure\Audit\AuditLogRepository();
 $eventHash = new ReflectionMethod($reference, 'eventHash');
@@ -33,7 +37,7 @@ $cases = [
     'detalle anidado y unicode' => [str_repeat('a', 64), '9b2f6c1e-3f4a-4c5d-8e6f-7a8b9c0d1e2f', '2026-10-16T01:02:03.000000Z', 'gobernanza.auditoria_consultada', ADMIN, H2, ['z' => 1, 'context' => ['página' => 2, 'b' => [3, 1]], 'a' => 1.0], 'req-1', 'success'],
 ];
 
-section('AuditChainHasher vs AuditLogRepository (Tenants @ ' . (getenv('TENANTS_AUDIT_REF') ?: 'ref no indicada') . ')');
+section('AuditChainHasher vs AuditLogRepository (Tenants @ ' . (getenv('TENANTS_AUDIT_REF') ?: ($dir === '' ? 'app/Modules/Tenants del repositorio' : 'ref no indicada')) . ')');
 $n = 0;
 foreach ($cases as $name => $args) {
     $n++;

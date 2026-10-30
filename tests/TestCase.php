@@ -16,6 +16,15 @@ abstract class TestCase extends BaseTestCase
         return parent::createApplication();
     }
 
+    /**
+     * Pasos de migrate:rollback (un solo lote, orden descendente por nombre) para revertir HOSPITAL hasta la migración
+     * $desde inclusive. Se cuentan los archivos, así una migración nueva de otro módulo no cambia el resultado de la prueba.
+     */
+    protected function hospitalRollbackSteps(string $desde): int
+    {
+        return count(array_filter(glob(database_path('migrations/hospital/*.php')), static fn (string $f): bool => basename($f, '.php') >= $desde));
+    }
+
     protected function assertPostgreSqlIntegrityPrerequisites(): void
     {
         $this->assertTrue(extension_loaded('pdo_pgsql'));
