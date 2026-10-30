@@ -141,8 +141,14 @@ final class LabOrder
             throw new DomainRuleViolation('INVALID_STATUS_TRANSITION', 'status');
         }
         $reason = self::optionalString($reason);
-        if ($nextStatus === 'CANCELLED' && $reason === null) {
-            throw new DomainRuleViolation('CANCELLATION_REASON_REQUIRED', 'reason');
+        if ($nextStatus === 'CANCELLED') {
+            if ($reason === null) {
+                throw new DomainRuleViolation('CANCELLATION_REASON_REQUIRED', 'reason');
+            }
+            $length = function_exists('mb_strlen') ? mb_strlen($reason, 'UTF-8') : strlen($reason);
+            if ($length < 5 || $length > 250) {
+                throw new DomainRuleViolation('CANCELLATION_REASON_INVALID', 'reason');
+            }
         }
         $events = $this->events;
         $events[] = new LabOrderEvent($eventId, $this->status, $nextStatus, $actor, $now, $this->correlationId, $reason);

@@ -140,6 +140,14 @@ foreach ($adapters as $adapter) {
         && $cancelled->events[count($cancelled->events) - 1]->reason === 'El paciente no requiere el estudio');
     check('cancelar una orden validada → ORDER_ALREADY_VALIDATED', failsWith(fn () => $app['cancel']->execute($tenant, $order->id, 'medico-1', 'ya validada'), 'ORDER_ALREADY_VALIDATED'));
 
+    $short = $app['issue']->execute(draft('key-10'), 'medico-1', $tenant);
+    check('motivo de 4 caracteres → CANCELLATION_REASON_INVALID', failsWith(fn () => $app['cancel']->execute($tenant, $short->id, 'medico-1', 'abcd'), 'CANCELLATION_REASON_INVALID'));
+    $long = $app['issue']->execute(draft('key-11'), 'medico-1', $tenant);
+    check('motivo de 251 caracteres → CANCELLATION_REASON_INVALID', failsWith(fn () => $app['cancel']->execute($tenant, $long->id, 'medico-1', str_repeat('a', 251)), 'CANCELLATION_REASON_INVALID'));
+    $minimal = $app['issue']->execute(draft('key-12'), 'medico-1', $tenant);
+    $minimalCancelled = $app['cancel']->execute($tenant, $minimal->id, 'medico-1', 'abcde');
+    check('motivo de 5 caracteres se acepta', $minimalCancelled->status === 'CANCELLED');
+
     check('otro hospital no ve la orden → ORDER_NOT_FOUND', failsWith(fn () => $app['find']->execute('hosp-b', $order->id), 'ORDER_NOT_FOUND'));
     check('listado por estado', count($app['list']->execute($tenant, ['status' => 'validated'])['items']) === 1);
     check('per_page fuera de rango → PAGINATION_INVALID', failsWith(fn () => $app['list']->execute($tenant, [], 51), 'PAGINATION_INVALID'));
