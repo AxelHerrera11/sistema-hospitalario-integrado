@@ -1,0 +1,35 @@
+%% Diagrama de actividad de la consulta autorizada (C1..C7) y la apertura (A1..A7). Cada salida termina de forma explícita.
+flowchart TD
+    I((Inicio)) --> V{"¿X-User-ID y X-Tenant-ID<br/>con formato válido?"}
+    V -- No --> E401["401 IDENTIDAD_REQUERIDA<br/>400 TENANT_REQUERIDO"] --> F1((Fin))
+    V -- Sí --> C{"¿Código de paciente válido?<br/>1..40 caracteres seguros"}
+    C -- No --> E422["422 CODIGO_PACIENTE_INVALIDO"] --> F2((Fin))
+    C -- Sí --> OP{"Operación"}
+
+    OP -- "GET consultar (UC-02)" --> C1{"C1 ¿RBAC concede<br/>expediente.ver en el hospital?"}
+    C1 -- No --> D1["Auditar acceso_denegado (UC-05)<br/>403 ACCESO_DENEGADO + trace_id"] --> F3((Fin))
+    C1 -- Sí --> C2{"C2 ¿Hospital con base configurada?"}
+    C2 -- No --> E503["503 HOSPITAL_NO_DISPONIBLE"] --> F4((Fin))
+    C2 -- Sí --> C3{"C3/C4 ¿Paciente existe y el usuario tiene<br/>asignación activa en un episodio? (UC-04)"}
+    C3 -- No --> D2["Auditar acceso_denegado<br/>403 SIN_VINCULO_ASISTENCIAL"] --> F5((Fin))
+    C3 -- Sí --> C5{"C5 ¿Expediente abierto?"}
+    C5 -- No --> E404["404 EXPEDIENTE_NO_ABIERTO<br/>(estado vacío: solicitar apertura)"] --> F6((Fin))
+    C5 -- Sí --> INT["Armar vista longitudinal<br/>regla: todo del mismo paciente"]
+    INT --> C6{"C6 ¿Auditoría «consultado»<br/>persistida? (Security)"}
+    C6 -- No --> E503b["503 AUDITORIA_NO_DISPONIBLE<br/>sin datos clínicos"] --> F7((Fin))
+    C6 -- Sí --> OK1["C7 200 expediente + episodios<br/>(reciente primero)"] --> F8((Fin))
+
+    OP -- "POST abrir (UC-01)" --> A1{"A1 ¿RBAC concede el permiso<br/>de apertura (propuesto)?"}
+    A1 -- No --> D3["Auditar acceso_denegado<br/>403 ACCESO_DENEGADO"] --> F9((Fin))
+    A1 -- Sí --> A2{"A2 ¿Paciente existe?"}
+    A2 -- No --> E404b["404 PACIENTE_NO_ENCONTRADO"] --> F10((Fin))
+    A2 -- Sí --> A3{"A3 ¿Ya tiene expediente?"}
+    A3 -- Sí --> OK2["200 created=false<br/>(idempotente)"] --> F11((Fin))
+    A3 -- No --> A4{"A4 ¿Paciente activo?"}
+    A4 -- No --> E409["409 PACIENTE_NO_ACTIVO"] --> F12((Fin))
+    A4 -- Sí --> TX["BEGIN · INSERT medical_records<br/>+ auditar «abierto»"]
+    TX --> A5{"A5 ¿Auditoría persistida?"}
+    A5 -- No --> RB["ROLLBACK<br/>503 AUDITORIA_NO_DISPONIBLE"] --> F13((Fin))
+    A5 -- Sí --> A6{"A6 ¿UNIQUE local_patient_id<br/>violado por otro proceso?"}
+    A6 -- Sí --> OK3["200 created=false con el expediente ganador"] --> F14((Fin))
+    A6 -- No --> OK4["A7 COMMIT · 201 created=true"] --> F15((Fin))

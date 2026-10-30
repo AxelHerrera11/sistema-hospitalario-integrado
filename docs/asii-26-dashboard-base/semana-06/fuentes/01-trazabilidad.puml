@@ -1,0 +1,32 @@
+@startuml
+title ASII-26 - Trazabilidad requisito -> caso de uso -> componente -> prueba
+left to right direction
+rectangle "RF-01 resumen" as rf1 #LightYellow
+rectangle "CU Consultar tablero" as cu1 #Paleturquoise
+rectangle "ResumenDashboard" as co1 #LightBlue
+rectangle "prueba: aplicacion: camino feliz arma el resumen" as pr1 #LightGreen
+rf1 --> cu1
+cu1 --> co1
+co1 --> pr1
+rectangle "RF-02 valor negativo" as rf2 #LightYellow
+rectangle "CU Registrar indicador" as cu2 #Paleturquoise
+rectangle "Indicador" as co2 #LightBlue
+rectangle "prueba: dominio: rechaza valor negativo" as pr2 #LightGreen
+rf2 --> cu2
+cu2 --> co2
+co2 --> pr2
+rectangle "RF-03 valor cero" as rf3 #LightYellow
+rectangle "CU Registrar indicador" as cu3 #Paleturquoise
+rectangle "Indicador" as co3 #LightBlue
+rectangle "prueba: dominio: acepta valor cero" as pr3 #LightGreen
+rf3 --> cu3
+cu3 --> co3
+co3 --> pr3
+rectangle "RF-04 resumen vacio" as rf4 #LightYellow
+rectangle "CU Consultar tablero" as cu4 #Paleturquoise
+rectangle "ResumenDashboard" as co4 #LightBlue
+rectangle "prueba: aplicacion: resumen vacio sin indicadores" as pr4 #LightGreen
+rf4 --> cu4
+cu4 --> co4
+co4 --> pr4
+@enduml
