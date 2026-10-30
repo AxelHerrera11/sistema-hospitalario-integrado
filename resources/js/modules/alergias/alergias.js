@@ -70,6 +70,7 @@ const MENSAJES = {
     ALLERGEN_REQUIRED: 'Indique el código o el nombre del alérgeno.',
     ALLERGY_TYPE_INVALID: 'Seleccione el tipo de reacción.',
     SEVERITY_INVALID: 'Seleccione la severidad.',
+    TEXT_TOO_LONG: 'El texto supera la longitud permitida.',
     ACTOR_WITHOUT_LOCAL_REFERENCE: 'Su usuario no está habilitado en este hospital para registrar alergias.',
     HOSPITAL_DATABASE_TENANT_MISMATCH: 'Este hospital no está disponible en esta instancia.',
 };
