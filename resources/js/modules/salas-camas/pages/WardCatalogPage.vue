@@ -1,12 +1,12 @@
 <template>
     <section class="ward-catalog" aria-labelledby="ward-catalog-title">
         <header class="ward-catalog__header">
-            <h1 id="ward-catalog-title">CatÃ¡logo de wards y camas</h1>
+            <h1 id="ward-catalog-title">Catálogo de wards y camas</h1>
             <p>Consulta las wards y las camas asociadas en el hospital activo.</p>
         </header>
 
         <p v-if="!canRead" class="ward-catalog__message ward-catalog__message--error" role="alert">
-            Tu sesiÃ³n no tiene permiso para consultar este catÃ¡logo.
+            Tu sesión no tiene permiso para consultar este catálogo.
         </p>
         <div v-else-if="accessError" class="ward-catalog__message ward-catalog__message--error" role="alert">
             <p>{{ accessError }}</p>
@@ -16,7 +16,7 @@
                 :disabled="wardsLoading"
                 @click="loadWards"
             >
-                {{ wardsLoading ? 'Verificandoâ€¦' : 'Reintentar acceso' }}
+                {{ wardsLoading ? 'Verificando…' : 'Reintentar acceso' }}
             </button>
         </div>
 
@@ -31,7 +31,7 @@
                         :disabled="wardsLoading"
                         @click="loadWards"
                     >
-                        {{ wardsLoading ? 'Actualizandoâ€¦' : 'Reintentar wards' }}
+                        {{ wardsLoading ? 'Actualizando…' : 'Reintentar wards' }}
                     </button>
                     <button
                         v-else
@@ -40,12 +40,12 @@
                         :disabled="wardsLoading"
                         @click="loadWards"
                     >
-                        {{ wardsLoading ? 'Actualizandoâ€¦' : 'Actualizar' }}
+                        {{ wardsLoading ? 'Actualizando…' : 'Actualizar' }}
                     </button>
                 </div>
 
                 <p v-if="wardsLoading" class="ward-catalog__message" role="status">
-                    Consultando wardsâ€¦
+                    Consultando wards…
                 </p>
                 <p v-if="wardsError" class="ward-catalog__message ward-catalog__message--error" role="alert">
                     {{ wardsError }}
@@ -57,7 +57,7 @@
                     Se cargaron {{ wards.length }} wards.
                 </p>
 
-                <ul v-if="wards.length" class="ward-catalog__list" aria-label="Wards del catÃ¡logo">
+                <ul v-if="wards.length" class="ward-catalog__list" aria-label="Wards del catálogo">
                     <li v-for="ward in wards" :key="ward.ward_id">
                         <WardCatalogWardCard
                             :ward="ward"
@@ -75,7 +75,7 @@
                         <div>
                             <h2 id="beds-title">Camas</h2>
                             <p class="ward-catalog__context">
-                                {{ selectedWard.code }} Â· {{ selectedWard.name }}
+                                {{ selectedWard.code }} · {{ selectedWard.name }}
                             </p>
                         </div>
                         <button
@@ -85,7 +85,7 @@
                             :disabled="bedsLoading"
                             @click="loadBeds(selectedWard)"
                         >
-                            {{ bedsLoading ? 'Consultandoâ€¦' : 'Reintentar camas' }}
+                            {{ bedsLoading ? 'Consultando…' : 'Reintentar camas' }}
                         </button>
                         <button
                             v-else-if="bedsError && bedsNotFound"
@@ -99,7 +99,7 @@
                     </div>
 
                     <p v-if="bedsLoading" class="ward-catalog__message" role="status">
-                        Consultando camasâ€¦
+                        Consultando camas…
                     </p>
                     <p v-if="bedsError" class="ward-catalog__message ward-catalog__message--error" role="alert">
                         {{ bedsError }}
@@ -154,19 +154,19 @@ function failureMessage(error, resource) {
     const status = error.response?.status;
     const code = error.response?.data?.error?.code;
 
-    if (status === 401) return 'Tu sesiÃ³n no es vÃ¡lida. Inicia sesiÃ³n nuevamente.';
-    if (status === 403) return 'No tienes permiso para consultar este catÃ¡logo en el hospital activo.';
-    if (status === 404 && resource === 'beds') return 'La ward ya no estÃ¡ disponible. Actualiza la lista de wards.';
-    if (status === 503 && code === 'WARD_CATALOG_UNAVAILABLE') return 'No se pudo consultar el catÃ¡logo de wards. Intenta nuevamente.';
-    if (status === 503 && code === 'BED_CATALOG_UNAVAILABLE') return 'No se pudo consultar el catÃ¡logo de camas. Intenta nuevamente.';
+    if (status === 401) return 'Tu sesión no es válida. Inicia sesión nuevamente.';
+    if (status === 403) return 'No tienes permiso para consultar este catálogo en el hospital activo.';
+    if (status === 404 && resource === 'beds') return 'La ward ya no está disponible. Actualiza la lista de wards.';
+    if (status === 503 && code === 'WARD_CATALOG_UNAVAILABLE') return 'No se pudo consultar el catálogo de wards. Intenta nuevamente.';
+    if (status === 503 && code === 'BED_CATALOG_UNAVAILABLE') return 'No se pudo consultar el catálogo de camas. Intenta nuevamente.';
     if (!status) {
         return error.response
-            ? 'El catÃ¡logo devolviÃ³ una respuesta no vÃ¡lida. Intenta nuevamente.'
-            : 'No se pudo conectar con el catÃ¡logo. Intenta nuevamente.';
+            ? 'El catálogo devolvió una respuesta no válida. Intenta nuevamente.'
+            : 'No se pudo conectar con el catálogo. Intenta nuevamente.';
     }
-    if (status >= 500) return 'No se pudo conectar con el catÃ¡logo. Intenta nuevamente.';
+    if (status >= 500) return 'No se pudo conectar con el catálogo. Intenta nuevamente.';
 
-    return 'No se pudo completar la consulta del catÃ¡logo.';
+    return 'No se pudo completar la consulta del catálogo.';
 }
 
 function restrictAccess(error) {
@@ -192,7 +192,7 @@ async function loadWards() {
 
     try {
         const response = await api.get('/wards');
-        if (!hasCatalogData(response)) throw new Error('Respuesta de wards invÃ¡lida.');
+        if (!hasCatalogData(response)) throw new Error('Respuesta de wards inválida.');
 
         wards.value = response.data.data;
         wardsLoaded.value = true;
@@ -233,7 +233,7 @@ async function loadBeds(ward) {
 
     try {
         const response = await api.get(`/wards/${encodeURIComponent(ward.ward_id)}/beds`);
-        if (!hasCatalogData(response)) throw new Error('Respuesta de camas invÃ¡lida.');
+        if (!hasCatalogData(response)) throw new Error('Respuesta de camas inválida.');
         if (request !== bedsRequest || selectedWard.value?.ward_id !== ward.ward_id) return;
 
         beds.value = response.data.data;

@@ -1,0 +1,18 @@
+@startsalt
+title ASII-05 - Escritorio (>= 1024 px)
+{
+<b>Hospital HIS</b> | . | . | . | Hospital Central - Lis
+{+
+[Agenda]
+[Nueva cita]
+} | {
+<b>Agenda del dia</b> - Lunes 02/11/2026 | [ + Nueva cita ]
+Doctor: ^Todos^ | Estado: ^Todos^
+{#
+Hora | Paciente | Doctor | Estado | .
+09:00-09:30 | Ana Lopez | Dr. Perez | Programada | [Ver]
+09:30-10:00 | Luis Mendez | Dr. Perez | Confirmada | [Ver]
+}
+}
+}
+@endsalt

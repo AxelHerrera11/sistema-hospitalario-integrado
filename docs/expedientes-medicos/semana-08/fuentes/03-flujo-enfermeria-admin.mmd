@@ -1,0 +1,10 @@
+%% User flow — Enfermería (permiso sin vínculo, supuesto S-01) y Administración del hospital (sin permiso).
+flowchart TD
+    A([Inicio]) --> B[Escribe el código y pulsa «Consultar expediente»]
+    B --> L[Cargando…]
+    L --> R{Rol}
+    R -- enfermeria --> E[403 SIN_VINCULO_ASISTENCIAL<br/>«Solo el personal asignado a un episodio activo…<br/>El intento quedó registrado.»]
+    R -- admin_hospital --> AD[403 ACCESO_DENEGADO<br/>«Su rol no tiene permiso…» + código de seguimiento]
+    E --> Z([Fin: ningún dato clínico en pantalla])
+    AD --> Z
+    E -. "Pendiente con RBAC: definir asignación de enfermería" .-> P[(Supuesto S-01)]

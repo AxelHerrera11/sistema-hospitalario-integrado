@@ -7,6 +7,7 @@ namespace MicroHis\SignosVitales\Persistence;
 use MicroHis\SignosVitales\Application\StoredVitalSign;
 use MicroHis\SignosVitales\Application\VitalSignRepository;
 use MicroHis\SignosVitales\Domain\Assessment;
+use MicroHis\SignosVitales\Domain\Uuid;
 use MicroHis\SignosVitales\Domain\VitalSigns;
 
 /** Adaptador InMemory del Repository: mismo contrato que PDO, para pruebas y para correr el MVC sin base de datos. */
@@ -24,7 +25,7 @@ final class InMemoryVitalSignRepository implements VitalSignRepository
     public function record(string $episodeId, string $userId, VitalSigns $vitals, string $measuredAt, ?Assessment $assessment): string
     {
         $this->available || throw new \RuntimeException('persistencia_no_disponible');
-        $id = 'sv-' . bin2hex(random_bytes(4));
+        $id = Uuid::v4();
         $this->rows[$id] = new StoredVitalSign($id, $episodeId, $userId, $measuredAt, $vitals);
         $this->audits[] = ['event' => 'signo_vital.registrado', 'actor_id' => $userId, 'detail' => $id];
         if ($assessment === null) {
