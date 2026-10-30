@@ -52,15 +52,15 @@ Sigue vigente lo que falta confirmar en [`revision-humana.md`](./revision-humana
 
 ### Bloqueado por terceros
 
-| Bloqueo | Responsable | Acción |
+| Bloqueo | Depende de | Qué falta |
 |---|---|---|
-| Activar permisos | RBAC (ASII-02) | Decidir e integrar #1577 |
-| Crear `local_user_refs` | Tenants e identidad | Sincronizar membresías CENTRAL |
-| Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Resolver `clinical_endpoint` |
-| Límite de tasa de `/api/v1` | API Gateway | Definir y probar la política |
-| Staging u on-premise | Coordinación | Autorizar el entorno |
-| Aprobación independiente de PR | Equipo | Revisar según `BRANCH_PROTECTION.md` |
-| GitHub Actions | Administración del repositorio | Resolver la facturación; hoy NO EJECUTADO |
+| Activar permisos | RBAC (ASII-02) | Decisión sobre #1577 |
+| Crear `local_user_refs` | Tenants e identidad | Sincronización de membresías CENTRAL |
+| Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Uso de `clinical_endpoint` |
+| Límite de tasa de `/api/v1` | API Gateway | Política definida y probada |
+| Staging u on-premise | Coordinación | Entorno autorizado |
+| Aprobación independiente de PR | Equipo | Revisión según `BRANCH_PROTECTION.md` |
+| GitHub Actions | Administración del repositorio | Facturación resuelta; hoy NO EJECUTADO |
 
 **No se declara el módulo completo:** en `develop` sigue respondiendo 403 hasta la activación.
 
