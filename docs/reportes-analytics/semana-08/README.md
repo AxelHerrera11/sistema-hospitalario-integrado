@@ -1,34 +1,40 @@
-# ASII-23 Semana 8 — UX del módulo de reportes
+# ASII-23 Semana 8 — Flujo y experiencia de usuario
 
-**Issue:** `Refs #152`. La pantalla "Reportes" ya integrada (#1248,
-promocionada en #1254) y las decisiones de experiencia que se defenderán.
+**Issue:** `Refs #152` · **Estudiante:** María Yamilet Lindo Pablo (`Yamilet1235`).
 
-## Iteraciones y hallazgos de usabilidad
+## Entregables
 
-| Iteración | Hallazgo | Cómo se resolvió |
-|---|---|---|
-| Filtros ambiguos | El usuario no sabía qué período se enviaba al servidor | Etiquetas `Desde`/`Hasta` + validación local antes de llamar (`errorDeFiltros`) y un solo mensaje visible con `role="status"`. |
-| Resultados sin explicación | Un 25.00 % no dice qué mide | Leyenda fija "Cancelados sobre hospitalizaciones finalizadas (TCI-1.0)" y traza `IND-RA-01 · calculado <instante>`. |
-| Estados vacíos confusos | Un `N/A` sin razón parece un bug | `ESTADOS_SIN_VALOR.SIN_DATOS_EN_PERIODO` trae su propia leyenda; el 0 % real se muestra cuando hay datos. | 
-| Errores con detalle técnico | Mensajes del servidor exponen internos | `mensajeDeError` traduce por código y nunca muestra el detalle crudo. |
+| Requisito | Evidencia |
+|---|---|
+| Flujo por rol | [`01-flujo-por-rol.svg`](./01-flujo-por-rol.svg) |
+| 4 a 6 wireframes anotados | [`wireframes.md`](./wireframes.md) (6) y el resumen [`02-wireframe-estados.svg`](./02-wireframe-estados.svg) |
+| Reglas de interacción | Esta página |
 
-## Decisiones de autoridad
+## Reglas de interacción
 
-- El cálculo y la autorización residen en el servidor; la pantalla solo
-  recolecta filtros y muestra el resultado del contrato.
-- El permiso es el mismo en backend (`rbac:reportes.ver`) y frontend
-  (`ROUTE_PERMISSIONS.reportes`); la navegación oculta la entrada sin él.
-- Sin datos personales en pantalla: solo agregados y trazabilidad.
+| Regla | Comportamiento |
+|---|---|
+| R1 | Sin `reportes.ver`, el menú no ofrece la entrada y la ruta redirige |
+| R2 | Se valida en la pantalla antes de llamar a la API; la API vuelve a validar |
+| R3 | Un resultado solo vale para sus filtros: cambiar uno lo retira |
+| R4 | Nunca se muestra una cifra junto a un error |
+| R5 | N/A siempre lleva su razón; 0.00 % es un valor real |
+| R6 | Los mensajes salen del código de error, nunca del detalle del servidor |
+| R7 | El botón se desactiva mientras se calcula y anuncia «Calculando…» |
+| R8 | Todo el formulario funciona con teclado y Enter |
 
-## Archivos
+## Roles
 
-- `resources/js/modules/reportes/reportes.js` y `reportes.test.mjs` (15
-  aserciones verificadoras de los mensajes/estados).
-- `resources/js/modules/reportes/pages/ReportsPage.vue`.
-- `resources/js/router/{index.js,permissions.js}` (ruta y navegación).
-- `01-flujo-por-rol.svg` — flujo por rol (con/sin `reportes.ver`) desde login
-  hasta los cuatro caminos de resultado (200/422/403/503).
-- `02-wireframe-estados.svg` — wireframe de los cuatro estados de la pantalla:
-  resultado, N/A sin datos, error de periodo y sin permiso (estática del
-  componente real; sin capturas: las capturas del dispositivo quedan en S10/S18
-  como acción presencial del estudiante).
+- **Con `reportes.ver`** (según `config/rbac.php`): `superadmin`, `admin_hospital`, `medico`, `tecnico_laboratorio` y `bioquimico`.
+- **Sin el permiso:** por ejemplo `recepcion` y `enfermeria`. No ven la entrada y la API responde 403.
+
+## Iteraciones
+
+| Hallazgo | Resolución |
+|---|---|
+| No se sabía qué periodo se enviaba | Etiquetas, ayuda y validación local |
+| Un 25.00 % no decía qué mide | Leyenda fija y trazabilidad |
+| N/A parecía un fallo | Texto del estado |
+| Mensajes con detalle técnico | Mensajes por código |
+
+La evaluación con hallazgos numerados está en `../semana-09/README.md`. **No hubo prueba con usuarios reales.**
