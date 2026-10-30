@@ -38,6 +38,7 @@ const MENSAJES = {
     PATIENT_ALREADY_ADMITTED: 'El paciente ya tiene una hospitalización abierta.',
     BED_NOT_AVAILABLE: 'La cama ya no está disponible. Elija otra.',
     REASON_REQUIRED: 'Indique el motivo de ingreso.',
+    TEXT_TOO_LONG: 'El motivo supera los 500 caracteres.',
     BED_TYPE_MISMATCH: 'La cama no es del tipo requerido.',
     ACTOR_WITHOUT_LOCAL_REFERENCE: 'Su usuario no está habilitado en este hospital para admitir pacientes.',
     HOSPITAL_DATABASE_TENANT_MISMATCH: 'Este hospital no está disponible en esta instancia.',

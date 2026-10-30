@@ -29,6 +29,7 @@ function rule(array $bed = [], ?string $type = 'adult', string $reason = 'Neumon
     }
 }
 check('B1 motivo solo con espacios → REASON_REQUIRED', rule(reason: '   ') === 'REASON_REQUIRED:reason');
+check('B1 motivo de 501 caracteres → TEXT_TOO_LONG; 500 con acentos es válido', rule(reason: str_repeat('x', 501)) === 'TEXT_TOO_LONG:reason' && rule(reason: str_repeat('ó', 500)) === null);
 check('B2 paciente ya admitido → PATIENT_ALREADY_ADMITTED (antes que la cama)', rule(['status' => 'occupied'], admitted: true) === 'PATIENT_ALREADY_ADMITTED:patient_id');
 foreach (['occupied', 'maintenance', 'inactive'] as $status) {
     check("B3 cama {$status} → BED_NOT_AVAILABLE", rule(['status' => $status]) === 'BED_NOT_AVAILABLE:bed_id');
