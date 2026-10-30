@@ -1,4 +1,4 @@
-> **Actualización:** este PR solicita la activación. Hasta su integración por RBAC (ASII-02), esta página sigue vigente.
+> **Actualización:** este PR solicita activar consulta y traslado; `altas.registrar` sigue en `pending` hasta que se decida a quién corresponde. Hasta su integración, esta página sigue vigente.
 
 # Permisos propuestos para traslados y altas (pendientes de RBAC)
 
