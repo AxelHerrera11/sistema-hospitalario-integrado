@@ -49,7 +49,7 @@ La tabla anterior conserva la línea base de la Semana 14. Estos son los valores
 | D1 | Detectivo | Mutación manual: tragar el fallo debe hacer fallar las pruebas | Autora | Cada parte con código |
 | D2 | Detectivo | `metricas.php` M3 = 0 | Autora | Antes de cada PR |
 | D3 | Detectivo | Pruebas HTTP de 401, 403, `TENANT_MISMATCH` y 200 por operación | Autora; revisión del moderador | Semana 16–17 |
-| D4 | Detectivo | `Validate ASII PR` y la aprobación requerida en `develop` | GitHub y revisor (@rortizs) | Cada PR |
+| D4 | Detectivo | `Validate ASII PR` y la aprobación requerida en `develop` | GitHub y revisor por confirmar | Cada PR |
 | D5 | Detectivo | Revisión técnica formal (Semana 13) | Moderador y revisores (propuestos) | Una vez por entrega |
 
 ## Calendario
