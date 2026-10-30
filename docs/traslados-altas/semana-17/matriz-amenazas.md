@@ -26,5 +26,5 @@ Alcance: `POST /api/v1/traslados`, `POST /api/v1/altas`, la consulta de internac
 
 - **Plataforma/Tenants:** resolver `hospitals.clinical_endpoint` y escoger una conexión HOSPITAL aislada antes de producción.
 - **ASII-01/identidad:** sincronizar membresías CENTRAL a `local_user_refs`; no sembrarlas manualmente.
-- **ASII-02 (`Luis890D`):** aprobar o rechazar los tres permisos; mientras sigan en `pending`, el sistema integrado debe continuar en 403.
+- **RBAC:** aprobar o rechazar los tres permisos; mientras sigan en `pending`, el sistema integrado debe continuar en 403.
 - **API Gateway:** definir y probar el límite de tasa común. ASII-08 no declara este control como implementado.

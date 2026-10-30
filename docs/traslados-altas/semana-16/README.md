@@ -14,3 +14,22 @@ La evidencia real confirma traslado y alta persistidos, continuidad de estancias
 No se declara despliegue en staging ni sincronizacion automatica de `local_user_refs`. Esas dependencias, con responsables y acciones, estan registradas en [integracion-api.md](./integracion-api.md#lo-que-depende-de-otros-modulos).
 
 [Declaracion de uso de IA](./DECLARACION_IA.md)
+
+## Actualización del 30/10/2026
+
+| Tema | Estado |
+|---|---|
+| Acceso entre hospitales | Corregido (#1561): un miembro válido de otro hospital recibe 403 `HOSPITAL_DATABASE_TENANT_MISMATCH` y no cambian filas. Requiere `HOSPITAL_DB_TENANT_ID` |
+| Permisos | Propuesta lista en #1577, con pruebas sobre la matriz real. **No integrada:** la decide RBAC (ASII-02). Hasta entonces, todo 403 y sin entrada en el menú |
+| Identidad local | Sin cambio: ningún módulo crea `local_user_refs`. Médicos, Expediente y Recepción solo las leen, igual que este módulo. Se siembran a mano en la instalación local |
+| Servidor, staging u on-premise | No hay entorno autorizado |
+
+### Errores corregidos
+
+| Error | Corrección | PR |
+|---|---|---|
+| Menú sin la entrada del módulo (D8) | Entrada con permiso | #1108 |
+| Aviso falso al cerrar sesión con token vencido | Política de cierre de sesión | #1113 |
+| Cruce entre hospitales | Guard de base | #1561 |
+| El 422 mostraba la sintaxis de la consola | La ayuda pasa a la consola | Entrega de esta fecha |
+
