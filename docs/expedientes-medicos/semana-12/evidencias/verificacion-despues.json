@@ -1,0 +1,8 @@
+{
+ "_fuente": "Mismo script de la Semana 9, ejecutado en el navegador integrado sobre http://localhost:8096/ui/ el 2026-10-23 DESPUÉS de las correcciones (zona horaria del navegador: GMT-6). Se agregó el paso de editar el código tras una consulta.",
+ "encabezados": ["H1:Expediente médico", "H2:Buscar expediente", "H2:Resultado", "H3:Episodios clínicos (más recien", "H4:HospitalizaciónAbierto", "H4:EmergenciaCerrado", "H4:Consulta externaCerrado", "H2:¿Abrir el expediente?"],
+ "fechas": ["Nacimiento=14/05/1980", "Abierto el=02/03/2026, 03:00 a. m. GMT-6"],
+ "primerEpisodio": "Desde 20/10/2026, 02:00 a. m. GMT-6",
+ "trasCodigoInvalido": {"expedienteVisible": false, "estado": "Código no válido | Revise el código del paciente: letras, números y guion, hasta 40 caracteres.", "foco": "codigo"},
+ "trasEditarCodigo": {"expedienteVisible": false, "estado": "Datos ocultos | Se quitaron de la pantalla los datos del paciente."}
+}
