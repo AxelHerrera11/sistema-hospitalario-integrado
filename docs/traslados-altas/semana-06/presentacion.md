@@ -1,3 +1,15 @@
+---
+marp: true
+paginate: true
+size: 16:9
+style: |
+  section { font-size: 22px; color: #0f172a; }
+  h1 { color: #1e3a8a; font-size: 34px; }
+  h2 { color: #1e3a8a; font-size: 32px; }
+  table { font-size: 18px; }
+  code { font-size: 18px; }
+---
+
 # Primer parcial — Traslados, altas y liberación de camas (ASII-08)
 
 Presentación en 7 diapositivas (Markdown; cada `---` separa una). No se declara ninguna defensa oral ni solicitud del docente.
@@ -15,20 +27,7 @@ Presentación en 7 diapositivas (Markdown; cada `---` separa una). No se declara
 
 ## 2. Trazabilidad UML → requisitos → código
 
-```mermaid
-flowchart LR
-    UC1["UC-TA-01 Traslado<br/>(S1)"] --> RF5["RF-TA-05/06"] --> TI["TrasladoInterno"]
-    UC2["UC-TA-02 Alta<br/>(S1)"] --> RF7["RF-TA-07"] --> AH["AltaHospitalaria"]
-    RF4["RF-TA-04 estancia esperada"] --> RL["ReglasLiberacion"]
-    RNF1["RNF-TA-01 LSP"] --> OP["OperacionConLiberacionDeCama"]
-    RNF3["RNF-TA-03/04 atomicidad y bloqueo"] --> PDO["PdoRegistroInternacion"]
-    RNF6["RNF-TA-06 incierto"] --> API["HTTP 500 + GET consulta"]
-    TI --> OP
-    AH --> OP
-    OP --> RL
-    TI --> PDO
-    AH --> PDO
-```
+![h:430](./01-trazabilidad.png)
 
 ---
 

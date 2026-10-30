@@ -118,6 +118,14 @@ final class TrasladosAltasApiTest extends TestCase
         $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
     }
 
+    public function test_invalid_request_does_not_expose_console_syntax(): void
+    {
+        $this->activarPropuesta();
+        TrasladosTestIdentity::como('enfermeria');
+        $this->postJson('/api/v1/traslados', ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => ''])
+            ->assertStatus(422)->assertJsonPath('campo', 'motivo')->assertJsonMissingPath('uso');
+    }
+
     public function test_actor_without_local_reference_and_unavailable_hospital(): void
     {
         TrasladosTestIdentity::como('medico', '00000000-0000-4000-8000-00000000c0ff');
