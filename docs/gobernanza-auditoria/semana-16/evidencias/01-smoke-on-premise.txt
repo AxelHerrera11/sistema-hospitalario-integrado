@@ -1,0 +1,46 @@
+# Smoke on-premise del micro-HIS Gobernanza y auditoría — 2026-10-29 21:38 -0600 · PHP 8.2.12 · Windows 11
+# Servidor de demostración: php -S 127.0.0.1:8091 (identidad por X-Demo-Session; 64 eventos ficticios; base develop 6e841849)
+# Parámetros del contrato (en español): usuario, modulo, accion, desde, hasta, resultado, correlacion, pagina, por_pagina
+
+$ GET audit-events como admin del hospital 1
+HTTP 200
+items=25 meta={"page":1,"per_page":25,"total":52,"total_pages":3}
+primer evento: {"occurred_at":"2026-10-16T05:09:00.000Z","tenant_id":"11111111-1111-4111-8111-111111111111","module":"sesiones","action":"sesion.revocada","outcome":"success"}
+módulo/resultado en la página: sesiones/success, prescripciones/denied, prescripciones/success, notas_soap/failure, usuarios/success, rbac/denied, rbac/success, notas_soap/success
+
+$ GET ?modulo=rbac&resultado=denied&por_pagina=5
+HTTP 200
+items=5 meta={"page":1,"per_page":5,"total":6,"total_pages":2}
+primer evento: {"occurred_at":"2026-10-15T20:51:00.000Z","tenant_id":"11111111-1111-4111-8111-111111111111","module":"rbac","action":"access_denied","outcome":"denied"}
+módulo/resultado en la página: rbac/denied
+
+$ GET como médico (sin auditoria.ver)
+HTTP 403
+{"code":"RBAC_DENIED","trace_id":"trace-denegado"}
+
+$ GET sin sesión
+HTTP 401
+{"code":"AUTH_REQUIRED","trace_id":"req-3f2ec87f23da596f"}
+
+$ GET con X-Tenant-ID de otro hospital
+HTTP 403
+{"code":"TENANT_MISMATCH","trace_id":"req-9e69ec8119c4b6d2"}
+
+$ GET ?hospital_id=otro (selección de hospital por query)
+HTTP 403
+{"code":"TENANT_MISMATCH","trace_id":"req-8b524ce2bf6d5e85"}
+
+$ GET ?por_pagina=0 y parámetro desconocido ?per_page=5
+HTTP 422
+{"code":"AUDIT_FILTER_INVALID","errors":{"per_page":"parametro_no_permitido","por_pagina":"fuera_de_rango"},"trace_id":"req-63daa5c2f31c3ae0"}
+
+$ GET con almacén caído (demo_falla=almacen)
+HTTP 503
+{"code":"AUDIT_UNAVAILABLE","trace_id":"req-25567cfc9662f135"}
+
+$ GET con RBAC caído (demo_falla=rbac)
+HTTP 503
+{"code":"RBAC_UNAVAILABLE","trace_id":"trace-forzado"}
+
+$ curl -s -o /dev/null -w '%{http_code}' /prototipo/
+200
