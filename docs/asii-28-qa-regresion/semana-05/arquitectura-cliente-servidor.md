@@ -32,8 +32,9 @@ prepare/execute; no se coloca SQL ni lógica de campaña en el adaptador HTTP.
 ## Seguridad: existente frente a propuesta
 
 Dependencias reales del HIS: bootstrap/app.php registra TenantMiddleware como
-`tenant` y JwtAuth como `jwt.auth`; app/Http/Middleware contiene ambos y
-RequirePermission para RBAC. JwtAuth contrasta tenant de token con hospital y
+`tenant` y JwtAuth como `jwt.auth`, ambos en app/Http/Middleware.
+RbacServiceProvider registra `rbac` con app/Rbac/RequirePermission.php.
+JwtAuth contrasta tenant de token con hospital y
 valida sesión/membresía. config/rbac.php define permisos actuales, sin los de
 casos QA propuestos. No se cambia autenticación global ni se replica el emisor JWT.
 
