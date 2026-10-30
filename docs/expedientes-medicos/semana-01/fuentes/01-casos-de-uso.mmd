@@ -1,0 +1,38 @@
+%% UML de casos de uso (notación en flowchart de Mermaid): actores a la izquierda, sistemas externos a la derecha.
+%% Trazabilidad: UC-xx = pasos A/C del diagrama de actividad y mensajes del diagrama de secuencia.
+flowchart LR
+    MED(["👤 Médico tratante<br/>rol medico"])
+    ENF(["👤 Enfermería<br/>rol enfermeria"])
+    REC(["👤 Recepción / Admisión<br/>rol recepcion"])
+    ADM(["👤 Administración del hospital<br/>rol admin_hospital"])
+
+    subgraph SIS["Micro-HIS Expediente médico electrónico base"]
+        UC01(["UC-01 Abrir expediente longitudinal"])
+        UC02(["UC-02 Consultar expediente longitudinal"])
+        UC03(["UC-03 Verificar permiso RBAC en el hospital"])
+        UC04(["UC-04 Verificar vínculo asistencial activo"])
+        UC05(["UC-05 Registrar acceso en auditoría"])
+        UC06(["UC-06 Ver motivo de un episodio"])
+    end
+
+    RBAC[["Sistema RBAC<br/>Authorize · config/rbac.php"]]
+    AUD[["Gobernanza y Auditoría<br/>RecordAuditEvent"]]
+    PAC[["Pacientes<br/>PatientRepository"]]
+
+    REC --- UC01
+    MED --- UC01
+    MED --- UC02
+    ENF --- UC02
+    ADM -. "sin permiso: 403" .- UC02
+
+    UC01 -. "«include»" .-> UC03
+    UC02 -. "«include»" .-> UC03
+    UC02 -. "«include»" .-> UC04
+    UC01 -. "«include»" .-> UC05
+    UC02 -. "«include»" .-> UC05
+    UC06 -. "«extend» (detalle plegado)" .-> UC02
+
+    UC03 --- RBAC
+    UC05 --- AUD
+    UC01 --- PAC
+    UC02 --- PAC

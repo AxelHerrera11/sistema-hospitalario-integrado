@@ -1,0 +1,24 @@
+@startuml
+title Integracion con un repositorio de datos compartido del HIS
+
+skinparam componentStyle rectangle
+package "Modulo Documentacion (ASII-24)" {
+  [ConsultarDocumentos] as uc
+  [DocumentoRepository (interfaz)] as repo
+}
+package "Modulo Citas (ASII-05)" {
+  [AgendarCita] as uc05
+  [CitaRepository (interfaz)] as repo05
+}
+package "Repositorio de datos compartido" {
+  [Esquema comun (tenant, rol, auditoria)] as esquema
+  [Adaptador Documentacion] as adp24
+  [Adaptador Citas] as adp05
+}
+uc --> repo
+uc05 --> repo05
+repo ..> adp24
+repo05 ..> adp05
+adp24 --> esquema
+adp05 --> esquema
+@enduml
