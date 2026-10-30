@@ -7,6 +7,7 @@ namespace MicroHis\SignosVitales\Persistence;
 use MicroHis\SignosVitales\Application\StoredVitalSign;
 use MicroHis\SignosVitales\Application\VitalSignRepository;
 use MicroHis\SignosVitales\Domain\Assessment;
+use MicroHis\SignosVitales\Domain\Uuid;
 use MicroHis\SignosVitales\Domain\VitalSigns;
 use PDO;
 
@@ -20,7 +21,7 @@ final class PdoVitalSignRepository implements VitalSignRepository
 
     public function record(string $episodeId, string $userId, VitalSigns $vitals, string $measuredAt, ?Assessment $assessment): string
     {
-        $id = 'sv-' . bin2hex(random_bytes(4));
+        $id = Uuid::v4();
         // Los nombres de columna salen de VitalSigns::LIMITS (lista blanca validada en el dominio), nunca de la entrada.
         $columns = implode(', ', array_keys($vitals->values));
         $marks = implode(', ', array_fill(0, count($vitals->values), '?'));

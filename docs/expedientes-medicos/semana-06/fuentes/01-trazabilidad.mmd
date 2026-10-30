@@ -1,0 +1,47 @@
+%% Diagrama trazable: actor → caso de uso → requisito → decisión/componente → prueba.
+flowchart LR
+    subgraph Actores
+        MED(["Médico tratante"])
+        REC(["Recepción"])
+        ENF(["Enfermería"])
+    end
+    subgraph UML["Casos de uso (S1)"]
+        UC01["UC-01 Abrir"]
+        UC02["UC-02 Consultar"]
+        UC03["UC-03 Permiso"]
+        UC04["UC-04 Vínculo"]
+        UC05["UC-05 Auditar"]
+    end
+    subgraph REQ["RF/RNF (S2)"]
+        RF1["RF-EXP-01"]
+        RF2["RF-EXP-02/03"]
+        RF4["RF-EXP-04"]
+        RF5["RF-EXP-05"]
+        RN2["RNF-EXP-02 integridad"]
+        RN3["RNF-EXP-03 tenant"]
+    end
+    subgraph DIS["Diseño (S2–S5)"]
+        DIP["DIP: puertos en Application"]
+        REPO["Repository PDO / InMemory"]
+        GUARD["AccessGuard + RbacAccessAuthorizer"]
+        AUD["GobernanzaClinicalAudit"]
+        REG["HospitalRegistry"]
+        API["openapi.yaml + adaptador Laravel"]
+    end
+    subgraph PRU["Pruebas (S3–S15)"]
+        T1["A1–A7 · N-08…N-10 · P-03/P-04"]
+        T2["C7 · N-01 · U-05"]
+        T3["C1–C4 · N-02…N-05 · Feature Laravel"]
+        T4["C6 · A5 · P-07 · N-12"]
+        T5["U-03/U-06 · P-05"]
+        T6["P-08 · P-09 · N-05"]
+    end
+    REC --> UC01 --> RF1 --> REPO --> T1
+    MED --> UC02 --> RF2 --> DIP --> T2
+    ENF --> UC02
+    UC02 --> UC03 --> RF4 --> GUARD --> T3
+    UC02 --> UC04 --> RF4
+    UC01 --> UC05 --> RF5 --> AUD --> T4
+    RF1 --> RN2 --> REPO --> T5
+    RF4 --> RN3 --> REG --> T6
+    RF2 --> API --> T3
