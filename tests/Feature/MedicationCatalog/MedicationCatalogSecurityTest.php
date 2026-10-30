@@ -52,6 +52,35 @@ final class MedicationCatalogSecurityTest extends TestCase
             ->assertStatus(403)->assertJsonPath('code', 'TENANT_MISMATCH');
     }
 
+    public function test_t3b_member_of_another_hospital_cannot_read_or_change_this_catalog(): void
+    {
+        $id = (string) $this->pdo->query('SELECT medication_id FROM medications')->fetchColumn();
+        $before = $this->pdo->query('SELECT * FROM medications')->fetchAll(PDO::FETCH_ASSOC);
+        $mismatch = 'HOSPITAL_DATABASE_TENANT_MISMATCH';
+
+        // Membresía válida en hospital-b, instancia con la base de hospital-a.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b']);
+        CatalogTestIdentity::as('admin_hospital', 'hospital-b');
+        $this->getJson('/api/v1/medications?q=amox')->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->getJson("/api/v1/medications/{$id}")->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->postJson('/api/v1/medications', ['code' => 'X-1', 'name' => 'X', 'active_ingredient' => 'X',
+            'pharmacological_group' => 'X'])->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])
+            ->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->assertSame($before, $this->pdo->query('SELECT * FROM medications')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertSame([], CatalogTestIdentity::$audited);
+
+        // El mismo rol en el hospital dueño de la base conserva el acceso.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
+        CatalogTestIdentity::as('admin_hospital', 'hospital-a');
+        $this->getJson('/api/v1/medications?q=amox')->assertOk()->assertJsonPath('count', 1);
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertOk();
+
+        // Sin hospital asignado a la base se cierra el paso.
+        config(['tenants.hospital_database_tenant_id' => null]);
+        $this->getJson('/api/v1/medications?q=amox')->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
+    }
+
     public function test_t4_errors_do_not_leak_internals_and_are_not_cached(): void
     {
         $this->pdo->exec('DROP TABLE medications');

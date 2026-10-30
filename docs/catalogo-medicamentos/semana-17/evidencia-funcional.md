@@ -115,5 +115,5 @@ Esta revisión no equivale a una revisión independiente de los PR ni a una acep
 
 ## Límites de esta evidencia
 
-- Las dos instancias de hospital comparten la misma base HOSPITAL desechable. El aislamiento probado es el de identidad y tenant (`TENANT_MISMATCH` y membresías por hospital), no el enrutamiento de una base física por hospital, que depende de la plataforma.
+- Las dos instancias de hospital comparten la misma base HOSPITAL desechable. El 30/10/2026 se comprobó que esta sección era insuficiente: un miembro válido de B leía y modificaba el catálogo de A. Desde entonces la ruta exige `EnsureHospitalDatabaseTenant` (403 `HOSPITAL_DATABASE_TENANT_MISMATCH`). Se prueba el rechazo, no el enrutamiento de una base física por hospital, que depende de la plataforma.
 - No hay prueba con lector de pantalla ni con usuarios reales.
