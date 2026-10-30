@@ -1,21 +1,27 @@
-# Declaración de uso de IA — ASII-23 (documentación final)
+# Declaración de uso de IA — ASII-23
 
-## Propósito
+**Estudiante:** María Yamilet Lindo Pablo.
 
-Unifica las declaraciones por semana (Semana 2: `semana-02/DECLARACION_IA.md`;
-Semana 3: `semana-03/DECLARACION_IA.md`; Semana 4:
-`semana-04/DECLARACION_IA.md`) y añade la responsable de los PRs de
-integración (#1237–#1271) y del manual del módulo.
+## Herramientas
 
-## Cómo me apoyé en la IA
+- **Entregas hasta el 26/10/2026:** asistentes de IA. Las declaraciones de esas semanas mencionan Copilot; el registro no permite detallar más.
+- **Correcciones y entregables del 30/10/2026:** Claude Code con Claude Opus 5.5 (`claude-opus-5-5`).
 
-- Se desglosó el contrato HTTP y los casos límite en prueba-driven: cálculo
-  con datos, `SIN_DATOS_EN_PERIODO`, 422 por regla del periodo, 503 por
-  persistencia, 503 por lectura incoherente, 401/403/aislamiento y método
-  no permitido, imitando el patrón probado del módulo de ocupación.
-- María Yamilet Lindo Pablo diseñó/validó la estructura de capas, la
-  fórmula con dos decimales y los estados publicados; el texto del manual
-  y de esta declaración es de la estudiante.
-- Toda evidencia de ejecución descrita se tomó de comandos realmente
-  ejecutados (phpunit, `run.php`, `example-lsp.php` y los `node *.test.mjs`)
-  en el entorno local.
+## Qué generó la IA
+
+- El código del módulo, sus pruebas y los recorridos en Chrome.
+- La documentación de las semanas, los diagramas, los wireframes, las presentaciones y este texto.
+
+Son borradores generados con IA hasta que la estudiante los revise.
+
+## Corrección de esta declaración
+
+La versión anterior decía que el texto del manual y de la declaración era de la estudiante, y que ella había diseñado y validado la estructura. **Esa afirmación no tenía confirmación registrada y se retira.** Las líneas de edición humana de las declaraciones de las Semanas 3 y 4 quedan en la misma condición.
+
+## Verificación
+
+Los resultados citados vienen de comandos ejecutados, y cada semana indica su evidencia. Chrome headless es una prueba automatizada: no equivale a una revisión humana.
+
+## Revisión humana
+
+No hay ninguna registrada para este módulo. Se agrega aquí solo cuando la estudiante la confirme, con fecha y alcance.
