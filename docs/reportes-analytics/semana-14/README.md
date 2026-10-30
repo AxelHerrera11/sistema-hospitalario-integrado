@@ -14,7 +14,7 @@ Atributos: exactitud del indicador, confiabilidad ante fallos, seguridad y traza
 | M4 | Reglas y accesibilidad de la pantalla | 100 % | `metricas.php` | 20 y 15 | Medido | Corregir antes de integrar |
 | M5 | Tamaño de cada PR | ≤ 400 líneas | `git diff --numstat` | Máximo 354, en los PR del 30/10/2026 | Medido | Dividir |
 | M6 | Recorrido en Chrome | 100 % | `semana-11/evidencia/recorrido-e2e.mjs` | 15/15 | Medido | Corregir y repetir |
-| M7 | p95 del cálculo | ≤ 500 ms | Medición local con 20 peticiones | 1040 ms en el servidor de desarrollo de PHP, sin opcache, con 4 episodios | **No cumple en local**; no representa producción | Repetir con opcache y volumen real antes de decidir |
+| M7 | p95 del cálculo | ≤ 500 ms | Medición local con 20 peticiones | 364 ms en el servidor de desarrollo de PHP, sin opcache, con 4 episodios. Una medición anterior dio 1040 ms con el equipo sin memoria libre | **Cumple en local**; no representa producción | Repetir con volumen real antes de darlo por válido |
 
 ## Matriz de riesgos
 
