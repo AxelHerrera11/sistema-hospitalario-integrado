@@ -51,7 +51,7 @@ check('B-11', 'Dr. Pérez no asocia diagnósticos a la nota ajena -> 403; nota i
 // Lectura (notas_soap.ver) y contrato.
 $get = static fn (string $id, string $actor): array => send($api, 'GET', "/api/v1/soap-notes/$id", $actor, []);
 $leida = $get($noteId, 'dra.lopez');
-check('B-12', 'Lectura · el tratante recibe secciones y 2 diagnósticos; enfermería sin asignación -> 403; id inexistente -> 404', $leida['status'] === 200 && $leida['body']['sections']['plan'] === 'Amoxicilina' && count($leida['body']['diagnoses']) === 2 && $state($get($noteId, 'enf.ruiz')) === '403 NOT_TREATING_PHYSICIAN' && $state($get('no-existe', 'dra.lopez')) === '404 NOTE_NOT_FOUND');
+check('B-12', 'Lectura · el tratante recibe secciones y 2 diagnósticos; enfermería sin asignación -> 404; id inexistente -> 404', $leida['status'] === 200 && $leida['body']['sections']['plan'] === 'Amoxicilina' && count($leida['body']['diagnoses']) === 2 && $state($get($noteId, 'enf.ruiz')) === '404 NOTE_NOT_FOUND' && $state($get('no-existe', 'dra.lopez')) === '404 NOTE_NOT_FOUND');
 check('B-13', 'Contrato · verbo o ruta no previstos -> 404 ROUTE_NOT_FOUND', $state(send($api, 'PUT', "/api/v1/soap-notes/$noteId", 'dra.lopez', [])) === '404 ROUTE_NOT_FOUND' && $state(send($api, 'GET', '/api/v2/soap-notes/x', 'dra.lopez', [])) === '404 ROUTE_NOT_FOUND');
 $trace = true;
 foreach ([$post(SOAP), $post([], 'enf.ruiz'), $dx('J18.9', 'secondary')] as $respuesta) {
@@ -61,7 +61,7 @@ check('B-14', 'Trazabilidad · éxitos y errores llevan un trace_id UUID en el c
 check('B-15', 'Privacidad · la auditoría guarda identificadores y no el texto clínico (RNF-SOAP-05)', $audit->events !== [] && !str_contains(json_encode($audit->events, JSON_UNESCAPED_UNICODE), 'Tos de 3 días'));
 
 // Defectos conocidos.
-defect('D-01', 'B-16', 'Una sección con solo espacio duro (U+00A0) se rechaza como vacía', $state($post(['subjective' => "\u{00A0}"] + SOAP)) === '422 SOAP_SECTION_INVALID');
-defect('D-03', 'B-17', 'Quien no atiende el episodio recibe la misma respuesta ante una nota existente y una inexistente', $state($get($noteId, 'enf.ruiz')) === $state($get('no-existe', 'enf.ruiz')));
+check('B-16', 'Una sección con solo espacio duro (U+00A0) se rechaza como vacía', $state($post(['subjective' => "\u{00A0}"] + SOAP)) === '422 SOAP_SECTION_INVALID');
+check('B-17', 'Quien no atiende el episodio recibe la misma respuesta ante una nota existente y una inexistente', $state($get($noteId, 'enf.ruiz')) === $state($get('no-existe', 'enf.ruiz')));
 
 summary();

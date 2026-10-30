@@ -52,7 +52,7 @@ check('U-11', 'TreatingPhysicianGuard rechaza a quien no atiende el episodio (NO
 check('U-12', 'Uuid::v4 genera identificadores con formato v4 y distintos entre sí', preg_match(Uuid::PATTERN, Uuid::v4()) === 1 && Uuid::v4() !== Uuid::v4());
 
 // Defecto D-01 (equivalencia): el texto «vacío» incluye espacios que trim() no reconoce.
-defect('D-01', 'U-13', 'SoapSections rechaza una sección con solo espacio duro (U+00A0)', violation(fn () => new SoapSections("\u{00A0}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
-defect('D-01', 'U-14', 'SoapSections rechaza una sección con solo espacio de ancho cero (U+200B)', violation(fn () => new SoapSections("\u{200B}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
+check('U-13', 'SoapSections rechaza una sección con solo espacio duro (U+00A0)', violation(fn () => new SoapSections("\u{00A0}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
+check('U-14', 'SoapSections rechaza una sección con solo espacio de ancho cero (U+200B)', violation(fn () => new SoapSections("\u{200B}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
 
 summary();
