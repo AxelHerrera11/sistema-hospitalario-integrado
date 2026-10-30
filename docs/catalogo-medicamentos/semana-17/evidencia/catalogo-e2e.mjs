@@ -1,24 +1,27 @@
 // Recorrido real de la interfaz del catálogo: Chrome → Vue → API Laravel (tenant, JWT, RBAC) → PostgreSQL.
-// Uso: node catalogo-e2e.mjs <url-base> <hospital-uuid> (puppeteer-core 23.11.1 instalado aparte; ver instalacion-local.md).
+// Uso: E2E_PASSWORD=... [E2E_DOMINIO=prueba.local] node catalogo-e2e.mjs <url-base> <hospital-uuid> (puppeteer-core 23.11.1 instalado aparte; ver instalacion-local.md).
 import puppeteer from 'puppeteer-core';
 
 const [base, hospital] = process.argv.slice(2);
+const password = process.env.E2E_PASSWORD;
+const dominio = process.env.E2E_DOMINIO ?? 'prueba.local';
 const chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`); };
 
-async function login(page, email) {
+async function login(page, email, abrirPantalla = true) {
     await page.goto(`${base}/login`, { waitUntil: 'networkidle0' });
     const inputs = await page.$$('input');
     await inputs[0].click({ clickCount: 3 }); await inputs[0].type(hospital);
-    await inputs[1].type(email);
-    await inputs[2].type('Smoke-Prueba-2026!');
+    await inputs[1].type(email.replace('prueba.local', dominio));
+    await inputs[2].type(password);
     const answer = page.waitForResponse((r) => r.url().endsWith('/api/v1/auth/login'));
     await page.click('button[type=submit]');
     const status = (await answer).status();
     if (status !== 200) throw new Error(`login de ${email} respondió ${status}`);
     console.log('  login '+email+': '+status);
     await page.waitForFunction(() => location.pathname !== '/login');
+    if (!abrirPantalla) return;
     // Navegación interna de la SPA: conserva el token en memoria (no se recarga la página).
     await page.evaluate(() => { document.querySelector('a[href="/medicamentos"]').click(); });
     await page.waitForSelector('.meds');
@@ -67,9 +70,27 @@ try {
     await search('asa');
     await admin.click('.meds__pick');
     await admin.waitForSelector('.meds__detail');
+    // Regla R8: el botón abre un diálogo; Cancelar no envía nada y solo confirmar llama a la API.
+    let patches = 0;
+    admin.on('request', (r) => { if (r.url().endsWith('/validity')) patches++; });
+    await admin.click('article .meds__secondary');
+    await admin.waitForSelector('dialog[open]');
+    const dialogo = await admin.$eval('dialog[open]', (d) => d.innerText);
+    check('el diálogo repite código, nombre, principio activo y estado destino', ['ASA-100', 'Ácido acetilsalicílico 100 mg', 'No vigente'].every((t) => dialogo.includes(t)));
+    check('el foco inicial queda en Cancelar', await admin.evaluate(() => document.activeElement?.innerText === 'Cancelar'));
+    await admin.click('dialog[open] .meds__secondary');
+    await admin.waitForFunction(() => !document.querySelector('dialog[open]'));
+    check('Cancelar no envía el cambio', patches === 0 && (await text(admin)).includes('Vigente'));
+    await admin.click('article .meds__secondary');
+    await admin.waitForSelector('dialog[open]');
+    await admin.keyboard.press('Escape');
+    await admin.waitForFunction(() => !document.querySelector('dialog[open]'));
+    check('Escape cierra sin enviar el cambio', patches === 0);
+    await admin.click('article .meds__secondary');
+    await admin.waitForSelector('dialog[open]');
     const patch = admin.waitForResponse((r) => r.url().endsWith('/validity'));
-    await admin.click('article button');
-    check('cambio de vigencia → 200', (await patch).status() === 200);
+    await admin.click('dialog[open] button:not(.meds__secondary)');
+    check('cambio de vigencia confirmado → 200', (await patch).status() === 200 && patches === 1);
     await admin.waitForFunction(() => document.querySelector('article').innerText.includes('No vigente'));
     // Salir de la pantalla y volver: el estado local se pierde y la vigencia se lee otra vez del servidor.
     await admin.evaluate(() => { document.querySelector('a[href="/"]').click(); });
@@ -88,8 +109,10 @@ try {
 
     // 3. Recepción: sin medicamentos.ver.
     const reception = await (await browser.createBrowserContext()).newPage();
-    await login(reception, 'recepcion@prueba.local');
-    check('recepción ve el aviso de permiso y no la búsqueda', (await text(reception)).includes('medicamentos.ver') && !(await reception.$('#meds-q')));
+    await login(reception, 'recepcion@prueba.local', false);
+    check('recepción no tiene el enlace del catálogo en el menú', !(await reception.$('a[href="/medicamentos"]')));
+    const denegada = await reception.evaluate(async () => (await fetch('/api/v1/medications?q=asa', { headers: { Accept: 'application/json' } })).status);
+    check('sin sesión del cliente la API responde 4xx', denegada >= 400 && denegada < 500);
 } catch (error) {
     const pages = await browser.pages();
     await pages[pages.length - 1].screenshot({ path: 'fallo.png' });

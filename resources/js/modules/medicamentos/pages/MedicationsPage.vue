@@ -35,10 +35,24 @@
                 <dt>Grupo farmacológico</dt><dd>{{ selected.pharmacological_group }}</dd>
                 <dt>Vigencia</dt><dd><span :class="['meds__badge', `meds__badge--${selected.validity}`]">{{ validityLabel(selected.validity) }}</span></dd>
             </dl>
-            <button v-if="canChange" type="button" class="meds__secondary" :disabled="changing" @click="toggleValidity">
+            <button v-if="canChange" type="button" class="meds__secondary" :disabled="changing" @click="askValidity">
                 {{ changing ? 'Guardando…' : (selected.validity === 'active' ? 'Marcar como no vigente' : 'Marcar como vigente') }}
             </button>
             <p v-if="validityMessage" :class="['meds__msg', validityOk ? 'meds__msg--ok' : 'meds__msg--error']" role="status">{{ validityMessage }}</p>
+            <dialog ref="validityDialog" class="meds__dialog" aria-labelledby="meds-vigencia-titulo">
+                <h2 id="meds-vigencia-titulo">{{ confirmation.title }}</h2>
+                <dl class="meds__detail">
+                    <dt>Código</dt><dd>{{ selected.code }}</dd>
+                    <dt>Nombre</dt><dd>{{ selected.name }}</dd>
+                    <dt>Principio activo</dt><dd>{{ selected.active_ingredient }}</dd>
+                    <dt>Nuevo estado</dt><dd>{{ confirmation.target }}</dd>
+                </dl>
+                <p>El registro no se borra y sigue disponible para consulta.</p>
+                <div class="meds__row">
+                    <button type="button" class="meds__secondary" @click="validityDialog.close()">Cancelar</button>
+                    <button type="button" @click="confirmValidity">{{ confirmation.action }}</button>
+                </div>
+            </dialog>
         </article>
 
         <form v-if="canRegister" class="meds__card" novalidate @submit.prevent="register">
@@ -64,7 +78,7 @@ import { computed, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 import { can } from '@/router/permissions';
 import { useAuthStore } from '@/stores/auth';
-import { failureMessage, isRetryable, nextValidity, PERMISSIONS, searchTermError, validateDraft, validityLabel } from '@/modules/medicamentos/medicamentos';
+import { failureMessage, isRetryable, nextValidity, PERMISSIONS, searchTermError, validateDraft, validityConfirmation, validityLabel } from '@/modules/medicamentos/medicamentos';
 
 const auth = useAuthStore();
 // Mostrar u ocultar acciones solo mejora la navegación: el servidor vuelve a exigir cada permiso.
@@ -88,6 +102,8 @@ const selected = ref(null);
 const changing = ref(false);
 const validityMessage = ref('');
 const validityOk = ref(false);
+const validityDialog = ref(null);
+const confirmation = computed(() => (selected.value ? validityConfirmation(selected.value) : {}));
 const draft = reactive({ code: '', name: '', active_ingredient: '', pharmacological_group: '' });
 const errors = reactive({});
 const submitting = ref(false);
@@ -125,6 +141,16 @@ async function select(item) {
         selected.value = null;
         searchError.value = failureMessage(statusOf(error), error.response?.data);
     }
+}
+
+function askValidity() {
+    validityMessage.value = '';
+    validityDialog.value.showModal();
+}
+
+function confirmValidity() {
+    validityDialog.value.close();
+    toggleValidity();
 }
 
 async function toggleValidity() {
@@ -186,6 +212,8 @@ async function register() {
 .meds button:disabled { opacity: 0.6; cursor: progress; }
 /* Jerarquía: el primario envía (Buscar, Registrar); las acciones secundarias van en contorno y los resultados como filas. */
 .meds .meds__secondary { background: #fff; color: #1e3a8a; }
+.meds__dialog { border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; max-width: min(28rem, calc(100vw - 2rem)); }
+.meds__dialog::backdrop { background: rgb(15 23 42 / 0.5); }
 .meds .meds__pick { background: #fff; color: #0f172a; border-color: #cbd5e1; font-weight: 400; }
 .meds .meds__pick:hover { border-color: #1d4ed8; background: #eff6ff; }
 .meds .meds__pick[aria-pressed="true"] { border-color: #1d4ed8; background: #eff6ff; box-shadow: inset 4px 0 0 #1d4ed8; }

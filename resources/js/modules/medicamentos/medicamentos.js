@@ -57,3 +57,14 @@ export function validityLabel(validity) {
 export function nextValidity(validity) {
     return validity === 'active' ? 'inactive' : 'active';
 }
+
+/** Regla R8 (Semana 8): el diálogo repite el registro elegido y nombra la acción antes de enviar el cambio. */
+export function validityConfirmation(medication) {
+    const target = nextValidity(medication.validity);
+    const verb = target === 'inactive' ? 'Inactivar' : 'Activar';
+    return {
+        title: `${verb} ${medication.code}`,
+        action: `${verb} ${medication.code}`,
+        target: validityLabel(target),
+    };
+}
