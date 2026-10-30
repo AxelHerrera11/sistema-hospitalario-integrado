@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\HospitalController;
 use App\Http\Controllers\Api\V1\Admin\HospitalUserController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DoctorApiController;
 use App\Http\Controllers\Api\V1\OccupancyController;
 use App\Http\Controllers\Api\V1\LabModulesController;
 use App\Http\Controllers\Api\V1\ReportesIndicatorController;
@@ -55,3 +56,12 @@ Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (
     Route::post('/reports/indicators/IND-RA-01/calculate', [ReportesIndicatorController::class, 'calcular']);
 });
 
+// Médicos y especialidades (ASII-04): cada operación declara su propio permiso; usa la base HOSPITAL de esta instancia.
+Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
+    Route::post('/doctors', [DoctorApiController::class, 'register'])
+        ->middleware('rbac:medicos.registrar');
+    Route::post('/doctors/{doctor}/specialties', [DoctorApiController::class, 'associateSpecialty'])
+        ->middleware('rbac:medicos.asociar_especialidad');
+    Route::get('/availability', [DoctorApiController::class, 'availability'])
+        ->middleware('rbac:medicos.ver_disponibilidad');
+});

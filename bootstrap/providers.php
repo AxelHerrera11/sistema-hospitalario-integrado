@@ -4,6 +4,7 @@ use App\Providers\AlergiasServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
+use App\Providers\MedicosServiceProvider;
 use App\Providers\OcupacionServiceProvider;
 use App\Providers\PatientsServiceProvider;
 use App\Providers\RbacServiceProvider;
@@ -34,4 +35,5 @@ return [
     LabModulesServiceProvider::class,
     // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
     AlergiasServiceProvider::class,
+    MedicosServiceProvider::class,
 ];
