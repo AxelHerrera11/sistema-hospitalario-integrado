@@ -1,8 +1,6 @@
 # ASII-23 Semana 13 — Revisión técnica formal preparada (reportes)
 
-**Issue:** `Refs #152`. Preparada en el formato de revisión del cuerpo
-(`revision-tecnica-formal.md` del módulo tenants) y lista para rendir,
-con hallazgos reales ya cerrados en PRs.
+**Issue:** `Refs #152`. Lista de verificación de la revisión planificada en [`plan-revision.md`](./plan-revision.md). **La revisión no se ha realizado.**
 
 ## Lista de verificación
 
@@ -16,9 +14,10 @@ con hallazgos reales ya cerrados en PRs.
 | DEN-01 | Denominador | ¿0 finales → estado publicado? | `SIN_DATOS_EN_PERIODO` sin porcentaje; el 0 % válido se muestra con datos (prueba de cero). |
 | PRV-01 | Privacidad | ¿Sin datos personales? | Consulta `count + SUM` y cuerpo sin `patient/paciente/care_episode/mpi`; test de no filtración en base real. |
 | AUT-01 | Autorización | ¿RBAC del servidor? | `rbac:reportes.ver` de ruta + test 403/TENANT_MISMATCH; el SPA no decide. |
+| AIS-01 | Aislamiento | ¿Un miembro de otro hospital queda fuera? | `EnsureHospitalDatabaseTenant` + `test_miembro_de_otro_hospital_…`. |
 | ANT-01 | Antipatrón | ¿SQL dinámico o inyección? | Params preparados `?` para todos los valores; sin concatenación. |
 | INY-02 | Integración | ¿Base caída no es 500? | Resolución del caso de uso dentro del `try` (fix de #1269). |
-| TEST-01 | Pruebas | ¿Se pueden ejecutar con un comando? | `run.php` (11), phpunit Feature (14), a11y node (11). |
+| TEST-01 | Pruebas | ¿Se pueden ejecutar con un comando? | `run.php` (15), `tests/Feature/Reportes` (16), a11y (15), recorrido en Chrome (15). |
 | DOC-01 | Documentación | ¿Semana→evidencia→PR trazable? | Manual del módulo (`docs/reportes-analytics/README.md`). |
 
 ## Hallazgos resueltos durante la construcción (registro del proceso)

@@ -18,3 +18,5 @@ vanilla con PDO preparado) del módulo `ASII-23`.
 - La evidencia se generó ejecutando realmente
   `php micro-his/reportes-analytics/tests/run.php` (11 escenarios OK en el
   entorno local de María Yamilet).
+
+**Nota del 30/10/2026:** las afirmaciones de revisión o edición humana de este archivo no tienen confirmación registrada. Ver [`../DECLARACION_IA.md`](../DECLARACION_IA.md).
