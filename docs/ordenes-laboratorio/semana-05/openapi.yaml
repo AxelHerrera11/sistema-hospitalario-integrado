@@ -1,0 +1,365 @@
+openapi: 3.1.0
+info:
+  title: Micro-HIS — Órdenes de laboratorio desde EMR
+  version: 1.0.0
+  description: |
+    Contrato del microservicio de órdenes de laboratorio (ASII-16).
+    Cada petición se aísla por `X-Tenant-ID` y se identifica con `X-Request-ID`.
+    Los errores usan `application/problem+json` (RFC 9457).
+servers:
+  - url: http://127.0.0.1:8091
+    description: Servidor local de desarrollo
+tags:
+  - name: Órdenes
+  - name: Salud
+paths:
+  /health:
+    get:
+      tags: [Salud]
+      summary: Liveness
+      security: []
+      responses:
+        '200':
+          description: Proceso vivo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+  /health/ready:
+    get:
+      tags: [Salud]
+      summary: Readiness
+      security: []
+      responses:
+        '200':
+          description: Dependencias listas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ready }
+  /api/v1/lab-orders:
+    post:
+      tags: [Órdenes]
+      summary: Emitir una orden desde el expediente
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/UserRef'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLabOrderRequest'
+      responses:
+        '201':
+          description: Orden nueva emitida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabOrderEnvelope'
+        '200':
+          description: Orden ya existente recuperada por Idempotency-Key (sin crear filas)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabOrderEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    get:
+      tags: [Órdenes]
+      summary: Listar órdenes del tenant
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/UserRef'
+        - $ref: '#/components/parameters/RequestId'
+        - name: patient_id
+          in: query
+          schema: { type: string }
+        - name: episode_id
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/Status' }
+        - name: per_page
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+      responses:
+        '200':
+          description: Página de órdenes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabOrderList'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/v1/lab-orders/{labOrderId}:
+    get:
+      tags: [Órdenes]
+      summary: Consultar una orden con ítems e historial
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/UserRef'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/LabOrderId'
+      responses:
+        '200':
+          description: Orden encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabOrderEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/lab-orders/{labOrderId}/status:
+    patch:
+      tags: [Órdenes]
+      summary: Avanzar el estado por la máquina de estados
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/UserRef'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/LabOrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: '#/components/schemas/Status'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabOrderEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/v1/lab-orders/{labOrderId}/cancel:
+    post:
+      tags: [Órdenes]
+      summary: Cancelar con motivo
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - $ref: '#/components/parameters/UserRef'
+        - $ref: '#/components/parameters/RequestId'
+        - $ref: '#/components/parameters/LabOrderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 5, maxLength: 250 }
+      responses:
+        '200':
+          description: Orden cancelada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabOrderEnvelope'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+components:
+  securitySchemes:
+    TenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-ID
+    UserHeader:
+      type: apiKey
+      in: header
+      name: X-User-Ref
+    PermissionsHeader:
+      type: apiKey
+      in: header
+      name: X-Permissions
+      description: Lista separada por comas de permisos ya verificados por el gateway.
+  security:
+    - TenantHeader: []
+      UserHeader: []
+      PermissionsHeader: []
+  parameters:
+    TenantId:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      schema: { type: string, minLength: 1 }
+    UserRef:
+      name: X-User-Ref
+      in: header
+      required: true
+      schema: { type: string, minLength: 1 }
+    RequestId:
+      name: X-Request-ID
+      in: header
+      required: false
+      schema: { type: string, maxLength: 100 }
+      description: Si se omite, el servidor genera uno y lo devuelve en la respuesta.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 100 }
+    LabOrderId:
+      name: labOrderId
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    Status:
+      type: string
+      enum: [ISSUED, COLLECTED, IN_PROCESS, RESULTED, VALIDATED, CANCELLED]
+    Item:
+      type: object
+      required: [lab_test_id, code, name]
+      properties:
+        lab_test_id: { type: string }
+        code: { type: string }
+        name: { type: string }
+    Event:
+      type: object
+      required: [event_id, to_status, actor, occurred_at, correlation_id]
+      properties:
+        event_id: { type: string }
+        from_status: { type: [string, 'null'] }
+        to_status: { $ref: '#/components/schemas/Status' }
+        actor: { type: string }
+        occurred_at: { type: string, format: date-time }
+        correlation_id: { type: string }
+        reason: { type: [string, 'null'] }
+    LabOrder:
+      type: object
+      required: [lab_order_id, local_patient_id, care_episode_id, ordered_by, priority, status, correlation_id, created_at, updated_at, items, events]
+      properties:
+        lab_order_id: { type: string }
+        local_patient_id: { type: string }
+        care_episode_id: { type: string }
+        clinical_note_id: { type: [string, 'null'] }
+        ordered_by: { type: string }
+        priority: { type: string, enum: [ROUTINE, URGENT, STAT] }
+        clinical_context: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/Status' }
+        correlation_id: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/Item' }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/Event' }
+    CreateLabOrderRequest:
+      type: object
+      required: [local_patient_id, care_episode_id, priority, items]
+      properties:
+        local_patient_id: { type: string }
+        care_episode_id: { type: string }
+        clinical_note_id: { type: string }
+        priority: { type: string, enum: [ROUTINE, URGENT, STAT] }
+        clinical_context: { type: string, maxLength: 500 }
+        idempotency_key:
+          type: string
+          description: Alternativa a la cabecera Idempotency-Key.
+        items:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            type: object
+            required: [lab_test_id]
+            properties:
+              lab_test_id: { type: string }
+    LabOrderEnvelope:
+      type: object
+      required: [lab_order]
+      properties:
+        lab_order: { $ref: '#/components/schemas/LabOrder' }
+        meta:
+          type: object
+          properties:
+            correlation_id: { type: string }
+    LabOrderList:
+      type: object
+      required: [lab_orders, meta]
+      properties:
+        lab_orders:
+          type: array
+          items: { $ref: '#/components/schemas/LabOrder' }
+        meta:
+          type: object
+          required: [per_page, page]
+          properties:
+            per_page: { type: integer }
+            page: { type: integer }
+    Problem:
+      type: object
+      required: [type, title, status, code, request_id]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string }
+        request_id: { type: string }
+        field: { type: string }
+  responses:
+    BadRequest:
+      description: Petición mal formada
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Falta el usuario o el tenant
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: El usuario no tiene el permiso laboratorio.ordenes.* de la operación
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: La orden no existe en el tenant
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Transición o cancelación no permitida
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unprocessable:
+      description: Regla de negocio incumplida
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unavailable:
+      description: Persistencia no disponible; la operación puede reintentarse con la misma clave
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
