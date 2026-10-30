@@ -1,34 +1,44 @@
-# ASII-23 Semana 9 — Accesibilidad del módulo de reportes
+# ASII-23 Semana 9 — Evaluación de usabilidad y accesibilidad
 
-**Issue:** `Refs #152`. WCAG 2.1 nivel AA aplicado al alcance del módulo
-(pantalla `ReportsPage.vue` + navegación compartida del SPA).
+**Issue:** `Refs #152`. Alcance: la pantalla de reportes y su entrada en el menú, con WCAG 2.1 AA como referencia.
 
-## Criterios WCAG 2.1 y cómo se cumplen
+**Método:** revisión con Chrome headless y pruebas automáticas, sin usuarios reales. Los hallazgos salen del recorrido de la auditoría del 30/10/2026.
 
-| Criterio (WCAG) | Qué exige | Evidencia |
+## Checklist
+
+| Criterio | Comprobación | Resultado |
 |---|---|---|
-| 1.1.1 Texto alternativo | Todo control no textual con nombre accesible | Solo controles textuales y botones con texto en español. |
-| 1.3.1 Info y relaciones | Etiquetas, títulos y estados en código | `aria-labelledby="reportes-title"` con `<h1>`; cada campo con `<label for>`; tabla-free sea el formulario. |
-| 1.4.1 Uso del color | Sin depender solo del color | Errores con texto (`No tienes permiso…`, `Revisa el periodo…) y roles ARIA. |
-| 2.1.1 Teclado | Todo funcional con teclado | `<form @submit.prevent>` + `<button type="submit">`: Enter envía; inputs nativos reciben foco. |
-| 2.4.2 Titulación de páginas/títulos | Títulos y encabezados descriptivos | `h1` de la sección, `p` explicativo, `small` de trazabilidad. |
-| 3.3.1/3.3.3 Identificación y sugerencia de errores | Mensajes claros y corrección guiada | `errorDeFiltros` valida antes de enviar; mensajes por código sin detalle interno. |
-| 4.1.2 Nombre, función, valor | Estados programáticos correctos | `role="status"` (cargando/avisos), `role="alert"` (errores), `:disabled` durante cálculo. |
+| 1.3.1 Información y relaciones | `label for`, `h1`, ayuda con `aria-describedby` | Cumple (`reportes.a11y.test.mjs`) |
+| 1.4.1 Uso del color | Los errores llevan texto | Cumple |
+| 1.4.3 Contraste | [`evidencia/contraste.mjs`](./evidencia/contraste.mjs) | Cumple; ver [`evidencia/salida-contraste.txt`](./evidencia/salida-contraste.txt) |
+| 1.4.10 Ajuste | Sin desplazamiento horizontal a 320 px | Cumple (`semana-10/evidencia/movilidad.mjs`) |
+| 1.4.11 Contraste no textual | Borde de campos y foco | Cumple |
+| 2.1.1 Teclado | Formulario y botón nativos | Cumple por estructura; sin prueba completa con teclado |
+| 2.4.7 Foco visible | `:focus-visible` con contorno | Cumple en CSS |
+| 2.5.5 Objetivo táctil | 44 px | Cumple (`recorrido-e2e.mjs`) |
+| 3.3.1 Identificación de errores | `role="alert"` y texto | Cumple |
+| 4.1.2 Nombre, función y valor | Controles nativos | Cumple por estructura |
+| Lector de pantalla | NVDA o TalkBack | **No probado** |
 
-## Prueba ejecutable (evita regresiones entre commits)
+## Hallazgos y backlog
+
+| ID | Hallazgo | Severidad | Corrección | Criterio de cierre | Estado |
+|---|---|---|---|---|---|
+| H1 | La cifra anterior queda junto al error de un periodo inválido | Alta | `limpiar()` antes de validar | E2E sin cifra tras invertir | Corregido, #1565 |
+| H2 | Los campos no tienen borde y parecen texto | Alta | Estilos propios | Borde de 1 px o más medido | Corregido, #1565 |
+| H3 | «Calcular» parece texto | Alta | Botón con fondo | Fondo medido en E2E | Corregido, #1565 |
+| H4 | No se avisa que «Hasta» no se incluye | Alta | Etiqueta y ayuda con ejemplo | a11y y E2E | Corregido, #1565 |
+| H5 | «Indica desde y hasta.» aparece al cargar | Media | Se valida al calcular | E2E sin error inicial | Corregido, #1565 |
+| H6 | El 403 repite «No tienes permiso» | Media | Un solo mensaje | Revisión del código | Corregido, #1565 |
+| H7 | Cambiar un filtro deja el resultado anterior | Media | `watch` de los filtros | E2E | Corregido, #1565 |
+| H8 | Otro hospital se confunde con falta de permiso | Media | Mensaje propio | E2E | Corregido, #1565 |
+| H9 | La hora del cálculo sale en formato ISO | Baja | Formato local legible | Prueba del formateador | Abierto |
+| H10 | El resultado no repite el periodo calculado | Baja | Mostrar desde y hasta | E2E | Abierto |
+| H11 | Sin prueba con lector de pantalla | Media | NVDA o TalkBack | Registro de la prueba | Requiere a la estudiante |
+
+## Reproducir
 
 ```bash
 node resources/js/modules/reportes/reportes.a11y.test.mjs
-# OK: 11 comprobaciones de accesibilidad de la pantalla de reportes aprobadas
+node docs/reportes-analytics/semana-09/evidencia/contraste.mjs
 ```
-
-Además `navigation.test.mjs` y `permissions.test.mjs` del router validan la
-falta segura de navegación sin permisos (indicador filtrado por rol; el
-usuario no ve entradas a módulos restringidos).
-
-## Fuera de alcance con registro
-
-La auditoría manual con lector de pantalla (NVDA/VoiceOver) en dispositivo
-real y contraste en modo oscuro quedan como acciones reales del estudiante;
-esta semana entrega la base programática que las soporta y el test que
-impide degradar entre commits.
