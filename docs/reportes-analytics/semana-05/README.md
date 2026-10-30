@@ -31,3 +31,7 @@ vanilla de la Semana 3 se consume desde la misma API protegida del sistema.
   `his_hospital_test` (55433): cálculo 33.33 %, `SIN_DATOS_EN_PERIODO`, 503
   sin base, respuesta sin datos personales. Rol="superadmin" ya trae
   `reportes.ver` en `config/rbac.php`.
+
+## Análisis cliente-servidor y plan
+
+El análisis completo, con diagramas, está en [`cliente-servidor.md`](./cliente-servidor.md).

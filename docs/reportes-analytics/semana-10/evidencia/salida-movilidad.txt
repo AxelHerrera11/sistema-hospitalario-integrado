@@ -1,0 +1,15 @@
+PASS  320 px: sin desborde, controles de 44 px o más, 1 columna(s)
+PASS  320 px: resultado visible sin desborde
+PASS  320 px: error visible sin desborde
+PASS  320 px girado: filtros conservados
+PASS  375 px: sin desborde, controles de 44 px o más, 1 columna(s)
+PASS  375 px: resultado visible sin desborde
+PASS  375 px: error visible sin desborde
+PASS  375 px girado: filtros conservados
+PASS  430 px: sin desborde, controles de 44 px o más, 1 columna(s)
+PASS  430 px: resultado visible sin desborde
+PASS  430 px: error visible sin desborde
+PASS  430 px girado: filtros conservados
+PASS  768 px: sin desborde, controles de 44 px o más, 3 columna(s)
+PASS  768 px: resultado visible sin desborde
+PASS  768 px: error visible sin desborde
