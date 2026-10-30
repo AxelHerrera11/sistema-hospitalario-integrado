@@ -8,7 +8,7 @@ declare(strict_types=1);
  * Variables opcionales: RBAC_DIR (otra copia de micro-his/rbac, ver rbac_integration.php) y
  * TENANTS_AUDIT_DIR (AuditLogRepository de Tenants, ver hash_compat.php).
  */
-$suites = ['unit', 'contract', 'whitebox', 'blackbox', 'rbac_integration', 'hash_compat', 'laravel_glue', 'architecture'];
+$suites = ['unit', 'contract', 'whitebox', 'blackbox', 'rbac_integration', 'hash_compat', 'laravel_glue', 'seguridad', 'architecture'];
 $failed = [];
 foreach ($suites as $suite) {
     echo PHP_EOL . "######## {$suite} ########" . PHP_EOL;
