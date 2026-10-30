@@ -1,0 +1,25 @@
+@startuml
+title Micro-HIS Centro de documentacion (ASII-24) - Cliente-servidor, API REST e integracion
+skinparam componentStyle rectangle
+[SPA Vue 3 / Postman] as spa
+[API Gateway (ASII-30)\nJWT + X-Tenant-ID] as gw
+node "Servidor Micro-HIS ASII-24" {
+  [Router REST /api/v1] as router
+  [DocumentoController (Semana 4)] as ctrl
+  [Casos de uso] as uc
+  [DocumentoRepository (interfaz)] as repo
+  [DocumentoRepositoryPDO] as pdo
+}
+database "BD del modulo\n(por tenant)" as db
+spa --> gw : HTTPS + JSON
+gw --> router : /api/v1/documentos
+router --> ctrl
+ctrl --> uc
+uc --> repo
+pdo ..|> repo
+pdo --> db
+[ASII-01 Auth API] as auth
+[ASII-02 RBAC] as rbac
+gw ..> auth : valida JWT\n(rol de la sesion)
+gw ..> rbac : permiso\ndocumentacion.*
+@enduml

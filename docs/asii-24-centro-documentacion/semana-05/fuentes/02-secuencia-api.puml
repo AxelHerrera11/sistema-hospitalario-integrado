@@ -1,0 +1,21 @@
+@startuml
+title ASII-24 - Secuencia de la solicitud REST
+actor "Usuario (rol)" as u
+participant "SPA Vue" as spa
+participant "Router REST" as r
+participant "DocumentoController" as c
+participant "ConsultarDocumentos" as uc
+participant "DocumentoRepository" as repo
+u -> spa : abre Centro de documentacion
+spa -> r : GET /api/v1/documentos?rol=enfermeria
+alt sin rol
+  r --> spa : 422 {code: validation_failed, errors: [rol]}
+else rol presente
+  r -> c : listar(entrada)
+  c -> uc : listar(rol)
+  uc -> repo : todos()
+  uc -> uc : filtra visiblePara(rol)
+  c --> r : 200 {documentos}
+  r --> spa : 200 {data}
+end
+@enduml

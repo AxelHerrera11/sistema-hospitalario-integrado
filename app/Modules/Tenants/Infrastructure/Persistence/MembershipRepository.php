@@ -23,10 +23,10 @@ final class MembershipRepository
             ->where('u.status', 'active')
             ->where('h.status', 'active')
             ->where('m.status', 'active')
-            ->where('m.valid_from', '<=', now())
+            ->whereRaw('m.valid_from <= CURRENT_TIMESTAMP')
             ->where(fn ($query) => $query
                 ->whereNull('m.valid_to')
-                ->orWhere('m.valid_to', '>', now()))
+                ->orWhereRaw('m.valid_to > CURRENT_TIMESTAMP'))
             ->distinct()
             ->pluck('m.role_code')
             ->all();
@@ -47,10 +47,10 @@ final class MembershipRepository
             ->where('hospital_id', $hospitalId)
             ->where('role_code', $roleCode)
             ->where('status', 'active')
-            ->where('valid_from', '<=', now())
+            ->whereRaw('valid_from <= CURRENT_TIMESTAMP')
             ->where(fn ($query) => $query
                 ->whereNull('valid_to')
-                ->orWhere('valid_to', '>', now()))
+                ->orWhereRaw('valid_to > CURRENT_TIMESTAMP'))
             ->exists();
     }
 
@@ -82,10 +82,10 @@ final class MembershipRepository
             ->where('hospital_id', $hospitalId)
             ->where('role_code', $roleCode)
             ->where('status', 'active')
-            ->where('valid_from', '<=', now())
+            ->whereRaw('valid_from <= CURRENT_TIMESTAMP')
             ->where(fn ($query) => $query
                 ->whereNull('valid_to')
-                ->orWhere('valid_to', '>', now()))
+                ->orWhereRaw('valid_to > CURRENT_TIMESTAMP'))
             ->update([
                 'status' => 'revoked',
                 'valid_to' => now(),
