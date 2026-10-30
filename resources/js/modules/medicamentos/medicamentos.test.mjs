@@ -29,6 +29,7 @@ assert.equal(isRetryable(422), false);
 assert.equal(validityLabel('active'), 'Vigente');
 assert.equal(nextValidity('active'), 'inactive');
 assert.equal(nextValidity('inactive'), 'active');
+assert.match(failureMessage(403, { error: 'HOSPITAL_DATABASE_TENANT_MISMATCH' }), /no está disponible en esta instalación/);
 assert.deepEqual(validityConfirmation({ code: 'AMX-500', validity: 'active' }),
     { title: 'Inactivar AMX-500', action: 'Inactivar AMX-500', target: 'No vigente' });
 assert.equal(validityConfirmation({ code: 'AMX-500', validity: 'inactive' }).action, 'Activar AMX-500');

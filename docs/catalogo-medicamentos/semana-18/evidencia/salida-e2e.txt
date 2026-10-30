@@ -1,0 +1,20 @@
+  login admin@prueba.local: 200
+PASS  admin_hospital ve el formulario de alta
+PASS  alta desde la interfaz → 201 y mensaje de éxito
+PASS  duplicado → 409 y error junto al código, sin éxito
+PASS  validación local antes de enviar (código y nombre)
+PASS  búsqueda "ÁCIDO" encuentra el registro
+PASS  búsqueda sin coincidencias muestra estado vacío
+PASS  el diálogo repite código, nombre, principio activo y estado destino
+PASS  el foco inicial queda en Cancelar
+PASS  Cancelar no envía el cambio
+PASS  Escape cierra sin enviar el cambio
+PASS  cambio de vigencia confirmado → 200
+PASS  al volver a la pantalla, la vigencia leída del servidor es "No vigente"
+  login enfermera@prueba.local: 200
+PASS  enfermería no ve alta ni cambio de vigencia
+PASS  en 375 px no hay desplazamiento horizontal
+  login recepcion@prueba.local: 200
+PASS  recepción no tiene el enlace del catálogo en el menú
+PASS  sin sesión del cliente la API responde 4xx
+16/16 comprobaciones
