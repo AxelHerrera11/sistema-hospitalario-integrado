@@ -48,7 +48,7 @@ class RoleMatrixTest extends TestCase
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
-            'altas.registrar', 'traslados.ver',
+            'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',

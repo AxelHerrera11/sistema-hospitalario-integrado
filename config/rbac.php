@@ -44,8 +44,8 @@ return [
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
-            // ASII-08: el médico da el alta y consulta la estancia.
-            'altas.registrar', 'traslados.ver',
+            // ASII-08: el médico consulta la estancia; altas.registrar sigue en pending.
+            'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
@@ -109,6 +109,8 @@ return [
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
         'alertas.ver' => ['enfermeria'],
         'alertas.acusar' => ['enfermeria'],
+        // ASII-08: sin decidir si corresponde a cualquier médico autorizado del hospital o solo al tratante.
+        'altas.registrar' => ['medico'],
     ],
     'catalog' => [
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
