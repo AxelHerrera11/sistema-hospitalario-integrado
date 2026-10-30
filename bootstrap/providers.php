@@ -25,6 +25,8 @@ return [
     TenantsServiceProvider::class,
     GobernanzaAuditoriaServiceProvider::class,
     MedicationCatalogServiceProvider::class,
+    // Catálogo de pruebas de laboratorio (ASII-17): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
+    \App\Providers\CatalogoLabServiceProvider::class,
     PatientsServiceProvider::class,
     // Admisión (ASII-07): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
     \App\Providers\AdmisionServiceProvider::class,
