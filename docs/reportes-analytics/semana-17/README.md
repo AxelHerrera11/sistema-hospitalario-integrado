@@ -9,7 +9,7 @@ de instalación para el demo/despliegue local.
 |---|---|---|
 | Autenticación obligatoria (JWT) | `jwt.auth` en la ruta | `IndicatorEndpointTest`: 401 `AUTH_REQUIRED` |
 | Autorización por permiso del servidor | `rbac:reportes.ver` (`config/rbac.php`: superadmin/admin_hospital/medico/tecnico_laboratorio/bioquimico lo traen) | 403 `RBAC_DENIED` |
-| Aislamiento tenant | `X-Tenant-ID` obligatorio + hospital activo | `TENANT_MISMATCH` con `X-Tenant-ID: hospital-b` |
+| Aislamiento tenant | `X-Tenant-ID` obligatorio + hospital activo + `EnsureHospitalDatabaseTenant` (requiere `HOSPITAL_DB_TENANT_ID`) | `TENANT_MISMATCH` con `X-Tenant-ID: hospital-b`; miembro válido de B contra base de A: 403 `HOSPITAL_DATABASE_TENANT_MISMATCH` sin leer (`test_miembro_de_otro_hospital_…`). Antes del 30/10/2026 ese cruce devolvía el indicador de A |
 | Inyección SQL imposible | Params preparados en el servidor PostgreSQL, sin concatenación | SQL canónico en `PdoEpisodeSummaryReader` |
 | Sin datos personales | Consulta `count+SUM`; respuesta solo agregados | `IndicatorHospitalIntegrationTest` (no-leak) |
 | Fallo honesto | Base caída → 503 sin cifras (no 500, no 0 %) | base inexistente → `REPORTES_UNAVAILABLE` |
