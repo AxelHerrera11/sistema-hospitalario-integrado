@@ -24,7 +24,7 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
         // Los fallos deben llegar como excepción para no confundirlos con "sin resultados".
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         // SQLite solo pasa a minúsculas los caracteres ASCII; se sustituye LOWER por una versión Unicode (defecto AV3).
-        // PostgreSQL ya aplica Unicode, así que solo se registra para SQLite.
+        // En PostgreSQL lo resuelve la colación ICU de lowered(), así que solo se registra para SQLite.
         if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
             $this->pdo->sqliteCreateFunction('LOWER', static fn (?string $value): ?string => $value === null ? null : mb_strtolower($value), 1);
         }
@@ -74,11 +74,17 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
             $medication->pharmacologicalGroup, $medication->validity);
     }
 
+    /** LOWER de PostgreSQL depende del locale del clúster: con "C" no cambia "Á". La colación ICU fija el resultado. */
+    private function lowered(string $column): string
+    {
+        return $this->postgres ? "LOWER({$column} COLLATE \"und-x-icu\")" : "LOWER({$column})";
+    }
+
     public function search(string $term, int $limit): array
     {
-        $sql = 'SELECT ' . self::COLUMNS . " FROM medications
-                WHERE LOWER(code) LIKE :by_code ESCAPE '!' OR LOWER(name) LIKE :by_name ESCAPE '!'
-                   OR LOWER(active_ingredient) LIKE :by_ingredient ESCAPE '!'
+        $sql = 'SELECT ' . self::COLUMNS . ' FROM medications
+                WHERE ' . $this->lowered('code') . " LIKE :by_code ESCAPE '!' OR " . $this->lowered('name') . " LIKE :by_name ESCAPE '!'
+                   OR " . $this->lowered('active_ingredient') . " LIKE :by_ingredient ESCAPE '!'
                 ORDER BY name, code LIMIT :limit";
         // Escape con "!": con ESCAPE '\', PDO para PostgreSQL toma la barra como escape de la comilla y no enlaza los
         // parámetros siguientes (SQLSTATE HY093). "!" es neutro en SQLite y PostgreSQL.

@@ -29,7 +29,7 @@ Los dos permisos se conceden solo al rol `admin_hospital`, gestor del catálogo 
 - **Vigencia:** `{ "validity": "active" | "inactive" }`. Repetir el estado actual: 422.
 - **Medicamento:** `medication_id`, `code`, `name`, `active_ingredient`, `pharmacological_group` y `validity`. No hay presentación, lote ni fecha de vencimiento: no forman parte de este catálogo.
 
-**Desviación conocida (Semana 16):** la implementación todavía no aplica `limit`; siempre devuelve como máximo 50 resultados.
+**`limit`:** entero de 1 a 50 (por defecto 50); fuera de rango o no entero: 422 con `field: limit`. Corregido el 30/10/2026, junto con el rechazo de campos desconocidos en alta y vigencia, que antes se ignoraban.
 
 ## Errores
 
@@ -41,6 +41,8 @@ Errores del catálogo: `{ "error": "CODE", "message": "...", "field": "campo", "
 | 400 | `code: TENANT_REQUIRED` | Falta `X-Tenant-ID` (acceso) |
 | 401 | `code: AUTH_REQUIRED` | Sin usuario autenticado (acceso) |
 | 403 | `code: RBAC_DENIED` / `code: TENANT_MISMATCH` | Sin permiso, o `X-Tenant-ID` distinto del hospital del contexto (acceso) |
+| 403 | `HOSPITAL_DATABASE_TENANT_MISMATCH` | El hospital del contexto no es el dueño de esta base HOSPITAL |
+| 503 | `HOSPITAL_DATABASE_TENANT_UNCONFIGURED` | La instancia no definió `HOSPITAL_DB_TENANT_ID` |
 | 404 | `MEDICATION_NOT_FOUND` | El identificador no existe en el hospital |
 | 409 | `MEDICATION_CODE_DUPLICATED` | Código normalizado ya registrado en el hospital |
 | 422 | `MEDICATION_INVALID` | Regla de dominio o tipo inválido (con `field`) |
