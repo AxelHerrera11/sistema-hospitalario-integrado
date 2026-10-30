@@ -11,6 +11,7 @@ namespace MicroHis\ExpedienteMedico\Application;
 interface ClinicalAccessAudit
 {
     public const OPENED = 'abierto';
+    public const REPEATED_OPENING = 'apertura_repetida';
     public const CONSULTED = 'consultado';
     public const DENIED = 'acceso_denegado';
 

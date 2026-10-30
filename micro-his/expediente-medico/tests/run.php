@@ -7,7 +7,7 @@ declare(strict_types=1);
 require __DIR__ . '/harness.php';
 
 // Las suites se incorporan por entregas semanales: se ejecutan las que existen y se informa cuáles faltan.
-foreach (['unitarias', 'caja-blanca', 'caja-negra', 'integracion-pdo', 'arquitectura'] as $suite) {
+foreach (['unitarias', 'caja-blanca', 'caja-negra', 'integracion-pdo', 'seguridad', 'arquitectura'] as $suite) {
     is_file(__DIR__ . "/$suite.php") ? require __DIR__ . "/$suite.php" : print("(suite $suite aún no incluida)" . PHP_EOL);
 }
 
