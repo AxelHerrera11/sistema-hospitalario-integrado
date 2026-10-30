@@ -53,6 +53,6 @@ Errores del catálogo: `{ "error": "CODE", "message": "...", "field": "campo", "
 | Micro-HIS (Semanas 3–4) | API v1 | Diferencia |
 |---|---|---|
 | `POST /medications` | `POST /api/v1/medications` | Agrega autenticación, permiso, tenant y `trace_id` |
-| `GET /medications?q=` | `GET /api/v1/medications?q=&limit=` | `limit` opcional (1–50; el micro-HIS fija 50) |
+| `GET /medications?q=` | `GET /api/v1/medications?q=&limit=` | `limit` opcional (1–50; el micro-HIS fija 50). `q` ignora mayúsculas y tildes; ñ y n son distintas (30/10/2026) |
 | `GET /medications/{id}/validity` | `GET /api/v1/medications/{medication_id}` | Devuelve el medicamento completo con su vigencia, lo que necesita Prescripciones |
 | `PATCH /medications/{id}/validity` | `PATCH /api/v1/medications/{medication_id}/validity` | Agrega permiso y `trace_id` |

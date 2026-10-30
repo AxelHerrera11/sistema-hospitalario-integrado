@@ -35,7 +35,7 @@
                 <dt>Grupo farmacológico</dt><dd>{{ selected.pharmacological_group }}</dd>
                 <dt>Vigencia</dt><dd><span :class="['meds__badge', `meds__badge--${selected.validity}`]">{{ validityLabel(selected.validity) }}</span></dd>
             </dl>
-            <button v-if="canChange" type="button" class="meds__secondary" :disabled="changing" @click="askValidity">
+            <button v-if="canChange" ref="validityButton" type="button" class="meds__secondary" :disabled="changing" @click="askValidity">
                 {{ changing ? 'Guardando…' : (selected.validity === 'active' ? 'Marcar como no vigente' : 'Marcar como vigente') }}
             </button>
             <p v-if="validityMessage" :class="['meds__msg', validityOk ? 'meds__msg--ok' : 'meds__msg--error']" role="status">{{ validityMessage }}</p>
@@ -74,7 +74,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, nextTick } from 'vue';
 import api from '@/plugins/axios';
 import { can } from '@/router/permissions';
 import { useAuthStore } from '@/stores/auth';
@@ -103,6 +103,7 @@ const changing = ref(false);
 const validityMessage = ref('');
 const validityOk = ref(false);
 const validityDialog = ref(null);
+const validityButton = ref(null);
 const confirmation = computed(() => (selected.value ? validityConfirmation(selected.value) : {}));
 const draft = reactive({ code: '', name: '', active_ingredient: '', pharmacological_group: '' });
 const errors = reactive({});
@@ -168,6 +169,9 @@ async function toggleValidity() {
         validityMessage.value = failureMessage(statusOf(error), error.response?.data);
     } finally {
         changing.value = false;
+        // El botón se deshabilita mientras guarda y pierde el foco que le devolvió el diálogo.
+        await nextTick();
+        validityButton.value?.focus();
     }
 }
 
@@ -212,7 +216,8 @@ async function register() {
 .meds button:disabled { opacity: 0.6; cursor: progress; }
 /* Jerarquía: el primario envía (Buscar, Registrar); las acciones secundarias van en contorno y los resultados como filas. */
 .meds .meds__secondary { background: #fff; color: #1e3a8a; }
-.meds__dialog { border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; max-width: min(28rem, calc(100vw - 2rem)); }
+/* La hoja base pone margin: 0 y anula el centrado nativo de dialog. */
+.meds__dialog { position: fixed; inset: 0; margin: auto; width: min(28rem, calc(100vw - 2rem)); height: fit-content; max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem); overflow-y: auto; overflow-wrap: anywhere; border: 1px solid #cbd5e1; border-radius: 8px; padding: 1rem; }
 .meds__dialog::backdrop { background: rgb(15 23 42 / 0.5); }
 .meds .meds__pick { background: #fff; color: #0f172a; border-color: #cbd5e1; font-weight: 400; }
 .meds .meds__pick:hover { border-color: #1d4ed8; background: #eff6ff; }
