@@ -1,0 +1,54 @@
+flowchart TB
+  subgraph FE[Frontend — EMR]
+    F1[OrderForm<br/>paciente · episodio · nota]
+    F2[TestSelector<br/>pruebas activas]
+    F3[OrderTimeline<br/>estados e historial]
+    F4[ErrorPanel<br/>problem+json]
+    F5[OrdersList<br/>filtros y paginación]
+  end
+
+  subgraph BE[Backend — Micro-HIS]
+    K[ApiKernel<br/>tenant · permisos · request-id]
+    C[LabOrderController<br/>rutas y despacho]
+    subgraph APP[Aplicación]
+      ASM[LabOrderDraftAssembler]
+      I[EmitLabOrderHandler]
+      A[AdvanceLabOrder]
+      X[CancelLabOrder]
+      Q[Find · List]
+    end
+    subgraph DOM[Dominio]
+      O[LabOrder]
+      IT[LabOrderItem]
+      EV[LabOrderEvent]
+    end
+    subgraph PORT[Puertos]
+      R{{LabOrderRepository}}
+      E{{ExpedienteGateway}}
+    end
+    subgraph PER[Persistencia]
+      PDO[PdoLabOrderRepository]
+      MEM[InMemoryLabOrderRepository]
+    end
+  end
+
+  F1 --> F2
+  F2 --> K
+  K --> C
+  C --> ASM & I & A & X & Q
+  ASM --> E
+  I --> R
+  A --> R
+  X --> R
+  Q --> R
+  I --> O
+  A --> O
+  X --> O
+  O --> IT
+  O --> EV
+  R -. implementa .-> PDO
+  R -. implementa .-> MEM
+  C --> F4
+  Q --> F5
+  Q --> F3
+```
