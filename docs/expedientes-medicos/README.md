@@ -34,6 +34,7 @@ clínicos, acceso autorizado, integridad y protección de datos sensibles).
 | [13](semana-13/README.md) | Revisión formal | Plan, checklist de 15 ítems, roles y formato de hallazgos |
 | [14](semana-14/README.md) | SQA | 7 métricas, riesgos, controles y calendario |
 | [15](semana-15/README.md) | Pruebas | Matriz RF/RNF→prueba, unitarias, caja blanca/negra y defectos |
+| [16](semana-16/README.md) | Integración | Validación on-premise, primera entrega funcional y DEF-EXP-10 corregido |
 
 ## Verificación rápida
 
