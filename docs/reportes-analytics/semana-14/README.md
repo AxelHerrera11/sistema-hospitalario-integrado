@@ -14,7 +14,7 @@ Atributos: exactitud del indicador, confiabilidad ante fallos, seguridad y traza
 | M4 | Reglas y accesibilidad de la pantalla | 100 % | `metricas.php` | 20 y 15 | Medido | Corregir antes de integrar |
 | M5 | Tamaño de cada PR | ≤ 400 líneas | `git diff --numstat` | Máximo 354, en los PR del 30/10/2026 | Medido | Dividir |
 | M6 | Recorrido en Chrome | 100 % | `semana-11/evidencia/recorrido-e2e.mjs` | 15/15 | Medido | Corregir y repetir |
-| M7 | p95 del cálculo | ≤ 500 ms | Medición local con 20 peticiones | 1040 ms en el servidor de desarrollo de PHP, sin opcache, con 4 episodios | **No cumple en local**; no representa producción | Repetir con opcache y volumen real antes de decidir |
+| M7 | p95 del cálculo | ≤ 500 ms | Medición local con 20 peticiones | 364 ms en el servidor de desarrollo de PHP, sin opcache, con 4 episodios. Una medición anterior dio 1040 ms con el equipo sin memoria libre | **Cumple en local**; no representa producción | Repetir con volumen real antes de darlo por válido |
 
 ## Matriz de riesgos
 
@@ -33,14 +33,14 @@ Atributos: exactitud del indicador, confiabilidad ante fallos, seguridad y traza
 | ID | Tipo | Control | Responsable | Momento |
 |---|---|---|---|---|
 | P1 | Preventivo | La prueba de integración usa las migraciones reales | Autora | Cada PR |
-| P2 | Preventivo | Middleware `tenant`, `jwt.auth`, guard de base y permiso | Autora; RBAC y Tenants | Cada PR |
+| P2 | Preventivo | Middleware `tenant`, `jwt.auth`, guard de base y permiso | Autora | Cada PR |
 | P3 | Preventivo | Estados sin porcentaje en el dominio | Autora | Diseño |
 | P4 | Preventivo | `limpiar()` antes de validar | Autora | Diseño |
-| P5 | Preventivo | Acordar quién cancela episodios | Autora con ASII-07 y ASII-08 | Pendiente |
+| P5 | Preventivo | Confirmar quién cancela episodios | Autora | Pendiente |
 | D1 | Detectivo | `run.php`, `tests/Feature/Reportes` | Autora | Cada PR |
 | D2 | Detectivo | `test_miembro_de_otro_hospital_…` | Autora | Cada PR |
 | D3 | Detectivo | `recorrido-e2e.mjs` | Autora | Antes de integrar la pantalla |
-| D4 | Detectivo | Ejecución local declarada; CI cuando se libere | Coordinación del repositorio | Cada PR |
+| D4 | Detectivo | Ejecución local declarada; CI cuando se libere | Autora | Cada PR |
 | D5 | Detectivo | Repetir M7 con volumen real | Autora | Cuando exista staging |
 
 ## Calendario

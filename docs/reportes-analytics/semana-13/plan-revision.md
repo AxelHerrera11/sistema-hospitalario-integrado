@@ -8,15 +8,15 @@ Verificar que el indicador cumple su regla, su contrato y sus controles de acces
 
 ## Roles
 
-Los nombres son una **propuesta por confirmar**; ninguna de estas personas ha aceptado.
+Solo la autora está definida; las demás personas están por confirmar.
 
 | Rol | Responsabilidad | Propuesta |
 |---|---|---|
 | Autora | Presenta y corrige | María Yamilet Lindo Pablo |
-| Moderador | Conduce y decide si hay nueva revisión | Por confirmar con el docente |
-| Revisor 1 | Regla, datos y consulta | Responsable de ASII-09 u otro módulo que lea HOSPITAL |
-| Revisor 2 | Permisos y aislamiento | Responsable de RBAC (ASII-02) |
-| Secretaría | Registra los hallazgos | Uno de los revisores |
+| Moderador | Conduce y decide si hay nueva revisión | Por confirmar |
+| Revisor 1 | Regla, datos y consulta | Por confirmar |
+| Revisor 2 | Permisos y aislamiento | Por confirmar |
+| Secretaría | Registra los hallazgos | Por confirmar |
 
 ## Criterios de entrada
 
