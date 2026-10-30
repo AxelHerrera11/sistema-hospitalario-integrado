@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { failureMessage, isRetryable, nextValidity, searchTermError, validateDraft, validityLabel } from './medicamentos.js';
+import { validityConfirmation, failureMessage, isRetryable, nextValidity, searchTermError, validateDraft, validityLabel } from './medicamentos.js';
 
 const valid = { code: 'amx-500', name: 'Amoxicilina 500 mg', active_ingredient: 'Amoxicilina', pharmacological_group: 'Antibiótico' };
 
@@ -29,5 +29,8 @@ assert.equal(isRetryable(422), false);
 assert.equal(validityLabel('active'), 'Vigente');
 assert.equal(nextValidity('active'), 'inactive');
 assert.equal(nextValidity('inactive'), 'active');
+assert.deepEqual(validityConfirmation({ code: 'AMX-500', validity: 'active' }),
+    { title: 'Inactivar AMX-500', action: 'Inactivar AMX-500', target: 'No vigente' });
+assert.equal(validityConfirmation({ code: 'AMX-500', validity: 'inactive' }).action, 'Activar AMX-500');
 
 console.log('OK: reglas de la pantalla del catálogo de medicamentos');
