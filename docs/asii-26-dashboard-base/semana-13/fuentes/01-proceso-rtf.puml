@@ -1,0 +1,23 @@
+@startuml
+title ASII-26 - Proceso de revision tecnica formal
+|Autora|
+start
+:Prepara material (PR + checklist);
+|Moderador|
+:Verifica criterios de entrada;
+|Revisores|
+:Preparacion individual (60 min max.);
+|Moderador|
+:Reunion de revision (max. 90 min);
+|Secretario|
+:Registra hallazgos con formato RTF;
+|Autora|
+:Corrige (rework);
+|Moderador|
+if (hallazgos criticos/mayores cerrados?) then (si)
+  :Aceptar producto;
+else (no)
+  :Nueva revision;
+endif
+stop
+@enduml

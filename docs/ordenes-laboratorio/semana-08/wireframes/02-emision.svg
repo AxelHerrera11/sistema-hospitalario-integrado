@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700" role="img" aria-labelledby="t">
+  <title id="t">Wireframe: emisión de orden desde el expediente</title>
+  <rect width="960" height="700" fill="#f3f4f6"/>
+  <rect x="0" y="0" width="960" height="60" fill="#1f2937"/>
+  <text x="24" y="37" font-family="system-ui" font-size="19" font-weight="700" fill="#ffffff">Emitir orden de laboratorio</text>
+  <text x="790" y="36" font-family="system-ui" font-size="12" fill="#d1d5db">Paciente: Pérez, Ana · EPI-77</text>
+
+  <rect x="24" y="84" width="300" height="430" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="44" y="112" font-family="system-ui" font-size="13" font-weight="700" fill="#0f172a">Contexto del expediente</text>
+  <text x="44" y="140" font-family="system-ui" font-size="11" fill="#64748b">Paciente</text>
+  <text x="44" y="158" font-family="system-ui" font-size="13" fill="#0f172a">Ana Pérez · 34 años</text>
+  <text x="44" y="188" font-family="system-ui" font-size="11" fill="#64748b">Episodio</text>
+  <text x="44" y="206" font-family="system-ui" font-size="13" fill="#0f172a">EPI-77 · abierto</text>
+  <text x="44" y="236" font-family="system-ui" font-size="11" fill="#64748b">Nota clínica</text>
+  <text x="44" y="254" font-family="system-ui" font-size="13" fill="#0f172a">NOTA-552 · Control</text>
+  <rect x="44" y="272" width="260" height="44" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="56" y="290" font-family="system-ui" font-size="11" fill="#475569">Datos tomados del expediente.</text>
+  <text x="56" y="306" font-family="system-ui" font-size="11" fill="#475569">No se editan aquí.</text>
+  <text x="44" y="344" font-family="system-ui" font-size="11" fill="#64748b">Prioridad</text>
+  <circle cx="56" cy="364" r="6" fill="#2563eb"/><text x="72" y="368" font-family="system-ui" font-size="12" fill="#0f172a">Rutina</text>
+  <circle cx="56" cy="388" r="6" fill="#ffffff" stroke="#94a3b8"/><text x="72" y="392" font-family="system-ui" font-size="12" fill="#0f172a">Urgente</text>
+  <circle cx="56" cy="412" r="6" fill="#ffffff" stroke="#94a3b8"/><text x="72" y="416" font-family="system-ui" font-size="12" fill="#0f172a">STAT</text>
+  <text x="44" y="452" font-family="system-ui" font-size="11" fill="#64748b">Contexto clínico (opcional)</text>
+  <rect x="44" y="462" width="260" height="36" rx="4" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="54" y="484" font-family="system-ui" font-size="11" fill="#94a3b8">Motivo de la solicitud…</text>
+
+  <rect x="340" y="84" width="596" height="430" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="360" y="112" font-family="system-ui" font-size="13" font-weight="700" fill="#0f172a">Pruebas solicitadas</text>
+  <rect x="360" y="126" width="360" height="30" rx="4" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="372" y="146" font-family="system-ui" font-size="12" fill="#64748b">Buscar prueba activa por nombre o código…</text>
+  <rect x="732" y="126" width="184" height="30" rx="4" fill="#e2e8f0"/>
+  <text x="750" y="146" font-family="system-ui" font-size="12" fill="#334155">Solo activas</text>
+
+  <text x="360" y="182" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">RESULTADOS</text>
+  <rect x="360" y="192" width="556" height="40" rx="4" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="374" y="210" font-family="system-ui" font-size="12" fill="#0f172a">GLU · Glucosa</text>
+  <text x="374" y="225" font-family="system-ui" font-size="10" fill="#475569">Química · vigente</text>
+  <text x="850" y="217" font-family="system-ui" font-size="18" font-weight="700" fill="#2563eb">+</text>
+  <rect x="360" y="238" width="556" height="40" rx="4" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="374" y="256" font-family="system-ui" font-size="12" fill="#0f172a">HB · Hemograma</text>
+  <text x="374" y="271" font-family="system-ui" font-size="10" fill="#475569">Hematología · vigente</text>
+  <text x="850" y="263" font-family="system-ui" font-size="18" font-weight="700" fill="#2563eb">+</text>
+
+  <text x="360" y="306" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">SELECCIONADAS (1)</text>
+  <rect x="360" y="316" width="150" height="28" rx="14" fill="#dbeafe"/>
+  <text x="374" y="334" font-family="system-ui" font-size="11" fill="#1e40af">GLU · Glucosa ✕</text>
+
+  <rect x="360" y="374" width="556" height="72" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="374" y="396" font-family="system-ui" font-size="11" fill="#475569">Al emitir se registra un evento inicial con actor, fecha y</text>
+  <text x="374" y="414" font-family="system-ui" font-size="11" fill="#475569">correlación. La orden podrá seguirse por su ID.</text>
+  <text x="374" y="432" font-family="system-ui" font-size="11" fill="#475569">No se puede editar después de la toma.</text>
+
+  <rect x="340" y="534" width="596" height="64" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="360" y="558" font-family="system-ui" font-size="11" fill="#64748b">Se enviará a: Hospital A · Laboratorio central</text>
+  <rect x="620" y="548" width="130" height="34" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="652" y="570" font-family="system-ui" font-size="12" fill="#334155">Cancelar</text>
+  <rect x="764" y="548" width="152" height="34" rx="6" fill="#2563eb"/>
+  <text x="794" y="570" font-family="system-ui" font-size="12" font-weight="600" fill="#ffffff">Revisar y emitir</text>
+
+  <rect x="24" y="618" width="912" height="64" rx="8" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="40" y="640" font-family="system-ui" font-size="11" font-weight="700" fill="#92400e">ANOTACIONES</text>
+  <text x="40" y="658" font-family="system-ui" font-size="11" fill="#78350f">A. Paciente/episodio/nota son de solo lectura. B. Solo pruebas activas y vigentes. C. Se impide duplicar una prueba. D. “Revisar y emitir” se habilita con ≥1 prueba.</text>
+</svg>
