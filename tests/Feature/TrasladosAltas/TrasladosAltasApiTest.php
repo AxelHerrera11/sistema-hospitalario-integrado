@@ -31,6 +31,9 @@ final class TrasladosAltasApiTest extends TestCase
     {
         parent::setUp();
         $this->app->make(Kernel::class);
+        // Instancia on-premise de prueba: su base HOSPITAL pertenece a hospital-a.
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
+        TrasladosTestIdentity::$hospital = 'hospital-a';
         $this->app['router']->aliasMiddleware('tenant', TrasladosTestIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', TrasladosTestIdentity::class);
         $this->app->instance(RoleResolver::class, new TrasladosTestIdentity);
@@ -92,6 +95,35 @@ final class TrasladosAltasApiTest extends TestCase
         TrasladosTestIdentity::como('medico');
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $id])->assertOk()->assertJsonPath('resultado', 'exito');
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $id])->assertStatus(409)->assertJsonPath('motivo', 'EPISODIO_NO_ABIERTO');
+    }
+
+    public function test_member_of_another_hospital_cannot_read_or_change_this_hospital_stays(): void
+    {
+        $this->activarPropuesta();
+        $traslado = ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento'];
+        $antes = serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]);
+        $mismatch = 'HOSPITAL_DATABASE_TENANT_MISMATCH';
+
+        // Membresía válida en hospital-b, instancia con la base de hospital-a.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b']);
+        TrasladosTestIdentity::$hospital = 'hospital-b';
+        TrasladosTestIdentity::como('enfermeria');
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->postJson('/api/v1/traslados', $traslado)->assertForbidden()->assertJsonPath('error', $mismatch);
+        TrasladosTestIdentity::como('medico');
+        $this->postJson('/api/v1/altas', ['estancia_esperada_id' => self::ESTANCIA])->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->assertSame($antes, serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]));
+
+        // El mismo rol en el hospital dueño de la base conserva el acceso.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        TrasladosTestIdentity::como('enfermeria');
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertOk();
+        $this->postJson('/api/v1/traslados', $traslado)->assertStatus(201);
+
+        // Sin hospital asignado a la base se cierra el paso.
+        config(['tenants.hospital_database_tenant_id' => null]);
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
     }
 
     public function test_actor_without_local_reference_and_unavailable_hospital(): void

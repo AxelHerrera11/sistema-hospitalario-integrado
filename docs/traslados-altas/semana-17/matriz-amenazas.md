@@ -5,7 +5,7 @@ Alcance: `POST /api/v1/traslados`, `POST /api/v1/altas`, la consulta de internac
 | ID | Amenaza | Control | Evidencia | Estado |
 |---|---|---|---|---|
 | T01 | Operar sin sesión o con token inválido | `jwt.auth` antes de RBAC y del controlador | `salida-recorrido-api.txt`: sin token 401 | Mitigada |
-| T02 | Leer o escribir en otro hospital | `tenant` contrasta JWT y `X-Tenant-ID` | Recorrido real: token A/cabecera B 403 | Mitigada |
+| T02 | Leer o escribir en otro hospital | `tenant` contrasta JWT y `X-Tenant-ID`; `EnsureHospitalDatabaseTenant` rechaza al hospital que no es dueño de la base | Token A/cabecera B 403; miembro válido de B contra base de A 403 sin cambiar estancias (`test_member_of_another_hospital_…` y recorrido real del 30/10/2026) | Mitigada |
 | T03 | Usar un permiso no aprobado | Denegación por defecto de `rbac.pending` | API y PostgreSQL: 403 y cero escrituras | Mitigada |
 | T04 | Un rol autorizado para traslado intenta dar alta | Permisos separados por ruta | Recorrido real: enfermería recibe 403 en alta | Mitigada |
 | T05 | Suplantar actor u hospital desde JSON | Actor desde JWT -> `local_user_refs`; tenant desde middleware; campos extra ignorados | `test_body_cannot_spoof_actor_or_tenant_and_wrong_role_cannot_write` | Mitigada |
@@ -18,7 +18,7 @@ Alcance: `POST /api/v1/traslados`, `POST /api/v1/altas`, la consulta de internac
 | T12 | Inyectar una traza no confiable | `X-Request-Id` acepta solo patrón y longitud limitados | La prueba T11 exige una traza nueva saneada | Mitigada |
 | T13 | Cachear datos de internación entre usuarios | `Cache-Control: no-store, private` | Pruebas API en éxito y 503 | Mitigada |
 | T14 | Exponer datos personales innecesarios | Respuesta operacional sin nombre, correo ni historia clínica | Contrato y respuestas del recorrido | Mitigada |
-| T15 | Mezclar datos pese a un tenant válido | Seleccionar conexión HOSPITAL por tenant | Una sola conexión `hospital` integrada | Bloqueada: Plataforma/Tenants |
+| T15 | Mezclar datos pese a un tenant válido | Rechazo por `EnsureHospitalDatabaseTenant`; falta seleccionar conexión HOSPITAL por tenant | La mezcla se rechaza con 403; sigue habiendo una sola conexión `hospital` por instancia | Parcial: el enrutamiento depende de Plataforma/Tenants |
 | T16 | Usuario válido sin referencia clínica local | Rechazo `ACTOR_SIN_REFERENCIA_LOCAL` | Pruebas Feature y PostgreSQL | Parcial: falta sincronización ASII-01 |
 | T17 | Agotar las rutas con solicitudes repetidas | Rate limiting común de `/api/v1` | No existe control específico verificable | Pendiente: API Gateway |
 
