@@ -103,8 +103,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LabOrderList'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '422': { $ref: '#/components/responses/Unprocessable' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /api/v1/lab-orders/{labOrderId}:
     get:
       tags: [Órdenes]
@@ -121,8 +124,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LabOrderEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /api/v1/lab-orders/{labOrderId}/status:
     patch:
       tags: [Órdenes]
@@ -149,11 +155,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LabOrderEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Unprocessable' }
+        '503': { $ref: '#/components/responses/Unavailable' }
   /api/v1/lab-orders/{labOrderId}/cancel:
     post:
       tags: [Órdenes]
@@ -179,11 +187,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LabOrderEnvelope'
+        '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409': { $ref: '#/components/responses/Conflict' }
         '422': { $ref: '#/components/responses/Unprocessable' }
+        '503': { $ref: '#/components/responses/Unavailable' }
 components:
   securitySchemes:
     TenantHeader:
