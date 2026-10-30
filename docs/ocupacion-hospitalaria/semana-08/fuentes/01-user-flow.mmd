@@ -1,0 +1,18 @@
+flowchart TD
+  Start[Entrar al dashboard] --> Auth{¿Sesión, tenant y<br/>ocupacion.ver válidos?}
+  Auth -->|No| Denied[Limpiar datos y mostrar<br/>acceso restringido]
+  Auth -->|Sí| Role{Rol autorizado}
+  Role -->|Coordinación| Load[Mostrar carga y solicitar fotografía]
+  Role -->|Dirección| Load
+  Load --> Result{Respuesta}
+  Result -->|200 con camas| Success[Mostrar corte, indicadores y salas]
+  Result -->|200 sin camas| Empty[Explicar vacío y ofrecer<br/>restablecer filtro]
+  Result -->|401/403| Denied
+  Result -->|503 con caché| Stale[Mostrar última fotografía<br/>marcada desactualizada]
+  Result -->|503 sin caché| Error[Ocultar cifras y ofrecer reintento]
+  Success --> Action{Acción por rol}
+  Action -->|Coordinación| Filter[Filtrar sala o revisar advertencias]
+  Action -->|Dirección| Compare[Comparar agregados por sala]
+  Filter --> Load
+  Stale -->|Reintentar| Load
+  Error -->|Reintentar| Load

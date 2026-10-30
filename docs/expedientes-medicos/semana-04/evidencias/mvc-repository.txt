@@ -1,0 +1,54 @@
+$ php micro-his/expediente-medico/tests/run.php | grep -E "\[(pdo|memoria)\] N-|R-0|Resumen"; echo "\$ grep -rn \"SELECT\|INSERT\" micro-his/expediente-medico/src/Presentation"; grep -rn "SELECT\|INSERT" micro-his/expediente-medico/src/Presentation; echo "(sin resultados: código $?)"
+# 2026-10-23 09:47 · PHP 8.2.12
+OK: [pdo] N-01 médica tratante → 200, 3 episodios (reciente primero) y Cache-Control no-store
+OK: [pdo] N-02 enfermería (expediente.ver, sin asignación) → 403 SIN_VINCULO_ASISTENCIAL
+OK: [pdo] N-03 recepción sin expediente.ver → 403 ACCESO_DENEGADO con trace_id
+OK: [pdo] N-04 admin_hospital sin expediente.ver → 403 ACCESO_DENEGADO
+OK: [pdo] N-04b ninguna respuesta denegada contiene datos del paciente
+OK: [pdo] N-05 usuario sin membresía en el hospital indicado → 403
+OK: [pdo] N-05b membresía válida pero hospital sin base configurada → 503 HOSPITAL_NO_DISPONIBLE
+OK: [pdo] N-06 sin X-User-ID → 401 IDENTIDAD_REQUERIDA
+OK: [pdo] N-06b sin X-Tenant-ID → 400 TENANT_REQUERIDO
+OK: [pdo] N-07 código de 1 carácter (válido, inexistente) → 403 sin revelar existencia
+OK: [pdo] N-07b código de 40 caracteres (válido) → 403
+OK: [pdo] N-07c código de 41 caracteres → 422 CODIGO_PACIENTE_INVALIDO
+OK: [pdo] N-07d código con inyección SQL → 422
+OK: [pdo] N-08 apertura sin activar el permiso propuesto → 403 para recepción y medicina
+OK: [pdo] N-09 apertura → 201 con EXP-P-0002 y sin datos del paciente; repetir → 200 created=false (idempotente)
+OK: [pdo] N-09b tras abrir, la médica tratante consulta el expediente nuevo (1 episodio abierto)
+OK: [pdo] N-10 apertura de paciente fallecido → 409; inexistente → 404
+OK: [pdo] N-10b la auditoría registró abierto + consultado
+OK: [pdo] N-11 almacén caído → 503 EXPEDIENTE_NO_DISPONIBLE con solo el código
+OK: [pdo] N-12 bitácora caída → 503 AUDITORIA_NO_DISPONIBLE sin datos del expediente
+OK: [pdo] N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404
+OK: [memoria] N-01 médica tratante → 200, 3 episodios (reciente primero) y Cache-Control no-store
+OK: [memoria] N-02 enfermería (expediente.ver, sin asignación) → 403 SIN_VINCULO_ASISTENCIAL
+OK: [memoria] N-03 recepción sin expediente.ver → 403 ACCESO_DENEGADO con trace_id
+OK: [memoria] N-04 admin_hospital sin expediente.ver → 403 ACCESO_DENEGADO
+OK: [memoria] N-04b ninguna respuesta denegada contiene datos del paciente
+OK: [memoria] N-05 usuario sin membresía en el hospital indicado → 403
+OK: [memoria] N-05b membresía válida pero hospital sin base configurada → 503 HOSPITAL_NO_DISPONIBLE
+OK: [memoria] N-06 sin X-User-ID → 401 IDENTIDAD_REQUERIDA
+OK: [memoria] N-06b sin X-Tenant-ID → 400 TENANT_REQUERIDO
+OK: [memoria] N-07 código de 1 carácter (válido, inexistente) → 403 sin revelar existencia
+OK: [memoria] N-07b código de 40 caracteres (válido) → 403
+OK: [memoria] N-07c código de 41 caracteres → 422 CODIGO_PACIENTE_INVALIDO
+OK: [memoria] N-07d código con inyección SQL → 422
+OK: [memoria] N-08 apertura sin activar el permiso propuesto → 403 para recepción y medicina
+OK: [memoria] N-09 apertura → 201 con EXP-P-0002 y sin datos del paciente; repetir → 200 created=false (idempotente)
+OK: [memoria] N-09b tras abrir, la médica tratante consulta el expediente nuevo (1 episodio abierto)
+OK: [memoria] N-10 apertura de paciente fallecido → 409; inexistente → 404
+OK: [memoria] N-10b la auditoría registró abierto + consultado
+OK: [memoria] N-11 almacén caído → 503 EXPEDIENTE_NO_DISPONIBLE con solo el código
+OK: [memoria] N-12 bitácora caída → 503 AUDITORIA_NO_DISPONIBLE sin datos del expediente
+OK: [memoria] N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404
+OK: R-01 Domain no depende de Application, Persistence, Presentation, Integration ni PDO
+OK: R-02 Application no conoce PDO, SQL, adaptadores ni otros módulos (solo puertos propios)
+OK: R-03 Presentation (controlador, router, vista) no tiene SQL ni usa PDO ni adaptadores
+OK: R-04 el controlador no aplica reglas de dominio (no construye MedicalRecord ni valida estados)
+OK: R-05 Persistence solo usa sentencias preparadas (sin query/exec con variables)
+OK: R-06 los contratos de RBAC, Gobernanza y Pacientes solo se usan en Integration
+OK: R-07 ningún archivo del módulo supera 400 líneas
+Resumen: 89 OK, 0 FALLO
+$ grep -rn "SELECT\|INSERT" micro-his/expediente-medico/src/Presentation
+(sin resultados: código 1)

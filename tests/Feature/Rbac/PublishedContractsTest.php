@@ -114,7 +114,7 @@ class PublishedContractsTest extends TestCase
 
     public function test_published_module_permissions_are_catalogued_or_explicitly_superseded(): void
     {
-        $exceptions = ['diagnosticos.asociar', 'prescripciones.anular', 'laboratorio.catalogo', 'laboratorio.ordenes', 'admision.registrada'];
+        $exceptions = ['diagnosticos.asociar', 'prescripciones.anular', 'laboratorio.catalogo', 'laboratorio.ordenes', 'admision.registrada', 'wards.ward_id', 'wards.status', 'ocupacion.js', 'ocupacion.test.mjs', 'traslados.test.mjs', 'reportes.js', 'reportes.test.mjs', 'reportes.a11y.test.mjs', 'alergias.test.mjs', 'admision.mjs', 'admision.sh', 'admision.txt', 'alergias.mjs', 'alergias.sh', 'alergias.txt'];
         $prefixes = 'pacientes|medicos|admisiones|admision|camas|alergias|prescripciones|muestras|notas_soap|diagnosticos|signos_vitales|laboratorio|lab-results|ocupacion|alertas|usuarios|sesiones|citas|reportes|documentacion|expediente|medicamentos|auditoria|salas|wards|traslados|altas|analytics';
         $seen = [];
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('docs')));

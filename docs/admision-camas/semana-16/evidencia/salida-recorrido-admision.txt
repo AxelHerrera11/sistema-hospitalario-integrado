@@ -1,0 +1,12 @@
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  médico sin camas.ver → 403 RBAC                                 esperado 403, obtenido 403
+PASS  recepción lista camas UCI → 200                                 esperado 200, obtenido 200
+      camas UCI disponibles: 1
+PASS  médico intenta admitir (sin admisiones.registrar) → 403         esperado 403, obtenido 403
+PASS  recepción admite al paciente 1 en la UCI → 201                  esperado 201, obtenido 201
+PASS  paciente 2 en la misma cama → 409 BED_NOT_AVAILABLE              esperado 409, obtenido 409
+PASS  paciente 1 otra vez → 409 PATIENT_ALREADY_ADMITTED               esperado 409, obtenido 409
+PASS  sin motivo → 422                                                 esperado 422, obtenido 422
+PASS  recepción lista camas UCI de nuevo → 200 (ninguna)              esperado 200, obtenido 200
+      camas UCI disponibles: 0
