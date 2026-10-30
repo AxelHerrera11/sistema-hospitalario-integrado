@@ -43,7 +43,28 @@ final class MedicationCatalogSecurityTest extends TestCase
         CatalogTestIdentity::as('admin_hospital');
         $this->postJson('/api/v1/medications', ['code' => 'ibu-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
             'pharmacological_group' => 'AINE', 'validity' => 'inactive', 'medication_id' => '999', 'hospital_id' => 'hospital-b'])
-            ->assertStatus(201)->assertJsonPath('medication.validity', 'active')->assertJsonPath('medication.medication_id', '2');
+            ->assertStatus(422)->assertJsonPath('error', 'MEDICATION_INVALID')->assertJsonPath('field', 'validity');
+        $this->assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM medications')->fetchColumn());
+    }
+
+    public function test_t2b_validity_change_rejects_unknown_fields_without_writing(): void
+    {
+        CatalogTestIdentity::as('admin_hospital');
+        $id = (string) $this->pdo->query('SELECT medication_id FROM medications')->fetchColumn();
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive', 'hospital_id' => 'hospital-b'])
+            ->assertStatus(422)->assertJsonPath('field', 'hospital_id');
+        $this->assertSame('active', $this->pdo->query('SELECT validity FROM medications')->fetchColumn());
+    }
+
+    public function test_t2c_limit_is_applied_and_validated(): void
+    {
+        $this->pdo->exec("INSERT INTO medications (code, name, active_ingredient, pharmacological_group, validity)
+            VALUES ('AMX-250', 'Amoxicilina 250 mg', 'Amoxicilina', 'Antibiótico', 'active')");
+        $this->getJson('/api/v1/medications?q=amox')->assertOk()->assertJsonPath('count', 2);
+        $this->getJson('/api/v1/medications?q=amox&limit=1')->assertOk()->assertJsonPath('count', 1);
+        foreach (['0', '51', 'abc', '1.5', '-1'] as $limit) {
+            $this->getJson('/api/v1/medications?q=amox&limit='.$limit)->assertStatus(422)->assertJsonPath('field', 'limit');
+        }
     }
 
     public function test_t3_tenant_comes_from_the_context_not_from_headers_or_body(): void
