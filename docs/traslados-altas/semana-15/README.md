@@ -27,3 +27,20 @@ node --test micro-his/traslados-altas/tests/ui-mensajes.test.mjs
 TRASLADOS_PG_DSN="pgsql:host=127.0.0.1;port=55433;dbname=<base>_test" TRASLADOS_PG_PASSWORD=<clave local> php micro-his/traslados-altas/tests/postgres.php
 TRASLADOS_PG_DSN=… TRASLADOS_PG_PASSWORD=… php micro-his/traslados-altas/tests/concurrencia.php 10
 ```
+
+## Capturas de la ejecución (30/10/2026)
+
+Chrome headless, API Laravel y PostgreSQL con datos ficticios. No son revisión humana. **Los permisos se activaron con la rama de la propuesta #1577, aún no integrada:** sobre `develop` todo responde 403.
+
+| Caso | Captura |
+|---|---|
+| Consulta de la estancia | [01](./capturas/01-consulta-1024.png) |
+| Motivo vacío | [02](./capturas/02-motivo-vacio-1024.png) |
+| Cama ocupada, sin cambios | [03](./capturas/03-cama-ocupada-1024.png) |
+| Traslado confirmado | [04](./capturas/04-traslado-confirmado-1024.png) |
+| Alta confirmada a 375 px | [05](./capturas/05-alta-375.png) |
+| Recepción sin entrada en el menú | [06](./capturas/06-recepcion-sin-acceso-1024.png) |
+| Miembro de otro hospital | [07](./capturas/07-otro-hospital-1024.png) |
+
+Script: [`evidencia/capturas-ui.mjs`](./evidencia/capturas-ui.mjs). Resultado: 8/8, en [`evidencia/salida-capturas-ui.txt`](./evidencia/salida-capturas-ui.txt).
+

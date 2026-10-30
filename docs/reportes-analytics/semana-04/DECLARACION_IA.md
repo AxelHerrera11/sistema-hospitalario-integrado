@@ -14,3 +14,5 @@ el módulo PHP ya integrado de la Semana 3.
   responsabilidades y verificó que cada fila de la tabla corresponde con
   el código vigente en `develop`.
 - No se generó ni modificó código del cuerpo del sistema en esta semana.
+
+**Nota del 30/10/2026:** las afirmaciones de revisión o edición humana de este archivo no tienen confirmación registrada. Ver [`../DECLARACION_IA.md`](../DECLARACION_IA.md).
