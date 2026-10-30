@@ -29,7 +29,7 @@ Windows 11, PHP 8.2.12, Laravel 12.58.0, Node 24.15.0, PostgreSQL 17.10 (clúste
 | `node fallo-e2e.mjs http://127.0.0.1:8771 <hospital A>` (HOSPITAL inexistente) | 4/4 | 0 |
 
 **Recorrido E2E (11/11):**
-- **admin_hospital:** registra `ASA-100` (201) y ve el éxito. El duplicado da 409, con el error junto al código y sin éxito. La validación local marca código y nombre. «ÁCIDO» encuentra el registro y una búsqueda sin resultados muestra el estado vacío. El cambio de vigencia da 200 y, al volver a la pantalla, se lee del servidor «No vigente».
+- **admin_hospital:** registra `ASA-100` (201) y ve el éxito. El duplicado da 409, con el error junto al código y sin éxito. La validación local marca código y nombre. «ácido», «ÁCIDO», «acido» y «ACIDO» encuentran el registro y una búsqueda sin resultados muestra el estado vacío. El cambio de vigencia da 200 y, al volver a la pantalla, se lee del servidor «No vigente».
 - **Enfermería:** no ve alta ni cambio de vigencia, y en 375 px no hay desplazamiento horizontal.
 - **Recepción:** ve el aviso de falta de `medicamentos.ver`.
 

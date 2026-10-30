@@ -3,7 +3,10 @@ PASS  admin_hospital ve el formulario de alta
 PASS  alta desde la interfaz → 201 y mensaje de éxito
 PASS  duplicado → 409 y error junto al código, sin éxito
 PASS  validación local antes de enviar (código y nombre)
+PASS  búsqueda "ácido" encuentra el registro
 PASS  búsqueda "ÁCIDO" encuentra el registro
+PASS  búsqueda "acido" encuentra el registro
+PASS  búsqueda "ACIDO" encuentra el registro
 PASS  búsqueda sin coincidencias muestra estado vacío
 PASS  el diálogo repite código, nombre, principio activo y estado destino
 PASS  el foco inicial queda en Cancelar
@@ -17,4 +20,4 @@ PASS  en 375 px no hay desplazamiento horizontal
   login recepcion@prueba.local: 200
 PASS  recepción no tiene el enlace del catálogo en el menú
 PASS  sin sesión del cliente la API responde 4xx
-16/16 comprobaciones
+19/19 comprobaciones
