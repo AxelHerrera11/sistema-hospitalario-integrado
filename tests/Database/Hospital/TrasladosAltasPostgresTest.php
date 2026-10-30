@@ -49,9 +49,9 @@ class TrasladosAltasPostgresTest extends TestCase
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
 
-    public function test_pending_permissions_deny_and_write_nothing(): void
+    public function test_a_role_without_the_permission_is_denied_and_writes_nothing(): void
     {
-        TrasladosTestIdentity::como('enfermeria', self::USUARIO);
+        TrasladosTestIdentity::como('medico', self::USUARIO);
         $this->postJson('/api/v1/traslados', ['estancia_esperada_id' => $this->estancia, 'cama_destino_id' => $this->camaB, 'motivo' => 'Aislamiento'])
             ->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM bed_stays'));
@@ -59,9 +59,6 @@ class TrasladosAltasPostgresTest extends TestCase
 
     public function test_transfer_and_discharge_persist_through_the_api(): void
     {
-        // Activación SIMULADA solo dentro de la prueba; config/rbac.php los mantiene en pending.
-        config()->set('rbac.roles.enfermeria', [...config('rbac.roles.enfermeria'), 'traslados.registrar']);
-        config()->set('rbac.roles.medico', [...config('rbac.roles.medico'), 'altas.registrar']);
         TrasladosTestIdentity::como('enfermeria', self::USUARIO);
         $destino = $this->postJson('/api/v1/traslados', ['estancia_esperada_id' => $this->estancia, 'cama_destino_id' => $this->camaB, 'motivo' => 'Aislamiento'])
             ->assertStatus(201)->json('estancia_destino_id');
@@ -77,7 +74,6 @@ class TrasladosAltasPostgresTest extends TestCase
 
     public function test_user_without_local_reference_is_rejected_by_the_real_resolver(): void
     {
-        config()->set('rbac.roles.medico', [...config('rbac.roles.medico'), 'altas.registrar']);
         TrasladosTestIdentity::como('medico', '00000000-0000-4000-8000-00000000c0ff');
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $this->estancia])->assertStatus(403)->assertJsonPath('codigo', 'ACTOR_SIN_REFERENCIA_LOCAL');
         $this->assertTrue((bool) DB::connection('hospital')->scalar('SELECT ended_at IS NULL FROM bed_stays WHERE bed_stay_id = ?', [$this->estancia]));
