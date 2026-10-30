@@ -1,31 +1,25 @@
-# ASII-23 Semana 6 — Primer parcial: guion de exposición (reportes)
+# ASII-23 Semana 6 — Primera evaluación parcial
 
-**Issue:** `Refs #152`. Evaluación tipo "Primer evaluativo" — el estudiante
-defiende el diseño del cálculo; esta guía sirve para ensayar y para rendir.
+**Issue:** `Refs #152` · **Estudiante:** María Yamilet Lindo Pablo (`Yamilet1235`).
+
+## Entregables
+
+| Requisito | Evidencia |
+|---|---|
+| Presentación de 6 a 8 diapositivas | [`presentacion.pdf`](./presentacion.pdf) (8). Fuente: [`fuentes/presentacion.md`](./fuentes/presentacion.md) |
+| Diagrama trazable | [`01-trazabilidad.png`](./01-trazabilidad.png). Fuente: [`fuentes/01-trazabilidad.dot`](./fuentes/01-trazabilidad.dot) |
+| Matriz decisión → evidencia | [`matriz-decisiones.md`](./matriz-decisiones.md) |
+| Registro del cambio práctico | [`cambio-practico.md`](./cambio-practico.md): **ejercicio simulado**; ningún docente lo pidió |
+
+**No realizado:** la defensa oral y la respuesta a un cambio pedido por el docente. Se registran solo cuando ocurran.
 
 ## Guion de 6 minutos
 
-1. **Problema (30 s):** coordinación necesita el % de hospitalizaciones
-   canceladas; hoy se suma a mano con exportaciones parciales.
-2. **Semana 1 — regla acordada (1 min):** `IND-RA-01`/`TCI-1.0` = `100 ×
-   N_cancelados / N_finalizados` sobre `HOSPITAL.care_episodes`
-   (`type='inpatient'`, `status ∈ {closed,cancelled}`); periodo medio abierto
-   `[desde, hasta)` sobre `ended_at`; fallback obligatorio; sin denuestos
-   inventados, con `SIN_DATOS_EN_PERIODO` cuando el periodo no trae datos.
-3. **Semana 2 — LSP (1 min):** el ejemplo ejecutable muestra una jerarquía
-   rígida que rompe el contrato (precondiciones más fuertes con
-   denominador 0) y su sustitución por el puerto `SummaryReader`.
-4. **Semanas 3–4 — arquitectura (2 min):** cuatro capas (Presentation/
-   Application/Domain/Persistence) y repositorio con consulta preparada;
-   `app.php` como raíz de composición.
-5. **Demo o captura (1 min):** POST del endpoint con periodo y ver el
-   porcentaje con dos decimales.
-6. **Cierre (30 s):** flasado de garantías y PRs.
+1. **Problema (30 s):** qué mide el indicador y qué errores no puede cometer.
+2. **Regla (1 min):** fórmula, periodo y estados.
+3. **LSP (1 min):** bloques ANTES y DESPUÉS de `example-lsp.php`.
+4. **Arquitectura (2 min):** cuatro capas y puerto de lectura.
+5. **Demostración (1 min):** enero, 25.00 %.
+6. **Cierre (30 s):** evidencia ejecutada y cambio practicado.
 
-## Con enzyme del seminario — qué preguntan los jurados y cómo responder
-
-- «¿Y si no hay datos?» — estado publicado, ni 0 % ni 500.
-- «¿Qué pasa si la base cae?» — 503 sin cifras previas.
-- «¿Filtrar por sala?» — `service_code` opcional en la consulta preparada.
-- «¿Alguien ve datos de pacientes?» — no: solo agregados y trazas mínimas.
-- «¿Quién autoriza?» — RBAC del backend (`reportes.ver`), no el SPA.
+Regenerar el PDF: `npx @marp-team/marp-cli@4.1.2 docs/reportes-analytics/semana-06/fuentes/presentacion.md --pdf --allow-local-files -o docs/reportes-analytics/semana-06/presentacion.pdf`
