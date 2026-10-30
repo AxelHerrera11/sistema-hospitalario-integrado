@@ -1,0 +1,24 @@
+%% ANTES (diseño inicial descartado, no implementado): el controlador depende de detalles concretos.
+classDiagram
+    direction LR
+    class ExpedienteController {
+        +consultar(codigo, usuario, hospital) array
+        +abrir(codigo, usuario, hospital) array
+        -PDO pdo
+        -verificarRol(rol) bool
+        -SELECT ... FROM medical_records
+        -INSERT INTO audit_log ...
+    }
+    class PDO {
+        <<concreto>>
+    }
+    class rbac_php["config/rbac.php"] {
+        <<archivo>>
+    }
+    class audit_log["tabla audit_log"] {
+        <<tabla>>
+    }
+    ExpedienteController --> PDO : crea y usa
+    ExpedienteController --> rbac_php : lee roles y decide
+    ExpedienteController --> audit_log : escribe SQL directo
+    note for ExpedienteController "Alto nivel (regla clínica) depende de bajo nivel:\nno se prueba sin base, duplica RBAC y Gobernanza\ny mezcla HTTP, reglas y SQL"

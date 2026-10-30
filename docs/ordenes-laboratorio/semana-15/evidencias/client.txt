@@ -1,0 +1,7 @@
+PASS  cliente crea la orden por HTTP → 201
+PASS  cliente consulta la orden → 200
+PASS  cliente avanza a COLLECTED → 200
+PASS  cliente cancela con motivo → 200
+PASS  cliente lista por estado → 200
+PASS  servidor caído lanza LabOrdersUnavailable
+OK: verificaciones del cliente aprobadas

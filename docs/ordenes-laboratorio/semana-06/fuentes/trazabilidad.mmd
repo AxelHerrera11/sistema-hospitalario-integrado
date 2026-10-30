@@ -1,0 +1,72 @@
+flowchart LR
+  subgraph ACT[Actores]
+    A1([Médico])
+    A2([Personal de laboratorio])
+    A3([Auditor / calidad])
+  end
+
+  subgraph CU[Casos de uso]
+    CU1((CU-OL-01<br/>Emitir orden))
+    CU2((CU-OL-02<br/>Consultar estado))
+    CU3((CU-OL-03<br/>Avanzar estado))
+    CU4((CU-OL-04<br/>Cancelar orden))
+    CU5((CU-OL-05<br/>Listar órdenes))
+  end
+
+  subgraph RF[Requisitos]
+    RF1[RF-OL-01/02/03<br/>emisión coherente]
+    RF2[RF-OL-04<br/>idempotencia]
+    RF3[RF-OL-05/08<br/>consulta y listado]
+    RF4[RF-OL-06/07<br/>transiciones y cancelación]
+    RF5[RF-OL-09/10<br/>tenant y trazabilidad]
+    RF6[RF-OL-11/12<br/>errores seguros y permisos]
+    RNF[RNF-OL-01/02/05<br/>atomicidad y append-only]
+  end
+
+  subgraph DIS[Diseño y código]
+    D1[LabOrder · IssueLabOrder]
+    D2[LabOrderRepository<br/>UNIQUE tenant + key]
+    D3[FindLabOrder · ListLabOrders]
+    D4[AdvanceLabOrder · CancelLabOrder]
+    D5[lab_order_events append-only]
+    D6[ApiKernel · presentador<br/>problem+json · X-Permissions]
+    D7[PdoLabOrderRepository<br/>transacción]
+  end
+
+  subgraph EVI[Evidencia]
+    E1[tests/run.php<br/>25 × 3 adaptadores]
+    E2[tests/mvc.php<br/>12 verificaciones]
+    E3[tests/api.php<br/>18 verificaciones]
+    E4[tests/client.php<br/>6 verificaciones]
+    E5[docs semana-05/openapi.yaml]
+  end
+
+  A1 --> CU1 & CU2 & CU4 & CU5
+  A2 --> CU2 & CU3
+  A3 --> CU2 & CU5
+
+  CU1 --> RF1 & RF2 & RF5 & RF6
+  CU2 --> RF3 & RF5 & RF6
+  CU3 --> RF4 & RF5 & RF6
+  CU4 --> RF4 & RF5 & RF6
+  CU5 --> RF3 & RF5 & RF6
+
+  RF1 --> D1
+  RF2 --> D2
+  RF3 --> D3
+  RF4 --> D4
+  RF5 --> D5
+  RF6 --> D6
+  RNF --> D7
+
+  D1 --> E1
+  D2 --> E1
+  D3 --> E2 & E3
+  D4 --> E2 & E4
+  D5 --> E1
+  D6 --> E3
+  D7 --> E1
+  E3 --> E5
+
+  classDef actor fill:#eef5ff,stroke:#3b6ea5,stroke-width:1px;
+  class A1,A2,A3 actor;

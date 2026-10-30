@@ -35,6 +35,7 @@ final readonly class LabTest
     {
         $ranges = [$this->referenceLow, $this->referenceHigh, $this->criticalLow, $this->criticalHigh];
         $rule = match (true) {
+            !preg_match('/^[A-Z0-9][A-Z0-9._-]{1,31}$/', $this->code) => ['CODE_INVALID', 'code'],
             $this->minVolumeMl <= 0 => ['SPECIMEN_REQUIREMENT_INVALID', 'min_volume_ml'],
             !in_array($this->resultType, ['numeric', 'qualitative', 'text'], true) => ['RESULT_TYPE_UNSUPPORTED', 'result_type'],
             $this->resultType === 'numeric' && ($this->unit === null || in_array(null, $ranges, true)) => ['RANGES_INCOHERENT', 'unit'],

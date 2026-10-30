@@ -13,6 +13,7 @@ use MicroHis\Medicos\Persistence\ConfigScheduleProvider;
 use MicroHis\Medicos\Persistence\InMemoryAppointmentReader;
 use MicroHis\Medicos\Persistence\InMemoryDoctorRepository;
 use MicroHis\Medicos\Persistence\PdoDoctorStore;
+use MicroHis\Medicos\Persistence\PdoScheduleProvider;
 use MicroHis\Medicos\Presentation\DoctorController;
 use MicroHis\Medicos\Presentation\Request;
 use MicroHis\Medicos\Presentation\Router;
@@ -128,6 +129,14 @@ $zonas->exec("INSERT INTO appointments VALUES ('doc-ana', '2026-10-19 14:30:00',
 check('PostgreSQL: las citas se leen en la zona del hospital (UTC-6: 14:30Z es 08:30 del 19 y 05:30Z del 20 cae el 19 a las 23:30)',
     (new PdoDoctorStore($zonas, 'America/Guatemala'))->busySlots('doc-ana', '2026-10-19') === ['08:30', '23:30']
     && (new PdoDoctorStore($zonas))->busySlots('doc-ana', '2026-10-19') === ['14:30']);
+
+$horarios = new PDO('sqlite::memory:');
+$horarios->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
+$horarios->exec("INSERT INTO doctor_schedules VALUES ('doc-ana', 'sp-neuro', 1, 480, 570, 30, '2026-01-01', '2026-12-01', 'active'), ('doc-ana', 'sp-neuro', 1, 840, 900, 30, '2026-01-01', NULL, 'inactive')");
+$horario = new PdoScheduleProvider($horarios);
+check('doctor_schedules: lunes 08:00-09:30 vigente; martes sin franjas ([]); médico sin horario null', $horario->scheduleFor('doc-ana', '2026-10-19') === [['08:00', '09:30']]
+    && $horario->scheduleFor('doc-ana', '2026-10-20') === [] && $horario->scheduleFor('doc-beto', '2026-10-19') === null);
+check('doctor_schedules: fuera de vigencia (valid_to exclusivo) y horario inactivo no cuentan', $horario->scheduleFor('doc-ana', '2026-12-01') === null);
 
 try {
     (new SpecialtyAssignmentPolicy)->assertCanAssociate(new Period('2026-01-01'), [new SpecialtyLink('x', true, new Period('2026-01-01'))], new SpecialtyLink('y', true, new Period('2026-05-01', '2026-06-01')));
