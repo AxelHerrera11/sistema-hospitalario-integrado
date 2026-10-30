@@ -1,30 +1,33 @@
-# ASII-23 Semana 11 — Prototipo navegable (parcial 2 en marcha)
+# ASII-23 Semana 11 — Prototipo navegable
 
-**Issue:** `Refs #152`. El "prototipo" de esta cohorte es el propio módulo
-integrado: no se entregan maquetas sueltas sino la pantalla real con datos
-reales de la base HOSPITAL.
+**Issue:** `Refs #152` · **Estudiante:** María Yamilet Lindo Pablo (`Yamilet1235`).
 
-## Checklist del prototipo (todo integrado en develop/main)
+El prototipo es la pantalla real integrada, con datos ficticios en PostgreSQL. No hay maqueta aparte.
 
-| Pasos del prototipo | Estado | Evidencia |
+## Mapa de navegación
+
+![Mapa de navegación](./mapa-navegacion.png)
+
+Fuente: [`fuentes/mapa-navegacion.dot`](./fuentes/mapa-navegacion.dot).
+
+## Capturas
+
+| Caso | Escritorio (1280 px) | Móvil (375 px) |
 |---|---|---|
-| Regla del indicador (Semana 1) | INTEGRADO | VCs y fórmula en `docs/reportes-analytics/semana-01` (SVG+PlantUML). |
-| Ejemplo LSP ejecutable (Semana 2) | INTEGRADO | `tests/example-lsp.php` — 7 comprobaciones. |
-| Micro-HIS 4 capas (Semana 3) | INTEGRADO | `micro-his/reportes-analytics/**` — `run.php` con 11 escenarios OK. |
-| MVC/Repository (Semana 4) | INTEGRADO | Mapeo por archivo en `docs/reportes-analytics/semana-04`. |
-| API REST (Semana 5) | INTEGRADO | `POST /api/v1/reports/indicators/IND-RA-01/calculate`. |
-| Pantalla "Reportes" (Semanas 8–10) | INTEGRADO | Ruta `/reportes` + navegación con `reportes.ver`. |
-| Datos reales (Semana 16) | INTEGRADO | `IndicatorHospitalIntegrationTest` contra `his_hospital_test`. |
+| Formulario | [01](./capturas/01-formulario-1280.png) | ver Semana 10 |
+| Camino feliz | [02](./capturas/02-resultado-25-1280.png) | [06](./capturas/06-resultado-375.png) |
+| Error crítico: periodo inválido | [03](./capturas/03-periodo-invertido-1280.png) | [07](./capturas/07-periodo-invertido-375.png) |
+| Sin datos | [04](./capturas/04-sin-datos-1280.png) | — |
+| Error crítico: base no disponible (**503 simulado**) | [05](./capturas/05-error-503-1280.png) | — |
+| Miembro de otro hospital | [08](./capturas/08-otro-hospital-1280.png) | — |
 
-## Cómo ensayarlo en 5 pasos (con local PostgreSQL)
+Generadas por [`evidencia/recorrido-e2e.mjs`](./evidencia/recorrido-e2e.mjs) (15/15, [`evidencia/salida-recorrido.txt`](./evidencia/salida-recorrido.txt)). Son de Chrome headless, no de una revisión humana.
 
-1. `php artisan serve` y `npm run dev` en dos terminales del repo.
-2. Login con el usuario ficticio creado con
-   `php artisan auth:provision-first-superadmin` (rol con `reportes.ver`).
-3. Menú "Reportes" → elegir `Desde 2026-01-01`, `Hasta 2026-02-01`.
-4. "Calcular" → porcentaje con dos decimales y trazabilidad.
-5. Repetir con `Hasta 2026-01-01` → mensaje "Revisa el periodo indicado."
+## Datos y servicios simulados
 
-Los datos del demo se siembran con el bloque SQL del manual del módulo
-(`docs/reportes-analytics/README.md`), que inserta un expediente sintético
-evidente y tres episodios en la base HOSPITAL del entorno local.
+- **Datos:** todos ficticios (`README.md` del módulo).
+- **503:** la respuesta se intercepta en el navegador. La caída real de la base la cubre `IndicatorHospitalIntegrationTest`.
+
+## Cómo probarla
+
+Pasos, URL y filtros en el manual del módulo: [`../README.md`](../README.md).

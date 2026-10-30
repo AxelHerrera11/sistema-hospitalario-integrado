@@ -1,31 +1,40 @@
-# ASII-23 Semana 10 — Movilidad del módulo de reportes
+# ASII-23 Semana 10 — Movilidad
 
-**Issue:** `Refs #152`. El módulo no inventa una app aparte: hereda la base
-móvil del SPA y concentra sus propios riesgos.
+**Issue:** `Refs #152` · **Estudiante:** María Yamilet Lindo Pablo (`Yamilet1235`).
 
-## Decisiones de movilidad
+El módulo no crea una aplicación aparte: adapta su pantalla real y hereda el menú móvil del sistema.
 
-| Aspecto | Decisión | Evidencia |
+## Pantallas (capturas reales de Chrome emulando móvil)
+
+| Pantalla | 320 px | 375 px | 430 px | 768 px |
+|---|---|---|---|---|
+| Formulario | [ver](./capturas/formulario-320.png) | [ver](./capturas/formulario-375.png) | [ver](./capturas/formulario-430.png) | [ver](./capturas/formulario-768.png) |
+| Resultado | [ver](./capturas/resultado-320.png) | [ver](./capturas/resultado-375.png) | [ver](./capturas/resultado-430.png) | [ver](./capturas/resultado-768.png) |
+| Error | [ver](./capturas/error-320.png) | — | — | — |
+
+## Breakpoints
+
+| Ancho | Formulario | Razón |
 |---|---|---|
-| Viewport | Meta viewport global `width=device-width, initial-scale=1` | `resources/views/app.blade.php` (una sola fuente de verdad; ninguna pantalla la sobrescribe). |
-| Inputs de fecha | `type="date"` nativos: el selector es el del sistema operativo (touch) | `ReportsPage.vue` (`rp-desde`, `rp-hasta`); `required` para bloquear envíos sin filtros. |
-| Formulario | Etiquetas con `for`/`id` y foco de teclado/touch | `reportes.a11y.test.mjs` los comprueba en cada commit. |
-| Errores en pantalla | `role="status"`/`role="alert"`: el lector de pantalla móvil lo anuncia | `ReportsPage.vue`; prueba estática. |
-| Sesión | Token y tenant persistidos por el SPA; sin re-login por giro de pantalla | `resources/js/plugins/axios.js` + guardia del router. |
+| Hasta 640 px | Una columna; botón a todo el ancho | Las fechas nativas necesitan ancho y el pulgar alcanza mejor el botón |
+| Más de 640 px | Tres columnas; botón a la izquierda | Filtros comparables en una sola línea |
 
-## Guía de verificación en dispositivo
+Los controles miden 44 px o más en todos los anchos. Medición: [`evidencia/salida-movilidad.txt`](./evidencia/salida-movilidad.txt).
 
-1. Abrir `http://127.0.0.1:8000/reportes` en el navegador del teléfono
-   (misma red; ajustar host de Vite si se usa `npm run dev -- --host`).
-2. Confirmar: página a ancho de dispositivo sin zoom inicial; campos de
-   fecha abren el selector nativo; "Calcular" táctil con un dedo.
-3. Girar el dispositivo: el estado (filtros y último resultado) se
-   conserva; no hay re-login.
-4. Con lector de pantalla activado, oír el anuncio "Calculando…" y la
-   leyenda del resultado.
+## Escenarios móviles
 
-## PR y promo
+### 1. Revisar la tasa durante un recorrido por las salas
 
-La pantalla, su ruta `/reportes` y su navegación con permiso
-`reportes.ver` se integraron en PR #1248 (236 líneas) y se promovieron en
-#1254; la base global del SPA era anterior y se reutiliza sin duplicar.
+Una coordinadora abre Reportes en el teléfono, elige del 01/01 al 01/02 con el selector nativo y calcula. Lee el 25.00 % sin hacer zoom. Si gira el teléfono, los filtros se conservan.
+
+### 2. Equivocarse de fechas con la conexión inestable
+
+Invierte las fechas y ve el error sin que se envíe nada. Corrige y calcula. Si la red o la base fallan, ve un aviso sin cifra y puede volver a pulsar «Calcular» sin perder los filtros.
+
+Son escenarios de diseño: **no se probaron con personas ni con un teléfono físico.**
+
+## Reproducir
+
+```bash
+E2E_PASSWORD=... E2E_DOMINIO=a.local node docs/reportes-analytics/semana-10/evidencia/movilidad.mjs <url> <hospital> <carpeta>
+```
