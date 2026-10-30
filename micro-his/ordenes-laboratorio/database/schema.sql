@@ -1,4 +1,5 @@
--- Subconjunto portable (PostgreSQL 13+ y SQLite) del esquema HOSPITAL para órdenes de laboratorio.
+-- Esquema portable (PostgreSQL 13+ y SQLite) del micro-HIS de órdenes de laboratorio. Es la propuesta para HOSPITAL:
+-- la migración Laravel 000600 aún no existe (specimens.lab_order_item_id la espera, ver 000601).
 -- Referencias lógicas a lab_tests, specimens y lab_result_versions: sus tablas pertenecen a otros
 -- módulos y no se crean aquí. El nombre y código de la prueba se guardan como instantánea.
 CREATE TABLE lab_orders (

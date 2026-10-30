@@ -1,0 +1,32 @@
+@startuml
+title ASII-24 - Trazabilidad requisito -> caso de uso -> componente -> prueba
+left to right direction
+rectangle "RF-01 publicar" as rf1 #LightYellow
+rectangle "CU Publicar documento" as cu1 #Paleturquoise
+rectangle "PublicarDocumento" as co1 #LightBlue
+rectangle "prueba: aplicacion: camino feliz publica y lista por rol" as pr1 #LightGreen
+rf1 --> cu1
+cu1 --> co1
+co1 --> pr1
+rectangle "RF-02 catalogo por rol" as rf2 #LightYellow
+rectangle "CU Consultar catalogo" as cu2 #Paleturquoise
+rectangle "ConsultarDocumentos" as co2 #LightBlue
+rectangle "prueba: aplicacion: no lista documentos de otro rol" as pr2 #LightGreen
+rf2 --> cu2
+cu2 --> co2
+co2 --> pr2
+rectangle "RF-03 sin roles" as rf3 #LightYellow
+rectangle "CU Publicar documento" as cu3 #Paleturquoise
+rectangle "Documento::publicar" as co3 #LightBlue
+rectangle "prueba: dominio: rechaza documento sin roles" as pr3 #LightGreen
+rf3 --> cu3
+cu3 --> co3
+co3 --> pr3
+rectangle "RF-04 normalizar roles" as rf4 #LightYellow
+rectangle "CU Publicar documento" as cu4 #Paleturquoise
+rectangle "Documento" as co4 #LightBlue
+rectangle "prueba: dominio: normaliza y detecta visibilidad por rol" as pr4 #LightGreen
+rf4 --> cu4
+cu4 --> co4
+co4 --> pr4
+@enduml

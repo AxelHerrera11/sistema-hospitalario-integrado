@@ -8,6 +8,11 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
+            path: '/recepcion-muestras', name: 'recepcion-muestras',
+            component: () => import('@/modules/recepcion-muestras/ReceptionPage.vue'),
+            meta: { requiresAuth: true, permission: 'muestras.ver' },
+        },
+        {
             path: '/ocupacion',
             name: 'ocupacion',
             component: () => import('@/modules/ocupacion/pages/OccupancyPage.vue'),
@@ -20,10 +25,22 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.medicamentos },
         },
         {
+            path: '/prescripciones',
+            name: 'prescripciones',
+            component: () => import('@/modules/prescripciones/pages/PrescriptionsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.prescripciones },
+        },
+        {
             path: '/traslados',
             name: 'traslados',
             component: () => import('@/modules/traslados/pages/TrasladosPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.traslados },
+        },
+        {
+            path: '/alergias',
+            name: 'alergias',
+            component: () => import('@/modules/alergias/pages/AllergiesPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.alergias },
         },
         {
             path: '/rbac',
@@ -58,6 +75,42 @@ const router = createRouter({
             name: 'patients',
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.patients },
+        },
+        {
+            path: '/wards',
+            name: 'wards',
+            component: () => import('@/modules/salas-camas/pages/WardCatalogPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.wards },
+        },
+        {
+            path: '/nativephp',
+            name: 'nativephp',
+            component: () => import('@/modules/nativephp/pages/NativePhpPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.nativephp },
+        },
+        {
+            path: '/lab-validation',
+            name: 'lab-validation',
+            component: () => import('@/modules/laboratorio/pages/ValidationPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-validation'] },
+        },
+        {
+            path: '/lab-results',
+            name: 'lab-results',
+            component: () => import('@/modules/laboratorio/pages/LabResultsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-results'] },
+        },
+        {
+            path: '/reportes',
+            name: 'reportes',
+            component: () => import('@/modules/reportes/pages/ReportsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.reportes },
+        },
+        {
+            path: '/admision',
+            name: 'admision',
+            component: () => import('@/modules/admision/pages/AdmissionPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.admision },
         },
         ...Object.entries({
             new: ROUTE_PERMISSIONS['patients-new'],

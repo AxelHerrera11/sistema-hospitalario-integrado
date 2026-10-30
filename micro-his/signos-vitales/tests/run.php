@@ -42,7 +42,7 @@ function app(): array
 /** Petición por la capa MVC (Router -> Controller -> View); devuelve el estado y el cuerpo JSON ya decodificado. */
 function post(Router $router, array $headers, string $episodeId, array $body, string $path = ''): array
 {
-    $response = $router->dispatch(new Request('POST', $path ?: "/episodes/$episodeId/vital-signs", $headers, $body));
+    $response = $router->dispatch(new Request('POST', $path ?: "/care-episodes/$episodeId/vital-signs", $headers, $body));
     return ['status' => $response['status'], 'body' => json_decode($response['body'], true)];
 }
 
@@ -96,7 +96,7 @@ check('error de persistencia: auditoría caída -> 500, rollback y sin notificac
 
 // Capa MVC: rutas, vista y adaptador InMemory sin base de datos.
 check('MVC: ruta desconocida -> 404 ROUTE_NOT_FOUND', $status(post($http, $lopez, 'ep1', [], '/otra-ruta')) === '404 ROUTE_NOT_FOUND');
-$response = $http->dispatch(new Request('POST', '/episodes/ep1/vital-signs', $lopez, ['heart_rate' => 138] + $hora));
+$response = $http->dispatch(new Request('POST', '/care-episodes/ep1/vital-signs', $lopez, ['heart_rate' => 138] + $hora));
 check('MVC: la vista entrega JSON UTF-8 con Content-Type', $response['headers']['Content-Type'] === 'application/json; charset=utf-8' && is_array(json_decode($response['body'], true)));
 
 $memory = new InMemoryVitalSignRepository();

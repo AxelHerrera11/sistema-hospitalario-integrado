@@ -18,6 +18,13 @@ final readonly class SoapSections
         }
     }
 
+    /** Reconstruye las secciones desde el `content` guardado por toJson(). */
+    public static function fromJson(string $content): self
+    {
+        $s = json_decode($content, true, 2, JSON_THROW_ON_ERROR);
+        return new self($s['S'], $s['O'], $s['A'], $s['P']);
+    }
+
     public function toJson(): string
     {
         return json_encode(['S' => $this->subjective, 'O' => $this->objective, 'A' => $this->assessment, 'P' => $this->plan], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
