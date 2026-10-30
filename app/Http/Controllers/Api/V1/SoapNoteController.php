@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\TrasladosAltas\ResolutorActorLocal;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use MicroHis\NotasSoap\Presentation\Request as SoapRequest;
 use MicroHis\NotasSoap\Presentation\Router as SoapRouter;
+use PDOException;
 
 /**
  * API v1 de Notas SOAP (contrato de Semana 5). Delgado: autenticación, tenant y permiso los aplican los middlewares de
@@ -17,7 +20,7 @@ use MicroHis\NotasSoap\Presentation\Router as SoapRouter;
  */
 final class SoapNoteController extends Controller
 {
-    public function __construct(private readonly SoapRouter $notes)
+    public function __construct(private readonly SoapRouter $notes, private readonly ResolutorActorLocal $actors)
     {
     }
 
@@ -36,14 +39,26 @@ final class SoapNoteController extends Controller
         return $this->forward($request, 'GET', '/soap-notes/' . rawurlencode($note));
     }
 
-    /** El actor sale de la identidad autenticada (servidor), nunca de una cabecera ni del cuerpo. */
+    /**
+     * El actor sale de la identidad autenticada (servidor), nunca de una cabecera ni del cuerpo: el usuario CENTRAL del JWT
+     * se traduce a su referencia en local_user_refs del hospital, que es la que guardan la autoría y la auditoría.
+     */
     private function forward(Request $request, string $method, string $path): JsonResponse
     {
         $traceId = (string) Str::uuid();
         $body = $this->body($request);
-        $response = $body === null
-            ? ['status' => 422, 'body' => json_encode(['code' => 'PAYLOAD_INVALID'], JSON_THROW_ON_ERROR)]
-            : $this->notes->dispatch(new SoapRequest($method, $path, ['X-User-ID' => (string) $request->user('api')?->getAuthIdentifier()], $body));
+        try {
+            $actor = $this->actors->referencia((string) $request->user('api')?->getAuthIdentifier());
+        } catch (PDOException|QueryException) {
+            $actor = false;
+        }
+        $error = static fn (int $status, string $code): array => ['status' => $status, 'body' => json_encode(['code' => $code], JSON_THROW_ON_ERROR)];
+        $response = match (true) {
+            $actor === false => $error(503, 'HOSPITAL_NO_DISPONIBLE'),
+            $actor === null => $error(403, 'ACTOR_SIN_REFERENCIA_LOCAL'), // mismo código que Traslados y Expediente
+            $body === null => $error(422, 'PAYLOAD_INVALID'),
+            default => $this->notes->dispatch(new SoapRequest($method, $path, ['X-User-ID' => $actor], $body)),
+        };
         $data = json_decode($response['body'], true, 512, JSON_THROW_ON_ERROR) + ['trace_id' => $traceId];
 
         return response()->json($data, $response['status'])->header('X-Trace-Id', $traceId)->header('Cache-Control', 'no-store, private');
