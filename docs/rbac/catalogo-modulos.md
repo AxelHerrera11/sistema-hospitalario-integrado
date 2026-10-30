@@ -81,7 +81,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `alertas.acusar` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.cerrar` | Sí | — | Sí | — | — | — | — | — |
 | `traslados.registrar` | — | — | — | Sí | — | — | — | — |
-| `altas.registrar` | — | — | — | — | — | — | — | — |
+| `altas.registrar` | — | — | Sí | — | — | — | — | — |
 | `traslados.ver` | — | — | Sí | Sí | — | — | — | — |
 
 ## Contratos conciliados y decisiones
@@ -102,7 +102,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
 | NativePHP, `docs/nativephp/semana-05/contrato-api.md` | consume lab-results.read/correct; no recibe permisos por ser cliente |
-| Traslados y altas, `docs/traslados-altas` | traslados.registrar y traslados.ver activos para enfermería; traslados.ver activo para médico; altas.registrar sigue **pending**. Ver la sección de activación |
+| Traslados y altas, `docs/traslados-altas` | traslados.registrar y traslados.ver activos para enfermería; altas.registrar y traslados.ver activos para médico. Ver la sección de activación |
 | Prescripciones y alertas | conserva permisos activos y la política pendiente de excepción de alergia |
 | Usuarios/tenants/RBAC | conserva usuarios.*, tenants.crear, sesiones.revocar_ajenas y operaciones RBAC existentes |
 
@@ -214,17 +214,13 @@ La política entra en vigor al integrar este cambio; #622 por sí solo no la act
 
 ## Activación de traslados y altas
 
-Solicitada por ASII-08 (#908, #913). RBAC (ASII-02) recomienda consulta para enfermería y médico, traslado
-para enfermería, alta para médico y ningún permiso administrativo implícito. Es una recomendación, no una decisión final.
-
-Este PR activa `traslados.registrar` para `enfermeria` y `traslados.ver` para `enfermeria` y `medico`. Los demás roles,
-incluido `superadmin`, siguen sin estas concesiones.
-
-`altas.registrar` sigue en `pending` y responde 403 a todos. Falta decidir si el alta corresponde a cualquier médico
-autorizado del hospital o solo al tratante. Hoy el módulo exige el permiso y la referencia local; **no existe control
-de la relación médico-paciente**.
+Solicitada por ASII-08 (#908, #913) y pendiente de la decisión de RBAC (ASII-02) en este PR:
+`traslados.registrar` para `enfermeria`, `altas.registrar` para `medico` y `traslados.ver` para ambos.
+Se retiran de `pending`. Los demás roles, incluido `superadmin`, siguen sin estas concesiones;
+no hay herencia administrativa implícita.
 
 La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
 `local_user_refs`, estancia esperada, cama de destino disponible y transacción. La política entra en
 vigor al integrar este cambio; publicar los nombres no la activó.
 
+Esta variante no verifica la relación médico-paciente: cualquier `medico` con referencia local en el hospital puede dar el alta.

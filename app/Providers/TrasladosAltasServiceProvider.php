@@ -32,7 +32,6 @@ final class TrasladosAltasServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso; la base HOSPITAL debe ser del hospital del contexto.
-        // altas.registrar sigue en pending: RequirePermission responde 403 a todos hasta que se decida a quién corresponde.
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
             Route::post('traslados', [TrasladosAltasController::class, 'trasladar'])->middleware('rbac:traslados.registrar');
             Route::post('altas', [TrasladosAltasController::class, 'darAlta'])->middleware('rbac:altas.registrar');

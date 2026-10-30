@@ -54,8 +54,7 @@ Sigue vigente lo que falta confirmar en [`revision-humana.md`](./revision-humana
 
 | Bloqueo | Depende de | Qué falta |
 |---|---|---|
-| Activar consulta y traslado | RBAC (ASII-02) | Integrar #1577, tras la revisión de la autora |
-| Activar el alta | Grupo o responsable autorizado | Decidir si corresponde a cualquier médico autorizado del hospital o solo al tratante. Hoy no existe control de la relación médico-paciente |
+| Activar permisos | RBAC (ASII-02) | Decisión sobre #1577 |
 | Crear `local_user_refs` | Tenants e identidad | Sincronización de membresías CENTRAL |
 | Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Uso de `clinical_endpoint` |
 | Límite de tasa de `/api/v1` | API Gateway | Política definida y probada |
