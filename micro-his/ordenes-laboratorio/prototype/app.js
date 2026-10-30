@@ -313,3 +313,274 @@ function confirmView() {
   `;
 }
 
+function detailView() {
+  const order = findOrder(state.orderId) ?? orders[0];
+  state.orderId = order.id;
+  const next = NEXT[order.status];
+  const cancelDisabled = order.status === "VALIDATED" || order.status === "CANCELLED";
+  return `
+    <p class="eyebrow">Seguimiento</p>
+    <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div>
+        <h1>${esc(order.id)}</h1>
+        <div class="row">${badge(order.status)}<span class="meta">${esc(order.patient)} · ${esc(order.episode)}</span></div>
+      </div>
+      <a class="btn secondary" href="?vista=lista" data-nav="lista">Volver a la bandeja</a>
+    </div>
+    <div class="grid">
+      <div class="stack">
+        <section class="card">
+          <h2>Datos de la orden</h2>
+          <dl>
+            <div><dt>Paciente / episodio</dt><dd>${esc(order.patient)} · ${esc(order.episode)}</dd></div>
+            <div><dt>Nota clínica</dt><dd>${esc(order.note)}</dd></div>
+            <div><dt>Solicitada por</dt><dd>${esc(order.orderedBy)} · ${esc(order.at)}</dd></div>
+            <div><dt>Prioridad</dt><dd>${esc(order.priority)}</dd></div>
+          </dl>
+        </section>
+        <section class="card">
+          <h2>Pruebas</h2>
+          <div class="table-wrap">
+            <table>
+              <caption>Pruebas solicitadas en la orden ${esc(order.id)}</caption>
+              <thead><tr><th scope="col">Código</th><th scope="col">Prueba</th></tr></thead>
+              <tbody>${order.tests.map((t) => `<tr><td>${esc(t.id)}</td><td>${esc(t.name)}</td></tr>`).join("")}</tbody>
+            </table>
+          </div>
+        </section>
+        <section class="card">
+          <h2>Acciones</h2>
+          ${next ? `<button class="btn" type="button" data-action="advance">Avanzar a ${esc(STATUS[next].label)}</button>` : `<p class="meta">La orden está en su estado final; no hay más transiciones.</p>`}
+          <button class="btn danger" type="button" data-action="open-cancel" ${cancelDisabled ? "disabled" : ""} style="margin-top:10px">Cancelar orden</button>
+          ${cancelDisabled ? `<p class="hint">No se puede cancelar una orden ${order.status === "VALIDATED" ? "validada" : "ya cancelada"}.</p>` : `<p class="hint">Cancelar exige motivo y conserva el historial.</p>`}
+        </section>
+      </div>
+      <aside class="stack">
+        <section class="card">
+          <h2>Historial</h2>
+          <ol class="timeline">
+            ${order.events.slice().reverse().map((event) => `<li><strong>${esc(STATUS[event.status]?.label ?? event.status)}</strong><span>${esc(event.actor)} · ${esc(event.at)}</span><span>${esc(event.note)} · corr. ${esc(event.corr)}</span></li>`).join("")}
+          </ol>
+        </section>
+        <section class="card">
+          <h2>Trazabilidad</h2>
+          <p class="meta">Cada evento guarda estado anterior, nuevo, actor, fecha, motivo y correlation_id. El historial no se edita.</p>
+          <p class="mono">ID de correlación: ${esc(order.events[0]?.corr ?? "—")}</p>
+        </section>
+      </aside>
+    </div>
+  `;
+}
+
+function errorView() {
+  const error = state.error ?? { code: "INTERNAL_ERROR", message: "No fue posible completar la operación.", status: 500, requestId: requestId(), retry: null };
+  return `
+    <p class="eyebrow">Error recuperable</p>
+    <h1>No se pudo completar la acción</h1>
+    <div class="error-panel" id="error-panel" role="alert" tabindex="-1">
+      <h2>${esc(error.message)}</h2>
+      <p><strong>Código:</strong> <span class="mono">${esc(error.code)}</span> · <strong>HTTP:</strong> ${esc(error.status)}</p>
+      <p><strong>request_id:</strong> <span class="mono">${esc(error.requestId)}</span></p>
+      <p>Tus datos siguen en el formulario; no se creó ni modificó ninguna orden.</p>
+    </div>
+    <div class="row" style="margin-top:16px">
+      ${error.retry ? `<a class="btn" href="?vista=detalle&orden=${encodeURIComponent(error.retry.id)}" data-nav="detalle" data-id="${esc(error.retry.id)}">Volver al detalle</a>` : `<a class="btn" href="?vista=emision" data-nav="emision">Corregir pruebas</a>`}
+      <a class="btn secondary" href="?vista=lista" data-nav="lista">Ir a la bandeja</a>
+      <button class="btn ghost" type="button" data-action="copy-request">Copiar request_id</button>
+    </div>
+  `;
+}
+
+function advanceCurrent() {
+  const order = findOrder(state.orderId);
+  if (!order) return;
+  const next = NEXT[order.status];
+  if (!next) {
+    showError("INVALID_STATUS_TRANSITION", "La orden ya está en su estado final.", 409, { id: order.id });
+    return;
+  }
+  order.status = next;
+  order.updated = "ahora";
+  order.events.push({ status: next, actor: "Laboratorio", at: "ahora", note: "Transición registrada", corr: order.events[0].corr });
+  render();
+  toast(`Estado actualizado a ${STATUS[next].label}`);
+}
+
+function tryCancel(order) {
+  if (order.status === "VALIDATED") {
+    showError("ORDER_ALREADY_VALIDATED", "La orden ya fue validada y no se puede cancelar.", 409, { id: order.id });
+    return;
+  }
+  if (order.status === "CANCELLED") {
+    showError("INVALID_STATUS_TRANSITION", "La orden ya está cancelada.", 409, { id: order.id });
+    return;
+  }
+  openCancelDialog(order);
+}
+
+function openCancelDialog(order) {
+  state.cancelTarget = order.id;
+  const dialog = document.getElementById("cancel-dialog");
+  document.getElementById("cancel-reason").value = "";
+  document.getElementById("cancel-error").hidden = true;
+  dialog.showModal();
+  document.getElementById("cancel-reason").focus();
+}
+
+function issueOrder(button) {
+  if (state.issuing) return;
+  state.issuing = true;
+  button.disabled = true;
+  button.textContent = "Emitiendo…";
+  button.setAttribute("aria-busy", "true");
+  document.getElementById("issuing-status").textContent = "Enviando la orden de forma segura…";
+  setTimeout(() => {
+    const id = `ORD-${1043 + orders.length}`;
+    const now = new Date().toLocaleTimeString("es-GT", { hour: "2-digit", minute: "2-digit" });
+    const tests = state.draft.tests.map((testId) => {
+      const test = testById(testId);
+      return { id: test.id, name: test.name };
+    });
+    const order = {
+      id, patient: state.draft.patient, episode: state.draft.episode, note: state.draft.note,
+      priority: state.draft.priority, status: "ISSUED", orderedBy: "Dra. Méndez",
+      at: `hoy ${now}`, updated: `hoy ${now}`, tests,
+      events: [{ status: "ISSUED", actor: "Dra. Méndez", at: `hoy ${now}`, note: "Orden emitida", corr: requestId() }],
+    };
+    orders.unshift(order);
+    state.issuing = false;
+    state.lastCreated = id;
+    state.orderId = id;
+    state.draft = freshDraft();
+    state.view = "detalle";
+    render();
+    toast(`Orden ${id} emitida`);
+  }, 800);
+}
+
+document.addEventListener("click", (event) => {
+  const nav = event.target.closest("[data-nav]");
+  if (nav) {
+    event.preventDefault();
+    const view = nav.dataset.nav;
+    go(view, { id: nav.dataset.id || state.orderId });
+    return;
+  }
+  const add = event.target.closest("[data-add]");
+  if (add) {
+    const id = add.dataset.add;
+    const test = testById(id);
+    if (test?.active && !state.draft.tests.includes(id)) {
+      state.draft.tests.push(id);
+      renderFormParts();
+      toast(`${test.name} agregada`);
+    }
+    return;
+  }
+  const remove = event.target.closest("[data-remove]");
+  if (remove) {
+    state.draft.tests = state.draft.tests.filter((id) => id !== remove.dataset.remove);
+    renderFormParts();
+    return;
+  }
+  const action = event.target.closest("[data-action]")?.dataset.action;
+  if (action === "review") {
+    if (state.draft.tests.length === 0) return;
+    go("confirmar");
+  } else if (action === "issue") {
+    issueOrder(event.target.closest("[data-action]"));
+  } else if (action === "advance") {
+    advanceCurrent();
+  } else if (action === "open-cancel") {
+    const order = findOrder(state.orderId);
+    if (order) tryCancel(order);
+  } else if (action === "copy-request") {
+    const code = state.error?.requestId ?? "";
+    navigator.clipboard?.writeText(code).then(() => toast("request_id copiado")).catch(() => toast("Copia manual: " + code));
+  } else if (action === "close-dialog") {
+    document.getElementById("cancel-dialog").close();
+  } else if (event.target.id === "clear-filters") {
+    state.filters = { q: "", status: "" };
+    render();
+  }
+});
+
+document.addEventListener("input", (event) => {
+  if (event.target.id === "filter-q") {
+    state.filters.q = event.target.value;
+    renderListBody();
+  } else if (event.target.id === "filter-status") {
+    state.filters.status = event.target.value;
+    renderListBody();
+  } else if (event.target.id === "test-q") {
+    state.testQuery = event.target.value;
+    renderFormParts();
+  } else if (event.target.id === "clinical-context") {
+    state.draft.context = event.target.value;
+  }
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target.name === "priority") {
+    state.draft.priority = event.target.value;
+  } else if (event.target.id === "filter-status") {
+    state.filters.status = event.target.value;
+    renderListBody();
+  }
+});
+
+document.getElementById("cancel-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const reason = document.getElementById("cancel-reason").value.trim();
+  const error = document.getElementById("cancel-error");
+  if (reason.length < 5) {
+    error.hidden = false;
+    document.getElementById("cancel-reason").focus();
+    return;
+  }
+  const order = findOrder(state.cancelTarget);
+  const dialog = document.getElementById("cancel-dialog");
+  if (!order) { dialog.close(); return; }
+  if (order.status === "VALIDATED" || order.status === "CANCELLED") {
+    dialog.close();
+    showError("ORDER_ALREADY_VALIDATED", "La orden ya fue validada y no se puede cancelar.", 409, { id: order.id });
+    return;
+  }
+  order.status = "CANCELLED";
+  order.updated = "ahora";
+  order.events.push({ status: "CANCELLED", actor: "Dra. Méndez", at: "ahora", note: reason, corr: order.events[0].corr });
+  dialog.close();
+  state.view = "detalle";
+  state.orderId = order.id;
+  render();
+  toast("Orden cancelada con motivo");
+});
+
+document.getElementById("cancel-dialog").addEventListener("close", () => {
+  state.cancelTarget = null;
+  document.querySelector('[data-action="open-cancel"]')?.focus();
+});
+
+(function init() {
+  const params = new URLSearchParams(location.search);
+  const view = params.get("vista");
+  if (["lista", "emision", "confirmar", "detalle", "error"].includes(view)) state.view = view;
+  if (params.get("orden")) state.orderId = params.get("orden");
+  if (state.view === "emision" && state.draft.tests.length === 0) state.draft.tests = ["GLU"];
+  if (state.view === "confirmar" && state.draft.tests.length === 0) state.draft.tests = ["GLU", "HB"];
+  if (state.view === "error") {
+    const code = params.get("code") || "LAB_TEST_NOT_ACTIVE";
+    state.error = {
+      code,
+      message: code === "ORDER_ALREADY_VALIDATED" ? "La orden ya fue validada y no se puede cancelar." : "La prueba seleccionada ya no está activa en el catálogo.",
+      status: 409,
+      requestId: requestId(),
+      retry: { id: state.orderId },
+    };
+  }
+  render();
+  if (state.view === "detalle" && params.get("accion") === "cancelar") {
+    const order = findOrder(state.orderId);
+    if (order) setTimeout(() => tryCancel(order), 50);
+  }
+})();
