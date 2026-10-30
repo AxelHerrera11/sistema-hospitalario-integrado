@@ -24,6 +24,8 @@ return [
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
     TenantsServiceProvider::class,
     GobernanzaAuditoriaServiceProvider::class,
+    // Alertas críticas (ASII-21): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
+    \App\Providers\AlertasCriticasServiceProvider::class,
     MedicationCatalogServiceProvider::class,
     // Catálogo de pruebas de laboratorio (ASII-17): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
     \App\Providers\CatalogoLabServiceProvider::class,
