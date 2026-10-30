@@ -1,0 +1,18 @@
+@startuml
+title ASII-27 - Flujo de interaccion (camino principal)
+start
+:Administracion abre **Reportes**;
+:Elige un reporte del catalogo;
+:Define filtros (fechas obligatorias);
+if (rango valido (<= 366 dias)?) then (si)
+  :Vista previa paginada con filtros visibles;
+  if (formato disponible?) then (CSV)
+    :Descarga con nombre que incluye el periodo;
+  else (PDF pendiente)
+    :Boton deshabilitado con explicacion;
+  endif
+else (no)
+  :Error en linea junto al campo Hasta;
+endif
+stop
+@enduml
