@@ -16,6 +16,6 @@
 
 ## Acción pendiente
 
-**Responsable:** RBAC (ASII-02, `Luis890D`). La activación de medicamentos la hizo `Mar-03` en `b73e3e8`.
+**Depende de:** RBAC. La activación equivalente de medicamentos está en `b73e3e8`.
 
 Revisar la propuesta y, si se aprueba, mover cada permiso de `pending` a `roles` para el rol acordado, actualizando la fila de `docs/rbac/catalogo-modulos.md`. ASII-08 no activa los permisos por su cuenta.

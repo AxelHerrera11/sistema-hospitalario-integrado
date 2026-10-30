@@ -31,7 +31,7 @@ Reversión: revertir el PR de la entrega y limpiar la caché de configuración. 
 
 | Bloqueo | Responsable | Acción verificable |
 |---|---|---|
-| Permisos en `rbac.pending` | ASII-02 (`Luis890D`) | Aprobar/rechazar la propuesta y probar la matriz integrada |
+| Permisos en `rbac.pending` | RBAC | Aprobar/rechazar la propuesta y probar la matriz integrada |
 | `local_user_refs` sembradas manualmente | ASII-01 / identidad | Sincronizar membresías CENTRAL por hospital |
 | Una conexión HOSPITAL para todos los tenants | Plataforma/Tenants | Resolver el endpoint clínico y probar aislamiento físico |
 | Sin staging/on-premise autorizado | Coordinación del proyecto | Proveer entorno, secretos y ventana de despliegue |

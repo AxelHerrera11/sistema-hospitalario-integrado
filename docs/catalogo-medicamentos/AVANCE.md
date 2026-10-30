@@ -15,7 +15,17 @@
 | 11 | Prototipo navegable desktop y móvil, mapa y capturas | `semana-11/` | `verificar-prototipo.mjs` 24/24 (exit 0) | #594, #595 | #665, #666 | Datos simulados; sin backend |
 | 12 | Defensa con el prototipo, matriz y cambio simulado | `semana-12/` | Marp PDF (6 diapositivas) revisado | #597 | #666 | Defensa oral real |
 | 13 | Plan de revisión, checklist de 14 ítems y autoverificación | `semana-13/` | Suites en verde; sondas: 5 hallazgos (AV3 mayor) | #598 | #667 | **No completa:** confirmar roles y realizar la revisión formal |
-| 14 | Plan SQA: 7 métricas, riesgos, controles y calendario | `semana-14/` | `metricas.php`: M1 101, M2 0, M3 2 (no cumple) | #599 | #667 | M6–M7 sin medir |
+| 14 | Plan SQA: 7 métricas, riesgos, controles y calendario | `semana-14/` | `metricas.php`: M1 101, M2 0, M3 2 (no cumple) | #599 | #667 | M7 no cumple en local; repetir con volumen real |
 | 15 | 17 casos (3 U, 9 W, 5 B), matriz y defectos | `semana-15/`, `tests/casos.php` | 17/17 sobre develop | #600 | #668 | — |
 | 16 | Integración en el API v1 de Laravel con autorización real | `semana-16/` | Feature 6/6; humo HTTP con `tenant`, `jwt.auth` y RBAC reales | #602, #603 | #669, #670 | **No completa:** staging u on-premise |
 | 17 | Amenazas STRIDE, seguridad, H5, adaptador PostgreSQL, interfaz y evidencia funcional | `semana-17/` | Suite completa 215 tests con PostgreSQL; E2E interfaz → PostgreSQL 11/11 y fallo 4/4 | #604, #683, #766, #774, #776 y esta entrega | #670, #765, #767, #775, #777 | **No completa:** despliegue en staging u on-premise; M6, M10 y M12 abiertos. Revisión humana parcial: alta, búsqueda, detalle, vigencia, validación, duplicado, roles y vista móvil (440/472 px); sin revisión humana: API forzada, aislamiento entre hospitales y caída de base |
+| 18 | Evaluación final: guion, matriz y preguntas | `semana-18/` | Recorrido en Chrome 16/16 | Entrega de esta fecha | Promovida | **No completa:** demostración y defensa |
+
+## Actualización del 30/10/2026
+
+- **#1561:** rechazo de miembros de otro hospital. Antes podían leer, crear e inactivar medicamentos.
+- **#1563:** búsqueda con tildes independiente del locale, diálogo de confirmación de vigencia, `limit` aplicado y campos desconocidos rechazados.
+- **Requisito de despliegue nuevo:** `HOSPITAL_DB_TENANT_ID`.
+- **Siguen bloqueados por terceros:** staging u on-premise, elegir la base por hospital, aprobación independiente de PR y GitHub Actions (NO EJECUTADO por facturación).
+- **Pendiente de la estudiante:** revisión de lo no cubierto, revisión formal y defensas.
+
