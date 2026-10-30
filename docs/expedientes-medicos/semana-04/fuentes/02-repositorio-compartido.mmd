@@ -1,0 +1,29 @@
+%% Integración con el repositorio de datos compartido (base federada real). Línea continua = escribe; punteada = solo lee.
+flowchart LR
+    subgraph CENTRAL["Base CENTRAL (una para la red)"]
+        CU[("central_users<br/>hospital_memberships")]
+        MPI[("mpi_patients<br/>(global_id)")]
+        AL[("audit_log")]
+    end
+    subgraph HOSP["Base HOSPITAL (una por tenant)"]
+        LP[("local_patients")]
+        LUR[("local_user_refs<br/>doctor_profiles")]
+        CE[("care_episodes")]
+        CA[("care_assignments")]
+        MR[("medical_records")]
+        CN[("clinical_notes<br/>diagnoses")]
+    end
+    PAC["Pacientes"] --> LP
+    MEDS["Médicos y especialidades"] --> LUR
+    ADM["Admisión / Traslados"] --> CE
+    ADM --> CA
+    SOAP["Notas SOAP"] --> CN
+    EXP["Expediente médico<br/>(este módulo)"] --> MR
+    EXP -. "PacientesDirectory → PatientRepository" .-> LP
+    EXP -. "PdoCareRelationship" .-> CA
+    EXP -. "PdoCareRelationship" .-> LUR
+    EXP -. "episodesOf()" .-> CE
+    EXP -- "RecordAuditEvent → PdoAuditLog" --> AL
+    RBAC["RBAC"] -. "CentralRoles" .-> CU
+    LP -. "global_id (referencia lógica, sin FK)" .-> MPI
+    CN -. "trigger: misma persona en expediente y episodio" .-> MR

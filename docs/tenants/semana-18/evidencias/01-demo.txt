@@ -1,0 +1,43 @@
+# Demo funcional — Gestión de usuarios, tenants y endurecimiento de autenticación — 2026-10-29 22:51 -0600 · Windows 11 · PHP 8.2.12
+# Código: integración local 7d34060e (develop 16654473 + PR abiertos de las Semanas 16–17)
+
+  hospital ficticio sembrado: 107dc7d9-3a1a-4553-84fb-476b5ee8007f (secreto JWT aleatorio de 32 bytes, no se imprime)
+$ php docs/tenants/semana-16/smoke-http.php . http://127.0.0.1:8081 <tenant_id> <totp_secret>
+$ POST /auth/login admin (rol con MFA obligatorio)
+HTTP 202 {"mfa_required":true,"challenge_id":"c7c14b44…(36)"}
+$ POST /auth/mfa con código incorrecto
+HTTP 401 {"message":"Código MFA inválido"}
+$ POST /auth/mfa con TOTP válido
+HTTP 200 {"access_token":"eyJ0eXAi…(567)","expires_in":900,"refresh_token":"7443cbd0…(101)","user":{"id":"fdb0a851-b106-47cb-ba68-153841a97b8a","email":"admin@demo.test","name":"Administrador Hosp
+$ POST /auth/mfa repitiendo el mismo desafío
+HTTP 401 {"message":"Desafío MFA inválido o vencido"}
+$ POST /admin/users medico (contraseña débil)
+HTTP 422 {"message":"Contraseña debe tener al menos 12 caracteres"}
+$ POST /admin/users medico@demo.test
+HTTP 201 {"user_id":"791489fb-6dde-498a-b983-5dfa2243ceb0"}
+$ POST /auth/login medico
+HTTP 200 {"access_token":"eyJ0eXAi…(556)","refresh_token":"d1ddc366…(101)","user":{"id":"791489fb-6dde-498a-b983-5dfa2243ceb0","email":"medico@demo.test","name":"Médico Demo","roles":["medico"],"
+$ GET /auth/me medico
+HTTP 200 {"tenant_id":"107dc7d9-3a1a-4553-84fb-476b5ee8007f","roles":["medico"]}
+$ POST /admin/users con token de medico
+HTTP 403 {"message":"Requiere el rol admin_hospital"}
+$ POST /auth/refresh (rotación)
+HTTP 200 {"access_token":"eyJ0eXAi…(556)","refresh_token":"09a9e8c7…(101)"}
+$ POST /auth/refresh reutilizando el refresh anterior
+HTTP 401 {"message":"Refresh token inválido o revocado"}
+$ POST /auth/refresh con el refresh nuevo tras la reutilización
+HTTP 401 {"message":"Refresh token inválido o revocado"}
+$ GET /auth/me sin token
+HTTP 401 {"message":"Token de autorización requerido"}
+$ POST /auth/login con X-Tenant-ID inexistente
+HTTP 401 {"message":"Credenciales inválidas"}
+$ 5 intentos fallidos de medico; el 5.º
+HTTP 401 {"message":"Credenciales inválidas"}
+$ POST /auth/login medico con la clave correcta después
+HTTP 423 {"message":"Cuenta bloqueada temporalmente"}
+$ Cabeceras de seguridad de GET /auth/me
+Content-Type: application/json
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+$ phpunit tests/Feature/Tenants tests/Unit/Tenants
+OK (107 tests, 540 assertions)

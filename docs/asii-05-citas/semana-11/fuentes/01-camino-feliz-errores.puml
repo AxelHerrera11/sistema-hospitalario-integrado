@@ -1,0 +1,12 @@
+@startuml
+title ASII-05 - Camino feliz y errores criticos (Semana 11)
+start
+:Agenda → Nueva cita (solo franjas libres) → Guardar → Cita agendada → Agenda;
+if (respuesta del servidor) then (2xx)
+  #palegreen:Confirmacion con el resultado concreto;
+else (error)
+  :Solape concurrente: 409 appointments_overlap\nDatos incompletos: 422 validation_failed\nSesion expirada: 401 unauthenticated\nSin conexion: error de red / 503;
+  :Mensaje accionable, datos conservados, foco en el error;
+endif
+stop
+@enduml
