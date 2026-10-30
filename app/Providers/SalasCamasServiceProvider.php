@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\WardCatalogController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -44,9 +45,9 @@ final class SalasCamasServiceProvider extends ServiceProvider
     {
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
             Route::get('wards', [WardCatalogController::class, 'index'])
-                ->middleware('rbac:camas.ver');
+                ->middleware(['rbac:camas.ver', EnsureHospitalDatabaseTenant::class]);
             Route::get('wards/{ward}/beds', [WardCatalogController::class, 'beds'])
-                ->middleware('rbac:camas.ver');
+                ->middleware(['rbac:camas.ver', EnsureHospitalDatabaseTenant::class]);
         });
     }
 
