@@ -1,0 +1,95 @@
+openapi: 3.0.3
+info:
+  title: Signos vitales y alertas — API v1
+  version: 1.0.0
+  description: Contrato del micro-HIS de signos vitales (ASII-13). Ver contrato-api.md.
+servers:
+  - url: http://127.0.0.1:8013
+paths:
+  /api/v1/care-episodes/{care_episode_id}/vital-signs:
+    post:
+      summary: Registrar signos vitales, evaluar umbrales y generar alerta
+      x-permission: signos_vitales.registrar
+      parameters:
+        - { name: care_episode_id, in: path, required: true, schema: { type: string } }
+        - { $ref: '#/components/parameters/UserId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VitalSignsInput' }
+      responses:
+        '201': { description: Guardada, content: { application/json: { schema: { $ref: '#/components/schemas/RecordResult' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '500': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+  /api/v1/vital-signs/{vital_sign_id}:
+    get:
+      summary: Consultar una medición
+      x-permission: signos_vitales.ver
+      parameters:
+        - { name: vital_sign_id, in: path, required: true, schema: { type: string } }
+        - { $ref: '#/components/parameters/UserId' }
+      responses:
+        '200': { description: Medición, content: { application/json: { schema: { $ref: '#/components/schemas/VitalSignView' } } } }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  parameters:
+    UserId:
+      name: X-User-ID
+      in: header
+      required: true
+      description: Prototipo; en el SHI será el JWT con X-Tenant-ID.
+      schema: { type: string }
+  responses:
+    Error:
+      description: Error con code y trace_id
+      headers:
+        X-Trace-Id: { schema: { type: string } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    VitalSignsInput:
+      type: object
+      required: [measured_at]
+      properties:
+        measured_at: { type: string, example: '2026-10-14 08:30:00' }
+        temperature: { type: number }
+        heart_rate: { type: number }
+        respiratory_rate: { type: number }
+        systolic_bp: { type: number }
+        diastolic_bp: { type: number }
+        oxygen_saturation: { type: number }
+        weight: { type: number }
+        height: { type: number }
+        glucose: { type: number }
+    RecordResult:
+      type: object
+      properties:
+        vital_sign_id: { type: string }
+        code: { type: string, enum: [OK, ALERT_GENERATED, THRESHOLDS_NOT_APPLICABLE] }
+        severity: { type: string, enum: [none, warning, critical] }
+        findings: { type: object, additionalProperties: { type: string } }
+        trace_id: { type: string }
+    VitalSignView:
+      type: object
+      properties:
+        vital_sign_id: { type: string }
+        care_episode_id: { type: string }
+        measured_at: { type: string }
+        values: { type: object, additionalProperties: { type: number } }
+        trace_id: { type: string }
+    Error:
+      type: object
+      required: [code, trace_id]
+      properties:
+        code: { type: string }
+        permission: { type: string }
+        trace_id: { type: string }
