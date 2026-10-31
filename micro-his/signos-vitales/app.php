@@ -8,11 +8,14 @@ use MicroHis\SignosVitales\Application\GetVitalSign;
 use MicroHis\SignosVitales\Application\PermissionChecker;
 use MicroHis\SignosVitales\Application\RecordVitalSigns;
 use MicroHis\SignosVitales\Application\VitalSignRepository;
+use MicroHis\SignosVitales\Domain\DiastolicBpRule;
 use MicroHis\SignosVitales\Domain\GlucoseRule;
 use MicroHis\SignosVitales\Domain\HeartRateRule;
 use MicroHis\SignosVitales\Domain\NoAlertRule;
 use MicroHis\SignosVitales\Domain\OxygenSaturationRule;
 use MicroHis\SignosVitales\Domain\RespiratoryRateRule;
+use MicroHis\SignosVitales\Domain\SystolicBpRule;
+use MicroHis\SignosVitales\Domain\TemperatureRule;
 use MicroHis\SignosVitales\Domain\ThresholdEvaluator;
 use MicroHis\SignosVitales\Presentation\ApiKernel;
 use MicroHis\SignosVitales\Presentation\JsonView;
@@ -25,7 +28,7 @@ require __DIR__ . '/bootstrap.php';
 function signos_vitales_router(CareEpisodeReader $episodes, VitalSignRepository $vitalSigns, AlertNotifier $notifier, ?Closure $clock = null, ?Closure $onNotificationFailure = null): Router
 {
     $view = new JsonView();
-    $evaluator = new ThresholdEvaluator([new HeartRateRule(), new OxygenSaturationRule(), new GlucoseRule(), new RespiratoryRateRule(), new NoAlertRule('weight'), new NoAlertRule('height')]);
+    $evaluator = new ThresholdEvaluator([new TemperatureRule(), new HeartRateRule(), new RespiratoryRateRule(), new SystolicBpRule(), new DiastolicBpRule(), new OxygenSaturationRule(), new GlucoseRule(), new NoAlertRule('weight'), new NoAlertRule('height')]);
     return new Router(new VitalSignController(new RecordVitalSigns($episodes, $evaluator, $vitalSigns, $notifier, $clock, $onNotificationFailure), new GetVitalSign($episodes, $vitalSigns), $view), $view);
 }
 

@@ -49,7 +49,7 @@ $sin = llamar($api, 'POST', $ruta, 'dra.lopez', ['heart_rate' => 80]);
 $num = llamar($api, 'POST', $ruta, 'dra.lopez', ['heart_rate' => 80, 'measured_at' => 20261014]);
 check('B-05 RF-SV-01: measured_at ausente -> 422 MEASURED_AT_INVALID; no textual -> 422 PAYLOAD_INVALID', $sin['json']['code'] === 'MEASURED_AT_INVALID' && $num['json']['code'] === 'PAYLOAD_INVALID');
 // Análisis de valores límite: plausibilidad.
-check('B-06 RF-SV-02: límites de plausibilidad de temperatura (25, 25,1, 45, 45,1) y FC (0, 300, 300,1)', $todos('temperature', ['25' => '422 VITAL_SIGN_IMPLAUSIBLE', '25.1' => '201 OK/none', '45' => '201 OK/none','45.1' => '422 VITAL_SIGN_IMPLAUSIBLE'])
+check('B-06 RF-SV-02: límites de plausibilidad de temperatura (25, 25,1, 45, 45,1) y FC (0, 300, 300,1)', $todos('temperature', ['25' => '422 VITAL_SIGN_IMPLAUSIBLE', '25.1' => '201 ALERT_GENERATED/critical', '45' => '201 ALERT_GENERATED/critical', '45.1' => '422 VITAL_SIGN_IMPLAUSIBLE'])
     && $todos('heart_rate', ['0' => '422 VITAL_SIGN_IMPLAUSIBLE', '300' => '201 ALERT_GENERATED/critical', '300.1' => '422 VITAL_SIGN_IMPLAUSIBLE']));
 check('B-07 RF-SV-02: SpO2 100 -> 201, 100,1 -> 422, 0 -> 422; sistólica menor que la diastólica -> 422', $todos('oxygen_saturation', ['100' => '201 OK/none', '100.1' => '422 VITAL_SIGN_IMPLAUSIBLE', '0' => '422 VITAL_SIGN_IMPLAUSIBLE']) && $reg(['systolic_bp' => 80, 'diastolic_bp' => 90]) === '422 VITAL_SIGN_IMPLAUSIBLE');
 // Análisis de valores límite: umbrales.
@@ -84,10 +84,13 @@ $id = llamar($api, 'POST', $ruta, 'dra.lopez', ['heart_rate' => 80, 'measured_at
 check('B-17 RNF-SV-01: GET con asignación 200 con los signos; sin asignación 403; inexistente 404; sin permiso 403 FORBIDDEN', llamar($api, 'GET', "/api/v1/vital-signs/{$id}")['json']['values'] == ['heart_rate' => 80]
     && llamar($api, 'GET', "/api/v1/vital-signs/{$id}", 'dr.perez')['status'] === 403 && llamar($api, 'GET', '/api/v1/vital-signs/inexistente')['status'] === 404 && llamar($api, 'GET', "/api/v1/vital-signs/{$id}", 'intruso')['json']['code'] === 'FORBIDDEN');
 
-// Defectos registrados: pasan a OK cuando se corrigen.
+// Defectos D-01 y D-02, ya corregidos: cobertura del perfil de umbrales (Q-06) y glucosa con decimales.
 $alerta = static fn (array $signos): bool => str_starts_with($reg($signos), '201 ALERT_GENERATED');
-defecto('D-01', 'B-18 RF-SV-03: temperatura 41 °C y presión 230/130 deben generar alerta (Anexo B); hoy no hay regla para esos signos', $alerta(['temperature' => 41]) && $alerta(['systolic_bp' => 230, 'diastolic_bp' => 130]) && $alerta(['temperature' => 34]) && $alerta(['systolic_bp' => 85]));
-defecto('D-02', 'B-19 RF-SV-03: glucosa 53,5 mg/dL es crítica (Anexo B: < 54); la regla usa ≤ 53 y da warning', $reg(['glucose' => 53.5]) === $a);
+check('B-18 RF-SV-03 (D-01 corregido): temperatura 41 y 34 °C y presión 230/130 y 85 generan alerta; un valor crítico por cada signo del Anexo B', $alerta(['temperature' => 41]) && $alerta(['systolic_bp' => 230, 'diastolic_bp' => 130]) && $alerta(['temperature' => 34]) && $alerta(['systolic_bp' => 85]));
+check('B-19 RF-SV-03 (D-02 corregido): glucosa 53,5 mg/dL es crítica (< 54); 53,99 también; 54 es warning', $reg(['glucose' => 53.5]) === $a && $reg(['glucose' => 53.99]) === $a && $reg(['glucose' => 54]) === $w);
+check('B-23 RF-SV-03: bandas de temperatura (°C) en 35, 35,1, 36, 36,1, 38, 38,1, 39, 39,1', $todos('temperature', ['35' => $a, '35.1' => $w, '36' => $w, '36.1' => $n, '38' => $n, '38.1' => $w, '39' => $w, '39.1' => $a]));
+check('B-24 RF-SV-03: bandas de sistólica (90, 91, 100, 101, 179, 180, 219, 220) y de diastólica (109, 110, 119, 120)', $todos('systolic_bp', [90 => $a, 91 => $w, 100 => $w, 101 => $n, 179 => $n, 180 => $w, 219 => $w, 220 => $a]) && $todos('diastolic_bp', [109 => $n, 110 => $w, 119 => $w, 120 => $a]));
+// Defectos registrados: pasan a OK cuando se corrigen.
 defecto('D-03', 'B-20 RF-SV-02: FC 138,5 debe rechazarse (la columna heart_rate es integer); hoy se acepta', str_starts_with($reg(['heart_rate' => 138.5]), '422'));
 defecto('D-04', 'B-21 RNF-SV-01: un id inexistente y uno ajeno deben responder igual a quien no atiende; hoy 404 frente a 403', llamar($api, 'GET', '/api/v1/vital-signs/inexistente', 'dr.perez')['status'] === llamar($api, 'GET', "/api/v1/vital-signs/{$id}", 'dr.perez')['status']);
 defecto('D-05', 'B-22 RNF-SV-01: una petición con X-Tenant-ID ajeno debe rechazarse; hoy el módulo ignora el tenant', llamar($api, 'POST', $ruta, 'dra.lopez', ['heart_rate' => 80, 'measured_at' => '2026-10-14 08:30:00'], ['X-Tenant-ID' => 'otro-hospital'])['status'] >= 400);
