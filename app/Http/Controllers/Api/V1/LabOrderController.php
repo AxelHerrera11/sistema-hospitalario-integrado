@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\TrasladosAltas\ResolutorActorLocal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -23,11 +24,25 @@ final class LabOrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         [$tenant] = $this->context($request);
+        $data = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d'],
+        ]);
         $query = DB::connection('hospital')->table('lab_orders')->where('tenant_id', $tenant)->orderByDesc('created_at');
         if (is_string($request->query('patient_id'))) $query->where('local_patient_id', $request->query('patient_id'));
         if (is_string($request->query('status'))) $query->where('status', $request->query('status'));
-        $orders = $query->limit(50)->get()->map(fn ($row): array => $this->order($row))->values();
-        return $this->json(['lab_orders' => $orders], 200, $this->requestId($request));
+        if (isset($data['from'])) $query->where('created_at', '>=', $data['from'].' 00:00:00');
+        if (isset($data['to'])) $query->where('created_at', '<', date('Y-m-d', strtotime($data['to'].' +1 day')).' 00:00:00');
+        $page = (int) ($data['page'] ?? 1);
+        $perPage = (int) ($data['per_page'] ?? 50);
+        $total = (clone $query)->count();
+        $orders = $query->forPage($page, $perPage)->get()->map(fn ($row): array => $this->order($row))->values();
+        return $this->json(['lab_orders' => $orders, 'pagination' => [
+            'page' => $page, 'per_page' => $perPage, 'total' => $total,
+            'last_page' => max(1, (int) ceil($total / $perPage)),
+        ]], 200, $this->requestId($request));
     }
 
     public function store(Request $request): JsonResponse
@@ -48,7 +63,8 @@ final class LabOrderController extends Controller
         $data['idempotency_key'] = $idempotencyKey;
         $data['request_hash'] = hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
         $db = DB::connection('hospital');
-        return $db->transaction(function () use ($db, $data, $tenant, $actor, $request): JsonResponse {
+        try {
+            return $db->transaction(function () use ($db, $data, $tenant, $actor, $request): JsonResponse {
             $existing = $db->table('lab_orders')->where('tenant_id', $tenant)->where('idempotency_key', $data['idempotency_key'])->first();
             if ($existing) {
                 if (!hash_equals((string) $existing->idempotency_request_hash, $data['request_hash'])) return $this->error('IDEMPOTENCY_CONFLICT', 409, $this->requestId($request));
@@ -81,7 +97,19 @@ final class LabOrderController extends Controller
                 'actor_user_ref_id' => $actor, 'occurred_at' => now(), 'correlation_id' => $correlation,
             ]);
             return $this->json(['lab_order' => $this->showOrder($db, $tenant, $id)], 201, $this->requestId($request));
-        });
+            });
+        } catch (QueryException $exception) {
+            // Dos peticiones simultáneas pueden competir por la clave única.
+            // La segunda debe devolver el mismo resultado idempotente, no 500.
+            if ($exception->getCode() !== '23505') throw $exception;
+            $existing = $db->table('lab_orders')->where('tenant_id', $tenant)
+                ->where('idempotency_key', $data['idempotency_key'])->first();
+            if ($existing === null) throw $exception;
+            if (! hash_equals((string) $existing->idempotency_request_hash, $data['request_hash'])) {
+                return $this->error('IDEMPOTENCY_CONFLICT', 409, $this->requestId($request));
+            }
+            return $this->json(['lab_order' => $this->order($existing)], 200, $this->requestId($request));
+        }
     }
 
     public function show(Request $request, string $id): JsonResponse
