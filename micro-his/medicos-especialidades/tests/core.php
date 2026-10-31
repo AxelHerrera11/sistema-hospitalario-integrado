@@ -61,4 +61,7 @@ check('franjas: 30 minutos sigue funcionando', $planner->freeSlots([['08:00', '0
 check('D-02: una cita 08:15-08:45 bloquea 08:00 y 08:30 aunque empiece fuera de la rejilla', $planner->freeSlots([['08:00', '09:30']], [['08:15', '08:45']]) === ['09:00']);
 check('D-02: una cita larga 08:00-09:30 bloquea todos los bloques que cubre; 09:30 queda libre', $planner->freeSlots([['08:00', '10:00']], [['08:00', '09:30']]) === ['09:30']);
 check('D-02: intervalo semiabierto: una cita que termina a las 08:30 no bloquea 08:30', $planner->freeSlots([['08:00', '09:00']], [['07:30', '08:30']]) === ['08:30']);
+check('slot_minutes: cada franja usa su propio tamaño de bloque y no lo contagia a la siguiente',
+    $planner->freeSlots([['08:00', '09:00', 20], ['09:00', '10:00']], [['08:20', '08:40']]) === ['08:00', '08:40', '09:00', '09:30']);
+check('slot_minutes: un tamaño de bloque 0 en la franja se rechaza', fails(fn () => $planner->freeSlots([['08:00', '09:00', 0]], []), InvalidArgumentException::class));
 echo 'Todas las pruebas pasaron.' . PHP_EOL;
