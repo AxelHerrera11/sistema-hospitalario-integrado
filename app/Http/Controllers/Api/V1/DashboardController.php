@@ -31,8 +31,8 @@ final class DashboardController extends Controller
         if ($usuario === null) {
             return $this->error(401, 'unauthenticated', 'Inicie sesion para ver el tablero.');
         }
-        $fecha = (string) $request->query('fecha', now()->toDateString());
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) !== 1 || !checkdate((int) substr($fecha, 5, 2), (int) substr($fecha, 8, 2), (int) substr($fecha, 0, 4))) {
+        $fecha = $request->query('fecha', now()->toDateString());
+        if (!is_string($fecha) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha) !== 1 || !checkdate((int) substr($fecha, 5, 2), (int) substr($fecha, 8, 2), (int) substr($fecha, 0, 4))) {
             return $this->error(422, 'validation_failed', 'La fecha debe tener el formato AAAA-MM-DD.');
         }
         $hospital = (string) $request->attributes->get('tenant')?->getKey();
