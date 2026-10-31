@@ -58,10 +58,12 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, 'r
 
 // Médicos y especialidades (ASII-04): cada operación declara su propio permiso; usa la base HOSPITAL de esta instancia.
 Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
+    // Límite de tasa por usuario (MED-14): las escrituras son raras; la consulta de disponibilidad es más frecuente.
+    // El prefijo separa los contadores: sin él, todas las rutas `throttle:N,1` del usuario comparten uno.
     Route::post('/doctors', [DoctorApiController::class, 'register'])
-        ->middleware('rbac:medicos.registrar');
+        ->middleware(['rbac:medicos.registrar', 'throttle:30,1,medicos-escritura']);
     Route::post('/doctors/{doctor}/specialties', [DoctorApiController::class, 'associateSpecialty'])
-        ->middleware('rbac:medicos.asociar_especialidad');
+        ->middleware(['rbac:medicos.asociar_especialidad', 'throttle:30,1,medicos-escritura']);
     Route::get('/availability', [DoctorApiController::class, 'availability'])
-        ->middleware('rbac:medicos.ver_disponibilidad');
+        ->middleware(['rbac:medicos.ver_disponibilidad', 'throttle:120,1,medicos-lectura']);
 });

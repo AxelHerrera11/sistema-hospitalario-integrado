@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototipo · Signos vitales y alertas</title>
+<style>
+:root{--bg:#f3f4f6;--tx:#1f2937;--mu:#4b5563;--bd:#6b7280;--pr:#1d4ed8;--er:#b91c1c;--wa:#b45309;--ok:#15803d}
+*{box-sizing:border-box}body{margin:0;font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+.skip,.sr{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:#fff;padding:8px;z-index:9}
+:focus-visible{outline:3px solid var(--pr);outline-offset:2px}
+header{background:#111827;color:#fff;padding:8px 16px;display:flex;gap:12px;align-items:center}header strong{flex:1}header select{min-height:44px;font:inherit}
+.pac{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #d1d5db;padding:8px 16px;font-size:14px}
+main{max-width:760px;margin:0 auto;padding:16px 16px 110px}h1{font-size:1.4rem;margin:.2em 0 .6em}h1:focus{outline:0}
+.card{background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:16px;margin-bottom:12px}
+.f{margin-top:12px}label,legend{font-weight:600}input[type=text]{width:100%;min-height:44px;font:inherit;border:2px solid var(--bd);border-radius:6px;padding:8px}
+.seg{border:0;padding:0;margin:8px 0 0;display:flex;gap:8px;flex-wrap:wrap}.seg legend{font-size:14px;color:var(--mu);margin-bottom:4px}
+.seg label{min-height:44px;min-width:88px;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--bd);border-radius:6px;background:#fff;cursor:pointer}
+.seg input{position:absolute;opacity:0}.seg input:checked+span{font-weight:700}.seg label:has(input:checked){background:var(--pr);color:#fff;border-color:var(--pr)}.seg label:has(input:focus-visible){outline:3px solid var(--pr);outline-offset:2px}
+.err{color:var(--er);font-size:14px;margin:4px 0}.warn{color:var(--wa);font-size:14px;margin:4px 0}.small{font-size:14px;color:var(--mu)}
+.btn{min-height:44px;min-width:44px;padding:8px 16px;border:2px solid var(--pr);border-radius:6px;background:#fff;color:var(--pr);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.main{background:var(--pr);color:#fff}.bar{display:flex;gap:8px;justify-content:space-between;margin-top:16px}
+.res{border:3px solid;border-radius:8px;padding:16px;margin-bottom:12px;background:#fff}.res h1{margin:0 0 .3em}.s2{color:var(--er);border-color:var(--er);background:#fef2f2}.s1{color:var(--wa);border-color:var(--wa);background:#fffbeb}.s0{color:var(--ok);border-color:var(--ok);background:#f0fdf4}.sx{color:var(--mu);border-color:var(--mu)}
+.chip{font-weight:700}.c2{color:var(--er)}.c1{color:var(--wa)}.c0{color:var(--ok)}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{text-align:left;padding:10px;border-bottom:1px solid #d1d5db}
+details{padding:8px 0}summary{min-height:44px;font-weight:600;cursor:pointer;display:flex;align-items:center}summary::before{content:"▸ ";margin-right:6px}details[open] summary::before{content:"▾ "}
+.sim{max-width:760px;margin:0 auto;padding:0 16px 96px;font-size:14px;color:var(--mu)}.sim label{font-weight:400}
+@media(max-width:767px){.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #d1d5db;padding:8px 16px calc(8px + env(safe-area-inset-bottom));margin:0}.bar .btn{flex:1}
+ thead{position:absolute;left:-999px}tr{display:block;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:8px;margin-bottom:12px}td{display:block;border:0;padding:2px 8px}.sim{padding-bottom:110px}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header><strong>HIS · Signos vitales</strong><label>Rol <select id="rol"><option value="medico">Médico tratante</option><option value="enfermeria">Enfermería (con asignación)</option></select></label></header>
+<div class="pac" id="pac" role="region" aria-label="Paciente"></div>
+<main id="main" tabindex="-1"></main>
+<div class="sim"><label><input type="checkbox" id="sim"> Simular error crítico: la conexión cae al registrar</label></div>
+<div id="live" role="status" class="sr"></div>
+<script>
+const Q=new URLSearchParams(location.search),EDAD=+Q.get('edad')||45,TRACE='3f2a91c4-6b7d-4e08-a1c5-9c1d2e0b7f10';
+const $=s=>document.querySelector(s),main=$('#main'),esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const movil=()=>matchMedia('(max-width:767px)').matches,medico=()=>$('#rol').value==='medico',go=h=>{location.hash=h};
+const SIG=[['hr','Frecuencia cardiaca','lpm',1],['spo2','Saturación de oxígeno','%',1],['rr','Frecuencia respiratoria','rpm',1],['sys','Presión sistólica','mmHg',1],['dia','Presión diastólica','mmHg',1],['glu','Glucosa',0,2],['temp','Temperatura',0,2],['wt','Peso','kg',3],['ht','Talla','cm',3]];
+const NOM=Object.fromEntries(SIG.map(s=>[s[0],s[1]])),UNI={glu:['mg/dL','mmol/L'],temp:['°C','°F']};
+const LIM={hr:[0,300],rr:[0,100],sys:[0,300],dia:[0,200],spo2:[0,100],wt:[0,1000],ht:[0,300],glu:[0,2000],temp:[25,45]},REG={hr:[40,50,91,131],rr:[8,11,21,25],glu:[53,69,181,400],spo2:[91,95,Infinity,Infinity]};
+const S={v:{},u:{},errs:{},paso:1,last:null,skip:false,list:[{when:'14/10 06:00',sev:0,txt:'FC 80 lpm · Peso 70 kg'}]};
+if(Q.has('ultima'))S.ultima={glu:'mmol/L'};
+if(Q.has('demo')){S.v={hr:'138',spo2:'94'};if(Q.get('demo')==='glu'){S.v.glu='5,5';S.u.glu='mmol/L'}}
+$('#pac').textContent=EDAD<18?'Pablo Ruiz · exp-5102 · Nac. 02/05/2017 ('+EDAD+' a) · Episodio EP-2':'María Gómez · exp-7734 · Nac. 14/03/1981 ('+EDAD+' a) · Episodio EP-1';
+if(Q.get('rol')==='enfermeria')$('#rol').value='enfermeria';
+const num=t=>{t=String(t||'').trim();return t===''?null:/^\d+([.,]\d+)?$/.test(t)?parseFloat(t.replace(',','.')):NaN};
+const canon=(k,x)=>k==='glu'&&S.u.glu==='mmol/L'?x*18.016:k==='temp'&&S.u.temp==='°F'?(x-32)*5/9:x;
+const sev=(k,x)=>{const r=REG[k];return !r?0:x<=r[0]||x>=r[3]?2:x<=r[1]||x>=r[2]?1:0},fmt=x=>(Math.round(x*10)/10).toString().replace('.',',');
+const warnU=k=>{const x=num(S.v[k]);if(k!=='glu'||!(x>0))return '';return S.u.glu==='mg/dL'&&x<20?fmt(x)+' es raro en mg/dL: ¿es mmol/L?':S.u.glu==='mmol/L'&&x>40?fmt(x)+' es raro en mmol/L: ¿es mg/dL?':''};
+function validar(){const e={},c={};let n=0;for(const [k,l] of SIG){const raw=S.v[k];if(raw==null||String(raw).trim()==='')continue;n++;const x=num(raw);
+ if(Number.isNaN(x)){e[k]='Escriba un número; use coma o punto, sin separador de miles.';continue}
+ if(UNI[k]&&!S.u[k]){e[k]='Elija la unidad.';continue}
+ const y=canon(k,x);if(!(y>LIM[k][0]&&y<=LIM[k][1])){e[k]='El valor no es posible para este signo. Revise el valor y la unidad.';continue}c[k]=y}
+ if(c.sys&&c.dia&&c.sys<c.dia)e.dia='La presión sistólica no puede ser menor que la diastólica.';if(!n)e._='Ingrese al menos un signo vital.';return {e,c}}
+function evaluar(c){const f=EDAD<18?[]:Object.keys(c).map(k=>[k,sev(k,c[k])]).filter(a=>a[1]>0).sort((a,b)=>b[1]-a[1]);return {max:EDAD<18?-1:f[0]?f[0][1]:0,f:f,c:c}}
+const val=(k,x)=>fmt(x)+' '+(k==='glu'?'mg/dL':k==='temp'?'°C':SIG.find(s=>s[0]===k)[2]);
+const seg=k=>`<fieldset class="seg"><legend>Unidad de ${NOM[k].toLowerCase()}${(S.sug||[]).includes(k)&&S.u[k]?' · la última que usó en esta sesión: confírmela':''}</legend>${UNI[k].map(u=>`<label><input type="radio" name="u_${k}" value="${u}"${S.u[k]===u?' checked':''}><span>${u}</span></label>`).join('')}</fieldset>`;
+const campo=(k,l,u)=>`<div class="f"><label for="${k}">${l}${u?' ('+u+')':''}</label><input type="text" id="${k}" inputmode="decimal" autocomplete="off" value="${esc(S.v[k]||'')}"${S.errs[k]?` aria-invalid="true" aria-describedby="${k}e"`:''}>${UNI[k]?seg(k):''}<p class="warn" id="${k}w" role="status">${warnU(k)?'⚠ '+esc(warnU(k)):''}</p>${S.errs[k]?`<p class="err" id="${k}e">${S.errs[k]}</p>`:''}</div>`;
+const bar=h=>`<div class="bar">${h}</div>`,btn=(a,t,m)=>`<button class="btn${m?' main':''}" data-act="${a}">${t}</button>`;
+const lab=s=>s===2?'<span class="chip c2">■ Crítica</span>':s===1?'<span class="chip c1">▲ Advertencia</span>':'<span class="chip c0">✓ Sin valores fuera de umbral</span>';
+const V={
+episodio(){const filas=S.list.map(m=>`<tr><td data-label="Fecha">${m.when}</td><td>${m.sev<0?'<span class="chip">? No evaluado</span>':lab(m.sev)}</td><td>${esc(m.txt)}</td></tr>`).join('');
+ return `<h1 tabindex="-1">Mediciones del episodio</h1>${medico()?'':'<p class="small">Solo lectura: su rol consulta las mediciones.</p>'}<table><thead><tr><th>Fecha</th><th>Resultado</th><th>Signos fuera de umbral</th></tr></thead><tbody>${filas}</tbody></table>${medico()?bar(btn('nueva','Nueva medición',1)):''}`},
+captura(){const p=movil()?S.paso:0,g=n=>SIG.filter(s=>s[3]===n).map(s=>campo(s[0],s[1],s[2])).join(''),ns=['','Signos principales','Glucosa y temperatura','Peso y talla'];
+ const resumen=S.errs._?`<div class="err" role="alert">${S.errs._}</div>`:Object.keys(S.errs).length?'<div class="err" role="alert">Revise los campos marcados.</div>':'';
+ const cuerpo=p?`<p class="small">Paso ${p} de 3 · ${ns[p]}</p>${g(p)}`:[1,2,3].map(n=>`<div class="card"><h2>${ns[n]}</h2>${g(n)}</div>`).join('');
+ const b=!p?bar(btn('cancelar','Cancelar')+btn('conf','Continuar',1)):bar((p>1?btn('atras','Atrás'):btn('cancelar','Cancelar'))+(p<3?btn('sig','Siguiente',1):btn('conf','Revisar',1)));
+ return `<h1 tabindex="-1">Nueva medición</h1>${resumen}${cuerpo}${b}`},
+confirmar(){const r=evaluar(validar().c),l=Object.keys(r.c).map(k=>`<tr><td>${NOM[k]}</td><td>${(S.v[k]||'')} ${UNI[k]?S.u[k]:SIG.find(s=>s[0]===k)[2]}${UNI[k]&&canon(k,num(S.v[k]))!==num(S.v[k])?' → '+val(k,r.c[k]):''}</td></tr>`).join('');
+ return `<h1 tabindex="-1">Confirmar registro</h1><div class="card"><p><strong>${esc($('#pac').textContent)}</strong><br>Medido el 14/10/2026 08:30</p><table><tbody>${l}</tbody></table><p class="small">Si hay un valor fuera de umbral se notificará a los médicos tratantes. Esta acción no se puede deshacer.</p></div>${bar(btn('corregir','Corregir')+btn('reg','Registrar',1))}`},
+resultado(){const r=S.last||evaluar(validar().c),m=r.max,cls=m<0?'sx':'s'+m,t=m<0?'? NO EVALUADO':m===2?'■ ALERTA CRÍTICA':m===1?'▲ ADVERTENCIA':'✓ SIN VALORES FUERA DE UMBRAL',code=m<0?'THRESHOLDS_NOT_APPLICABLE':m>0?'ALERT_GENERATED':'OK';
+ const ok=Object.keys(r.c).filter(k=>!r.f.some(a=>a[0]===k));
+ return `<div class="res ${cls}" role="${m>0?'alert':'status'}"><h1 tabindex="-1">${t}</h1><p>${m<0?'Paciente de '+EDAD+' años: la medición se guardó pero NO se comparó con umbrales. Revise los valores usted mismo.':m>0?'Se notificó a los médicos tratantes del episodio. La notificación no incluye valores.':'Medición registrada y evaluada con el perfil adulto-2026.1.'}</p>${r.f.map(a=>`<p><strong>${a[1]===2?'■':'▲'} ${NOM[a[0]]} ${val(a[0],r.c[a[0]])}</strong> · ${a[1]===2?'Crítica':'Advertencia'}</p>`).join('')}</div>${ok.length?`<details><summary>Ver los demás signos (${ok.length})</summary>${ok.map(k=>`<p>${NOM[k]} ${val(k,r.c[k])}${m<0?' · No evaluado':REG[k]?' · Sin alerta':' · Sin umbral'}</p>`).join('')}</details>`:''}<p class="small">Código ${code} · trace_id ${TRACE.slice(0,8)}… <button class="btn" data-act="copy">Copiar referencia</button></p>${bar(btn('ver','Ver mediciones')+btn('otra','Registrar otra',1))}`},
+error(){return `<div class="res s1" role="alert"><h1 tabindex="-1">⚠ No sabemos si se guardó</h1><p>No se confirmó que se haya notificado a los médicos tratantes. Si hay un valor crítico, avise usted directamente. <strong>No repita el envío.</strong></p><p class="small">Código: sin respuesta · trace_id ${TRACE.slice(0,8)}…</p></div>${bar(btn('rev','Revisar mediciones',1))}`},
+revision(){return `<h1 tabindex="-1">Revisión de mediciones</h1><div class="card" role="status"><p>No se encontró una medición de las 08:30 de este episodio: no se guardó. Ya puede registrarla de nuevo sin riesgo de duplicarla.</p></div>${bar(btn('atrasconf','Corregir')+btn('nuevo','Registrar de nuevo',1))}`}};
+function render(){const [r]=(location.hash.replace('#/','')||'episodio').split('/'),ruta=V[r]?r:'episodio',p=+location.hash.split('/')[2];if(ruta==='captura'&&p)S.paso=p;
+ if(ruta!=='episodio'&&!medico()){go('#/episodio');return}main.innerHTML=V[ruta]();document.title=(main.querySelector('h1')||{textContent:''}).textContent+' · Signos vitales';const h=main.querySelector('h1');h&&h.focus();
+ $('#live').textContent=ruta==='resultado'?(S.last||{max:0}).max>0?'Alerta generada':'Medición registrada':ruta==='error'?'No sabemos si se guardó':''}
+function registrar(){if($('#sim').checked&&!S.skip){go('#/error');return}S.skip=false;const r=evaluar(validar().c);S.last=r;S.ultima={};for(const k of ['glu','temp'])if(S.u[k]&&S.v[k])S.ultima[k]=S.u[k];
+ S.list.unshift({when:'14/10 08:30',sev:r.max,txt:r.max<0?'Sin perfil de umbrales para esta edad':r.f.length?r.f.map(a=>NOM[a[0]]+' '+val(a[0],r.c[a[0]])).join(' · '):'Sin valores fuera de umbral'});go('#/resultado')}
+document.addEventListener('input',e=>{const k=e.target.id;if(SIG.some(s=>s[0]===k)){S.v[k]=e.target.value;const w=$('#'+k+'w');w&&(w.textContent=warnU(k)?'⚠ '+warnU(k):'')}});
+document.addEventListener('change',e=>{if(e.target.name&&e.target.name.startsWith('u_')){S.u[e.target.name.slice(2)]=e.target.value;const k=e.target.name.slice(2),w=$('#'+k+'w');S.sug=(S.sug||[]).filter(x=>x!==k);e.target.closest('fieldset').querySelector('legend').textContent='Unidad de '+NOM[k].toLowerCase();w&&(w.textContent=warnU(k)?'⚠ '+warnU(k):'')}});
+document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a)return;const t=a.dataset.act;
+ if(t==='nueva'||t==='otra'){S.v={};S.u={...S.ultima};S.sug=Object.keys(S.u);S.errs={};S.paso=1;S.last=null;go('#/captura/1')}
+ else if(t==='sig'||t==='conf'){const v=validar();S.errs=v.e;const cur=SIG.filter(s=>s[3]===S.paso).map(s=>s[0]),ks=Object.keys(v.e);
+  if(t==='sig'){if(cur.some(k=>v.e[k])){render();const f=main.querySelector('[aria-invalid]');f&&f.focus()}else{S.errs={};S.paso++;go('#/captura/'+S.paso)}}
+  else if(ks.length){const st=ks[0]==='_'?1:SIG.find(s=>s[0]===ks[0])[3];if(movil()&&st!==S.paso){S.paso=st;go('#/captura/'+st)}else{render();const f=main.querySelector('[aria-invalid]')||main.querySelector('[role=alert]');f&&f.focus()}}else go('#/confirmar')}
+ else if(t==='atras'){S.paso--;go('#/captura/'+S.paso)}else if(t==='cancelar'||t==='ver')go('#/episodio');else if(t==='corregir'||t==='atrasconf')go('#/captura/'+(movil()?3:1));
+ else if(t==='reg')registrar();else if(t==='rev')go('#/revision');else if(t==='nuevo'){S.skip=true;registrar()}
+ else if(t==='copy'){navigator.clipboard&&navigator.clipboard.writeText(TRACE);$('#live').textContent='Referencia copiada'}});
+$('#rol').addEventListener('change',render);addEventListener('hashchange',render);addEventListener('resize',()=>{if(location.hash.startsWith('#/captura'))render()});render();
+</script>
+</body>
+</html>

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MicroHis\QaCalidad\Application;
 
 /**
- * PROPUESTA pendiente de validación con María (RBAC). Estos nombres NO están en
- * config/rbac.php; por eso el módulo no se conecta todavía al middleware rbac de
- * Laravel y la demo usa un AccessGate estático. Ver docs/CI-E2E/semana-05.
+ * Activos en config/rbac.php desde el 30/10/2026 para superadmin y admin_hospital.
+ * En Laravel los exige el middleware rbac y RbacAccessGate; la demo y el CLI de CI
+ * siguen con StaticAccessGate. Ver docs/CI-E2E/semana-16/integracion-laravel.md.
  */
 final class QaPermissions
 {
