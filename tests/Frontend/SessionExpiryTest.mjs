@@ -26,7 +26,10 @@ test('failed refresh clears the session before the login guard runs', async () =
     });
     const source = (path) => readFileSync(new URL(`../../resources/js/${path}`, import.meta.url), 'utf8')
         .replace(/^import .*;\r?$/gm, '').replace(/^export /gm, '');
+    vm.runInContext(source('modules/tenants/responsive/formRules.js'), context);
+    vm.runInContext(source('stores/logoutPolicy.js'), context);
     vm.runInContext(source('stores/auth.js'), context);
+    vm.runInContext(source('router/navigation.js'), context);
     vm.runInContext(source('router/guards.js'), context);
     context.router = {
         push: async (route) => {

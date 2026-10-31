@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Micro-HIS Alertas críticas y notificaciones internas — API v1
+  version: 1.0.0
+  description: Evento de resultado validado, bandeja y acuse (ASII-21). Errores en application/problem+json (RFC 9457) con code y request_id.
+  license:
+    name: Uso académico
+    identifier: CC-BY-4.0
+servers:
+  - url: http://127.0.0.1:8084
+security:
+  - userRef: []
+paths:
+  /api/v1/internal/result-validated:
+    post:
+      operationId: handleResultValidated
+      summary: Evento «resultado validado» de ASII-20 (identidad de servicio)
+      description: Idempotente por result_version_id. El mismo evento otra vez responde 200 duplicate, así que el emisor puede reintentar.
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ResultValidatedEvent' } } }
+      responses:
+        '201': { $ref: '#/components/responses/HandleResult' }
+        '200': { $ref: '#/components/responses/HandleResult' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '500': { $ref: '#/components/responses/Problem' }
+  /api/v1/critical-alerts:
+    get:
+      operationId: getInbox
+      summary: Bandeja de alertas pendientes del usuario (UC-ALR-06)
+      parameters:
+        - $ref: '#/components/parameters/TenantId'
+        - { name: format, in: query, description: html = bandeja (View de la Semana 4), schema: { type: string, enum: [html] } }
+      responses:
+        '200':
+          description: Pendientes de acuse cuyo destinatario es el usuario, por vencimiento
+          content:
+            application/json: { schema: { type: object, required: [alerts], properties: { alerts: { type: array, items: { $ref: '#/components/schemas/Alert' } } } } }
+            text/html: { schema: { type: string } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /api/v1/critical-alerts/{alert}/acknowledge:
+    post:
+      operationId: acknowledgeAlert
+      summary: Acusar recibo con lectura de verificación (UC-ALR-04)
+      parameters:
+        - { name: alert, in: path, required: true, schema: { type: string } }
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { type: object, required: [read_back], properties: { read_back: { type: object, required: [patient_id, lab_test_id, value] } } } } }
+      responses:
+        '200':
+          description: Alerta acusada
+          content: { application/json: { schema: { type: object, properties: { alert: { $ref: '#/components/schemas/Alert' } } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /health:
+    get:
+      operationId: liveness
+      summary: El proceso responde (solo GET; otro método da 404)
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /health/ready:
+    get:
+      operationId: readiness
+      summary: La base responde
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Health' }
+components:
+  securitySchemes:
+    userRef: { type: apiKey, in: header, name: X-User-Ref, description: Identidad que inyecta el gateway del HIS tras validar el JWT (propuesto). }
+  parameters:
+    TenantId: { name: X-Tenant-ID, in: header, required: true, schema: { type: string, example: HOSP-DEMO } }
+  responses:
+    HandleResult:
+      description: created (201), duplicate o not_critical (200)
+      content: { application/json: { schema: { type: object, required: [outcome, alert], properties: { outcome: { type: string, enum: [created, duplicate, not_critical] }, alert: { oneOf: [{ $ref: '#/components/schemas/Alert' }, { type: 'null' }] } } } } }
+    Problem:
+      description: Error (RFC 9457)
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required: [title, status, code, request_id]
+            properties:
+              title: { type: string }
+              status: { type: integer }
+              code: { type: string, examples: [TENANT_REQUIRED, EVENT_INVALID, READ_BACK_MISMATCH, NO_CARE_RELATION, ALERT_ALREADY_ACKNOWLEDGED] }
+              field: { type: string }
+              request_id: { type: string }
+    Health:
+      description: Estado del servicio
+      content: { application/json: { schema: { type: object, required: [status, service], properties: { status: { type: string, enum: [ok, unavailable] }, service: { type: string } } } } }
+  schemas:
+    ResultValidatedEvent:
+      type: object
+      required: [result_version_id, lab_test_id, patient_id, episode_id, value]
+      properties:
+        result_version_id: { type: string }
+        lab_test_id: { type: string, description: Versión exacta del catálogo (ASII-17) }
+        patient_id: { type: string }
+        episode_id: { type: string }
+        value: { type: number }
+    Alert:
+      type: object
+      required: [id, status, level, recipient, direction, dueAt]
+      properties:
+        id: { type: string }
+        status: { type: string, enum: [open, acknowledged] }
+        level: { type: integer, minimum: 0, maximum: 2 }
+        recipient: { type: string }
+        direction: { type: string, enum: [low, high] }
+        dueAt: { type: string, format: date-time }

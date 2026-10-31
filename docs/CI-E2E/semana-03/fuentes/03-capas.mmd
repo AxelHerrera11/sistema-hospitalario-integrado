@@ -1,0 +1,38 @@
+flowchart TB
+    %% Capas Presentation → Application → Domain ← Persistence (las flechas son dependencias de código)
+    subgraph P["Presentation"]
+        H[QaHttpHandler<br/>identidad, tenant, enrutamiento]
+        C[QaController - MVC]
+        V[RunPresenter - vista JSON]
+        E[ErrorMapper - excepción → HTTP]
+    end
+    subgraph A["Application"]
+        UC[PlanTestRun · AdvanceTestRun · RecordSuiteResult<br/>EvaluateQualityGate · ViewTestRuns]
+        AZ[Authorizer · RunInputParser · RunLoader]
+        PORTS{{AccessGate · AuditTrail · Clock}}
+    end
+    subgraph D["Domain"]
+        AG[TestRun · TestPlan · SuiteResult · EvidenceRef]
+        QG[QualityGate · QualityGatePolicy · GateDecision]
+        REPO{{TestRunRepository}}
+    end
+    subgraph I["Persistence / Integration / Ci (adaptadores)"]
+        PDO[PdoTestRunRepository + RunRowMapper]
+        MEM[InMemoryTestRunRepository]
+        GOB[GobernanzaAuditTrail]
+        GATE[StaticAccessGate]
+        CI[GateRunner · JUnitReportReader · EvidenceCollector · RouteGuard]
+    end
+    H --> C --> UC
+    C --> V
+    H --> E
+    UC --> AZ
+    UC --> AG
+    UC --> QG
+    UC --> REPO
+    AZ --> PORTS
+    PDO -.implementa.-> REPO
+    MEM -.implementa.-> REPO
+    GOB -.implementa.-> PORTS
+    GATE -.implementa.-> PORTS
+    CI --> UC

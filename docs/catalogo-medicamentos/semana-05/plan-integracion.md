@@ -7,7 +7,7 @@
 | Worktree | El README pide `git worktree add ../shi-asii-14-catalogo -b <rama> origin/develop` para aislar cada módulo sin mezclar cambios | Ver abajo |
 | PR | Plantilla `.github/pull_request_template.md`, destino `develop`, al menos 3 commits significativos, ≤ 400 líneas (objetivo 350) | Así desde la Semana 2 |
 | Control | `ASII PR Guard` (`.github/workflows/branch-protection.yml`): cuerpo de al menos 80 caracteres y nombre de rama válido | Automático |
-| Aprobación | `BRANCH_PROTECTION.md`: 1 aprobación en `develop` y revisión de Code Owners en `main`. La autora no puede aprobar su propio PR | Se solicita a @rortizs |
+| Aprobación | `BRANCH_PROTECTION.md`: 1 aprobación en `develop` y revisión de Code Owners en `main`. La autora no puede aprobar su propio PR | Aprobador por confirmar |
 | Promoción | Tras cada parte integrada, PR `develop → main` inmediato y confirmación remota antes de la parte siguiente | Desde la Semana 4 |
 
 ## Papel del worktree y ejecución real

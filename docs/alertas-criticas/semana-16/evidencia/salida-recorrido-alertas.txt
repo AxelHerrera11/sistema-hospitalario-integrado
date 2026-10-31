@@ -1,0 +1,19 @@
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  recepción sin alertas.ver → 403 RBAC                            esperado 403, obtenido 403
+PASS  médico intenta publicar un resultado (sin lab-results.validate) → 403 esperado 403, obtenido 403
+PASS  bioquímico publica glucosa 32 (crítico bajo 40) → 201          esperado 201, obtenido 201
+      dirección 'low', nivel 0, destinataria = médica tratante: sí
+PASS  el mismo resultado otra vez → 200 duplicate                      esperado 200, obtenido 200
+PASS  glucosa 95 → 200 not_critical                                    esperado 200, obtenido 200
+PASS  episodio de otro paciente → 422 EVENT_INVALID                    esperado 422, obtenido 422
+PASS  paciente 2 sin médico tratante, glucosa 500 → 201 a la jefatura esperado 201, obtenido 201
+      nivel 1, destinatario NULL
+PASS  médico ve su bandeja → 200                                      esperado 200, obtenido 200
+      alertas pendientes: 1
+PASS  médico acusa leyendo 23 en lugar de 32 → 422 READ_BACK_MISMATCH esperado 422, obtenido 422
+PASS  médico acusa con la lectura correcta → 200                      esperado 200, obtenido 200
+PASS  segundo acuse → 409 ALERT_ALREADY_ACKNOWLEDGED                   esperado 409, obtenido 409
+PASS  médico pide la bandeja de la jefatura (sin alertas.supervisar) → 403 esperado 403, obtenido 403
+PASS  jefatura médica ve la bandeja del servicio → 200                esperado 200, obtenido 200
+      alertas pendientes: 1

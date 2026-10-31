@@ -1,0 +1,7 @@
+PASS  Texto de ayuda: 7.24:1 (mínimo 4.5:1)
+PASS  Trazabilidad: 7.24:1 (mínimo 4.5:1)
+PASS  Error: 7.60:1 (mínimo 4.5:1)
+PASS  Botón: 10.36:1 (mínimo 4.5:1)
+PASS  Porcentaje: 9.90:1 (mínimo 3:1)
+PASS  Borde del campo (no texto): 4.55:1 (mínimo 3:1)
+PASS  Foco (no texto): 6.41:1 (mínimo 3:1)

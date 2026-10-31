@@ -1,0 +1,7 @@
+$ php vendor/bin/phpunit --testsuite Unit,Feature
+# Suite completa con el provider del expediente registrado. El único error es ajeno al módulo:
+# CatalogLaravelIntegrationTest (Salas y camas) necesita PostgreSQL en 127.0.0.1:55433, que no existe en este equipo.
+1) Tests\Feature\SalasCamas\CatalogLaravelIntegrationTest::test_container_resolves_catalog_repositories_and_uses_hospital_postgresql
+PDOException: SQLSTATE[08006] [7] could not connect to server: Connection refused (0x0000274D/10061)
+ERRORS!
+Tests: 217, Assertions: 4802, Errors: 1.

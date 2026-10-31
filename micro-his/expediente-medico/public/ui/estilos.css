@@ -1,0 +1,74 @@
+/* Prototipo del expediente. Colores verificados con contraste >= 4.5:1 sobre su fondo (docs/expedientes-medicos/semana-09). */
+:root {
+    --texto: #1f2933; --texto-suave: #4a5561; --fondo: #f4f6f8; --panel: #ffffff; --borde: #c5ccd3;
+    --primario: #0b5cad; --primario-hover: #084a8c; --foco: #ffbf47;
+    --exito-texto: #145c2e; --exito-fondo: #e8f5ec; --denegado-texto: #7a3e00; --denegado-fondo: #fff4e5;
+    --error-texto: #a61b1b; --error-fondo: #fdecec; --vacio-texto: #3d4852; --vacio-fondo: #eef1f4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--texto); background: var(--fondo); }
+.saltar { position: absolute; left: -999px; top: 0; padding: 8px 12px; background: var(--panel); color: var(--primario); z-index: 10; }
+.saltar:focus { left: 8px; }
+:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; box-shadow: 0 0 0 5px var(--texto); }
+
+.barra { background: var(--primario); color: #fff; padding: 12px 16px; }
+.barra h1 { margin: 0; font-size: 1.25rem; }
+.aviso { margin: 4px 0 0; font-size: 0.875rem; }
+
+/* Móvil primero (320–430 px): una columna, controles a todo el ancho. */
+.contenido { display: grid; gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+.panel { background: var(--panel); border: 1px solid var(--borde); border-radius: 8px; padding: 16px; min-width: 0; }
+.panel h2 { margin: 0 0 12px; font-size: 1.125rem; }
+.campo { display: grid; gap: 4px; margin-bottom: 12px; }
+label { font-weight: 600; }
+input, select { font: inherit; min-height: 44px; padding: 8px 10px; border: 1px solid #6b7682; border-radius: 6px; width: 100%; background: #fff; color: var(--texto); }
+input[aria-invalid="true"] { border: 2px solid var(--error-texto); }
+.ayuda { margin: 0; font-size: 0.875rem; color: var(--texto-suave); }
+.error-campo { margin: 0; font-size: 0.875rem; color: var(--error-texto); font-weight: 600; }
+.acciones { display: flex; flex-direction: column; gap: 8px; }
+button { font: inherit; min-height: 44px; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.primario { background: var(--primario); color: #fff; border: 1px solid var(--primario); }
+.primario:hover:not(:disabled) { background: var(--primario-hover); }
+.secundario { background: #fff; color: var(--primario); border: 1px solid var(--primario); }
+
+.estado { border-radius: 6px; padding: 12px; border-left: 6px solid transparent; }
+.estado p { margin: 0 0 8px; }
+.estado p:last-child { margin-bottom: 0; }
+.estado-inicial, .estado-vacio { background: var(--vacio-fondo); color: var(--vacio-texto); border-left-color: #6b7682; }
+.estado-cargando { background: var(--vacio-fondo); color: var(--vacio-texto); }
+.estado-exito { background: var(--exito-fondo); color: var(--exito-texto); border-left-color: var(--exito-texto); }
+.estado-denegado { background: var(--denegado-fondo); color: var(--denegado-texto); border-left-color: var(--denegado-texto); }
+.estado-error { background: var(--error-fondo); color: var(--error-texto); border-left-color: var(--error-texto); }
+.estado .titulo { font-weight: 700; }
+.traza { font-family: ui-monospace, Consolas, monospace; font-size: 0.875rem; }
+
+.ficha { display: grid; gap: 4px 16px; margin: 16px 0; }
+.ficha div { display: grid; }
+.ficha dt { font-size: 0.8125rem; color: var(--texto-suave); }
+.ficha dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.resumen { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; margin: 0 0 12px; }
+.resumen li { background: var(--vacio-fondo); border-radius: 999px; padding: 2px 12px; font-size: 0.875rem; }
+.linea-tiempo { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.episodio { border: 1px solid var(--borde); border-left: 4px solid var(--primario); border-radius: 6px; padding: 12px; }
+.episodio h4 { margin: 0 0 4px; font-size: 1rem; }
+.episodio p { margin: 0; color: var(--texto-suave); font-size: 0.9375rem; }
+.insignia { display: inline-block; font-size: 0.8125rem; font-weight: 600; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; margin-left: 6px; }
+details { margin-top: 8px; }
+summary { cursor: pointer; color: var(--primario); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+
+dialog { border: 1px solid var(--borde); border-radius: 8px; padding: 16px; max-width: min(480px, calc(100vw - 32px)); color: var(--texto); }
+dialog::backdrop { background: rgb(15 23 32 / 0.55); }
+dialog h2 { margin-top: 0; font-size: 1.125rem; }
+
+/* Tableta y escritorio (>= 768 px): búsqueda a la izquierda y resultado a la derecha. */
+@media (min-width: 768px) {
+    .contenido { grid-template-columns: 300px 1fr; align-items: start; padding: 24px; }
+    .acciones { flex-direction: row; flex-wrap: wrap; }
+    .ficha { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+    .contenido { grid-template-columns: 340px 1fr; }
+    .ficha { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
