@@ -1,0 +1,119 @@
+openapi: 3.0.3
+info:
+  title: Micro-HIS Traslados y altas (PROTOTIPO, ASII-08)
+  version: 0.5.0
+  description: >-
+    Contrato del prototipo HTTP de la Semana 5 (micro-his/traslados-altas/public/index.php). Solo para entornos locales
+    aislados. El actor llega en X-Actor-Ref; en la integración lo reemplazan JWT, tenant y RBAC de Laravel.
+servers:
+  - url: http://127.0.0.1:8790
+    description: php -S local con una base HOSPITAL desechable
+paths:
+  /traslados:
+    post:
+      summary: Traslado interno (UC-TA-01)
+      parameters: [{ $ref: '#/components/parameters/Actor' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estancia_esperada_id, cama_destino_id, motivo]
+              properties:
+                estancia_esperada_id: { type: string, format: uuid }
+                cama_destino_id: { type: string, format: uuid }
+                motivo: { type: string, minLength: 1, maxLength: 500 }
+      responses:
+        '201': { description: Traslado confirmado, content: { application/json: { schema: { $ref: '#/components/schemas/ExitoTraslado' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Rechazo' }
+        '409': { $ref: '#/components/responses/Rechazo' }
+        '422': { $ref: '#/components/responses/SolicitudInvalida' }
+        '500': { $ref: '#/components/responses/Incierto' }
+        '503': { $ref: '#/components/responses/Fallo' }
+  /altas:
+    post:
+      summary: Alta hospitalaria (UC-TA-02)
+      parameters: [{ $ref: '#/components/parameters/Actor' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estancia_esperada_id]
+              properties:
+                estancia_esperada_id: { type: string, format: uuid }
+      responses:
+        '200': { description: Alta confirmada, content: { application/json: { schema: { $ref: '#/components/schemas/ExitoAlta' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Rechazo' }
+        '409': { $ref: '#/components/responses/Rechazo' }
+        '422': { $ref: '#/components/responses/SolicitudInvalida' }
+        '500': { $ref: '#/components/responses/Incierto' }
+        '503': { $ref: '#/components/responses/Fallo' }
+  /estancias/{estanciaId}/internacion:
+    get:
+      summary: Estado del episodio de una estancia (para resolver un resultado incierto)
+      parameters:
+        - { $ref: '#/components/parameters/Actor' }
+        - { name: estanciaId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Estado leído en una transacción que siempre se revierte
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  episodio_id: { type: string, format: uuid }
+                  tipo: { type: string, enum: [outpatient, emergency, inpatient] }
+                  estado: { type: string, enum: [open, closed, cancelled] }
+                  estancia_abierta_id: { type: string, format: uuid, nullable: true }
+                  cama_actual_id: { type: string, format: uuid, nullable: true }
+                  estancia_consultada_abierta: { type: boolean }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { $ref: '#/components/responses/Error' }
+components:
+  parameters:
+    Actor:
+      { name: X-Actor-Ref, in: header, required: true, description: 'local_user_ref_id activo (solo prototipo)', schema: { type: string, format: uuid } }
+  schemas:
+    Liberacion:
+      type: object
+      required: [resultado, cama_liberada_id, estancia_cerrada_id, t]
+      properties:
+        resultado: { type: string, enum: [exito] }
+        cama_liberada_id: { type: string, format: uuid }
+        estancia_cerrada_id: { type: string, format: uuid }
+        t: { type: string, format: date-time }
+    ExitoTraslado:
+      allOf:
+        - { $ref: '#/components/schemas/Liberacion' }
+        - { type: object, properties: { estancia_destino_id: { type: string, format: uuid }, cama_destino_id: { type: string, format: uuid }, episodio_abierto_id: { type: string, format: uuid } } }
+    ExitoAlta:
+      allOf:
+        - { $ref: '#/components/schemas/Liberacion' }
+        - { type: object, properties: { episodio_cerrado_id: { type: string, format: uuid } } }
+  responses:
+    Error:
+      description: Error de protocolo, sin cambios
+      content: { application/json: { schema: { type: object, properties: { resultado: { type: string, enum: [error] }, codigo: { type: string } } } } }
+    Rechazo:
+      description: Rechazo confirmado (403 si es NO_AUTORIZADO); no se guardó ningún cambio
+      content: { application/json: { schema: { type: object, properties: { resultado: { type: string, enum: [rechazo] }, motivo: { type: string }, mensaje: { type: string } } } } }
+    SolicitudInvalida:
+      description: Solicitud inválida; HOSPITAL no se consultó
+      content: { application/json: { schema: { type: object, properties: { resultado: { type: string, enum: [solicitud_invalida] }, campo: { type: string } } } } }
+    Fallo:
+      description: HOSPITAL no confirmó; se sabe que no hubo cambios y se puede reintentar
+      content: { application/json: { schema: { type: object, properties: { resultado: { type: string, enum: [fallo, error] }, codigo: { type: string } } } } }
+    Incierto:
+      description: No se sabe si HOSPITAL confirmó. NO reintentar sin consultar /estancias/{id}/internacion
+      content: { application/json: { schema: { type: object, properties: { resultado: { type: string, enum: [incierto] }, estancia_esperada_id: { type: string, format: uuid } } } } }

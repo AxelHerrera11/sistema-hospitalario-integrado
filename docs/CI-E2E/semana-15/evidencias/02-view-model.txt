@@ -1,0 +1,15 @@
+✔ VM01 plan válido no tiene errores; producción y SHA corto sí (1.9148ms)
+✔ VM02 plan sin E2E obligatoria o con nombres repetidos se marca (1.7024ms)
+✔ VM03 resultado: límites de conteo y huella (1.3815ms)
+✔ VM04 acciones: el observador no ve botones de escritura; running sin pendientes no ofrece registrar (0.2765ms)
+✔ VM05 mensajes de error: 503 permite reintentar, 403 no (0.2317ms)
+✔ VM07 cambio de la semana 12: motivo principal, bloqueo antes que rechazo; aprobado sin motivo (0.1339ms)
+✔ VM06 veredictos y hallazgos tienen texto para la persona usuaria (0.1318ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 112.3333

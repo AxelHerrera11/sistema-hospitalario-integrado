@@ -26,7 +26,7 @@ final readonly class Router
             return match ($request->method) {
                 'POST' => $this->withJson($request, self::DRAFT_FIELDS, fn (array $body): array => $this->registration->register($body)),
                 'GET' => is_string($request->query['q'] ?? null)
-                    ? $this->search->search($request->query['q'])
+                    ? $this->search->search($request->query['q'], $request->query['limit'] ?? null)
                     : self::error(422, 'MEDICATION_INVALID', 'El parámetro q es obligatorio.', 'term'),
                 default => self::error(405, 'METHOD_NOT_ALLOWED', 'Método no permitido.'),
             };
@@ -43,12 +43,17 @@ final readonly class Router
         return self::error(404, 'ROUTE_NOT_FOUND', 'Ruta no encontrada.');
     }
 
-    /** Decodifica un objeto JSON y exige que los campos conocidos, si vienen, sean texto. */
+    /** Decodifica un objeto JSON, rechaza los campos desconocidos y exige que los conocidos, si vienen, sean texto. */
     private function withJson(Request $request, array $fields, callable $handler): array
     {
         $body = json_decode($request->rawBody, true);
         if (!is_array($body) || array_is_list($body) && $body !== []) {
             return self::error(400, 'BODY_INVALID', 'El cuerpo debe ser un objeto JSON.');
+        }
+        foreach (array_keys($body) as $field) {
+            if (!in_array($field, $fields, true)) {
+                return self::error(422, 'MEDICATION_INVALID', "El campo {$field} no se admite.", (string) $field);
+            }
         }
         foreach ($fields as $field) {
             if (array_key_exists($field, $body) && !is_string($body[$field])) {
@@ -56,7 +61,7 @@ final readonly class Router
             }
         }
 
-        return $handler(array_intersect_key($body, array_flip($fields)));
+        return $handler($body);
     }
 
     private static function error(int $status, string $code, string $message, ?string $field = null): array

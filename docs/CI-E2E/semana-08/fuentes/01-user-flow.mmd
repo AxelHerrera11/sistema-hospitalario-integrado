@@ -1,0 +1,32 @@
+flowchart TD
+    %% User flow por rol autorizado
+    S([Inicio: abre Calidad de versiones]) --> R{Perfil / permisos}
+    R -->|sin sesión| L0[Aviso 401: elija un perfil] --> S
+    R -->|Observador: qa.ejecuciones.ver| LV[Lista de ejecuciones]
+    R -->|Líder QA: ver + registrar + evaluar| LL[Lista + botón Planificar]
+    LV --> EMP{¿Hay ejecuciones?}
+    LL --> EMP
+    EMP -->|no| VAC[Estado vacío con ayuda]
+    EMP -->|sí| DET[Detalle de ejecución]
+    VAC -->|Líder| PLAN
+    LL --> PLAN[Planificar: versión, commit, ambiente, suites]
+    PLAN --> VAL{¿Validación local OK?}
+    VAL -->|no| ERRF[Errores por campo, foco al primero] --> PLAN
+    VAL -->|sí| SRV{Respuesta del servidor}
+    SRV -->|422 / 409| ERRF
+    SRV -->|503 o sin red| REC[Aviso recuperable + Reintentar; datos conservados] --> PLAN
+    SRV -->|201| DET
+    DET -->|Líder, planned| INI[Iniciar]
+    INI --> RUN[Running: registrar resultado por suite]
+    RUN --> CMP{Completar: confirmación}
+    CMP -->|cancelar| RUN
+    CMP -->|confirmar| DONE[Completed]
+    DET -->|Líder| AB{Abortar: confirmación con motivo}
+    AB -->|confirmar| ABD[Aborted]
+    DONE --> GATE[Evaluar quality gate]
+    ABD --> GATE
+    GATE --> VER{Veredicto}
+    VER -->|approved| OK([Aprobado: puede promoverse])
+    VER -->|rejected| KO([Rechazado: corregir y volver a ejecutar])
+    VER -->|blocked| BL([Bloqueado: falta evidencia])
+    DET -->|Observador| SOLO[Solo lectura: sin botones de escritura]

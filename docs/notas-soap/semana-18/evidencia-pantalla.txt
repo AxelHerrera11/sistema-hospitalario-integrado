@@ -1,0 +1,48 @@
+Recorrido de la pantalla /notas-soap en Chrome real (puppeteer-core) contra el API de Laravel (login, tenant y RBAC reales) y PostgreSQL 16.15.
+Fecha: 2026-10-23. Código: rama feature/asii-11-semana-18-notas-soap-interfaz-reglas-jhos-hgnu (93e24a42). Navegador: Google Chrome (headless).
+Datos: una médica con asignación activa, un paciente, un episodio y su expediente abierto; NOTAS_SOAP_ICD10_PROVISIONAL=true.
+
+OK    login con la médica — http://127.0.0.1:8099/
+OK    la navegación muestra «Notas SOAP» como enlace
+OK    se abre la pantalla de Notas SOAP — http://127.0.0.1:8099/notas-soap
+OK    registrar vacío muestra errores y no llama al API — 5 alertas
+OK    registrar abre la nota en borrador, versión 1
+OK    se muestra el trace_id de la solicitud
+OK    sin diagnóstico principal no se ofrece «Firmar nota»
+OK    código con forma inválida se rechaza en el cliente
+OK    código bien formado pero fuera del catálogo: mensaje del servidor
+OK    J18.9 principal se asocia y aparece en la lista
+OK    «Firmar nota» aparece con diagnóstico principal
+OK    la nota queda Firmada y deja de ofrecer asociar/firmar
+OK    aparece el formulario de corrección
+OK    corregir sin motivo muestra el error y no crea nada
+OK    la corrección abre la versión 2 en borrador
+OK    la versión 2 muestra el plan corregido y sin diagnósticos
+OK    la versión 2 se completa y se firma
+OK    corregir una nota ya corregida muestra el aviso del contrato
+OK    abrir una nota inexistente muestra «no existe o no tiene acceso»
+OK    en 390 px de ancho no hay desbordamiento horizontal
+Llamadas al API:
+POST /api/v1/auth/login -> 200
+GET /api/v1/auth/me -> 200
+POST /api/v1/care-episodes/dddddddd-dddd-4ddd-8ddd-dddddddddddd/soap-notes -> 201
+GET /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43 -> 200
+POST /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43/diagnoses -> 422
+POST /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43/diagnoses -> 201
+GET /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43 -> 200
+POST /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43/sign -> 200
+GET /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43 -> 200
+POST /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43/corrections -> 201
+GET /api/v1/soap-notes/fc3c1cc4-fefe-43f3-bc07-49ccc6451a32 -> 200
+POST /api/v1/soap-notes/fc3c1cc4-fefe-43f3-bc07-49ccc6451a32/diagnoses -> 201
+GET /api/v1/soap-notes/fc3c1cc4-fefe-43f3-bc07-49ccc6451a32 -> 200
+POST /api/v1/soap-notes/fc3c1cc4-fefe-43f3-bc07-49ccc6451a32/sign -> 200
+GET /api/v1/soap-notes/fc3c1cc4-fefe-43f3-bc07-49ccc6451a32 -> 200
+GET /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43 -> 200
+POST /api/v1/soap-notes/a55ab9dc-12f8-4420-9c9d-8de093ca4b43/corrections -> 409
+GET /api/v1/soap-notes/00000000-0000-4000-8000-000000000000 -> 404
+Problemas de consola/red (3):
+console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Content)
+console.error: Failed to load resource: the server responded with a status of 409 (Conflict)
+console.error: Failed to load resource: the server responded with a status of 404 (Not Found)
+Resumen: 20 OK, 0 fallos

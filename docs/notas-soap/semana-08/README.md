@@ -14,7 +14,7 @@
 
 Diseñar la experiencia del flujo «registro de nota SOAP y asociación de diagnóstico clínico» para los roles autorizados, con inicio, decisión, confirmación, estados vacío, carga, éxito y error recuperable, y con mensajes que usan los códigos reales del [contrato API](../semana-05/contrato-api.md). El diseño respeta dos reglas que vienen de las semanas anteriores y no se negocian: **la nota firmada no se edita** y **el catálogo CIE-10 que no responde no es «no hay diagnósticos»**.
 
-Los wireframes, anotados, están en la parte 2 de esta entrega (#427).
+Los wireframes, anotados, están en [wireframes.md](./wireframes.md).
 
 ## Roles y permisos
 
@@ -68,7 +68,7 @@ flowchart TD
   nota -.->|propuesto: contrato v1, sin código| firma[Firmar: exige las cuatro secciones y un diagnóstico principal]
 ```
 
-SVG: en la parte 2 (#427) · [Fuente Mermaid](./fuentes/01-user-flow.mmd)
+[SVG](./01-user-flow.svg) · [Fuente Mermaid](./fuentes/01-user-flow.mmd)
 
 ### Flujo 2 — Lectura por rol: médico tratante y enfermería
 
@@ -82,12 +82,12 @@ flowchart TD
   ver -- Sí --> buscar[Buscar la nota del episodio]
   buscar --> carga{Carga}
   carga -- en curso --> spinner[Lista en gris, sin datos clínicos visibles]
-  carga -- 200 con nota --> vista[Lectura: secciones, diagnósticos, autor y estado]
+  carga -- 200 con nota --> trat{¿Tiene asignación activa en el episodio?}
   carga -- 200 sin nota --> vacio[Vacío: «Este episodio aún no tiene nota SOAP»]
   carga -- 404 NOTE_NOT_FOUND --> d404[«La nota ya no está disponible»]
-  vista --> trat{¿Tiene asignación activa en el episodio?}
   trat -- No --> d403t[403 NOT_TREATING_PHYSICIAN: «No atiende este episodio; pida al médico tratante»]
-  trat -- Sí --> lect[Ver el texto clínico y los diagnósticos]
+  trat -- Sí --> vista[Lectura: secciones, diagnósticos, autor y estado]
+  vista --> lect[Ver el texto clínico y los diagnósticos]
   vista --> firmado{¿La nota está firmada?}
   firmado -- Sí --> inmutable[«Nota firmada: no se puede editar; una corrección crea una versión nueva»]
   firmado -- No --> editable[«Borrador: puede completar y asociar diagnósticos»]
@@ -96,7 +96,7 @@ flowchart TD
   med -- No --> sololect[«Solo lectura: usted no es el tratante de esta nota»]
 ```
 
-SVG: en la parte 2 (#427) · [Fuente Mermaid](./fuentes/02-user-flow-lectura.mmd)
+[SVG](./02-user-flow-lectura.svg) · [Fuente Mermaid](./fuentes/02-user-flow-lectura.mmd)
 
 ## Estados de la pantalla
 
@@ -164,9 +164,9 @@ SVG: en la parte 2 (#427) · [Fuente Mermaid](./fuentes/02-user-flow-lectura.mmd
 
 ## Archivos
 
-- Wireframes anotados: seis pantallas con estados, mensajes, validaciones y reglas, en la parte 2 (#427).
-- Flujo 1: SVG en la parte 2 (#427) y [fuente Mermaid](./fuentes/01-user-flow.mmd).
-- Flujo 2: SVG en la parte 2 (#427) y [fuente Mermaid](./fuentes/02-user-flow-lectura.mmd).
+- [Wireframes anotados](./wireframes.md): seis pantallas con estados, mensajes, validaciones y reglas.
+- [Flujo 1 en SVG](./01-user-flow.svg) y [fuente Mermaid](./fuentes/01-user-flow.mmd).
+- [Flujo 2 en SVG](./02-user-flow-lectura.svg) y [fuente Mermaid](./fuentes/02-user-flow-lectura.mmd).
 - [Declaración de uso de IA](./DECLARACION_IA.md).
 
 > Los enlaces a las Semanas 2 a 7 y al micro-HIS resuelven cuando la cadena de PRs (#65, #130, #128, #129, #379, #376, #378, #374, #404, #405, #411 y #421) esté integrada en `develop`; esta rama solo añade el diseño de la Semana 8.

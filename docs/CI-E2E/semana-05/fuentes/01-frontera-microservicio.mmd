@@ -1,0 +1,16 @@
+flowchart LR
+    %% Cliente-servidor actual y frontera de microservicio evaluada
+    subgraph HOY["Hoy: módulo dentro del monorepo"]
+        GHA[GitHub Actions] -->|proceso CLI| GATE[quality-gate.php]
+        UI[Prototipo web] -->|HTTP JSON| API[/api/v1/qa/runs/]
+        GATE --> CORE[Dominio + casos de uso]
+        API --> CORE
+        CORE --> SQ[(SQLite por ejecución)]
+    end
+    subgraph FUT["Frontera evaluada: servicio qa-registry"]
+        GHA2[GitHub Actions] -->|HTTPS + token de servicio| SVC[qa-registry]
+        SVC --> PGQ[(PostgreSQL propio)]
+        SVC -->|eventos| AUD[Gobernanza]
+        SVC -->|¿permiso?| RB[RBAC]
+    end
+    HOY -. migrar solo si se cumplen los criterios medibles .-> FUT

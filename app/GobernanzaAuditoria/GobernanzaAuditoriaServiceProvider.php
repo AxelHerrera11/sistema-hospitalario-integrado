@@ -24,10 +24,9 @@ use MicroHis\Rbac\Application\Authorize;
 /**
  * Conecta micro-his/gobernanza-auditoria con Laravel.
  *
- * NO está registrado en bootstrap/providers.php (archivo compartido). Para
- * activarlo se requiere, en este orden: RbacServiceProvider (develop), las
- * migraciones de audit_log en CENTRAL y el permiso auditoria.ver aprobado en
- * config/rbac.php. Ver docs/gobernanza-auditoria/semana-05/contrato-api.md.
+ * Registrado después de RBAC y Tenants en bootstrap/providers.php. Requiere
+ * las migraciones de audit_log en CENTRAL y auditoria.ver de config/rbac.php.
+ * Ver docs/gobernanza-auditoria/semana-05/contrato-api.md.
  */
 final class GobernanzaAuditoriaServiceProvider extends ServiceProvider
 {
@@ -37,6 +36,8 @@ final class GobernanzaAuditoriaServiceProvider extends ServiceProvider
 
         $this->app->singleton(PdoAuditLog::class, fn () => new PdoAuditLog(DB::connection('central')->getPdo()));
         $this->app->bind(AuditLogger::class, PdoAuditLog::class);
+        $this->app->bind(AuditChainVerifier::class, fn () => new AuditChainVerifier(DB::connection('central')->getPdo()));
+        $this->app->bind(AuditFilterCatalog::class, fn () => new AuditFilterCatalog(DB::connection('central')->getPdo()));
         $this->app->bind(AuditEventReader::class, PdoAuditLog::class);
         $this->app->bind(Clock::class, SystemClock::class);
         $this->app->bind(FailureReporter::class, LaravelLogFailureReporter::class);
@@ -61,6 +62,8 @@ final class GobernanzaAuditoriaServiceProvider extends ServiceProvider
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', 'rbac:'.AuditPermissions::VIEW])
             ->group(function (): void {
                 Route::get('audit-events', [AuditEventController::class, 'index']);
+                Route::get('audit-events/integrity', [AuditEventController::class, 'integrity']);
+                Route::get('audit-events/catalog', [AuditEventController::class, 'catalog']);
             });
     }
 }

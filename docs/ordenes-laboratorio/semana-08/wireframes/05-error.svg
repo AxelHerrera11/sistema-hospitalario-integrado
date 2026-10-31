@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="t">
+  <title id="t">Wireframe: error recuperable al emitir una orden</title>
+  <rect width="960" height="640" fill="#f3f4f6"/>
+  <rect x="0" y="0" width="960" height="60" fill="#1f2937"/>
+  <text x="24" y="37" font-family="system-ui" font-size="19" font-weight="700" fill="#ffffff">Emitir orden de laboratorio</text>
+
+  <rect x="24" y="84" width="912" height="108" rx="8" fill="#fef2f2" stroke="#f87171"/>
+  <text x="44" y="112" font-family="system-ui" font-size="14" font-weight="700" fill="#991b1b">No se pudo emitir la orden</text>
+  <text x="44" y="136" font-family="system-ui" font-size="12" fill="#7f1d1d">La prueba “TSH” ya no está activa en el catálogo. Quítala o elige otra para continuar.</text>
+  <text x="44" y="156" font-family="system-ui" font-size="11" fill="#991b1b">Código: LAB_TEST_NOT_ACTIVE · request_id: 9f3c2a71</text>
+  <text x="44" y="176" font-family="system-ui" font-size="11" fill="#7f1d1d">Tus datos siguen en el formulario; no se creó ninguna orden.</text>
+
+  <rect x="24" y="212" width="300" height="300" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="44" y="240" font-family="system-ui" font-size="13" font-weight="700" fill="#0f172a">Contexto del expediente</text>
+  <text x="44" y="268" font-family="system-ui" font-size="11" fill="#64748b">Paciente</text>
+  <text x="44" y="286" font-family="system-ui" font-size="13" fill="#0f172a">Ana Pérez · EPI-77</text>
+  <text x="44" y="316" font-family="system-ui" font-size="11" fill="#64748b">Nota clínica</text>
+  <text x="44" y="334" font-family="system-ui" font-size="13" fill="#0f172a">NOTA-552</text>
+  <text x="44" y="364" font-family="system-ui" font-size="11" fill="#64748b">Prioridad</text>
+  <text x="44" y="382" font-family="system-ui" font-size="13" fill="#0f172a">Rutina</text>
+
+  <rect x="340" y="212" width="596" height="300" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="360" y="240" font-family="system-ui" font-size="13" font-weight="700" fill="#0f172a">Pruebas seleccionadas</text>
+  <rect x="360" y="256" width="180" height="30" rx="15" fill="#dbeafe"/>
+  <text x="374" y="276" font-family="system-ui" font-size="11" fill="#1e40af">GLU · Glucosa ✕</text>
+  <rect x="360" y="296" width="240" height="30" rx="15" fill="#fee2e2" stroke="#f87171"/>
+  <text x="374" y="316" font-family="system-ui" font-size="11" fill="#991b1b">TSH · Tirotropina ✕</text>
+  <rect x="620" y="296" width="110" height="30" rx="6" fill="#ffffff" stroke="#b91c1c"/>
+  <text x="640" y="316" font-family="system-ui" font-size="11" fill="#b91c1c">Quitar</text>
+
+  <text x="360" y="364" font-family="system-ui" font-size="11" fill="#475569">Sugerencias activas</text>
+  <rect x="360" y="374" width="556" height="34" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="374" y="396" font-family="system-ui" font-size="12" fill="#0f172a">TSH libre · Tiroides</text>
+  <text x="850" y="396" font-family="system-ui" font-size="18" font-weight="700" fill="#2563eb">+</text>
+  <rect x="360" y="416" width="556" height="34" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="374" y="438" font-family="system-ui" font-size="12" fill="#0f172a">T4 · Tiroxina</text>
+  <text x="850" y="438" font-family="system-ui" font-size="18" font-weight="700" fill="#2563eb">+</text>
+
+  <rect x="620" y="548" width="150" height="34" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="648" y="570" font-family="system-ui" font-size="12" fill="#334155">Cancelar</text>
+  <rect x="784" y="548" width="132" height="34" rx="6" fill="#94a3b8"/>
+  <text x="808" y="570" font-family="system-ui" font-size="12" font-weight="600" fill="#ffffff">Revisar y emitir</text>
+
+  <rect x="24" y="590" width="912" height="44" rx="8" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="40" y="610" font-family="system-ui" font-size="11" font-weight="700" fill="#92400e">ANOTACIONES</text>
+  <text x="40" y="626" font-family="system-ui" font-size="11" fill="#78350f">A. Mensaje en lenguaje claro + código. B. request_id para soporte. C. Acción recuperable sin perder datos. D. El foco se mueve al panel de error; “Revisar y emitir” queda deshabilitado.</text>
+</svg>

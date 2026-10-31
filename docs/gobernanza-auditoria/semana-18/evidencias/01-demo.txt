@@ -1,0 +1,28 @@
+# Demo funcional — Gobernanza y auditoría de movimientos del sistema — 2026-10-29 22:51 -0600 · Windows 11 · PHP 8.2.12
+# Código: integración local 7d34060e (develop 16654473 + PR abiertos de las Semanas 16–17)
+
+$ Prototipo /prototipo/
+  HTTP 200
+$ Administrador del hospital 1
+  HTTP 200 eventos=25 meta={"page":1,"per_page":25,"total":52,"total_pages":3} resultados=sesiones/success,prescripciones/denied,prescripciones/success,notas_soap/failure,usuarios/success,rbac/denied,rbac/success,notas_soap/success
+$ Filtro modulo=rbac&resultado=denied
+  HTTP 200 eventos=6 meta={"page":1,"per_page":25,"total":6,"total_pages":1} resultados=rbac/denied
+$ Médico sin auditoria.ver (con filtro inválido)
+  HTTP 403 {"code":"RBAC_DENIED","trace_id":"trace-denegado"}
+$ Otro hospital por cabecera
+  HTTP 403 {"code":"TENANT_MISMATCH","trace_id":"req-6f0d0da9c8d1d4e1"}
+$ Almacén caído
+  HTTP 503 {"code":"AUDIT_UNAVAILABLE","trace_id":"req-5d57bf393e43cbdc"}
+$ php micro-his/gobernanza-auditoria/tests/run.php
+[unit] 22 pruebas, 0 fallos.
+[contract] 22 pruebas, 0 fallos.
+[whitebox] 15 pruebas, 0 fallos.
+[blackbox] 34 pruebas, 0 fallos.
+[rbac_integration] 7 pruebas, 0 fallos.
+[hash_compat] 3 pruebas, 0 fallos.
+[laravel_glue] 5 pruebas, 0 fallos.
+[seguridad] 10 pruebas, 0 fallos.
+[architecture] 4 pruebas, 0 fallos.
+TODAS LAS SUITES APROBADAS
+$ phpunit tests/Feature/Rbac/GovernanceHttpTest.php
+OK (5 tests, 33 assertions)

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testsuite name="E2E-QA: planificación → ejecución → evidencia → quality gate" time="0.406860" disabled="0" errors="0" tests="3" failures="0" skipped="0" hostname="equipo-local">
+		<testcase name="E2E-QA-01 camino feliz: suites verdes con evidencia → approved y visible en el detalle" time="0.164560" classname="test"/>
+		<testcase name="E2E-QA-02 una prueba E2E obligatoria en rojo → rejected con la regla SUITE_BELOW_THRESHOLD" time="0.117583" classname="test"/>
+		<testcase name="E2E-QA-03 la etapa E2E no reportó → blocked (falta evidencia, no se aprueba por omisión)" time="0.096781" classname="test"/>
+	</testsuite>
+	<testsuite name="E2E-QA: permisos, tenant y errores" time="0.325700" disabled="0" errors="0" tests="6" failures="0" skipped="0" hostname="equipo-local">
+		<testcase name="E2E-QA-04 sin sesión → 401; observador no planifica → 403 RBAC_DENIED" time="0.023755" classname="test"/>
+		<testcase name="E2E-QA-05 una ejecución del hospital 1 no existe para el hospital 2 (404) y no aparece en su listado" time="0.131650" classname="test"/>
+		<testcase name="E2E-QA-06 X-Tenant-ID ajeno → 403 TENANT_MISMATCH" time="0.010982" classname="test"/>
+		<testcase name="E2E-QA-07 almacén o RBAC caídos → 503 con código, sin detalle técnico" time="0.021801" classname="test"/>
+		<testcase name="E2E-QA-08 una ejecución completada no admite más resultados (409)" time="0.132970" classname="test"/>
+		<testcase name="E2E-QA-09 el prototipo navegable se sirve y respeta la cabecera de idioma" time="0.003834" classname="test"/>
+	</testsuite>
+	<!-- tests 9 -->
+	<!-- suites 2 -->
+	<!-- pass 9 -->
+	<!-- fail 0 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 0 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 864.1298 -->
+</testsuites>

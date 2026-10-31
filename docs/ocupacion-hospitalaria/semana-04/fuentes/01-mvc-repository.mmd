@@ -1,0 +1,14 @@
+flowchart LR
+  Request[Solicitud HTTP] --> Controller[Controller<br/>OccupancyController]
+  Controller --> Model[Model / Application<br/>ConsultOccupancy<br/>OccupancySummaryQuery]
+  Model --> Domain[Domain<br/>OccupancyCalculator]
+  Model --> Port{{BedSnapshotReader}}
+  Port -. implementa .-> Pdo[PdoBedSnapshotReader]
+  Port -. implementa .-> Memory[Doble en memoria<br/>verificaciones]
+  Pdo --> DB[(PostgreSQL HOSPITAL)]
+  Controller --> View[View<br/>status + body]
+
+  classDef boundary fill:#e8f1ff,stroke:#245a9b
+  classDef core fill:#eaf8ef,stroke:#26734d
+  class Controller,View boundary
+  class Model,Domain,Port core

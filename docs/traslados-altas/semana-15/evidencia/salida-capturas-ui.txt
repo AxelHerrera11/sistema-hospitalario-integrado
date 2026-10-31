@@ -1,0 +1,9 @@
+PASS  consulta muestra la estancia y permite trasladar
+PASS  motivo vacío: aviso local
+PASS  cama ocupada: rechazo sin cambios
+PASS  traslado confirmado con nueva estancia
+PASS  alta confirmada a 375 px
+PASS  375 px sin desplazamiento horizontal
+PASS  recepción no tiene la entrada del menú
+PASS  miembro de otro hospital: rechazo y sin datos de la estancia
+8/8 comprobaciones

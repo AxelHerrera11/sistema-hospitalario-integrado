@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: Micro-HIS Alergias clínicas y alerta visual — API v1
+  version: 1.0.0
+  description: Alta de alergias y alerta del expediente (ASII-12). Errores en application/problem+json (RFC 9457) con code y request_id.
+  license:
+    name: Uso académico
+    identifier: CC-BY-4.0
+servers:
+  - url: http://127.0.0.1:8082
+security:
+  - userRef: []
+paths:
+  /api/v1/patients/{patient}/allergies:
+    post:
+      operationId: registerAllergy
+      summary: Registrar una alergia (UC-ALG-01)
+      parameters:
+        - $ref: '#/components/parameters/Patient'
+        - $ref: '#/components/parameters/TenantId'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/AllergyInput' } } }
+      responses:
+        '201':
+          description: Alergia registrada
+          content: { application/json: { schema: { type: object, required: [allergy], properties: { allergy: { type: object } } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '500': { $ref: '#/components/responses/Problem' }
+  /api/v1/patients/{patient}/allergy-alert:
+    get:
+      operationId: getAllergyAlert
+      summary: Alerta visual del expediente (UC-ALG-05)
+      description: Falla segura. Si la base no responde, level = unavailable (200), nunca none.
+      parameters:
+        - $ref: '#/components/parameters/Patient'
+        - $ref: '#/components/parameters/TenantId'
+        - { name: format, in: query, description: html = banner (View de la Semana 4), schema: { type: string, enum: [html] } }
+      responses:
+        '200':
+          description: Nivel del banner y alergias activas
+          content:
+            application/json: { schema: { type: object, required: [alert], properties: { alert: { $ref: '#/components/schemas/AllergyAlert' } } } }
+            text/html: { schema: { type: string } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /health:
+    get:
+      operationId: liveness
+      summary: El proceso responde (solo GET; otro método da 404)
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /health/ready:
+    get:
+      operationId: readiness
+      summary: La base responde
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/Health' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Health' }
+components:
+  securitySchemes:
+    userRef:
+      type: apiKey
+      in: header
+      name: X-User-Ref
+      description: Identidad que inyecta el gateway del HIS tras validar el JWT (propuesto para el HIS integrado).
+  parameters:
+    TenantId: { name: X-Tenant-ID, in: header, required: true, schema: { type: string, example: HOSP-DEMO } }
+    Patient: { name: patient, in: path, required: true, description: local_patient_id, schema: { type: string } }
+  responses:
+    Problem:
+      description: Error (RFC 9457)
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            required: [title, status, code, request_id]
+            properties:
+              type: { type: string }
+              title: { type: string }
+              status: { type: integer }
+              code: { type: string, examples: [TENANT_REQUIRED, PATIENT_NOT_FOUND, ALLERGY_ALREADY_ACTIVE, SEVERITY_INVALID] }
+              field: { type: string }
+              request_id: { type: string }
+    Health:
+      description: Estado del servicio
+      content: { application/json: { schema: { type: object, required: [status, service], properties: { status: { type: string, enum: [ok, unavailable] }, service: { type: string } } } } }
+  schemas:
+    AllergyInput:
+      type: object
+      required: [allergy_type, severity]
+      description: Exige allergen_code o allergen_name.
+      properties:
+        allergen_code: { type: [string, 'null'] }
+        allergen_name: { type: [string, 'null'] }
+        reaction: { type: [string, 'null'] }
+        allergy_type: { type: string, enum: [allergy, intolerance, unknown] }
+        severity: { type: string, enum: [mild, moderate, severe, life_threatening, unknown] }
+    AllergyAlert:
+      type: object
+      required: [level, message, allergies]
+      properties:
+        level: { type: string, enum: [none, warning, critical, unavailable] }
+        message: { type: string }
+        allergies: { type: array, items: { type: object } }
