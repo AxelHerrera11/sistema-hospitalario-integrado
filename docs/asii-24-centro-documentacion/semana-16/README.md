@@ -54,6 +54,9 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 
 **Hallazgo nuevo durante la integracion:** La rama de la Semana 5 mencionaba un permiso no catalogado (`documentacion` + `.publicar`), lo que rompia `PublishedContractsTest` de RBAC; se corrigio en las ramas de las semanas 5, 11 y 15.
 
+**Correccion del 2026-10-30 (parte 1):** el 404 generaba siempre un `trace_id` nuevo aunque `X-Request-Id` fuera valido, en contra de
+`formato-respuestas-errores.md`; ahora lo refleja (prueba en `DocumentacionApiTest`).
+
 ## Evidencia
 
 Ejecutado el 2026-10-30 sobre la parte 1 actualizada con `origin/develop` (PHP 8.2.33, PHPUnit 11.5.55).
@@ -106,6 +109,6 @@ disponible) y ninguno pertenece a este modulo.
   pendiente de un recorrido con base real.
 - La publicacion de documentos desde la interfaz requiere un permiso nuevo que debe proponerse a RBAC (ASII-02); por ahora el catalogo se administra en `config/centro_documentacion.php`.
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-24-semana-16-api-lis671`
-  (API y pruebas, sobre la Semana 5) y parte 2 `feature/asii-24-semana-16-evidencia-lis671` (interfaz,
-  si aplica, y esta evidencia, sobre la parte 1). Los PR se abren cuando la Semana 5 (y la Semana 4,
-  PR #1183) esten fusionadas. `Refs #208`.
+  (API y pruebas, PR #1613 hacia `develop`) y parte 2 `feature/asii-24-semana-16-evidencia-lis671`
+  (esta evidencia, PR #1617 sobre la parte 1). La parte 2 se reapunta a `develop` cuando se fusione la
+  parte 1. Las Semanas 4 (#1183) y 5 (#1361) ya estan fusionadas. Issue del modulo: #208.
