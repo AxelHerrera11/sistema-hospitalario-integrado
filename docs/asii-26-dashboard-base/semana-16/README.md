@@ -55,6 +55,9 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 
 **Hallazgo nuevo durante la integracion:** Con preparacion nativa, PDO no permite repetir un parametro nombrado; la consulta usa `:desde` y `:hasta` aunque reciban la misma fecha.
 
+**Correccion del 2026-10-30 (parte 1):** `?fecha[]=...` provocaba un 500 (`Array to string conversion`); ahora termina en 422
+`validation_failed` con el sobre comun (prueba en `DashboardApiTest`).
+
 ## Evidencia
 
 Ejecutado el 2026-10-30 sobre la parte 1 actualizada con `origin/develop` (PHP 8.2.33, PHPUnit 11.5.55).
@@ -121,6 +124,6 @@ disponible) y ninguno pertenece a este modulo.
   pendiente de un recorrido con base real.
 - Las tarjetas de ocupacion y laboratorio se agregaran cuando esos modulos publiquen su contrato de lectura para composicion.
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-26-semana-16-api-lis671`
-  (API y pruebas, sobre la Semana 5) y parte 2 `feature/asii-26-semana-16-evidencia-lis671` (interfaz,
-  si aplica, y esta evidencia, sobre la parte 1). Los PR se abren cuando la Semana 5 (y la Semana 4,
-  PR #1184) esten fusionadas. `Refs #209`.
+  (API y pruebas, PR #1614 hacia `develop`) y parte 2 `feature/asii-26-semana-16-evidencia-lis671`
+  (esta evidencia, PR #1618 sobre la parte 1). La parte 2 se reapunta a `develop` cuando se fusione la
+  parte 1. Las Semanas 4 (#1184) y 5 (#1362) ya estan fusionadas. Issue del modulo: #209.
