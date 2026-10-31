@@ -6,13 +6,13 @@ namespace MicroHis\NotasSoap\Persistence;
 
 use MicroHis\NotasSoap\Application\AuditTrail;
 
-/** Auditoría en memoria para pruebas y demo, con las mismas columnas que PdoAuditTrail. Con $down simula la bitácora caída. */
+/** Auditoría en memoria para pruebas y demo, con las mismas columnas que PdoAuditTrail. Con $down simula la bitácora caída, también a mitad de una prueba. */
 final class InMemoryAuditTrail implements AuditTrail
 {
     /** @var list<array{actor_user_ref_id: string, action: string, resource_type: string, resource_id: string, care_episode_id: string, metadata: array<string, scalar>}> */
     public array $events = [];
 
-    public function __construct(private readonly bool $down = false)
+    public function __construct(public bool $down = false)
     {
     }
 

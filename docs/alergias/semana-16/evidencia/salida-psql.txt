@@ -1,0 +1,10 @@
+ allergen_name |     severity     | status |   verificado_por    
+---------------+------------------+--------+---------------------
+ Penicilina    | life_threatening | active | Medico Ficticio E2E
+(1 row)
+
+  module  |       action       | resource_type | con_actor 
+----------+--------------------+---------------+-----------
+ alergias | alergia.registrada | allergy       | t
+(1 row)
+

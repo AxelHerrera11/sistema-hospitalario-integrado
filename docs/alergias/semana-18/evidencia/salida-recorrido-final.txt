@@ -1,0 +1,38 @@
+# Recorrido final sobre develop a24bfb36 — 30/10/2026, datos ficticios, APP_DEBUG=false
+## API (Semana 16)
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  admin_hospital sin alergias.ver → 403 RBAC                       esperado 403, obtenido 403
+PASS  médico consulta un paciente sin alergias → 200 (none)           esperado 200, obtenido 200
+      nivel: none
+PASS  médico registra penicilina (amenaza la vida) → 201              esperado 201, obtenido 201
+PASS  médico repite la misma alergia activa → 409                     esperado 409, obtenido 409
+PASS  severidad fuera del catálogo → 422                              esperado 422, obtenido 422
+PASS  paciente inexistente → 404                                       esperado 404, obtenido 404
+PASS  médico consulta de nuevo → 200 (critical)                       esperado 200, obtenido 200
+      nivel: critical · 1 alergia(s)
+## Pantalla en Chrome (Semana 16)
+PASS  admin_hospital (sin alergias.ver) no ve «Alergias» en el menú
+PASS  PAC-E2E-01 → banner crítico con role="alert" y la penicilina
+PASS  PAC-E2E-02 → «Sin alergias registradas» con role="status"
+PASS  enviar sin alérgeno → error local, sin llamar a la API
+PASS  registro de látex leve → 201 y banner «warning»
+PASS  la misma alergia otra vez → 409 con el mensaje del servidor junto al campo
+PASS  375 px: sin desplazamiento horizontal
+7/7 verificaciones
+## Seguridad (Semana 17, con la firma alterada en el medio, corregido en esta entrega), sobre bases recreadas
+PASS  A01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  A01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  A02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  A03 admin_hospital sin alergias.ver → 403                            esperado 403, obtenido 403
+PASS  A03 recepción sin alergias.registrar → 403                          esperado 403, obtenido 403
+PASS  A06 nombre de 201 caracteres → 422                                   esperado 422, obtenido 422
+      código: TEXT_TOO_LONG · campo: allergen_name
+PASS  A04 el cuerpo pide otro paciente, estado resuelto y otro autor → 201 esperado 201, obtenido 201
+      paciente guardado = ruta: sí · estado: active · texto devuelto literal: <img src=x onerror=alert(1)>
+PASS  A08 X-Request-ID no confiable (HTML) → 200                           esperado 200, obtenido 200
+      request_id reemplazado: req-f1705ad2b0137c07 · Cache-Control: no-store, private
+PASS  A10 identificador que no es UUID → 404 JSON, sin traza               esperado 404, obtenido 404
+      código: PATIENT_NOT_FOUND · contiene «Exception» o «SQLSTATE»: 0
+PASS  A09 HOSPITAL caído → 503, nunca «sin alergias»                    esperado 503, obtenido 503
+      código: ALLERGIES_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0

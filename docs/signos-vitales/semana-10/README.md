@@ -29,7 +29,7 @@ Quien captura junto a la cama, de pie, muchas veces con una sola mano y señal i
 
 Reglas comunes:
 
-- **Objetivos táctiles** de 44 × 44 px como mínimo (B-11 de la Semana 9) y 8 px entre ellos.
+- **Objetivos táctiles** de 44 × 44 px como mínimo y 8 px entre ellos: más exigente que B-11 de la Semana 9, que pide 24 × 24 px y recomienda 44 × 44.
 - **Texto de campo** de 16 px o más (evita el zoom automático de iOS). Las etiquetas, 14 px mínimo.
 - **Teclado numérico** con `inputmode="decimal"` y entrada con coma o punto (B-02).
 - **Barra de paciente fija** arriba (nombre, edad, episodio) y **barra de acción fija** abajo, con la acción principal a la derecha y `safe-area-inset-bottom`.

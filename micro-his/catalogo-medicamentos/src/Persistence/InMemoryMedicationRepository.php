@@ -8,6 +8,7 @@ use MicroHis\MedicationCatalog\Application\DuplicateMedicationCode;
 use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Application\PersistenceFailure;
 use MicroHis\MedicationCatalog\Domain\Medication;
+use MicroHis\MedicationCatalog\Domain\SearchText;
 use MicroHis\MedicationCatalog\Domain\Validity;
 
 /** Adaptador en memoria del Repository: mismas reglas observables que PdoMedicationCatalog, sin base de datos. */
@@ -44,12 +45,15 @@ final class InMemoryMedicationRepository implements MedicationRepository
             $medication->activeIngredient, $medication->pharmacologicalGroup, $medication->validity);
     }
 
-    /** Coincidencia literal sin distinguir mayúsculas en código, nombre o principio activo; orden por nombre y código. */
+    /** Coincidencia literal sin distinguir mayúsculas ni tildes, con ñ distinta de n, en código, nombre o principio activo; orden por nombre y código. */
     public function search(string $term, int $limit): array
     {
-        $needle = mb_strtolower($term);
+        $needle = SearchText::fold($term);
+        if ($needle === '') {
+            return [];
+        }
         $matches = array_values(array_filter($this->rows, static fn (Medication $m): bool =>
-            str_contains(mb_strtolower("{$m->code}\n{$m->name}\n{$m->activeIngredient}"), $needle)));
+            str_contains(SearchText::fold("{$m->code}\n{$m->name}\n{$m->activeIngredient}"), $needle)));
         usort($matches, static fn (Medication $a, Medication $b): int => [$a->name, $a->code] <=> [$b->name, $b->code]);
 
         return array_slice($matches, 0, $limit);

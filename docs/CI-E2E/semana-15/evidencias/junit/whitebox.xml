@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.whitebox" tests="18" failures="0">
+    <testcase name="[W01] Estado planned → RUN_NOT_COMPLETED blocker → blocked" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W02] Estado aborted → RUN_ABORTED (no evalúa suites)" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W03] Todas las obligatorias verdes y opcional ausente → approved con warning" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W04] Obligatoria ausente → SUITE_MISSING blocker" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W05] executed()=0 por total 0 → SUITE_EMPTY blocker (vacío no es éxito)" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W06] executed()=0 por todo omitido → SUITE_EMPTY blocker" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W07] require_evidence=true y sin evidencia → EVIDENCE_MISSING blocker" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W08] require_evidence=false → la misma entrada no genera hallazgo de evidencia" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W09] rate 0.95 &lt; min 1.0 en obligatoria → SUITE_BELOW_THRESHOLD rejection" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W10] Límite exacto rate 0.95 = min 0.95 → FAILURES_TOLERATED warning (no rechaza)" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W11] Opcional por debajo del umbral → warning, la versión se aprueba" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W12] Omitida en obligatoria y allow_skipped=false → SKIPPED_IN_REQUIRED rejection" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W13] allow_skipped=true → la omitida no cuenta contra la tasa (9/9) → approved" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W14] E2E 60001 ms &gt; 60000 → E2E_SLOW warning (no bloquea)" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W15] E2E 60000 ms = límite → sin E2E_SLOW" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W16] rejection (unit) + blocker (e2e ausente) → blocked: falta evidencia para decidir" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W17] verdictFor([]) → approved" classname="qa-calidad.whitebox" time="0.000"/>
+    <testcase name="[W18] verdictFor([warning]) → approved" classname="qa-calidad.whitebox" time="0.000"/>
+  </testsuite>
+</testsuites>

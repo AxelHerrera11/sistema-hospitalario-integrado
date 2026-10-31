@@ -1,0 +1,29 @@
+Fecha: 2026-10-22. Rama: feature/asii-11-semana-18-notas-soap-interfaz-reglas-jhos-hgnu (633d814f)
+PHP: 8.3.33  Node: v22.13.1  PostgreSQL: 16.15 (Debian 16.15-1.pgdg13+2)
+
+== 1. Micro-HIS sin base de datos (SQLite en memoria y adaptadores en memoria) ==
+-- php tests/unit.php
+Resumen: 22 OK, 0 fallos, 0 defectos abiertos
+-- php tests/whitebox.php
+Resumen: 12 OK, 0 fallos, 0 defectos abiertos
+-- php tests/blackbox.php
+Resumen: 20 OK, 0 fallos, 0 defectos abiertos
+-- php tests/run.php
+Todas las pruebas pasaron.
+   (pruebas OK: 54)
+-- php tests/api.php
+Todas las pruebas del API pasaron.
+
+== 2. Rutas HTTP de Laravel con la matriz RBAC real ==
+OK (13 tests, 94 assertions)
+
+== 3. PostgreSQL 16 con el esquema real de la migración hospital ==
+OK (28 tests, 159 assertions)
+
+== 4. Interfaz ==
+notas-soap.test.mjs: OK
+OK: pruebas de permisos del router pasaron.
+OK: navegacion revalida permisos, revocacion y fallo seguro
+public/build/assets/NotasSoapPage-Dfm0a-T-.css              0.22 kB │ gzip:  0.15 kB
+public/build/assets/NotasSoapPage-XqUmo2qq.js              10.41 kB │ gzip:  3.94 kB
+✓ built in 2.25s
