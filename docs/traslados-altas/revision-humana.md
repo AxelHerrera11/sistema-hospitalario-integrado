@@ -4,6 +4,7 @@
 |---|---|---|---|
 | 21/10/2026 | María Yamilet Lindo Pablo (`Yamilet1235`), autora del módulo | «Confirmo que revisé personalmente la entrega actual de ASII-08.» | La entrega integrada en ese momento: **semanas 3 a 10**, PR #790–#869 (`develop` `e3f0ca4`, `main` `8f0158f`). Incluye código, pruebas, evidencia y documentación de `micro-his/traslados-altas` y de `docs/traslados-altas/semana-03` a `semana-10` |
 | 30/10/2026 | María Yamilet Lindo Pablo (`Yamilet1235`), autora del módulo | Prueba manual en el entorno local, con la propuesta #1577 **sin integrar**, antes de la decisión final de RBAC | Consulta, rechazo por motivo vacío, rechazo por cama ocupada, traslado 401→405 y alta; en la consulta posterior, episodio cerrado, sin cama actual y estancia no vigente. No cubre revisión total, pruebas móviles, seguridad ni la integración de #1577 |
+| 30/10/2026 | María Yamilet Lindo Pablo (`Yamilet1235`), autora del módulo | Prueba manual en el entorno local (8123), con la **versión integrada** (`main` `2ec43776`) | Con enfermería, traslado de la estancia `…0602` a la cama `…0405`, con nueva estancia `a3424554-bcb1-40ed-8f97-09be59eeb4dc`. Con médico, alta confirmada; en la consulta posterior, episodio cerrado, sin cama actual y estancia no vigente. No cubre revisión total, rechazos, otros roles u hospitales, pruebas móviles ni seguridad |
 
 ## Qué no implica este registro
 
