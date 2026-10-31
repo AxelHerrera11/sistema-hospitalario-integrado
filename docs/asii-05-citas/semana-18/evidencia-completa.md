@@ -20,13 +20,13 @@ Indice final del modulo ASII-05 (issue #207). Estados de los PR consultados en G
 | 12 | 2.a evaluacion | [`semana-12`](../semana-12/) | #1215 | - |
 | 13 | Revision tecnica | [`semana-13`](../semana-13/) | #1219 | - |
 | 14 | Plan SQA | [`semana-14`](../semana-14/) | #1223 | - |
-| 15 | Pruebas unitarias, caja blanca y negra | [`semana-15`](../semana-15/) | - | #1605 |
-| 16 | Integracion y primera entrega | [`semana-16`](../semana-16/) | #246 (dominio y repositorio) | #1612, #1616 |
-| 17 | Seguridad y despliegue final | [`semana-17`](../semana-17/) | - | `feature/asii-05-semana-17-documentacion-lis671` |
-| 18 | Evaluacion final y defensa | [`semana-18`](./) | - | esta rama |
+| 15 | Pruebas unitarias, caja blanca y negra | [`semana-15`](../semana-15/) | #1605 | - |
+| 16 | Integracion y primera entrega | [`semana-16`](../semana-16/) | #246 (dominio y repositorio), #1612, #1616 | - |
+| 17 | Seguridad y despliegue final | [`semana-17`](../semana-17/) | #1684 | - |
+| 18 | Evaluacion final y defensa | [`semana-18`](./) | - | este PR |
 
-La Semana 16 se dividio en dos PR por el limite de 400 lineas; las Semanas 17 y 18 se abren cuando se fusione
-la parte 1 (#1612), porque hoy su diff contra `develop` incluiria esa parte.
+La Semana 16 se dividio en dos PR por el limite de 400 lineas; las Semanas 17 y 18 se abrieron despues de
+fusionar ambas partes, para que cada PR midiera solo su semana.
 
 ## Requisitos: estado final
 
