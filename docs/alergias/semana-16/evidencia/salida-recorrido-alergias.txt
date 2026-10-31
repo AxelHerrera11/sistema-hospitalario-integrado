@@ -1,0 +1,11 @@
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  admin_hospital sin alergias.ver → 403 RBAC                       esperado 403, obtenido 403
+PASS  médico consulta un paciente sin alergias → 200 (none)           esperado 200, obtenido 200
+      nivel: none
+PASS  médico registra penicilina (amenaza la vida) → 201              esperado 201, obtenido 201
+PASS  médico repite la misma alergia activa → 409                     esperado 409, obtenido 409
+PASS  severidad fuera del catálogo → 422                              esperado 422, obtenido 422
+PASS  paciente inexistente → 404                                       esperado 404, obtenido 404
+PASS  médico consulta de nuevo → 200 (critical)                       esperado 200, obtenido 200
+      nivel: critical · 1 alergia(s)

@@ -7,7 +7,7 @@
 | Rol | Persona propuesta | Responsabilidad |
 |---|---|---|
 | Autora | María Yamilet Lindo Pablo (`Yamilet1235`) | Preparar el paquete, responder hallazgos y corregir |
-| Moderador | Docente del curso (`rortizs`), por confirmar | Conducir la reunión y decidir la salida |
+| Moderador | Por confirmar | Conducir la reunión y decidir la salida |
 | Revisor 1: dominio e integridad | Responsable de Prescripciones, por confirmar | Reglas de vigencia y unicidad, y uso por consumidores |
 | Revisor 2: permisos y tenant | Responsable de RBAC (ASII-02), por confirmar | Matriz de permisos y aislamiento por hospital |
 | Registrador | Autora o moderador | Llenar la tabla de hallazgos |

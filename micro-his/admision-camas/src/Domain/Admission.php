@@ -7,6 +7,9 @@ namespace MicroHis\Admision\Domain;
 /** Hospitalización: episodio inpatient abierto + estancia en una cama (UC-ADM-01, 02, 04 y 05). Nace válida o no nace. */
 final readonly class Admission
 {
+    /** El mismo límite que la pantalla (maxlength): la API no confía en el cliente. */
+    public const MAX_REASON_LENGTH = 500;
+
     private function __construct(
         public string $episodeId, public string $stayId, public string $patientId,
         public string $bedId, public string $reason, public string $startedAt,
@@ -18,6 +21,7 @@ final readonly class Admission
     {
         $rule = match (true) {
             trim($reason) === '' => ['REASON_REQUIRED', 'reason'],
+            mb_strlen(trim($reason)) > self::MAX_REASON_LENGTH => ['TEXT_TOO_LONG', 'reason'],
             $alreadyAdmitted => ['PATIENT_ALREADY_ADMITTED', 'patient_id'],
             $bed['status'] !== 'available' => ['BED_NOT_AVAILABLE', 'bed_id'],
             $requiredType !== null && $requiredType !== $bed['type'] => ['BED_TYPE_MISMATCH', 'bed_type'],
