@@ -1,0 +1,17 @@
+sequenceDiagram
+  participant UI as Dashboard HIS
+  participant API as API ocupación
+  participant APP as ConsultOccupancy
+  participant DB as PostgreSQL HOSPITAL
+  UI->>API: GET /api/v1/occupancy + JWT/tenant
+  API->>API: autenticar, autorizar y validar corte
+  API->>APP: execute(cutoff_at)
+  APP->>DB: fotografía preparada y atómica
+  alt disponible
+    DB-->>APP: camas + estancia activa
+    APP-->>API: resumen e inconsistencias
+    API-->>UI: 200 + data + request_id
+  else falla
+    DB--xAPP: error
+    API-->>UI: 503, nunca ocupación cero
+  end

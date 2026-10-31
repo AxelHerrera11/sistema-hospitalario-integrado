@@ -8,8 +8,16 @@ use MicroHis\TrasladosAltas\Presentation\VistaResultado;
 // Controller y vista sobre el doble: cada resultado tiene su código de salida y solo el éxito dice "exito".
 function consola(RegistroFalso $h, array $argumentos): array
 {
-    return (new ConsolaTraslados($h, new AutorizadorFijo(true), ACTOR))->atender($argumentos);
+    return (new ConsolaTraslados(static fn (): array => [$h, new AutorizadorFijo(true)], ACTOR))->atender($argumentos);
 }
+
+// Una solicitud inválida responde 64 sin pedir las dependencias (sin abrir conexiones).
+$pedidas = 0;
+$r = (new ConsolaTraslados(static function () use (&$pedidas): array {
+    $pedidas++;
+    throw new LogicException('no debía conectarse');
+}, ACTOR))->atender(['alta', 'no-es-uuid']);
+check('solicitud inválida → 64 sin abrir conexiones', $r['codigo'] === VistaResultado::SOLICITUD_INVALIDA && $pedidas === 0);
 
 $r = consola(hospitalFalso(), ['trasladar', ESTANCIA, CAMA_B, 'Aislamiento']);
 check('trasladar → código 0 con estancia destino y episodio abierto', $r['codigo'] === VistaResultado::EXITO && $r['cuerpo']['cama_liberada_id'] === CAMA_A

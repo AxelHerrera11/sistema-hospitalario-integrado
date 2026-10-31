@@ -1,0 +1,17 @@
+@startsalt
+title ASII-24 - Escritorio (>= 1024 px)
+{
+<b>Hospital HIS</b> | . | . | Hospital Central - Lis
+{+
+[Catalogo]
+[Publicar]
+} | {
+<b>Centro de documentacion</b> | "Buscar documento        "
+Tipo: ^Todos^ | Rol: Enfermeria
+{+
+<b>Manual de enfermeria</b> | <b>Protocolo de alergias</b> | <b>Guia de signos vitales</b>
+Manual v2.1 | Protocolo v1.0 | Guia v1.3
+}
+}
+}
+@endsalt

@@ -18,7 +18,7 @@ Contrato que consumen Expediente clínico, Prescripciones, Órdenes de laborator
 | Método | Ruta | Permiso RBAC | Éxito | Estado |
 |---|---|---|---|---|
 | `POST` | `/api/v1/care-episodes/{care_episode_id}/soap-notes` | `notas_soap.crear` | `201` | implementado |
-| `POST` | `/api/v1/soap-notes/{clinical_note_id}/diagnoses` | `notas_soap.asociar_diagnostico` | `201` | implementado |
+| `POST` | `/api/v1/soap-notes/{clinical_note_id}/diagnoses` | `notas_soap.asociar_diagnostico` | `201` | implementado; en el HIS integrado responde `503 ICD10_UNAVAILABLE` hasta que `icd10_codes` esté migrada y cargada (ASII-09, #1620) |
 | `GET` | `/api/v1/soap-notes/{clinical_note_id}` | `notas_soap.ver` | `200` | implementado |
 | `GET` | `/api/v1/care-episodes/{care_episode_id}/soap-notes` | `notas_soap.ver` | `200` | propuesto |
 | `POST` | `/api/v1/soap-notes/{clinical_note_id}/sign` | `notas_soap.firmar` | `200` | propuesto |
@@ -76,10 +76,14 @@ Un campo con tipo incorrecto (número, arreglo, `null`, booleano) o un JSON malf
 |---|---|---|
 | `401` | `UNAUTHENTICATED` | Sin actor autenticado o token inválido |
 | `403` | `FORBIDDEN` | El actor no tiene el permiso de la ruta o el tenant no coincide; el cuerpo incluye `permission` |
-| `403` | `NOT_TREATING_PHYSICIAN` | Sin `care_assignment` activo en el episodio, o no es el autor de la nota (RF-SOAP-03) |
+| `403` | `NOT_TREATING_PHYSICIAN` | Sin `care_assignment` activo en el episodio, o no es el autor de la nota (RF-SOAP-03). En la lectura (`GET`) se responde `404 NOTE_NOT_FOUND`, igual que ante una nota inexistente, para no revelar qué identificadores existen |
 | `404` | `ROUTE_NOT_FOUND` / `NOTE_NOT_FOUND` | Ruta inexistente / nota inexistente |
 | `409` | `DIAGNOSIS_DUPLICATED` / `PRIMARY_DIAGNOSIS_EXISTS` | Código ya asociado / segundo principal (RF-SOAP-05) |
 | `409` | `NOTE_SIGNED` | La nota firmada no acepta diagnósticos (RF-SOAP-07) |
+| `409` | `MEDICAL_RECORD_NOT_FOUND` | El paciente del episodio no tiene un expediente abierto; este módulo no lo crea |
+| `409` | `RECORD_ALREADY_HAS_NOTE` | El expediente ya tiene una nota: `clinical_notes_record_version_unique` solo admite una nota original (R-06, pendiente en ASII-09) |
+| `403` | `ACTOR_SIN_REFERENCIA_LOCAL` | El usuario del token no tiene referencia en `local_user_refs` de este hospital |
+| `503` | `HOSPITAL_NO_DISPONIBLE` | La base HOSPITAL no respondió al resolver el actor; no se escribe nada |
 | `422` | `PAYLOAD_INVALID` | JSON malformado o campo con tipo incorrecto |
 | `422` | `SOAP_SECTION_INVALID` | Sección ausente, vacía o mayor a 4000 caracteres (RF-SOAP-02) |
 | `422` | `DIAGNOSIS_INVALID` | Código vacío o tipo fuera de los tres permitidos |
@@ -94,7 +98,7 @@ RF-SOAP-04 nombra `DIAGNOSIS_TYPE_INVALID`; el código usa `DIAGNOSIS_INVALID` p
 
 Notas SOAP es dueño de `clinical_notes` y `diagnoses`. Lee `care_assignments` (Episodios) solo por `CareAssignmentReader` y el catálogo CIE-10 por `Icd10Catalog`; nunca escribe en tablas de otro módulo. Dependencias de base pendientes de acordar con Javier:
 
-- `icd10_codes` (catálogo CIE-10) no está entre las 27 entidades de la especificación; Javier la registró como tabla candidata (revisión de #376, R-03). Su origen real (tabla o servicio) está por definir.
+- `icd10_codes` (catálogo CIE-10) no está entre las 27 entidades de la especificación; Javier la registró como tabla candidata (revisión de #376, R-03). ASII-09 la crea como entidad de referencia en el esquema HOSPITAL (PR #1620: `code varchar(10)` PK, `description text`, `active boolean`). Notas SOAP la lee con `active IS TRUE`. Fuente acordada: CIE-10 de la OMS (2019). `micro-his/notas-soap/database/icd10-seed-minimo.csv` es un **conjunto mínimo de 20 códigos para pruebas y demostración**, con descripciones en español sin edición de referencia citada; no es el catálogo oficial ni lo carga ninguna migración. El catálogo completo lo carga el importador de ASII-09 (pendiente). Mientras la tabla no tenga códigos activos, el adaptador responde `503 ICD10_UNAVAILABLE`, no `422`.
 - `local_access_audits` es la entidad `local_access_audit` del slice H8, sin migración. El doble sigue las columnas del Anexo A de la [Semana 1](../semana-01/narrativa-alcance-trazabilidad.md) y es **provisional** hasta esa migración (R-02). Médicos (ASII-04) necesita la misma tabla.
 - `clinical_notes_record_version_unique (medical_record_id, version_no)` impediría una segunda nota original por expediente (riesgo R1 de la Semana 1); el doble no la replica hasta que se resuelva con Javier.
 

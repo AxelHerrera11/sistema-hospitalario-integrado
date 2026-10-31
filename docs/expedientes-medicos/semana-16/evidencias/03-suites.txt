@@ -1,0 +1,28 @@
+# Suites del expediente tras la corrección DEF-EXP-10 — 2026-10-29 21:36 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php micro-his/expediente-medico/tests/run.php | grep -E '^(==|Resumen|  -)|N-14'
+== Unitarias (dominio)
+== Caja blanca (ramas de los casos de uso)
+== Caja negra (contrato HTTP)
+OK: N-14 interfaz: app.js → 200 JS con no-cache; «/» → index.html; «..», .php y archivo inexistente → 404
+== Integración PDO + Gobernanza
+== Arquitectura (capas y dependencias)
+Resumen: 90 OK, 0 FALLO
+(código de salida: 0)
+
+$ node --test --test-reporter=spec micro-his/expediente-medico/tests/ui-estados.test.mjs | grep -E '^ℹ (tests|pass|fail)'
+ℹ tests 11
+ℹ pass 11
+ℹ fail 0
+(código de salida: 0)
+
+$ php micro-his/qa-calidad-versiones/bin/micro-his-suites.php "$TMP/s16-suites" | grep -E 'expediente|gobernanza|qa-calidad'
+OK         expediente-medico (0.11 s)
+OK         gobernanza-auditoria (0.82 s)
+OK         qa-calidad-versiones (1.22 s)
+(código de salida: 0)
+
+$ php micro-his/qa-calidad-versiones/bin/micro-his-suites.php "$TMP/s16-suites2" | grep -cE '^OK '
+25
+(código de salida: 0)

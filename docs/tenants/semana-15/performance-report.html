@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rendimiento del micro-HIS de Tenants (Semana 15)</title>
+    <style>
+        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 1.25rem; background: #f8fafc; color: #0f172a; }
+        main { max-width: 960px; margin: 0 auto; background: #ffffff; padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 12px; }
+        h1 { font-size: 1.4rem; margin-top: 0; }
+        h2 { font-size: 1.1rem; margin-top: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.95rem; }
+        th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f1f5f9; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .aviso { background: #fef3c7; color: #78350f; padding: 0.75rem 1rem; border-radius: 8px; }
+        code, pre { background: #f1f5f9; border-radius: 6px; }
+        code { padding: 0.1rem 0.35rem; }
+        pre { padding: 0.75rem; overflow-x: auto; }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Rendimiento del micro-HIS de Tenants — Semana 15</h1>
+    <p class="aviso" role="note">
+        <strong>Alcance.</strong> Micro-benchmark <em>en proceso</em>: peticiones PSR-7 directas al router,
+        sin red, servidor web ni base de datos. <strong>No es una prueba de carga</strong>: no mide concurrencia,
+        throughput ni disponibilidad. La versión anterior de este reporte mostraba resultados de k6,
+        caos (LitmusChaos), pentesting y recuperación ante desastres que nunca se ejecutaron; se retiraron.
+    </p>
+
+    <h2>Corrida</h2>
+    <table>
+        <tbody>
+        <tr><th scope="row">Fecha</th><td>2026-10-21</td></tr>
+        <tr><th scope="row">Código</th><td>micro-HIS de Semana 3 (<code>16f68b0</code>) con las pruebas de Semana 15</td></tr>
+        <tr><th scope="row">Entorno</th><td>PHP 8.2.12 (XAMPP), Windows 11 x64, equipo de desarrollo; una sola ejecución</td></tr>
+        <tr><th scope="row">Script</th><td><code>docs/tenants/semana-15/bench/micro-his-bench.php</code></td></tr>
+        <tr><th scope="row">Iteraciones</th><td>200 ciclos login → me → refresh → logout de un usuario <code>medico</code> sin MFA</td></tr>
+        <tr><th scope="row">Argon2id</th><td>Parámetros reales del módulo: 64 MiB, 4 pasadas, 1 hilo</td></tr>
+        </tbody>
+    </table>
+    <pre>php docs/tenants/semana-15/bench/micro-his-bench.php 200</pre>
+
+    <h2>Resultados medidos (milisegundos)</h2>
+    <table>
+        <thead><tr><th scope="col">Operación</th><th scope="col">Ruta</th><th scope="col">p50</th><th scope="col">p95</th><th scope="col">p99</th><th scope="col">Máx.</th></tr></thead>
+        <tbody>
+        <tr><td>Login</td><td><code>POST /auth/login</code></td><td class="num">170.41</td><td class="num">178.54</td><td class="num">192.84</td><td class="num">235.80</td></tr>
+        <tr><td>Validar token</td><td><code>GET /auth/me</code></td><td class="num">0.14</td><td class="num">0.24</td><td class="num">0.33</td><td class="num">0.46</td></tr>
+        <tr><td>Rotar refresh</td><td><code>POST /auth/refresh</code></td><td class="num">0.11</td><td class="num">0.19</td><td class="num">0.36</td><td class="num">2.36</td></tr>
+        <tr><td>Logout</td><td><code>POST /auth/logout</code></td><td class="num">0.15</td><td class="num">0.23</td><td class="num">0.48</td><td class="num">1.00</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Lectura</h2>
+    <ul>
+        <li>El login cuesta unos 170 ms y casi todo es Argon2id: es el costo intencional de la verificación
+            de contraseña, y por eso frena los ataques de fuerza bruta.</li>
+        <li>Validar el JWT, revisar que la sesión siga activa y rotar el refresh cuestan menos de 0,5 ms (p95)
+            en proceso: el refresh usa SHA-256 sobre un secreto aleatorio de 256 bits, no Argon2id.</li>
+        <li>Estas cifras no incluyen red, TLS, PHP-FPM ni almacenamiento persistente: en un despliegue real serán
+            mayores. Solo sirven para comparar operaciones entre sí.</li>
+    </ul>
+
+    <h2>Objetivos de los RNF frente a lo medido</h2>
+    <table>
+        <thead><tr><th scope="col">RNF</th><th scope="col">Objetivo</th><th scope="col">Estado</th></tr></thead>
+        <tbody>
+        <tr><td>RNF-02 Login</td><td>p95 &lt; 300 ms</td><td>Indicio favorable en proceso (178,54 ms); <strong>sin medir</strong> en un despliegue</td></tr>
+        <tr><td>RNF-03 Validación de token</td><td>p99 &lt; 50 ms</td><td>Indicio favorable en proceso (0,33 ms); <strong>sin medir</strong> en un despliegue</td></tr>
+        <tr><td>RNF-04 Revocación</td><td>p99 &lt; 100 ms</td><td>Indicio favorable en proceso (logout 0,48 ms); <strong>sin medir</strong> en un despliegue</td></tr>
+        <tr><td>RNF-05 Throughput</td><td>500–2000 req/s</td><td><strong>Sin medir</strong>: requiere prueba de carga (k6) sobre un servidor</td></tr>
+        <tr><td>RNF-01 Disponibilidad 99,99 %, RNF-13 RPO/RTO</td><td>—</td><td><strong>Sin medir</strong>: no hay despliegue ni simulacro</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Pendiente</h2>
+    <ol>
+        <li>Prueba de carga con k6 contra <code>php -S</code> o PHP-FPM con el front controller <code>app/Modules/Tenants/micro-his.php</code>.</li>
+        <li>Repetir la corrida en otro equipo y publicar las dos series.</li>
+    </ol>
+</main>
+</body>
+</html>

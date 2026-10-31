@@ -1,0 +1,22 @@
+# Ensayo de despliegue on-premise del micro-HIS de Tenants — 2026-10-29 · Windows 11 · PHP 8.2.12 (XAMPP)
+# Releases exportados con git archive (app/ y composer.json) en una carpeta aparte, vendor/ enlazado; estado en shared/ fuera del release.
+# 887f24b54390 = develop + corrección H-TEN-16-01 (commit local de ensayo con el mismo código del PR); 6e841849f99a = develop.
+# El secreto JWT nunca se imprime. La carpeta de ensayo se borra al final.
+
+[22:16:43] P3 PHP 8.2.12 · date.timezone de php.ini = Europe/Berlin → se fuerza UTC con -d date.timezone=UTC (H-TEN-16-02)
+[22:16:44] release nuevo 887f24b54390 (develop + corrección H-TEN-16-01) exportado; estado en shared/, fuera del release
+[22:16:45] P4 secreto corto (16 bytes) → Defina MICRO_HIS_JWT_SECRET con al menos 32 bytes.
+ (exit 1)
+[22:16:45] P4 secreto de 32 bytes generado con random_bytes (no se guarda en el repositorio ni en la bitácora)
+[22:16:46] primera cuenta admin_hospital sembrada en el hospital ficticio ec1b8c0f-d8b1-41d4-9e5f-f95f498d0146
+[22:16:47] servidor del release nuevo en 127.0.0.1:8281
+[22:16:47] V1 cabeceras de una respuesta de login: HTTP/1.1 202 Accepted Cache-Control: no-store X-Content-Type-Options: nosniff
+[22:16:48] V2 GET /auth/me sin token → {"message":"Token de autorización requerido"} HTTP 401
+[22:16:48] V3 login admin con MFA (TOTP) → token de acceso de 567 caracteres; GET /auth/me con él → HTTP 200
+[22:16:48] §2 rotación del secreto JWT: se reinicia con un secreto nuevo
+[22:16:49] V4 el mismo token, firmado con el secreto anterior → {"message":"Token inválido o expirado"} HTTP 401
+[22:16:49] V5 el estado sobrevive al reinicio: login admin → HTTP 202
+[22:16:51] §4 rollback al release anterior 6e841849f99a (develop) con el mismo shared/
+[22:16:52] V6 tras el rollback: login admin → HTTP 202 (estado conservado)
+[22:16:52] V7 cabeceras en el release anterior: HTTP/1.1 202 Accepted ← sin no-store: por eso se despliega el nuevo
+[22:16:57] cierre: servidores detenidos, junctions eliminados y carpeta de ensayo borrada; puerto 8281 cerrado

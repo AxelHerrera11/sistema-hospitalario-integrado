@@ -1,0 +1,35 @@
+/* PROTOTIPO de baja fidelidad (Semana 8): estructura y estados, sin diseño visual definitivo. */
+body { margin: 0; font-family: system-ui, sans-serif; color: #1f2933; background: #f5f7fa; }
+main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.1rem; margin-top: 0; }
+form, section { background: #fff; border: 1px solid #cbd2d9; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+label { display: block; font-weight: 600; margin-top: .75rem; }
+input, textarea { box-sizing: border-box; width: 100%; padding: .5rem; font: inherit; border: 1px solid #52606d; border-radius: 4px; }
+button { margin-top: .75rem; padding: .6rem 1rem; font: inherit; border: 0; border-radius: 4px; background: #1d4ed8; color: #fff; cursor: pointer; }
+button.secundario { background: #e4e7eb; color: #1f2933; }
+button:disabled { opacity: .6; cursor: progress; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #f59e0b; outline-offset: 2px; }
+.aviso { background: #fff7ed; border-left: 4px solid #c2410c; padding: .5rem .75rem; }
+.ayuda { color: #3e4c59; font-size: .9rem; margin: .25rem 0; }
+.error { color: #b91c1c; margin: .25rem 0; }
+#resultado:not(:empty) { padding: .75rem; border-radius: 6px; border-left: 4px solid #52606d; background: #fff; }
+#resultado.exito { border-color: #15803d; }
+#resultado.rechazo, #resultado.invalida, #resultado.error { border-color: #b91c1c; }
+#resultado.reintentar, #resultado.consultar { border-color: #c2410c; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Semana 10 — movilidad de 320 a 430 px. Base: objetivos táctiles de 44 px y texto de 16 px en los campos (evita el
+   zoom automático de iOS). Un único punto de corte en 30rem (480 px): una columna, botones a todo el ancho y menos relleno. */
+button { min-height: 44px; }
+input, textarea { font-size: 1rem; }
+@media (max-width: 30rem) {
+    main { padding: .75rem; }
+    h1 { font-size: 1.25rem; }
+    form, section { padding: .75rem; }
+    button { width: 100%; }
+    dl { grid-template-columns: 1fr; gap: 0; }
+    dt { font-weight: 600; }
+    dd { margin-bottom: .5rem; }
+}

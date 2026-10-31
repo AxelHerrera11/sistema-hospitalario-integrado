@@ -1,0 +1,12 @@
+flowchart LR
+    %% Mapa de navegación del prototipo (rutas hash)
+    L["#/ Lista de ejecuciones"] -->|Planificar ejecución| N["#/nueva Planificar"]
+    N -->|Guardar plan 201| D["#/ejecucion/:id Detalle"]
+    N -->|Cancelar| L
+    L -->|tarjeta| D
+    D -->|Volver| L
+    D -->|Iniciar / Completar / Abortar| D
+    D -->|Registrar resultado| D
+    D -->|Evaluar quality gate| G[Panel del gate en el detalle]
+    ANY[(Cualquier vista)] -->|401 / 403 / 404 / 409 / 422 / 503 / sin red| A[Aviso con mensaje y, si aplica, Reintentar]
+    Q["?perfil= & ?falla="] -.preselecciona contexto.-> L
