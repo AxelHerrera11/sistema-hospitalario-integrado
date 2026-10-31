@@ -12,7 +12,7 @@ return [
         'superadmin' => [
             'citas.ver', 'citas.crear', 'citas.confirmar',
             'citas.cancelar', 'reportes.ver', 'reportes.exportar',
-            'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir',
+            'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir', 'expediente.asignar',
             'medicamentos.ver', 'laboratorio.ver', 'auditoria.ver',
             'signos_vitales.corregir', 'alertas.supervisar',
             'admisiones.registrar', 'admisiones.ver', 'camas.asignar',
@@ -43,6 +43,7 @@ return [
             'medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.crear', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            'expediente.asignar',
             // ASII-25: calidad de versiones (ejecuciones automatizadas y quality gate), decisión del 30/10/2026.
             'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
         ],
@@ -101,6 +102,7 @@ return [
         ],
         'jefatura_medica' => [
             'documentacion.ver', 'alertas.ver', 'alertas.acusar', 'alertas.supervisar',
+            'expediente.asignar',
         ],
     ],
     /*
@@ -121,7 +123,7 @@ return [
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
         'citas.cancelar', 'reportes.ver', 'reportes.exportar',
-        'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir',
+        'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir', 'expediente.asignar',
         'medicamentos.ver', 'laboratorio.ver', 'auditoria.ver',
         'signos_vitales.corregir', 'alertas.supervisar',
         'admisiones.registrar', 'admisiones.ver', 'camas.asignar',
