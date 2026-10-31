@@ -89,8 +89,8 @@ OK (7 tests, 43 assertions)
 ```
 
 La suite Feature completa del repositorio (`php vendor/bin/phpunit --testsuite Feature`) termina con
-`Tests: 318, Assertions: 5702, Errors: 44, Failures: 2, Risky: 28`. Los 46 fallos son de Recepcion de
-muestras (61 menciones), Salas y camas (10) e Indicadores (3): todos necesitan PostgreSQL en los puertos
+`Tests: 318, Assertions: 5702, Errors: 44, Failures: 2, Risky: 28`. Los 46 errores y fallos son de
+Recepcion de muestras (33), Salas y camas (10) e Indicadores (3): todos necesitan PostgreSQL en los puertos
 55431/55433 (`Connection refused` o 503 por fuente no disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
