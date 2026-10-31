@@ -4,7 +4,6 @@ namespace Tests\Database\Hospital;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use App\NotasSoap\PdoLocalActorResolver;
 use Illuminate\Auth\GenericUser;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
