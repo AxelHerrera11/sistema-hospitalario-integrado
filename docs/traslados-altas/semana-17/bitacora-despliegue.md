@@ -19,7 +19,7 @@ La prueba nueva ejecuta `APP_DEBUG=false` y confirma que el 503 no contiene `SQL
 ## Procedimiento preparado
 
 1. Fijar el SHA aprobado y ejecutar `composer install --no-interaction --prefer-dist --optimize-autoloader` y `npm ci && npm run build`.
-2. Proveer fuera del repositorio `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*` y la conexión HOSPITAL del tenant; usar `APP_DEBUG=false`.
+2. Proveer fuera del repositorio `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*`, la conexión HOSPITAL del tenant y `HOSPITAL_DB_TENANT_ID` (sin él, 503); usar `APP_DEBUG=false`.
 3. Ejecutar las migraciones CENTRAL y HOSPITAL con respaldo y una base explícitamente seleccionada; esta entrega no agrega migraciones.
 4. Ejecutar las suites Feature, Database y del micro-HIS sin usar `migrate:fresh` sobre datos compartidos.
 5. Confirmar los tres permisos activos, la referencia local del usuario y las respuestas 401, 403, 409, 503, traslado 201 y alta 200.
@@ -31,7 +31,7 @@ Reversión: revertir el PR de la entrega y limpiar la caché de configuración. 
 
 | Bloqueo | Responsable | Acción verificable |
 |---|---|---|
-| Permisos en `rbac.pending` | ASII-02 (`Luis890D`) | Aprobar/rechazar la propuesta y probar la matriz integrada |
+| Permisos en `rbac.pending` | RBAC | Aprobar/rechazar la propuesta y probar la matriz integrada |
 | `local_user_refs` sembradas manualmente | ASII-01 / identidad | Sincronizar membresías CENTRAL por hospital |
 | Una conexión HOSPITAL para todos los tenants | Plataforma/Tenants | Resolver el endpoint clínico y probar aislamiento físico |
 | Sin staging/on-premise autorizado | Coordinación del proyecto | Proveer entorno, secretos y ventana de despliegue |

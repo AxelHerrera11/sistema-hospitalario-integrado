@@ -1,0 +1,12 @@
+@startuml
+title ASII-27 - Camino feliz y errores criticos (Semana 11)
+start
+:Reportes → Filtros → Vista previa (paginada) → Exportar CSV → Exportacion lista → Vista previa con los mismos filtros;
+if (respuesta del servidor) then (2xx)
+  #palegreen:Confirmacion con el resultado concreto;
+else (error)
+  :Rango excesivo: 422 report_range_too_long\nFormato no soportado: 406 report_format_unsupported\nSin filas: 200 con lista vacia\nSesion expirada: 401 unauthenticated;
+  :Mensaje accionable, datos conservados, foco en el error;
+endif
+stop
+@enduml

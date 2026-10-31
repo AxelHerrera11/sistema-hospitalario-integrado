@@ -1,0 +1,55 @@
+# Pruebas de permisos y datos sensibles de Gobernanza (Semana 17) — 2026-10-29 22:03 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php micro-his/gobernanza-auditoria/tests/seguridad.php | grep -E '^(OK|FALLO)|pruebas,'
+OK    [TC-S-01/InMemory] email, DPI, teléfono, dirección y fecha de nacimiento no se guardan y quedan en redacted_keys
+OK    [TC-S-02/InMemory] un correo bajo una clave neutra («usuario») también se elimina
+OK    [TC-S-03/InMemory] ningún valor personal aparece en la respuesta
+OK    [TC-S-01/PDO] email, DPI, teléfono, dirección y fecha de nacimiento no se guardan y quedan en redacted_keys
+OK    [TC-S-02/PDO] un correo bajo una clave neutra («usuario») también se elimina
+OK    [TC-S-03/PDO] ningún valor personal aparece en la respuesta
+OK    [TC-S-04] al leer filas ajenas también se quitan email y teléfono (role_code se conserva)
+OK    [TC-S-05] sin permiso, un filtro inválido devuelve 403 (no 422): no se revela cómo valida la API
+OK    [TC-S-06] con permiso, inyección en «modulo» → 422 sin eco del valor ni texto SQL
+OK    [TC-S-07] toda respuesta (200, 403, 422) lleva Cache-Control: no-store, private
+[seguridad] 10 pruebas, 0 fallos.
+(código de salida: 0)
+
+$ php micro-his/gobernanza-auditoria/tests/run.php | grep -E '^\[|TODAS|FALLOS'
+[unit] 22 pruebas, 0 fallos.
+[contract] 22 pruebas, 0 fallos.
+[whitebox] 15 pruebas, 0 fallos.
+[blackbox] 34 pruebas, 0 fallos.
+[rbac_integration] 7 pruebas, 0 fallos.
+[laravel_glue] 5 pruebas, 0 fallos.
+[seguridad] 10 pruebas, 0 fallos.
+[architecture] 4 pruebas, 0 fallos.
+TODAS LAS SUITES APROBADAS
+(código de salida: 0)
+
+$ php micro-his/gobernanza-auditoria/tests/blackbox.php | grep -E 'TC-N-0[1-9]/PDO|TC-N-1[0-9]/PDO'
+OK    [TC-N-01/PDO] positivo: 200 con data, meta de paginación, trace_id y no-store
+OK    [TC-N-02/PDO] aislamiento: ningún evento del otro tenant aparece
+OK    [TC-N-03/PDO] respuesta sin hashes de la cadena ni campos internos
+OK    [TC-N-04/PDO] el intento denegado se distingue de lo ocurrido (outcome denied, occurred false)
+OK    [TC-N-05/PDO] sin usuario autenticado -> 401 AUTH_REQUIRED
+OK    [TC-N-06/PDO] sin cabecera X-Tenant-ID -> 400 TENANT_REQUIRED
+OK    [TC-N-07/PDO] cabecera de otro tenant -> 403 TENANT_MISMATCH (no se confía en el cliente)
+OK    [TC-N-08/PDO] parámetro tenant_id distinto del servidor -> 403 TENANT_MISMATCH
+OK    [TC-N-09/PDO] parámetro tenant_id igual al del servidor se tolera -> 200
+OK    [TC-N-10/PDO] usuario sin permiso auditoria.ver -> 403 RBAC_DENIED con el trace_id de RBAC
+OK    [TC-N-11/PDO] sin permiso, un filtro inválido no revela validación: 403 antes que 422
+OK    [TC-N-12/PDO] filtros inválidos -> 422 AUDIT_FILTER_INVALID con errores por parámetro
+OK    [TC-N-13/PDO] paginación con límite: página 2 de tamaño 1
+OK    [TC-N-14/PDO] solo las 3 consultas exitosas previas quedan auditadas (gobernanza.auditoria_consultada, Security); las rechazadas no
+OK    [TC-N-15/PDO] X-Request-ID inseguro se reemplaza por uno generado
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Rbac/GovernanceHttpTest.php --testdox | grep -E '✔|✘|^OK|Tests:'
+ ✔ Registered endpoint reads denied events and records its own query
+ ✔ Medico is denied before filters and denial is persisted once
+ ✔ Real token cannot select foreign hospital in header or query
+ ✔ Logout and role revocation prevent further audit access
+ ✔ Invalid filters and storage failure do not expose internal details
+OK (5 tests, 33 assertions)
+(código de salida: 0)

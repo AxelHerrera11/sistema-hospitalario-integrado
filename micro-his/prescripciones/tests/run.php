@@ -8,4 +8,8 @@ require __DIR__.'/harness.php';
 
 require __DIR__.'/domain.php';
 
+require __DIR__.'/ports.php';
+
+require __DIR__.'/application.php';
+
 finish();

@@ -6,10 +6,12 @@ use MicroHis\Medicos\Application\AppointmentReader;
 use MicroHis\Medicos\Application\AssociateSpecialty;
 use MicroHis\Medicos\Application\DoctorRepository;
 use MicroHis\Medicos\Application\DoctorScheduleProvider;
+use MicroHis\Medicos\Application\PermissionChecker;
 use MicroHis\Medicos\Application\QueryAvailability;
 use MicroHis\Medicos\Application\RegisterDoctor;
 use MicroHis\Medicos\Domain\SlotPlanner;
 use MicroHis\Medicos\Domain\SpecialtyAssignmentPolicy;
+use MicroHis\Medicos\Presentation\ApiKernel;
 use MicroHis\Medicos\Presentation\DoctorController;
 use MicroHis\Medicos\Presentation\JsonView;
 use MicroHis\Medicos\Presentation\Router;
@@ -27,4 +29,10 @@ function medicos_router(DoctorRepository $doctors, AppointmentReader $appointmen
         $view,
     );
     return new Router($controller, $view);
+}
+
+/** Servidor API v1 (Semana 5): el mismo Router detrás de autenticación, permisos RBAC y trace_id. */
+function medicos_api(DoctorRepository $doctors, AppointmentReader $appointments, DoctorScheduleProvider $schedule, PermissionChecker $permissions, ?Closure $traceIds = null, ?Closure $log = null): ApiKernel
+{
+    return new ApiKernel(medicos_router($doctors, $appointments, $schedule), $permissions, new JsonView(), $traceIds, $log);
 }

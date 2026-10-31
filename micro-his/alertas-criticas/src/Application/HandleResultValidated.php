@@ -18,7 +18,8 @@ final class HandleResultValidated
     public function execute(array $event, string $actor): array
     {
         foreach (['result_version_id', 'lab_test_id', 'patient_id', 'episode_id', 'value'] as $field) {
-            if ($field === 'value' ? !is_numeric($event[$field] ?? null) : !is_string($event[$field] ?? null)) {
+            // Un valor no finito («1e400» es INF) no es una medición: se rechaza antes de compararlo o serializarlo.
+            if ($field === 'value' ? !is_numeric($event[$field] ?? null) || !is_finite((float) $event[$field]) : !is_string($event[$field] ?? null)) {
                 throw new DomainRuleViolation('EVENT_INVALID', $field);
             }
         }

@@ -1,0 +1,103 @@
+$ php micro-his/expediente-medico/tests/run.php
+
+== Unitarias (dominio)
+OK: U-01 apertura de paciente activo: abierto, sin cierre y numerado
+OK: U-02 paciente fallecido no recibe expediente (409)
+OK: U-03 expediente cerrado sin fecha de cierre es inconsistente
+OK: U-03b expediente cerrado antes de abrirse es inconsistente
+OK: U-03c expediente abierto con fecha de cierre es inconsistente
+OK: U-04 episodio cerrado que termina antes de empezar es inconsistente
+OK: U-04b episodio de tipo desconocido es inconsistente
+OK: U-05 línea de tiempo ordenada (reciente primero) y 1 episodio abierto
+OK: U-06 episodio de otro paciente rechaza toda la vista (500)
+OK: U-06b expediente de otro paciente rechaza la vista (500)
+OK: U-07 código de 40 caracteres es válido
+OK: U-07b código de 41 caracteres es inválido (422)
+OK: U-07c código con comilla (inyección) es inválido (422)
+
+== Caja blanca (ramas de los casos de uso)
+OK: C1 RBAC niega → 403 ACCESO_DENEGADO y se audita la denegación
+OK: C2 tenant sin almacenes configurados → 503 HOSPITAL_NO_DISPONIBLE
+OK: C3 paciente inexistente → 403 SIN_VINCULO_ASISTENCIAL (no revela existencia)
+OK: C4 paciente existente sin vínculo del usuario → 403 SIN_VINCULO_ASISTENCIAL
+OK: C5 vínculo sí, expediente no abierto → 404 EXPEDIENTE_NO_ABIERTO
+OK: C6 bitácora caída en acceso exitoso → AuditUnavailable (no se entregan datos)
+OK: C6b almacén del hospital caído → PersistenceFailure
+OK: C7 camino feliz: 3 episodios, evento «consultado» Security con el id del expediente y sin datos clínicos
+OK: C8 identidad CENTRAL distinta de la referencia local: el vínculo usa la local y la auditoría la CENTRAL
+OK: A1 RBAC niega el permiso de apertura → 403
+OK: A2 paciente inexistente → 404 PACIENTE_NO_ENCONTRADO
+OK: A3 expediente ya existente → created=false, mismo expediente y sin evento nuevo
+OK: A4 paciente fallecido → 409 PACIENTE_NO_ACTIVO
+OK: A5 bitácora caída al abrir → AuditUnavailable y el expediente NO queda guardado
+OK: A6 carrera: otro proceso abrió primero → se devuelve ese expediente con created=false
+OK: A7 camino feliz: created=true, EXP-P-0002, fecha del reloj del servidor y evento «abierto»
+
+== Caja negra (contrato HTTP)
+OK: [pdo] N-01 médica tratante → 200, 3 episodios (reciente primero) y Cache-Control no-store
+OK: [pdo] N-02 enfermería (expediente.ver, sin asignación) → 403 SIN_VINCULO_ASISTENCIAL
+OK: [pdo] N-03 recepción sin expediente.ver → 403 ACCESO_DENEGADO con trace_id
+OK: [pdo] N-04 admin_hospital sin expediente.ver → 403 ACCESO_DENEGADO
+OK: [pdo] N-04b ninguna respuesta denegada contiene datos del paciente
+OK: [pdo] N-05 usuario sin membresía en el hospital indicado → 403
+OK: [pdo] N-05b membresía válida pero hospital sin base configurada → 503 HOSPITAL_NO_DISPONIBLE
+OK: [pdo] N-06 sin X-User-ID → 401 IDENTIDAD_REQUERIDA
+OK: [pdo] N-06b sin X-Tenant-ID → 400 TENANT_REQUERIDO
+OK: [pdo] N-07 código de 1 carácter (válido, inexistente) → 403 sin revelar existencia
+OK: [pdo] N-07b código de 40 caracteres (válido) → 403
+OK: [pdo] N-07c código de 41 caracteres → 422 CODIGO_PACIENTE_INVALIDO
+OK: [pdo] N-07d código con inyección SQL → 422
+OK: [pdo] N-08 apertura sin activar el permiso propuesto → 403 para recepción y medicina
+OK: [pdo] N-09 apertura → 201 con EXP-P-0002 y sin datos del paciente; repetir → 200 created=false (idempotente)
+OK: [pdo] N-09b tras abrir, la médica tratante consulta el expediente nuevo (1 episodio abierto)
+OK: [pdo] N-10 apertura de paciente fallecido → 409; inexistente → 404
+OK: [pdo] N-10b la auditoría registró abierto + consultado
+OK: [pdo] N-11 almacén caído → 503 EXPEDIENTE_NO_DISPONIBLE con solo el código
+OK: [pdo] N-12 bitácora caída → 503 AUDITORIA_NO_DISPONIBLE sin datos del expediente
+OK: [pdo] N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404
+OK: [memoria] N-01 médica tratante → 200, 3 episodios (reciente primero) y Cache-Control no-store
+OK: [memoria] N-02 enfermería (expediente.ver, sin asignación) → 403 SIN_VINCULO_ASISTENCIAL
+OK: [memoria] N-03 recepción sin expediente.ver → 403 ACCESO_DENEGADO con trace_id
+OK: [memoria] N-04 admin_hospital sin expediente.ver → 403 ACCESO_DENEGADO
+OK: [memoria] N-04b ninguna respuesta denegada contiene datos del paciente
+OK: [memoria] N-05 usuario sin membresía en el hospital indicado → 403
+OK: [memoria] N-05b membresía válida pero hospital sin base configurada → 503 HOSPITAL_NO_DISPONIBLE
+OK: [memoria] N-06 sin X-User-ID → 401 IDENTIDAD_REQUERIDA
+OK: [memoria] N-06b sin X-Tenant-ID → 400 TENANT_REQUERIDO
+OK: [memoria] N-07 código de 1 carácter (válido, inexistente) → 403 sin revelar existencia
+OK: [memoria] N-07b código de 40 caracteres (válido) → 403
+OK: [memoria] N-07c código de 41 caracteres → 422 CODIGO_PACIENTE_INVALIDO
+OK: [memoria] N-07d código con inyección SQL → 422
+OK: [memoria] N-08 apertura sin activar el permiso propuesto → 403 para recepción y medicina
+OK: [memoria] N-09 apertura → 201 con EXP-P-0002 y sin datos del paciente; repetir → 200 created=false (idempotente)
+OK: [memoria] N-09b tras abrir, la médica tratante consulta el expediente nuevo (1 episodio abierto)
+OK: [memoria] N-10 apertura de paciente fallecido → 409; inexistente → 404
+OK: [memoria] N-10b la auditoría registró abierto + consultado
+OK: [memoria] N-11 almacén caído → 503 EXPEDIENTE_NO_DISPONIBLE con solo el código
+OK: [memoria] N-12 bitácora caída → 503 AUDITORIA_NO_DISPONIBLE sin datos del expediente
+OK: [memoria] N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404
+
+== Integración PDO + Gobernanza
+OK: P-01 vínculo: López↔P-0001 sí; Pérez (asignación cerrada)↔P-0001 no; López↔P-0003 no
+OK: P-01b perfil médico suspendido → sin vínculo aunque la asignación siga activa
+OK: P-02 episodios de P-0001 desde care_episodes (3, reciente primero) y expediente EXP-P-0001
+OK: P-03 apertura concurrente: una sola fila y el segundo recibe el primero
+OK: P-04 confirmación fallida → ROLLBACK, sin expediente para P-0002
+OK: P-05 borrar un expediente es rechazado por el trigger de retención
+OK: P-06 fallo del driver → PersistenceFailure("episodes_read_failed")
+OK: P-07 audit_log contiene consultado:success y acceso_denegado:denied del hospital-demo
+OK: P-07b los eventos llevan hash de cadena y no contienen nombres ni motivos clínicos
+OK: P-08 la misma médica: 200 en su hospital y 403 SIN_VINCULO en hospital-norte (otra base, otro paciente)
+OK: P-09 base de hospital-norte inaccesible → 503 EXPEDIENTE_NO_DISPONIBLE; hospital-demo sigue en 200
+
+== Arquitectura (capas y dependencias)
+OK: R-01 Domain no depende de Application, Persistence, Presentation, Integration ni PDO
+OK: R-02 Application no conoce PDO, SQL, adaptadores ni otros módulos (solo puertos propios)
+OK: R-03 Presentation (controlador, router, vista) no tiene SQL ni usa PDO ni adaptadores
+OK: R-04 el controlador no aplica reglas de dominio (no construye MedicalRecord ni valida estados)
+OK: R-05 Persistence solo usa sentencias preparadas (sin query/exec con variables)
+OK: R-06 los contratos de RBAC, Gobernanza y Pacientes solo se usan en Integration
+OK: R-07 ningún archivo del módulo supera 400 líneas
+
+Resumen: 89 OK, 0 FALLO
+(código de salida: 0)

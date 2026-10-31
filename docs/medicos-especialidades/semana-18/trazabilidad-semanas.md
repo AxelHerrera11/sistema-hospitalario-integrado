@@ -1,6 +1,6 @@
 # Trazabilidad de las 18 semanas del módulo
 
-Cada semana corresponde a una entrega con su Pull Request. La columna «Estado» refleja la situación verificada el 22 de octubre de 2026 con `gh pr view`; un PR «Borrador» o «Abierto» **no** está integrado en `develop`.
+Cada semana corresponde a una entrega con su Pull Request. La columna «Estado» refleja la situación verificada el 31 de octubre de 2026 con `gh pr view`; un PR «Borrador» o «Abierto» **no** está integrado en `develop`.
 
 | Semana | Entregable | PR | Estado |
 |---:|---|---:|---|
@@ -9,7 +9,7 @@ Cada semana corresponde a una entrega con su Pull Request. La columna «Estado»
 | 3 | Micro-HIS en PHP vanilla con capas: dominio, aplicación, persistencia PDO, entrada HTTP y vista C4 | #124, #126, #127 | Fusionados |
 | 4 | Capas y patrón Repository (adaptadores PDO e InMemory), repositorio compartido y entrada MVC | #355, #357, #617, #618 | Fusionados (#356, la primera versión del MVC, se cerró y se rehízo como #617 y #618) |
 | 5 | Cliente-servidor: contrato API v1, OpenAPI y frontera de microservicio | #371 | Fusionado |
-| 5 | Servidor API v1 y cliente HTTP | #372 | **Abierto**: no está en `develop` (ver «Laguna de la Semana 5») |
+| 5 | Servidor API v1 y cliente HTTP | #372 | Fusionado |
 | 6 | Primera evaluación parcial: tesis, decisiones defendidas y caso práctico | #381 | Fusionado |
 | 7 | Componentes backend/frontend y refactorización de la consulta de disponibilidad | #382 | Fusionado |
 | 8 | Flujo UX por rol, wireframes y reglas de interacción | #400 | Fusionado |
@@ -17,12 +17,12 @@ Cada semana corresponde a una entrega con su Pull Request. La columna «Estado»
 | 10 | Diseño para movilidad de 320 a 430 px | #402 | Fusionado |
 | 11 | Prototipo navegable desktop y móvil con 9 capturas | #408 | Fusionado |
 | 12 | Segunda evaluación parcial y guiones de evidencia reproducible (contraste y prototipo) | #428, #429 | Fusionados |
-| 13 | Revisión técnica formal | #524 | **Borrador** |
+| 13 | Revisión técnica formal | #524 | Fusionado |
 | 14 | Plan SQA: métricas, riesgos y controles | #526 | Fusionado |
-| 15 | Pruebas unitarias, de caja blanca y de caja negra trazadas a RF/RNF, con 5 defectos registrados | #527 | **Borrador** |
-| 16 | Integración en Laravel: adaptador PostgreSQL, API, defectos corregidos, prueba en PostgreSQL 16, `slot_minutes`, pantalla Vue, zona horaria y documentación | #1038, #1039, #1042, #1043, #1044, #1045, #1046, #1040 | **Abiertos** (#1038 listo para revisión; el resto, borrador y apilado) |
-| 17 | Seguridad: pruebas de permisos y datos sensibles, matriz de amenazas, bitácora de despliegue local, límite de tasa y longitudes máximas | #1052, #1061 | **Borrador**, apilados |
-| 18 | Evaluación final y defensa | Este PR | Borrador |
+| 15 | Pruebas unitarias, de caja blanca y de caja negra trazadas a RF/RNF, con 5 defectos registrados | #527 | Fusionado |
+| 16 | Integración en Laravel: adaptador PostgreSQL, API, defectos corregidos, prueba en PostgreSQL 16, `slot_minutes`, pantalla Vue, zona horaria y documentación | #1038, #1039, #1042, #1043, #1044, #1045, #1046, #1040 | Fusionados |
+| 17 | Seguridad: pruebas de permisos y datos sensibles, matriz de amenazas, bitácora de despliegue local, límite de tasa y longitudes máximas | #1052, #1061 | Fusionados |
+| 18 | Evaluación final y defensa | Este PR | En revisión |
 
 ## Continuidad entre entregas
 
@@ -37,8 +37,8 @@ Cada semana corresponde a una entrega con su Pull Request. La columna «Estado»
 
 ## Laguna de la Semana 5
 
-El contrato API v1 (#371) está integrado, pero el servidor API v1 y el cliente HTTP (#372) siguen abiertos. En la práctica, las rutas de Laravel de la Semana 16 (#1039) ocupan el lugar del servidor; **no existe en `develop` un cliente HTTP** del módulo, ni lo necesita hoy ningún otro módulo. La evidencia de la Semana 15 se ejecutó contra la punta de la pila de #372. Qué se hace con ese PR queda como decisión pendiente del autor.
+El contrato API v1 (#371) y el servidor API v1 con su cliente HTTP (#372) están integrados. Las rutas de Laravel de la Semana 16 (#1039) son el servidor que usa el HIS.
 
 ## Qué no está integrado todavía
 
-Todo lo de las semanas 13, 15, 16, 17 y 18 está en PR abiertos. Hasta que se integren en orden (#1038 primero, y después cada PR de la cadena reorientado a `develop`), `develop` solo contiene el micro-HIS sin ruta en Laravel.
+Al 31 de octubre de 2026 están integradas las semanas 1 a 17; solo esta entrega (Semana 18) queda en revisión.

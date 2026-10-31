@@ -10,7 +10,7 @@
 
 | Entregable | Archivo | Estado |
 |---|---|---|
-| Presentación breve | [presentacion.md](./presentacion.md): 5 diapositivas | Cumplido |
+| Presentación breve | [presentacion.pdf](./presentacion.pdf) (portada y 5). Fuente Marp: [presentacion.md](./presentacion.md) | Cumplido |
 | Recorrido | Diapositiva 2 y el [prototipo de la Semana 11](../semana-11/prototipo.md) | Cumplido |
 | Matriz decisión → RF/RNF → evidencia | [matriz-decisiones.md](./matriz-decisiones.md): 14 decisiones | Cumplido |
 | Cambio documentado | [cambio-practico.md](./cambio-practico.md): Escape y foco | Cumplido; **ejercicio simulado** |

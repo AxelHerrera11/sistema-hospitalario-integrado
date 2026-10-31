@@ -10,8 +10,8 @@
 
 | Entregable | Archivo | Estado |
 |---|---|---|
-| 7 diapositivas | [presentacion.md](./presentacion.md) | Cumplido (Markdown; sin PDF) |
-| Diagrama trazable UML → RF/RNF → código | [presentacion.md](./presentacion.md), diapositiva 2 | Cumplido |
+| 7 diapositivas | [presentacion.pdf](./presentacion.pdf) (portada y 7). Fuente Marp: [presentacion.md](./presentacion.md) | Cumplido |
+| Diagrama trazable UML → RF/RNF → código | [01-trazabilidad.png](./01-trazabilidad.png), diapositiva 2. Fuente: [fuentes/01-trazabilidad.dot](./fuentes/01-trazabilidad.dot) | Cumplido |
 | Matriz decisión → evidencia | [matriz-decisiones.md](./matriz-decisiones.md): 15 decisiones | Cumplido |
 | Cambio práctico documentado | [cambio-practico.md](./cambio-practico.md): `Retry-After` en el 503 | Cumplido; **ejercicio simulado** |
 | [Declaración de uso de IA](./DECLARACION_IA.md) | — | — |

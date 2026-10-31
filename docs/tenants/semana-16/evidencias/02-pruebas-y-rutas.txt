@@ -1,0 +1,36 @@
+# Tenants: integración de la autenticación en develop — 2026-10-29 21:43 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php artisan route:list --path=api/v1/auth
+  POST       api/v1/auth/login ........................................................... Api\V1\AuthController@login
+  POST       api/v1/auth/logout ......................................................... Api\V1\AuthController@logout
+  GET|HEAD   api/v1/auth/me ................................................................. Api\V1\AuthController@me
+  POST       api/v1/auth/refresh ....................................................... Api\V1\AuthController@refresh
+                                                                                                    Showing [4] routes
+(código de salida: 0)
+
+$ php artisan route:list --path=api/v1/admin
+  DELETE     api/v1/admin/sessions/{session} ....................... Api\V1\Admin\HospitalUserController@revokeSession
+  POST       api/v1/admin/tenants .............................................. Api\V1\Admin\HospitalController@store
+  GET|HEAD   api/v1/admin/users ............................................ Api\V1\Admin\HospitalUserController@index
+  POST       api/v1/admin/users/{user}/deactivate ..................... Api\V1\Admin\HospitalUserController@deactivate
+  POST       api/v1/admin/users/{user}/roles .............................. Api\V1\Admin\HospitalUserController@assign
+  DELETE     api/v1/admin/users/{user}/roles/{role} ....................... Api\V1\Admin\HospitalUserController@revoke
+                                                                                                    Showing [6] routes
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Tenants tests/Unit/Tenants | grep -E '^(OK|Tests:|FAILURES|ERRORS)'
+OK (106 tests, 529 assertions)
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never --group unitarias | grep -E '^(OK|Tests:)'
+OK (29 tests, 71 assertions)
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never --group caja-blanca | grep -E '^(OK|Tests:)'
+OK (17 tests, 42 assertions)
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never --group caja-negra | grep -E '^(OK|Tests:)'
+OK (27 tests, 88 assertions)
+(código de salida: 0)

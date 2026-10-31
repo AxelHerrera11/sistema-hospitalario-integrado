@@ -19,7 +19,9 @@ final class AuthResponseTransformer
         $this->responseFactory = $responseFactory;}
     public function json(array $payload, int $status = 200, array $headers = []): Response
     {
-        $response = $this->responseFactory->createResponse($status)->withHeader('Content-Type', 'application/json');
+        // H-TEN-16-01: las respuestas llevan tokens o datos de sesión; ninguna caché debe guardarlas (RFC 6749 §5.1).
+        $response = $this->responseFactory->createResponse($status)->withHeader('Content-Type', 'application/json')
+            ->withHeader('Cache-Control', 'no-store')->withHeader('Pragma', 'no-cache')->withHeader('X-Content-Type-Options', 'nosniff');
         foreach ($headers as $name => $value) {
             $response = $response->withHeader($name, $value);}
         $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));

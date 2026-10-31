@@ -15,6 +15,7 @@ CREATE TABLE lab_tests (
     valid_from     DATE NOT NULL,
     valid_to       DATE,
     status         TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    created_by_user_ref_id TEXT NOT NULL,
     UNIQUE (code, version_no)
 );
 CREATE TABLE local_access_audits (correlation_id TEXT NOT NULL, actor_user_ref_id TEXT NOT NULL, module TEXT NOT NULL, action TEXT NOT NULL,

@@ -1,0 +1,19 @@
+PASS  /health sin credenciales → 200
+PASS  sin X-Tenant-ID → 400
+PASS  el error usa problem+json
+PASS  el error incluye request_id generado
+PASS  sin X-User-Ref → 401
+PASS  sin permiso de creación → 403
+PASS  emisión → 201 con X-Request-ID
+PASS  misma Idempotency-Key recupera con 200
+PASS  Idempotency-Key por cabecera es aceptada
+PASS  GET orden → 200
+PASS  otro tenant no ve la orden → 404
+PASS  PATCH de estado → 200
+PASS  transición inválida → 409
+PASS  el 409 conserva el campo
+PASS  cancelación → 200 CANCELLED
+PASS  sin Idempotency-Key → 422
+PASS  ruta desconocida → 404
+PASS  método desconocido → 404
+OK: verificaciones de API aprobadas
