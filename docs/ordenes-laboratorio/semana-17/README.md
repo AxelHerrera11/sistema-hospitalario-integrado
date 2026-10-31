@@ -6,22 +6,21 @@
 - Estudiante: Javier Alexander Fajardo López (`Javifa2324`)
 - Rama: `feature/asii-16-semana-17-seguridad-ordenes-javifa2324`
 - Destino: `develop`
-- Dependencia: PR #1673 (Semana 16)
+- Dependencia: PR #1673 (Semana 16), ya fusionado en `develop`
 - Issue relacionado: `Refs #343`
 
 ## Alcance
 
 Esta entrega deja la matriz de seguridad y la comprobación reproducible para la operación
-de órdenes. La implementación funcional de la Semana 17 se habilita después de integrar
-la Semana 16; por eso esta evidencia no afirma que un entorno de staging ya esté desplegado.
+de órdenes. La Semana 16 (#1673) ya está integrada en `develop`; esta evidencia no afirma que un entorno de staging ya esté desplegado.
 
 | Control | Evidencia esperada | Resultado en este checkout |
 |---|---|---|
-| Identidad | usuario autenticado, no usuario demo | pendiente de integrar #1673 |
-| Tenant | `X-Tenant-ID` validado y aislado | pendiente de integrar #1673 |
-| Permiso | `laboratorio.ordenes.ver` y `laboratorio.ordenes.crear` | pendiente de integrar #1673 |
-| Persistencia | PDO/hospital y transacción | pendiente de integrar #1673 |
-| Errores | RFC 9457 sin excepciones internas | pendiente de integrar #1673 |
+| Identidad | usuario autenticado, no usuario demo | integrado en #1673; falta prueba contra PostgreSQL |
+| Tenant | `X-Tenant-ID` validado y aislado | integrado en #1673; falta prueba contra PostgreSQL |
+| Permiso | `laboratorio.ordenes.ver` y `laboratorio.ordenes.crear` | integrado en #1673; falta prueba contra PostgreSQL |
+| Persistencia | PDO/hospital y transacción | integrado en #1673; falta prueba contra PostgreSQL |
+| Errores | `error.code` y `meta.request_id` sin excepciones internas | integrado en #1673; falta prueba contra PostgreSQL |
 | Datos clínicos | sin credenciales ni datos reales en evidencia | verificado |
 
 ## Criterios de aceptación
