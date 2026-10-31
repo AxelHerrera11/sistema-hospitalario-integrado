@@ -71,7 +71,8 @@ class Icd10CodesIntegrityTest extends TestCase
 
         $this->assertSame(0, (int) DB::connection('hospital')->scalar('SELECT active::int FROM icd10_codes WHERE code = ?', ['J18.9']));
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM icd10_codes WHERE code = ?', ['J18.9']));
-        $this->assertRejected('icd10_codes_active_not_null', fn () => DB::connection('hospital')->update('UPDATE icd10_codes SET active = NULL WHERE code = ?', ['J18.9']));
+        // NOT NULL no tiene nombre de restricción antes de PostgreSQL 18: se verifica el SQLSTATE.
+        $this->assertRejected('SQLSTATE[23502]', fn () => DB::connection('hospital')->update('UPDATE icd10_codes SET active = NULL WHERE code = ?', ['J18.9']));
     }
 
     public function test_rollback_removes_only_the_catalog(): void

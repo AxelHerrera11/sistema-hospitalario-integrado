@@ -10,7 +10,7 @@
 
 | Columna | Tipo | Regla |
 |---|---|---|
-| `code` | `varchar(10)` | PK. Mayúsculas, sin espacios, formato CIE-10 con punto opcional (`J18.9`, `I10`, `S72.001A`). |
+| `code` | `varchar(10)` | PK. Mayúsculas, sin espacios, formato CIE-10 con punto opcional (`J18.9`, `I10`). El `CHECK` admite hasta 4 caracteres tras el punto para extensiones nacionales, pero la fuente acordada es la CIE-10 de la OMS. |
 | `description` | `text` | Obligatoria, recortada y no vacía. |
 | `active` | `boolean` | `NOT NULL DEFAULT true`. Nunca entero. Un código retirado se desactiva, no se borra. |
 
@@ -21,6 +21,11 @@ No hay FK desde `diagnoses`: esa tabla guarda su propio `code` y `description` c
 - **OMS, CIE-10, versión 2019:** <https://icd.who.int/browse10/2019/en>.
 - Adopción regional de referencia: **PAHO/OMS, Clasificación Internacional de Enfermedades, 10.ª revisión**.
 - El catálogo completo no se versiona en este repositorio: son miles de filas, no cabe en el límite de 400 líneas por PR y la OMS tiene condiciones de uso. Se descarga del sitio oficial y se carga con el importador/seed en un PR aparte.
+
+## Estado de esta entrega
+
+- Crea **solo la tabla, vacía**: no carga códigos.
+- Los diagnósticos de Notas SOAP **siguen sin funcionar**: `PdoIcd10Catalog` consulta `active = 1`, que en PostgreSQL falla contra `boolean` y responde `503 ICD10_UNAVAILABLE` aunque haya filas. Lo corrigen el adaptador y el seed pendientes (`#1110`).
 
 ## Carga por seed
 
