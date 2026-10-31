@@ -18,7 +18,7 @@ Contrato que consumen Expediente clínico, Prescripciones, Órdenes de laborator
 | Método | Ruta | Permiso RBAC | Éxito | Estado |
 |---|---|---|---|---|
 | `POST` | `/api/v1/care-episodes/{care_episode_id}/soap-notes` | `notas_soap.crear` | `201` | implementado |
-| `POST` | `/api/v1/soap-notes/{clinical_note_id}/diagnoses` | `notas_soap.asociar_diagnostico` | `201` | implementado; en el HIS integrado responde `503 ICD10_UNAVAILABLE` hasta que exista `icd10_codes` (alcance parcial) |
+| `POST` | `/api/v1/soap-notes/{clinical_note_id}/diagnoses` | `notas_soap.asociar_diagnostico` | `201` | implementado; en el HIS integrado responde `503 ICD10_UNAVAILABLE` hasta que `icd10_codes` esté migrada y cargada (ASII-09, #1620) |
 | `GET` | `/api/v1/soap-notes/{clinical_note_id}` | `notas_soap.ver` | `200` | implementado |
 | `GET` | `/api/v1/care-episodes/{care_episode_id}/soap-notes` | `notas_soap.ver` | `200` | propuesto |
 | `POST` | `/api/v1/soap-notes/{clinical_note_id}/sign` | `notas_soap.firmar` | `200` | propuesto |
@@ -97,7 +97,7 @@ RF-SOAP-04 nombra `DIAGNOSIS_TYPE_INVALID`; el código usa `DIAGNOSIS_INVALID` p
 
 Notas SOAP es dueño de `clinical_notes` y `diagnoses`. Lee `care_assignments` (Episodios) solo por `CareAssignmentReader` y el catálogo CIE-10 por `Icd10Catalog`; nunca escribe en tablas de otro módulo. Dependencias de base pendientes de acordar con Javier:
 
-- `icd10_codes` (catálogo CIE-10) no está entre las 27 entidades de la especificación; Javier la registró como tabla candidata (revisión de #376, R-03). Su origen real (tabla o servicio) está por definir.
+- `icd10_codes` (catálogo CIE-10) no está entre las 27 entidades de la especificación; Javier la registró como tabla candidata (revisión de #376, R-03). ASII-09 la crea como entidad de referencia en el esquema HOSPITAL (PR #1620: `code varchar(10)` PK, `description text`, `active boolean`). Notas SOAP la lee con `active IS TRUE`. Fuente: CIE-10 OMS 2019; el seed mínimo de 20 códigos está en `micro-his/notas-soap/database/icd10-seed-minimo.csv` y el catálogo completo lo carga el importador de ASII-09.
 - `local_access_audits` es la entidad `local_access_audit` del slice H8, sin migración. El doble sigue las columnas del Anexo A de la [Semana 1](../semana-01/narrativa-alcance-trazabilidad.md) y es **provisional** hasta esa migración (R-02). Médicos (ASII-04) necesita la misma tabla.
 - `clinical_notes_record_version_unique (medical_record_id, version_no)` impediría una segunda nota original por expediente (riesgo R1 de la Semana 1); el doble no la replica hasta que se resuelva con Javier.
 
