@@ -33,7 +33,7 @@ function pdoApp(string $fail = ''): array
 {
     $pdo = new PDO('sqlite::memory:');
     $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
-    $pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'dra.lopez', 'active'), ('ep1', 'dr.perez', 'ended')");
+    $pdo->exec(file_get_contents(__DIR__ . '/care-seed.sql'));
     foreach (CODES as $code => [$description, $active]) {
         $pdo->prepare('INSERT INTO icd10_codes VALUES (?, ?, ?)')->execute([$code, $description, (int) $active]);
     }
