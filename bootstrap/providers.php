@@ -16,6 +16,7 @@ use App\Providers\TenantsServiceProvider;
 use App\Providers\TrasladosAltasServiceProvider;
 use App\Providers\CitasServiceProvider;
 use App\Providers\CentroDocumentacionServiceProvider;
+use App\Providers\DashboardServiceProvider;
 use App\Providers\LabModulesServiceProvider;
 
 return [
@@ -45,6 +46,7 @@ return [
     TrasladosAltasServiceProvider::class,
     CitasServiceProvider::class,
     CentroDocumentacionServiceProvider::class,
+    DashboardServiceProvider::class,
     LabModulesServiceProvider::class,
     // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
     AlergiasServiceProvider::class,
