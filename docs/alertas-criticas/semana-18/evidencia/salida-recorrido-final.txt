@@ -1,0 +1,53 @@
+# Recorrido final sobre develop a24bfb36 — 30/10/2026, datos ficticios, APP_DEBUG=false
+## API (Semana 16)
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  recepción sin alertas.ver → 403 RBAC                            esperado 403, obtenido 403
+PASS  médico intenta publicar un resultado (sin lab-results.validate) → 403 esperado 403, obtenido 403
+PASS  bioquímico publica glucosa 32 (crítico bajo 40) → 201          esperado 201, obtenido 201
+      dirección 'low', nivel 0, destinataria = médica tratante: sí
+PASS  el mismo resultado otra vez → 200 duplicate                      esperado 200, obtenido 200
+PASS  glucosa 95 → 200 not_critical                                    esperado 200, obtenido 200
+PASS  episodio de otro paciente → 422 EVENT_INVALID                    esperado 422, obtenido 422
+PASS  paciente 2 sin médico tratante, glucosa 500 → 201 a la jefatura esperado 201, obtenido 201
+      nivel 1, destinatario NULL
+PASS  médico ve su bandeja → 200                                      esperado 200, obtenido 200
+      alertas pendientes: 1
+PASS  médico acusa leyendo 23 en lugar de 32 → 422 READ_BACK_MISMATCH esperado 422, obtenido 422
+PASS  médico acusa con la lectura correcta → 200                      esperado 200, obtenido 200
+PASS  segundo acuse → 409 ALERT_ALREADY_ACKNOWLEDGED                   esperado 409, obtenido 409
+PASS  médico pide la bandeja de la jefatura (sin alertas.supervisar) → 403 esperado 403, obtenido 403
+PASS  jefatura médica ve la bandeja del servicio → 200                esperado 200, obtenido 200
+      alertas pendientes: 1
+## Pantalla en Chrome (Semana 16)
+PASS  el bioquímico publica glucosa 450 por la API → 201
+PASS  bioquímico (sin alertas.ver) no ve «Alertas críticas»
+PASS  la médica ve solo su alerta pendiente (450, sobre el umbral) con role="alert"
+PASS  acusar sin confirmar ni escribir el valor → error local, sin llamar a la API
+PASS  lectura 45 en lugar de 450 → 422 READ_BACK_MISMATCH con mensaje seguro
+PASS  lectura correcta → acusada y la bandeja queda vacía
+PASS  la jefatura médica ve en la bandeja del servicio la alerta sin médico tratante (500, nivel 1)
+PASS  la jefatura acusa la alerta del servicio (ruta con alertas.supervisar) y su bandeja queda vacía
+PASS  375 px: sin desplazamiento horizontal
+9/9 verificaciones
+## Seguridad (Semana 17, con la firma alterada en el medio, corregido en esta entrega), sobre bases recreadas
+PASS  C01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  C01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  C02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  C03 médica sin lab-results.validate publica un resultado → 403      esperado 403, obtenido 403
+PASS  C03 recepción sin alertas.ver → 403                                 esperado 403, obtenido 403
+PASS  C03 médica sin alertas.supervisar pide la bandeja de jefatura → 403 esperado 403, obtenido 403
+PASS  C05 result_version_id como arreglo → 422, no 500                     esperado 422, obtenido 422
+PASS  C05 valor 1e400 (infinito) → 422, no 500                             esperado 422, obtenido 422
+PASS  C06 episodio de otro paciente → 422 (trigger de HOSPITAL)            esperado 422, obtenido 422
+PASS  C04 el cuerpo pide otro destinatario, nivel 2 y acusada → 201        esperado 201, obtenido 201
+      destinataria: médica tratante · nivel: 0 · estado: open
+PASS  C07 jefatura (no tratante) acusa por la ruta común → 403            esperado 403, obtenido 403
+PASS  C08 médica tratante con una lectura equivocada → 422                esperado 422, obtenido 422
+PASS  C08 médica tratante con la lectura correcta y otro acusador → 200   esperado 200, obtenido 200
+      estado: acknowledged · acusada por la tratante: sí
+PASS  C09 acusar de nuevo → 409                                            esperado 409, obtenido 409
+PASS  C10 bandeja con X-Request-ID no confiable → 200                      esperado 200, obtenido 200
+      request_id: req-19f1f02a15799dc0 · Cache-Control: no-store, private
+PASS  C11 HOSPITAL caído → 503                                            esperado 503, obtenido 503
+      código: CRITICAL_ALERTS_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0
