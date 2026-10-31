@@ -1,0 +1,67 @@
+$ node --test micro-his/expediente-medico/tests/ui-estados.test.mjs
+TAP version 13
+# Subtest: V-10 (H-01) editar el código a otro paciente obliga a ocultar el expediente mostrado
+ok 1 - V-10 (H-01) editar el código a otro paciente obliga a ocultar el expediente mostrado
+  ---
+  duration_ms: 3.1721
+  ...
+# Subtest: V-11 (H-02/H-03) las horas llevan zona y el nacimiento no cambia de día
+ok 2 - V-11 (H-02/H-03) las horas llevan zona y el nacimiento no cambia de día
+  ---
+  duration_ms: 21.9524
+  ...
+# Subtest: V-09 (DEF-EXP-02) sexo y estado del paciente se muestran en español, nunca el código crudo
+ok 3 - V-09 (DEF-EXP-02) sexo y estado del paciente se muestran en español, nunca el código crudo
+  ---
+  duration_ms: 0.2895
+  ...
+# Subtest: V-01 código vacío, con espacios o de 41 caracteres no se envía; 40 sí
+ok 4 - V-01 código vacío, con espacios o de 41 caracteres no se envía; 40 sí
+  ---
+  duration_ms: 1.8904
+  ...
+# Subtest: V-02 consulta 200 con episodios es éxito; sin episodios es estado vacío
+ok 5 - V-02 consulta 200 con episodios es éxito; sin episodios es estado vacío
+  ---
+  duration_ms: 0.2395
+  ...
+# Subtest: V-03 apertura 201 informa el número; 200 aclara que no se creó otro
+ok 6 - V-03 apertura 201 informa el número; 200 aclara que no se creó otro
+  ---
+  duration_ms: 0.1165
+  ...
+# Subtest: V-04 los 403 son acceso denegado y conservan el trace_id, sin datos del paciente
+ok 7 - V-04 los 403 son acceso denegado y conservan el trace_id, sin datos del paciente
+  ---
+  duration_ms: 0.1787
+  ...
+# Subtest: V-05 los 503 se pueden reintentar; un 409 o 404 no
+ok 8 - V-05 los 503 se pueden reintentar; un 409 o 404 no
+  ---
+  duration_ms: 0.1297
+  ...
+# Subtest: V-06 sin respuesta: la apertura avisa que reintentar es seguro (idempotente)
+ok 9 - V-06 sin respuesta: la apertura avisa que reintentar es seguro (idempotente)
+  ---
+  duration_ms: 0.3489
+  ...
+# Subtest: V-07 los reintentos tienen salida: al llegar al máximo se pide avisar a soporte
+ok 10 - V-07 los reintentos tienen salida: al llegar al máximo se pide avisar a soporte
+  ---
+  duration_ms: 0.3688
+  ...
+# Subtest: V-08 un código desconocido no muestra detalles internos
+ok 11 - V-08 un código desconocido no muestra detalles internos
+  ---
+  duration_ms: 0.1838
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 177.9743
+(código de salida: 0)

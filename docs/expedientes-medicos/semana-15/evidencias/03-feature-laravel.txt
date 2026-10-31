@@ -1,0 +1,19 @@
+$ php vendor/bin/phpunit tests/Feature/ExpedienteMedico --testdox --log-junit docs/expedientes-medicos/semana-15/evidencias/03-feature-laravel.junit.xml
+# Con ExpedienteMedicoServiceProvider registrado en bootstrap/providers.php (2026-10-23).
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.12
+Configuration: C:\Users\cindy\Desktop\Análisis\sistema-hospitalario-integrado-SistenasII-2026-G3\phpunit.xml
+
+....                                                                4 / 4 (100%)
+
+Time: 00:00.407, Memory: 30.00 MB
+
+Expediente Medico Api (Tests\Feature\ExpedienteMedico\ExpedienteMedicoApi)
+ ✔ Treating physician reads the longitudinal record and the access is audited
+ ✔ Identity tenant and permission are enforced before the micro his
+ ✔ Clinical relationship and local reference are required
+ ✔ Opening is not published until rbac catalogues its permission
+
+OK (4 tests, 24 assertions)
+(código de salida: 0)

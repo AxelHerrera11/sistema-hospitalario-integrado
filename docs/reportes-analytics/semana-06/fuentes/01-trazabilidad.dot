@@ -1,0 +1,18 @@
+digraph trazabilidad {
+  rankdir=LR; fontname="Helvetica"; nodesep=0.3; ranksep=0.7;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [color="#475569"];
+  subgraph cluster_r { label="Requisitos"; color="#94a3b8";
+    r1 [label="Calcular IND-RA-01"]; r2 [label="Estados sin porcentaje"]; r3 [label="Periodo válido"]; r4 [label="Solo agregados y con permiso"];
+  }
+  subgraph cluster_d { label="Decisiones"; color="#94a3b8";
+    d1 [label="Fórmula TCI-1.0"]; d2 [label="Puerto de lectura (LSP)"]; d3 [label="Period: [desde, hasta)"]; d4 [label="Autoridad en el servidor"];
+  }
+  subgraph cluster_c { label="Código"; color="#94a3b8";
+    c1 [label="CalculateCancellationRate"]; c2 [label="EpisodeSummaryReader"]; c3 [label="Period"]; c4 [label="routes/api.php"];
+  }
+  subgraph cluster_p { label="Prueba"; color="#94a3b8";
+    p1 [label="run.php: 25.00, 33.33, 0.00"]; p2 [label="example-lsp.php"]; p3 [label="run.php: 422"]; p4 [label="IndicatorEndpointTest"];
+  }
+  r1->d1->c1->p1; r2->d2->c2->p2; r3->d3->c3->p3; r4->d4->c4->p4;
+}

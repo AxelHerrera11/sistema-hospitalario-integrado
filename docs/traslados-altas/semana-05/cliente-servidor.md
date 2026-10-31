@@ -2,6 +2,12 @@
 
 Contrato: [openapi.yaml](./openapi.yaml). Implementación: `micro-his/traslados-altas/public/index.php` y `src/Presentation/HttpTraslados.php` (prototipo, #849).
 
+## Diagrama cliente-servidor
+
+![Cliente, API, casos de uso y bases](./cliente-servidor.png)
+
+Fuente: [`fuentes/cliente-servidor.dot`](./fuentes/cliente-servidor.dot).
+
 ## Propiedades del contrato
 
 | Propiedad | Decisión | Estado |
@@ -16,6 +22,10 @@ Contrato: [openapi.yaml](./openapi.yaml). Implementación: `micro-his/traslados-
 | **Observabilidad** | Sin `trace_id` ni bitácora en el prototipo | **Pendiente**: `trace_id` de la API v1 y auditoría CENTRAL al integrar |
 
 ## Frontera de microservicio
+
+![Frontera actual y separación no recomendada](./frontera-microservicio.png)
+
+Fuente: [`fuentes/frontera-microservicio.dot`](./fuentes/frontera-microservicio.dot).
 
 | Criterio | Evaluación |
 |---|---|

@@ -42,8 +42,7 @@ final class VistaResultado
     /** @return array{codigo: int, cuerpo: array<string, mixed>} */
     public static function solicitudInvalida(string $campo): array
     {
-        return ['codigo' => self::SOLICITUD_INVALIDA, 'cuerpo' => ['resultado' => 'solicitud_invalida', 'campo' => $campo,
-            'uso' => 'trasladar <estancia_id> <cama_destino_id> <motivo> | alta <estancia_id>']];
+        return ['codigo' => self::SOLICITUD_INVALIDA, 'cuerpo' => ['resultado' => 'solicitud_invalida', 'campo' => $campo]];
     }
 
     private static function exito(ExitoConfirmado $exito): array

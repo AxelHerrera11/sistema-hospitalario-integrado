@@ -19,17 +19,17 @@ El alta de médicos con su especialidad principal, la asociación de especialida
 | Micro-HIS por capas (Presentation, Application, Domain, Persistence) y Repository con adaptadores PDO e InMemory | `micro-his/medicos-especialidades/` | Integrado en `develop` (semanas 3 y 4) |
 | Contrato API v1 y OpenAPI | `docs/medicos-especialidades/semana-05/` | Integrado (#371) |
 | Prototipo navegable, diseño móvil y accesibilidad | `docs/medicos-especialidades/semana-08/` a `semana-12/` | Integrado |
-| Adaptador PDO compatible con el esquema HOSPITAL de PostgreSQL | `PdoDoctorStore` | Abierto (#1038) |
-| Rutas en Laravel con tenant, JWT y un permiso por operación | `routes/api.php`, `DoctorApiController` | Abierto (#1039) |
-| Defectos D-01, D-02 y D-04 de la Semana 15 | dominio y aplicación | Abierto (#1042) |
-| Prueba contra PostgreSQL 16 | `tests/Database/Hospital/DoctorsPostgresTest.php` | Abierto (#1043) |
-| Horario partido con el `slot_minutes` de `doctor_schedules` | `SlotPlanner`, `PdoScheduleProvider` | Abierto (#1044) |
-| Pantalla Vue `/medicos` | `resources/js/modules/medicos/` | Abierto (#1045) |
-| Citas leídas en la zona horaria del hospital del tenant | `DoctorApiController` | Abierto (#1046) |
-| Pruebas de seguridad, matriz de amenazas y bitácora de despliegue local | `tests/Feature/Medicos/DoctorSecurityTest.php`, `semana-17/` | Abierto (#1052) |
-| Límite de tasa y longitudes máximas (MED-14 y MED-15) | `routes/api.php`, `Limits` | Abierto (#1061) |
+| Adaptador PDO compatible con el esquema HOSPITAL de PostgreSQL | `PdoDoctorStore` | Integrado (#1038) |
+| Rutas en Laravel con tenant, JWT y un permiso por operación | `routes/api.php`, `DoctorApiController` | Integrado (#1039) |
+| Defectos D-01, D-02 y D-04 de la Semana 15 | dominio y aplicación | Integrado (#1042) |
+| Prueba contra PostgreSQL 16 | `tests/Database/Hospital/DoctorsPostgresTest.php` | Integrado (#1043) |
+| Horario partido con el `slot_minutes` de `doctor_schedules` | `SlotPlanner`, `PdoScheduleProvider` | Integrado (#1044) |
+| Pantalla Vue `/medicos` | `resources/js/modules/medicos/` | Integrado (#1045) |
+| Citas leídas en la zona horaria del hospital del tenant | `DoctorApiController` | Integrado (#1046) |
+| Pruebas de seguridad, matriz de amenazas y bitácora de despliegue local | `tests/Feature/Medicos/DoctorSecurityTest.php`, `semana-17/` | Integrado (#1052) |
+| Límite de tasa y longitudes máximas (MED-14 y MED-15) | `routes/api.php`, `Limits` | Integrado (#1061) |
 
-Todo lo marcado como «Abierto» está en un PR sin integrar; ver el orden en la [trazabilidad](./trazabilidad-semanas.md).
+Estado verificado el 31 de octubre de 2026: toda la cadena está integrada en `develop` (ver la [trazabilidad](./trazabilidad-semanas.md)).
 
 ## Demo funcional
 
@@ -64,7 +64,7 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 | Utilidades de la pantalla (`node --test`) | 1 test, 0 fallas |
 | `npm run build` | Correcto |
 | Prototipo de la Semana 11 (guion de la Semana 12) | 27 de 27 comprobaciones; 16 de 16 pares de color |
-| Matriz de amenazas | 18 amenazas: 15 probadas, 1 verificada por lectura, 1 parcial, 1 abierta |
+| Matriz de amenazas | 18 amenazas: 15 probadas, 1 verificada por lectura, 2 parciales (MED-08 y MED-13), 0 abiertas |
 | Rendimiento (RNF-MED-04), [rendimiento.md](./rendimiento.md) | Un día con 20 médicos: p95 de 120 a ~13 ms. Ventana de 14 días: p95 de 1561 a 145–194 ms (límite 500 ms) |
 | Backend real de punta a punta, [e2e-real.md](./e2e-real.md) | 21 de 21 verificaciones (Laravel, JWT, tenant, RBAC y PostgreSQL 16) y 6 capturas con sesión real |
 
@@ -72,10 +72,10 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 
 | # | Pendiente | Efecto |
 |---|---|---|
-| 1 | Integrar los PR en orden (#1038 primero) | Hasta entonces `develop` no tiene las rutas de médicos |
-| 2 | Servidor API y cliente HTTP de la Semana 5 (#372) | Abierto; no hay cliente HTTP en `develop` |
+| 1 | ~~Integrar los PR en orden~~ **Hecho** | `develop` ya tiene las rutas, el adaptador PostgreSQL, la pantalla y las pruebas |
+| 2 | ~~Servidor API y cliente HTTP de la Semana 5 (#372)~~ **Integrado** | El cliente `DoctorApiClient` está en `develop`; las rutas de Laravel hacen de servidor |
 | 3 | Contraste y teclado sobre la pantalla `/medicos` | Se probó contra el backend real con sesión real (21 de 21 verificaciones y 6 capturas, ver [e2e-real.md](./e2e-real.md)), pero el contraste y el teclado solo se midieron sobre el prototipo de la Semana 12 |
-| 4 | MED-13: la conexión `hospital` no cambia por tenant | El aislamiento entre hospitales depende de una base por hospital; decisión de la plataforma |
+| 4 | MED-13 (parcial): `EnsureHospitalDatabaseTenant` rechaza otro hospital, pero la conexión `hospital` no cambia por tenant | El aislamiento entre varios hospitales depende de una base por hospital; decisión de la plataforma |
 | 5 | MED-08: las lecturas de disponibilidad no se auditan | Parcial |
 | 6 | Despliegue final | Sin staging u on-premise ni semillas aprobadas de `specialties` y `local_user_refs` |
 | 7 | Falla de `AuditChainIntegrityTest` en la suite `Database` | Ajena al módulo; no se investigó; confirmar en CI |

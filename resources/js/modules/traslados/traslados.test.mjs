@@ -19,3 +19,10 @@ test('sin respuesta: un POST es incierto y una lectura es reintentable', () => {
     const get = respuestaDeError(new Error('Network Error'), 'get');
     assert.equal(interpretar(get.estado, get.cuerpo).puedeReintentar, true);
 });
+
+test('otro hospital: mensaje propio, sin reintento ni consulta', () => {
+    const r = interpretar(403, { error: 'HOSPITAL_DATABASE_TENANT_MISMATCH' });
+    assert.equal(r.tipo, 'rechazo');
+    assert.match(r.texto, /no está disponible en esta instalación/);
+    assert.equal(r.puedeReintentar, false);
+});

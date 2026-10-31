@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" role="img" aria-labelledby="t">
+  <title id="t">Wireframe: confirmación de emisión</title>
+  <rect width="960" height="620" fill="#0f172a" opacity="0.55"/>
+  <rect x="180" y="100" width="600" height="420" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="212" y="140" font-family="system-ui" font-size="19" font-weight="700" fill="#0f172a">Confirmar emisión</text>
+  <text x="212" y="166" font-family="system-ui" font-size="12" fill="#64748b">Revisa los datos antes de crear la orden.</text>
+
+  <rect x="212" y="188" width="536" height="96" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="228" y="212" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">PACIENTE Y EPISODIO</text>
+  <text x="228" y="234" font-family="system-ui" font-size="13" fill="#0f172a">Ana Pérez · EPI-77 · Nota NOTA-552</text>
+  <text x="228" y="256" font-family="system-ui" font-size="11" fill="#64748b">Hospital A · Médico: Dra. Méndez</text>
+  <text x="228" y="274" font-family="system-ui" font-size="11" fill="#64748b">Prioridad: Rutina</text>
+
+  <text x="212" y="314" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">PRUEBAS (1)</text>
+  <rect x="212" y="324" width="536" height="34" rx="4" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="228" y="346" font-family="system-ui" font-size="12" fill="#0f172a">GLU · Glucosa</text>
+
+  <rect x="212" y="378" width="536" height="52" rx="6" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="228" y="400" font-family="system-ui" font-size="11" fill="#92400e">Se creará una orden ISSUED y un evento inicial.</text>
+  <text x="228" y="418" font-family="system-ui" font-size="11" fill="#92400e">La clave de idempotencia evita duplicados si reintentas.</text>
+
+  <rect x="500" y="456" width="116" height="36" rx="6" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="528" y="479" font-family="system-ui" font-size="12" fill="#334155">Volver</text>
+  <rect x="628" y="456" width="120" height="36" rx="6" fill="#2563eb"/>
+  <text x="652" y="479" font-family="system-ui" font-size="12" font-weight="600" fill="#ffffff">Emitir orden</text>
+
+  <rect x="212" y="502" width="536" height="2" fill="#e2e8f0"/>
+  <text x="212" y="534" font-family="system-ui" font-size="11" fill="#64748b">Estado de envío: ● Listo. Al emitir se deshabilita el botón para evitar doble envío.</text>
+  <text x="212" y="552" font-family="system-ui" font-size="11" fill="#64748b">Si falla, el formulario conserva los datos y muestra un mensaje con request_id.</text>
+
+  <rect x="24" y="556" width="912" height="52" rx="8" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="40" y="578" font-family="system-ui" font-size="11" font-weight="700" fill="#92400e">ANOTACIONES</text>
+  <text x="40" y="596" font-family="system-ui" font-size="11" fill="#78350f">A. Resumen completo antes de confirmar. B. Botón único con estado “enviando”. C. Aviso de trazabilidad e idempotencia, sin tecnicismos innecesarios.</text>
+</svg>

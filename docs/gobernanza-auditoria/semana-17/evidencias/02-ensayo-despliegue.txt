@@ -1,0 +1,45 @@
+# Ensayo de despliegue on-premise de Gobernanza — 2026-10-29 · Windows 11 · PHP 8.2.12
+# Destino: carpeta local srv-his-gobernanza (releases/, shared/, current). Script: micro-his/qa-calidad-versiones/bin/desplegar-micro-his.sh
+# Releases: develop 6e841849f99a; candidato 5286dc4ed1fe = develop + código de esta entrega (commit local, mismo árbol de micro-his/gobernanza-auditoria que el PR);
+# e0985a3ea35f = candidato + un archivo PHP con error de sintaxis (commit local de ensayo, nunca publicado).
+
+## Paso 1 — release anterior: develop
+[2026-10-29 22:03:05 -0600] P3 plataforma: PHP 8.2.12 pdo_sqlite=sí
+[2026-10-29 22:03:05 -0600] release activo antes del despliegue: ninguno
+[2026-10-29 22:03:05 -0600] release 6e841849f99a exportado con git archive (50 archivos)
+[2026-10-29 22:03:08 -0600] sintaxis PHP del release: OK
+[2026-10-29 22:03:08 -0600] V1 salud /prototipo/ en 6e841849f99a → HTTP 200
+[2026-10-29 22:03:08 -0600] DESPLEGADO: current → 6e841849f99a (servidor en 127.0.0.1:8291, pid 518)
+[2026-10-29 22:03:08 -0600] simulacro: servidor detenido
+
+## Paso 2 — release nuevo: develop + código de la Semana 17 (commit local 5286dc4ed1fe)
+[2026-10-29 22:03:09 -0600] P3 plataforma: PHP 8.2.12 pdo_sqlite=sí
+[2026-10-29 22:03:09 -0600] release activo antes del despliegue: 6e841849f99a
+[2026-10-29 22:03:09 -0600] release 5286dc4ed1fe exportado con git archive (51 archivos)
+[2026-10-29 22:03:12 -0600] sintaxis PHP del release: OK
+[2026-10-29 22:03:12 -0600] V1 salud /prototipo/ en 5286dc4ed1fe → HTTP 200
+[2026-10-29 22:03:12 -0600] DESPLEGADO: current → 5286dc4ed1fe (servidor en 127.0.0.1:8291, pid 594)
+## Paso 3 — validaciones posteriores sobre el servidor desplegado
+V2 admin hospital 1: 200
+V3 médico sin auditoria.ver: {"code":"RBAC_DENIED","trace_id":"trace-denegado"}
+V4 cabecera de otro hospital: {"code":"TENANT_MISMATCH","trace_id":"req-6c9ddd759666ec26"}
+V5 cabecera de caché: Cache-Control: no-store, private
+V6 suite de seguridad ejecutada DESDE el release desplegado:
+[seguridad] 10 pruebas, 0 fallos.
+[22:03:13] servidor detenido
+
+## Paso 4 — ensayo de release defectuoso (commit local e0985a3ea35f con un error de sintaxis)
+[2026-10-29 22:03:13 -0600] P3 plataforma: PHP 8.2.12 pdo_sqlite=sí
+[2026-10-29 22:03:13 -0600] release activo antes del despliegue: 5286dc4ed1fe
+[2026-10-29 22:03:13 -0600] release e0985a3ea35f exportado con git archive (52 archivos)
+[2026-10-29 22:03:16 -0600] error de sintaxis: micro-his/gobernanza-auditoria/src/Roto.php
+[2026-10-29 22:03:16 -0600] FALLÓ la verificación de e0985a3ea35f
+[2026-10-29 22:03:17 -0600] V1 salud /prototipo/ en 5286dc4ed1fe → HTTP 200
+[2026-10-29 22:03:17 -0600] ROLLBACK: current sigue en 5286dc4ed1fe y responde
+[2026-10-29 22:03:17 -0600] simulacro: servidor detenido
+código de salida del despliegue: 2
+
+## Estado final
+current = 5286dc4ed1fe
+releases = 5286dc4ed1fe 6e841849f99a e0985a3ea35f
+puerto cerrado (ningún servidor queda en ejecución)
