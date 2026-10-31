@@ -68,6 +68,7 @@ final class DoctorEndpointTest extends TestCase
         $this->app['router']->aliasMiddleware('jwt.auth', TestIdentity::class);
         TestIdentity::$user = new GenericUser(['id' => 'admin']);
         TestIdentity::$hospital = 'hospital-a';
+        TestIdentity::$timezone = null;
         config()->set('tenants.hospital_database_tenant_id', 'hospital-a');
 
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
@@ -163,6 +164,26 @@ final class DoctorEndpointTest extends TestCase
         $this->assertFalse($this->doctors->licenseExists('COL-1'));
     }
 
+    public function test_las_citas_se_leen_en_la_zona_del_hospital_del_tenant_y_una_zona_invalida_cae_a_la_de_la_aplicacion(): void
+    {
+        $zones = [];
+        $this->app->bind(Router::class, function ($app, array $parameters) use (&$zones) {
+            $zones[] = $parameters['timezone'];
+
+            return medicos_router($this->doctors, new InMemoryAppointmentReader(), new ConfigScheduleProvider([]));
+        });
+        $url = '/api/v1/availability?specialty=NEURO&date=2026-10-19';
+
+        TestIdentity::$timezone = 'America/Guatemala';
+        $this->getJson($url)->assertOk();
+        TestIdentity::$timezone = 'Marte/Olimpo';
+        $this->getJson($url)->assertOk();
+        TestIdentity::$timezone = null;
+        $this->getJson($url)->assertOk();
+
+        $this->assertSame(['America/Guatemala', 'UTC', 'UTC'], $zones);
+    }
+
     public function test_si_la_base_falla_responde_503_y_no_un_500(): void
     {
         $this->app->bind(Router::class, static fn () => throw new \PDOException('simulated'));
@@ -188,11 +209,13 @@ class TestIdentity
 
     public static ?string $hospital;
 
+    public static ?string $timezone = null;
+
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(fn () => self::$user);
         // Modelo Hospital real: EnsureHospitalDatabaseTenant lo compara con la base HOSPITAL de la instancia.
-        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital, 'timezone' => self::$timezone]));
 
         return $next($request);
     }
