@@ -72,7 +72,7 @@ Resultado verificado: 27 de 27 comprobaciones y 16 de 16 pares de color cumplen.
 - Que el módulo está desplegado: **no hay despliegue** fuera del equipo local.
 - Que la inyección SQL o los límites se probaron en CI: se probaron localmente con PostgreSQL 16 efímero.
 - Que las 18 semanas están integradas sin revisión: las semanas 1 a 17 están en `develop` y la 18 es este PR.
-- Que las 9 capturas de la Semana 16 (PR #1040) prueban la integración: son de Chrome sin interfaz con un **API simulado**. La prueba contra el backend real con sesión real es la de [e2e-real.md](./e2e-real.md) (16 de 16 verificaciones y 6 capturas `capturas-reales/`), hecha sobre bases efímeras y datos ficticios.
+- Que las 9 capturas de la Semana 16 (PR #1040) prueban la integración: son de Chrome sin interfaz con un **API simulado**. La prueba contra el backend real con sesión real es la de [e2e-real.md](./e2e-real.md) (21 de 21 verificaciones y 6 capturas `capturas-reales/`), hecha sobre bases efímeras y datos ficticios.
 - Que el contraste y el teclado de `/medicos` están medidos: se midieron sobre el prototipo de la Semana 12, no sobre la pantalla real.
 - Que el límite de tasa funciona en cualquier despliegue: depende de una caché compartida y persistente; con `CACHE_STORE=array` no cuenta nada.
 - Que la consulta de disponibilidad cumple RNF-MED-04 «en general»: se midió con 20 médicos, datos uniformes y sin HTTP; ver los límites en [rendimiento.md](./rendimiento.md).

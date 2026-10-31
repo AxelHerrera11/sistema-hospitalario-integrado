@@ -79,6 +79,17 @@ check('Fecha imposible: 422 con trace_id', bad.status === 422 && bad.json?.code 
 const big = await call('POST', '/doctors', { token: admin, body: { ...alta, license_number: 'L'.repeat(65) } });
 check('Licencia de 65 caracteres: 422', big.status === 422 && big.json?.code === 'PAYLOAD_INVALID', `${big.status} ${big.json?.code}`);
 
+// Errores del cliente que PostgreSQL detecta: antes salían como 500 «base caída».
+const notUuid = await call('POST', '/doctors/doc-x/specialties', { token: admin, body: { specialty_code: 'CARD', valid_from: '2026-02-01' } });
+check('Id de médico que no es uuid: 404 y no 500', notUuid.status === 404 && notUuid.json?.code === 'DOCTOR_NOT_FOUND', `${notUuid.status} ${notUuid.json?.code}`);
+const badRef = await call('POST', '/doctors', { token: admin, body: { ...alta, local_user_ref_id: 'u-ana', license_number: 'NUEVA-1' } });
+check('Referencia de usuario que no es uuid: 422 y no 500', badRef.status === 422 && badRef.json?.code === 'PAYLOAD_INVALID', `${badRef.status} ${badRef.json?.code}`);
+const noRef = await call('POST', '/doctors', { token: admin, body: { ...alta, local_user_ref_id: '00000000-0000-4000-8000-0000000000aa', license_number: 'NUEVA-2' } });
+check('Referencia de usuario inexistente: 422 USER_REF_NOT_FOUND', noRef.status === 422 && noRef.json?.code === 'USER_REF_NOT_FOUND', `${noRef.status} ${noRef.json?.code}`);
+const sameUser = await call('POST', '/doctors', { token: admin, body: { ...alta, license_number: 'NUEVA-3' } });
+check('Usuario que ya tiene un perfil activo: 409 USER_ALREADY_REGISTERED', sameUser.status === 409 && sameUser.json?.code === 'USER_ALREADY_REGISTERED', `${sameUser.status} ${sameUser.json?.code}`);
+check('Ninguno de esos rechazos dejó un perfil', sql(`SELECT count(*) FROM doctor_profiles`) === '1', `perfiles: ${sql('SELECT count(*) FROM doctor_profiles')}`);
+
 let limited = 0;
 for (let i = 0; i < 125; i++) { if ((await call('GET', '/availability?specialty=NEURO&date=2026-10-19', { token: medico })).status === 429) { limited++; } }
 check('Límite de tasa de la consulta (120/min por usuario): hay 429', limited > 0, `${limited} respuestas 429 en 125 consultas más`);
