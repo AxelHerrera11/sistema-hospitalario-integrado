@@ -1,0 +1,38 @@
+# Recorrido final sobre develop a24bfb36 — 30/10/2026, datos ficticios, APP_DEBUG=false
+## API (Semana 16)
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  recepción sin laboratorio.catalogo.ver → 403 RBAC               esperado 403, obtenido 403
+PASS  técnico intenta registrar (sin administrar) → 403               esperado 403, obtenido 403
+PASS  superadmin registra glucosa (código «glu») → 201              esperado 201, obtenido 201
+      código guardado: GLU, versión 1
+PASS  otra versión vigente del mismo código → 409                    esperado 409, obtenido 409
+PASS  rangos incoherentes (crítico bajo 80) → 422                     esperado 422, obtenido 422
+PASS  técnico busca «gluc» vigente hoy → 200                        esperado 200, obtenido 200
+      pruebas encontradas: 1
+PASS  técnico consulta con fecha inválida → 422                      esperado 422, obtenido 422
+## Pantalla en Chrome (Semana 16)
+PASS  recepción (sin laboratorio.catalogo.ver) no ve «Catálogo de laboratorio»
+PASS  técnico ve GLU vigente y no ve el formulario de alta
+PASS  rangos incoherentes → error local, sin llamar a la API
+PASS  alta de HB → 201 y aparece en la tabla vigente
+PASS  GLU otra vez → 409 con el mensaje del servidor
+PASS  375 px: la página no se desplaza en horizontal (la tabla sí, dentro de su contenedor)
+6/6 verificaciones
+## Seguridad (Semana 17, con la firma alterada en el medio, corregido en esta entrega), sobre bases recreadas
+PASS  L01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  L01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  L02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  L03 recepción sin laboratorio.catalogo.ver → 403                    esperado 403, obtenido 403
+PASS  L03 médico consulta pero no administra → 403                        esperado 403, obtenido 403
+PASS  L05 unidad como arreglo → 422, no 500                                esperado 422, obtenido 422
+PASS  L05 crítico alto 1e400 (infinito) → 422, no 500                     esperado 422, obtenido 422
+PASS  L06 nombre de 161 caracteres → 422                                   esperado 422, obtenido 422
+      código: TEXT_TOO_LONG · campo: name
+PASS  L04 el cuerpo pide otro autor, versión 99 e inactiva → 201          esperado 201, obtenido 201
+      versión guardada: 1
+PASS  L07 misma prueba con vigencia solapada → 409                         esperado 409, obtenido 409
+PASS  L08 médico consulta con X-Request-ID no confiable → 200             esperado 200, obtenido 200
+      pruebas: 1 · request_id: req-74eba1314059da24 · Cache-Control: no-store, private
+PASS  L09 HOSPITAL caído → 503                                            esperado 503, obtenido 503
+      código: LAB_CATALOG_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0
