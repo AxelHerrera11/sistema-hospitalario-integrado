@@ -83,12 +83,18 @@ class NotasSoapPostgresTest extends TestCase
     }
 
     /** LÍMITE CONOCIDO R-06: la restricción única (medical_record_id, version_no) con version_no = 1 permite una sola nota SOAP por expediente. Cuando Javier la resuelva, esta prueba deberá invertirse. */
-    public function test_known_limit_r06_a_second_note_in_the_same_record_is_rejected_by_the_database(): void
+    public function test_known_limit_r06_a_second_note_in_the_same_record_is_a_409_conflict_and_leaves_no_trace(): void
     {
         $this->store->add(self::EPISODE, self::DOCTOR, new SoapSections('s', 'o', 'a', 'p'));
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('persistencia_no_disponible');
-        $this->store->add(self::EPISODE, self::DOCTOR, new SoapSections('s2', 'o', 'a', 'p'));
+        try {
+            $this->store->add(self::EPISODE, self::DOCTOR, new SoapSections('s2', 'o', 'a', 'p'));
+            $this->fail('La base debió rechazar la segunda nota del expediente.');
+        } catch (SoapRuleViolation $e) {
+            $this->assertSame(['RECORD_ALREADY_HAS_NOTE', 409], [$e->getMessage(), $e->status]);
+        }
+        $this->assertFalse($this->pdo->inTransaction());
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM clinical_notes'));
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM local_access_audits WHERE action = 'nota_soap.registrada'"));
     }
 
     /** D-02 mitigado en el módulo: otra sesión firma la nota entre la lectura y la escritura y el adaptador lo detecta, revierte y no deja auditoría. */
