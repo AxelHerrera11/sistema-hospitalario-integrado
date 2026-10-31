@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reporte generado por PHPUnit (formato JUnit), no editado a mano salvo esta cabecera
+  y las rutas, que se volvieron relativas a la raíz del repositorio.
+  Comando: vendor/bin/phpunit [group caja-blanca] [log-junit docs/tenants/semana-15/whitebox-tests.results.xml]
+  Entorno: PHP 8.2.12 · PHPUnit 11.5.55 · Windows 11 · 2026-10-21T17:16Z
+  Base: micro-HIS de Semana 3 (16f68b0) + pruebas de Semana 15 (#344 a #348).
+-->
+<testsuites>
+  <testsuite name="phpunit.xml" tests="17" assertions="42" errors="0" failures="0" skipped="0" time="0.042404">
+    <testsuite name="Unit" tests="17" assertions="42" errors="0" failures="0" skipped="0" time="0.042404">
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" tests="3" assertions="3" errors="0" failures="0" skipped="0" time="0.006228">
+        <testcase name="test_hospital_policy_forces_mfa_for_any_role" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" line="40" class="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.MfaPolicyTest" assertions="1" time="0.006069"/>
+        <testcase name="test_user_flag_forces_mfa_for_any_role" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.MfaPolicyTest" assertions="1" time="0.000097"/>
+        <testcase name="test_one_privileged_role_among_several_is_enough" file="tests/Unit/Tenants/Domain/Services/MfaPolicyTest.php" line="56" class="Tests\Unit\Tenants\Domain\Services\MfaPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.MfaPolicyTest" assertions="1" time="0.000063"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" tests="8" assertions="16" errors="0" failures="0" skipped="0" time="0.004070">
+        <testsuite name="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest::test_each_complexity_branch_reports_its_error" tests="5" assertions="10" errors="0" failures="0" skipped="0" time="0.001831">
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;menos de 12 caracteres&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.001499"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin mayúscula&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000102"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin minúscula&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000080"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin número&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000077"/>
+          <testcase name="test_each_complexity_branch_reports_its_error with data set &quot;sin símbolo&quot;" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="48" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.000072"/>
+        </testsuite>
+        <testcase name="test_password_from_history_is_rejected" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="57" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="2" time="0.001509"/>
+        <testcase name="test_compromised_password_is_rejected" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="68" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="3" time="0.000648"/>
+        <testcase name="test_breach_service_is_not_called_when_the_password_already_fails" file="tests/Unit/Tenants/Domain/Services/PasswordPolicyTest.php" line="80" class="Tests\Unit\Tenants\Domain\Services\PasswordPolicyTest" classname="Tests.Unit.Tenants.Domain.Services.PasswordPolicyTest" assertions="1" time="0.000082"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" tests="5" assertions="17" errors="0" failures="0" skipped="0" time="0.018073">
+        <testcase name="test_path_valid_token_rotates_and_old_one_is_marked" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="45" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="4" time="0.017679"/>
+        <testcase name="test_path_rotated_token_presented_again_is_reuse" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="58" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="3" time="0.000141"/>
+        <testcase name="test_path_unknown_or_malformed_token_fails_without_reuse" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="71" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="6" time="0.000074"/>
+        <testcase name="test_path_wrong_secret_fails_without_revealing_reuse" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="81" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="2" time="0.000083"/>
+        <testcase name="test_path_revoked_and_expired_tokens_fail" file="tests/Unit/Tenants/Domain/Services/RefreshTokenRotatorTest.php" line="92" class="Tests\Unit\Tenants\Domain\Services\RefreshTokenRotatorTest" classname="Tests.Unit.Tenants.Domain.Services.RefreshTokenRotatorTest" assertions="2" time="0.000096"/>
+      </testsuite>
+      <testsuite name="Tests\Unit\Tenants\Domain\Services\TokenFactoryTest" file="tests/Unit/Tenants/Domain/Services/TokenFactoryTest.php" tests="1" assertions="6" errors="0" failures="0" skipped="0" time="0.014033">
+        <testcase name="test_rejects_tampered_foreign_expired_and_malformed_tokens" file="tests/Unit/Tenants/Domain/Services/TokenFactoryTest.php" line="59" class="Tests\Unit\Tenants\Domain\Services\TokenFactoryTest" classname="Tests.Unit.Tenants.Domain.Services.TokenFactoryTest" assertions="6" time="0.014033"/>
+      </testsuite>
+    </testsuite>
+  </testsuite>
+</testsuites>

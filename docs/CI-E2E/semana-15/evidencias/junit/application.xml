@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.application" tests="16" failures="0">
+    <testcase name="[A01] Flujo completo verde → approved y persistido" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A02] Cada paso deja un evento de auditoría en orden" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A03] El evento del gate guarda veredicto y versión de política" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A04] Reevaluar agrega una decisión nueva (no reescribe la anterior)" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A05] Observador no puede evaluar el gate → AccessDenied" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A06] La denegación queda auditada con el permiso faltante" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A07] Si la auditoría falla, la denegación se mantiene (403, nunca 200)" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A08] Otro tenant no encuentra la ejecución → RunNotFound" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A09] Id con caracteres no válidos → RunNotFound sin consultar" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A10] Límite del listado acotado a 50" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A11] Almacén caído al planificar → QaStorageFailure y sin auditoría de éxito" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A12] Auditoría caída después de guardar → la operación informa QaStorageFailure" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A13] Los 6 eventos llegan a Gobernanza con módulo qa_calidad, sin rechazos" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A14] Gobernanza no expone eventos QA de H1 a H2" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A15] Evento Security (gate) con Gobernanza caída → QaStorageFailure" classname="qa-calidad.application" time="0.000"/>
+    <testcase name="[A16] Evento Informational con Gobernanza caída → se reporta y no detiene" classname="qa-calidad.application" time="0.000"/>
+  </testsuite>
+</testsuites>

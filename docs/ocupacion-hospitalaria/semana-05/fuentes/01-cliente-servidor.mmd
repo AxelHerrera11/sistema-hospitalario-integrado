@@ -1,0 +1,9 @@
+flowchart LR
+  UI[Dashboard HIS] -->|HTTPS + JWT + tenant + request ID| API[API v1 ASII-09]
+  API --> Handler[ApiRequestHandler]
+  Handler --> Controller[OccupancyController]
+  Controller --> UseCase[ConsultOccupancy]
+  UseCase --> Repo[PdoOccupancyRepository]
+  Repo -->|lectura preparada| DB[(Base HOSPITAL)]
+  API --> Obs[Logs y métricas]
+  Owner[ASII-06/07/08] -->|escrituras| DB

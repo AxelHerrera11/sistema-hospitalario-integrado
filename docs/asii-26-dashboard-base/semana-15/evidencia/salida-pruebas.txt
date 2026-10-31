@@ -1,0 +1,12 @@
+$ php -d zend.assertions=1 -d assert.exception=1 tests/pruebas_semana15.php
+  [OK] [UNIT-01] Indicador cumple la meta en el valor limite (valor = meta)
+  [OK] [UNIT-02] Indicador::registrar sin clave lanza excepcion 422
+  [OK] [UNIT-03] ObtenerTablero agrega total y cumplen_meta
+  [OK] [WB-01] Indicador::registrar: MC/DC de (clave vacia || periodo vacio)
+  [OK] [WB-02] Router::despachar recorre sus 5 caminos (404, 405, 422, error, exito)
+  [OK] [BB-01] particion valida: GET /tablero con datos responde 200
+  [OK] [BB-02] particion valida sin datos: periodo vacio de datos devuelve total 0
+  [OK] [BB-03] particion invalida: sin periodo responde 422
+  [OK] [BB-04] particion invalida: DELETE /tablero responde 405
+
+Resumen: 9 pruebas, 0 fallidas.

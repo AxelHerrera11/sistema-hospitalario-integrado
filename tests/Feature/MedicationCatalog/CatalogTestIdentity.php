@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\MedicationCatalog;
 
 use App\Modules\Tenants\Domain\Audit\AuditLogRepositoryInterface;
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -34,12 +35,7 @@ final class CatalogTestIdentity implements RoleResolver, DenialRecorder, AuditLo
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(static fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): ?string
-            {
-                return CatalogTestIdentity::$hospital;
-            }
-        });
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
 
         return $next($request);
     }
@@ -66,6 +62,8 @@ final class CatalogTestIdentity implements RoleResolver, DenialRecorder, AuditLo
     public static function install(\Illuminate\Foundation\Application $app): void
     {
         $app->make(\Illuminate\Contracts\Http\Kernel::class);
+        // Instancia on-premise de prueba: su base HOSPITAL pertenece a hospital-a.
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
         $app['router']->aliasMiddleware('tenant', self::class);
         $app['router']->aliasMiddleware('jwt.auth', self::class);
         $app->instance(RoleResolver::class, new self());

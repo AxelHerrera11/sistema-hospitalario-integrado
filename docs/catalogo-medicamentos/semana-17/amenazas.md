@@ -6,6 +6,7 @@ Objeto: `/api/v1/medications` (PR #602), el micro-HIS y el prototipo. Pruebas: `
 |---|---|---|---|---|---|
 | M1 | Suplantación | Llamar al API sin identidad | `jwt.auth` y `RequirePermission` (401 `AUTH_REQUIRED`) | A1 | Probado (identidad sustituida en la prueba) |
 | M2 | Suplantación | Elegir otro hospital con `X-Tenant-ID` o con el cuerpo | El hospital sale del contexto; la cabecera debe coincidir | A1, T3 | Probado |
+| M2b | Elevación | Miembro válido del hospital B usa la base HOSPITAL del hospital A | `EnsureHospitalDatabaseTenant` tras `jwt.auth`: 403 `HOSPITAL_DATABASE_TENANT_MISMATCH` sin tocar filas. Requiere `HOSPITAL_DB_TENANT_ID` con el UUID del hospital dueño de la base. | `test_t3b_…`; recorrido con JWT y PostgreSQL reales | Probado; defecto hallado en auditoría el 30/10/2026. La selección de base por hospital sigue en Plataforma/Tenants |
 | M3 | Manipulación | Inyección SQL en `q` o en el cuerpo | Sentencias preparadas, `%` literal | T1, `tests/pdo.php` | Probado (SQLite real) |
 | M4 | Manipulación | Asignación masiva (`validity`, id u hospital en el alta) | El Router solo pasa campos conocidos y el dominio fija `active` | T2 | Probado |
 | M5 | Manipulación | Cambiar la vigencia sin confirmar o en el medicamento equivocado | Confirmación con el registro completo y éxito solo tras `rowCount` | Prototipo D7–D9, `tests/casos.php` W2 | Probado (UI simulada) |

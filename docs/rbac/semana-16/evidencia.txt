@@ -51,3 +51,44 @@ public/build/assets/app-U9-G_tKy.js          138.34 kB │ gzip: 53.89 kB
 ✓ built in 5.53s
 
 exit=0
+
+2026-10-21: corrección del contrato de auditoría de las denegaciones RBAC.
+Rama feature/asii-02-semana-16-rbac-cobertura-modulos-mar-03 desde origin/develop (3afc782).
+PostgreSQL 17.10 local (central 55431/his_central_test, hospital 55433/his_hospital_test); sin staging.
+> php artisan test tests/Feature/Rbac/AuditDenialsContractTest.php tests/Database/Central/RbacDenialAuditTest.php --no-ansi
+
+   PASS  Tests\Feature\Rbac\AuditDenialsContractTest
+  ✓ denial carries the governance contract fields                                                                0.21s
+  ✓ denial without permission does not invent a resource                                                         0.02s
+
+   PASS  Tests\Database\Central\RbacDenialAuditTest
+  ✓ stored denial is read back as a denied outcome                                                               0.71s
+
+  Tests:    3 passed (25 assertions)
+  Duration: 1.02s
+
+exit=0
+> git stash push -- app/Rbac/AuditDenials.php    # reproducción del defecto sin la corrección
+> php artisan test tests/Feature/Rbac/AuditDenialsContractTest.php tests/Database/Central/RbacDenialAuditTest.php --no-ansi
+
+  FAILED  Tests\Feature\Rbac\AuditDenialsContractTest > denial carries the governance contract fields
+  Failed asserting that an array has the key 'result'.
+  FAILED  Tests\Feature\Rbac\AuditDenialsContractTest > denial without permission does not invent a…  ErrorException
+  FAILED  Tests\Database\Central\RbacDenialAuditTest > stored denial is read back as a denied outcome
+  Failed asserting that null is identical to 'denied'.
+  Tests:    3 failed (7 assertions)
+
+exit=1
+Defecto reproducido: audit_log.result quedaba NULL (el lector de gobernanza lo reconstruye como
+unknown y el filtro result = 'denied' no lo devuelve) y no existían criticality ni resource.
+> php artisan test --no-ansi
+
+  Tests:    222 passed (5487 assertions)
+  Duration: 82.72s
+
+exit=0
+Nota: la primera ejecución completa posterior a la prueba nueva falló en 11 pruebas de hospital
+("Duplicate table: appointments" y "table appointments does not exist") por estado residual de la
+base de pruebas de hospital, no por el cambio: la prueba nueva solo migra la conexión `central`.
+La suite de hospital y la suite completa se ejecutaron dos veces después sin fallos.
+

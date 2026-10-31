@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="micro-his" tests="14" failures="0">
+    <testcase name="catalogo-medicamentos" classname="micro-his" time="0.110"/>
+    <testcase name="gobernanza-auditoria" classname="micro-his" time="1.145"/>
+    <testcase name="ingreso-resultados-lab" classname="micro-his" time="0.000">
+      <skipped message="El módulo no tiene tests/run.php"/>
+    </testcase>
+    <testcase name="medicos-especialidades" classname="micro-his" time="0.100"/>
+    <testcase name="nativephp-extension-prototype" classname="micro-his" time="0.000">
+      <skipped message="El módulo no tiene tests/run.php"/>
+    </testcase>
+    <testcase name="notas-soap" classname="micro-his" time="0.101"/>
+    <testcase name="ocupacion-hospitalaria" classname="micro-his" time="0.085"/>
+    <testcase name="pacientes" classname="micro-his" time="0.079"/>
+    <testcase name="qa-calidad-versiones" classname="micro-his" time="1.696"/>
+    <testcase name="rbac" classname="micro-his" time="0.093"/>
+    <testcase name="salas-camas" classname="micro-his" time="0.082"/>
+    <testcase name="signos-vitales" classname="micro-his" time="0.000">
+      <skipped message="El módulo no tiene tests/run.php"/>
+    </testcase>
+    <testcase name="traslados-altas" classname="micro-his" time="0.119"/>
+    <testcase name="validacion-resultados-bioquimico" classname="micro-his" time="0.000">
+      <skipped message="El módulo no tiene tests/run.php"/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,8 @@
+PASS  admin_hospital (sin alergias.ver) no ve «Alergias» en el menú
+PASS  PAC-E2E-01 → banner crítico con role="alert" y la penicilina
+PASS  PAC-E2E-02 → «Sin alergias registradas» con role="status"
+PASS  enviar sin alérgeno → error local, sin llamar a la API
+PASS  registro de látex leve → 201 y banner «warning»
+PASS  la misma alergia otra vez → 409 con el mensaje del servidor junto al campo
+PASS  375 px: sin desplazamiento horizontal
+7/7 verificaciones

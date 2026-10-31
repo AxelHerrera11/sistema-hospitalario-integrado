@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASII-28 · Propuesta móvil QA</title>
+<style>
+*{box-sizing:border-box}html{scroll-padding:12px}body{margin:0;background:#eee;color:#171717;font:16px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}header,main{max-width:1280px;margin:auto;padding:16px}h1{font-size:25px}h2{font-size:22px}h3{font-size:18px}nav,.actions{display:flex;flex-wrap:wrap;gap:8px}a{color:#202020;text-underline-offset:3px}.touch,button,summary{display:inline-flex;align-items:center;min-height:44px;padding:10px 12px;border:1px solid #666;border-radius:4px;background:white;max-width:100%}a:focus-visible,summary:focus-visible{outline:3px solid #333;outline-offset:3px}.screens{display:grid;gap:20px}section{background:white;border:2px solid #666;padding:16px;min-width:0;scroll-margin:12px}label{display:block;font-weight:600;margin-top:12px}input,textarea,select{width:100%;min-width:0;min-height:44px;padding:10px;font:inherit;border:1px solid #666;margin:6px 0}textarea{min-height:88px;resize:vertical}input:disabled,textarea:disabled,select:disabled,button:disabled{color:#333;background:#f7f7f7;opacity:1}button{font:inherit}details{margin:12px 0}summary{cursor:pointer;list-style:none}summary::before{content:'▸ ';white-space:pre}details[open]>summary::before{content:'▾ '}.notice,.error,.card{border:1px solid #777;padding:12px;margin:12px 0}.error{border-left:4px solid #333}.muted{font-size:14px}.stack{display:grid;gap:8px}footer{border-top:1px solid #777;margin-top:16px;padding-top:10px}@media(min-width:768px){header,main{padding:24px}.screens{grid-template-columns:repeat(2,minmax(0,1fr))}section{padding:20px}.wide{grid-column:1/-1}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}@media(min-width:1100px){nav{gap:12px}.actions{gap:12px}}
+</style>
+</head>
+<body>
+<header>
+<h1>QA funcional · Diseño móvil</h1>
+<p><strong>Maqueta estática propuesta.</strong> Cinco pantallas, datos ficticios. Sin API, autenticación o almacenamiento. Botones/campos deshabilitados; enlaces y desplegables solo navegan/muestran contenido local.</p>
+<nav aria-label="Pantallas QA"><a class="touch" href="#mov-1">Panel</a><a class="touch" href="#mov-2">Campañas</a><a class="touch" href="#mov-3">Nuevo caso</a><a class="touch" href="#mov-4">Ejecución</a><a class="touch" href="#mov-5">Defecto</a></nav>
+</header>
+<main class="screens">
+<section id="mov-1" aria-labelledby="title-1">
+<h2 id="title-1">M01 · Panel QA</h2>
+<p>Analista QA · [Ámbito autorizado por definir]</p>
+<h3>Tareas primero</h3><p>Casos pendientes: [n] · Defectos pendientes: [n]</p>
+<div class="actions"><a class="touch" href="#mov-2">Consultar campañas</a><a class="touch" href="#mov-3">Diseñar nuevo caso</a></div>
+<div class="card"><h3>Campañas de ejemplo</h3><p>[Campaña A] · Casos: [n] · Estado: [por definir]</p></div>
+<div class="notice">Ejemplo vacío: aún no hay actividad. Empieza diseñando un caso.</div>
+<details><summary>Actividad secundaria</summary><p>Últimas ejecuciones: [caso, resultado, referencia]. Sin cifras reales.</p></details>
+<p class="error">Error de ejemplo: no se pudo cargar el resumen.</p><button disabled>Reintentar lectura</button>
+<footer>Resumen, no diagnóstico ni datos de pacientes.</footer>
+</section>
+<section id="mov-2" aria-labelledby="title-2">
+<h2 id="title-2">M02 · Campañas</h2>
+<a class="touch" href="#mov-1">Volver al panel</a>
+<label for="search">Buscar por nombre o ID</label><input id="search" disabled placeholder="Ej.: Campaña A">
+<details><summary>Filtros de campañas</summary><label for="filter">Estado (catálogo pendiente)</label><select id="filter" disabled><option>Todos / por acordar</option></select><button disabled>Limpiar filtros</button></details>
+<div class="cards"><div class="card"><h3>Campaña A · ejemplo</h3><p>Estado: [por definir] · Casos: [n]</p><a class="touch" href="#mov-4">Consultar caso A y ejecutar</a>
+<details><summary>Detalle y trazabilidad</summary><p>Campaña A → caso A → ejecución E (fallida, ejemplo) → evidencia privada → defecto D. Responsable: [campo propuesto, sin asignar].</p></details></div>
+<div class="notice">Sin resultados: revisa la búsqueda o elimina filtros. No se representa una lista real.</div></div>
+<a class="touch" href="#mov-3">Diseñar nuevo caso</a>
+<footer>Las tarjetas sustituyen tablas anchas; ningún dato esencial exige desplazamiento horizontal.</footer>
+</section>
+<section id="mov-3" aria-labelledby="title-3">
+<h2 id="title-3">M03 · Diseñar caso manual</h2>
+<p>ID: [generado al guardar] · Los campos “Obligatorio” deben completarse.</p>
+<label for="purpose">Título / propósito · Obligatorio</label><input id="purpose" disabled placeholder="Revisar formulario QA">
+<label for="steps">Pasos · Obligatorio</label><textarea id="steps" disabled aria-invalid="true" aria-describedby="steps-error" placeholder="1. Abrir formulario&#10;2. Revisar campos"></textarea>
+<p class="error" id="steps-error">Ejemplo de error: escribe al menos un paso; no se acepta solo espacios.</p>
+<label for="expected">Resultado esperado · Obligatorio</label><textarea id="expected" disabled placeholder="Campos visibles"></textarea>
+<details><summary>Contexto adicional propuesto</summary><label for="requirement">Requisito relacionado</label><input id="requirement" disabled placeholder="Referencia por acordar"><label for="preconditions">Precondiciones</label><textarea id="preconditions" disabled placeholder="Condiciones ficticias previas"></textarea><p>Estos dos campos no existen en el alta CLI actual.</p></details>
+<div class="actions"><button disabled>Guardar caso</button><a class="touch" href="#mov-1">Cancelar nuevo caso</a></div>
+<footer>Confirmación propuesta: caso guardado e ID visible. Cancelar con cambios requerirá confirmación en un prototipo interactivo.</footer>
+</section>
+<section id="mov-4" aria-labelledby="title-4">
+<h2 id="title-4">M04 · Caso A / ejecución manual</h2>
+<a class="touch" href="#mov-2">Volver a campaña</a><p>Campaña A → caso A (ejemplo seleccionado, no formulario de alta)</p>
+<p><strong>Progreso de tarea propuesto:</strong> 1 Consultar → 2 Observar → 3 Revisar y registrar.</p>
+<h3>Pasos y esperado</h3><p>1. Abrir formulario. Esperado: campos visibles (datos ficticios).</p>
+<label for="observation">Resultado obtenido / observaciones · Obligatorio</label><textarea id="observation" disabled placeholder="Describe lo observado sin datos clínicos"></textarea>
+<label for="result">Comparación y resultado · Obligatorio</label><select id="result" disabled><option>Seleccionar</option><option>Aprobado: coincide</option><option>Fallido: no coincide</option></select>
+<label for="evidence">Referencia privada de evidencia · Obligatorio</label><input id="evidence" disabled aria-describedby="evidence-help evidence-error" placeholder="Ejemplo ficticio: evidencia-qa-ejemplo-01">
+<p id="evidence-help">Propuesta: obtener referencia del repositorio privado autorizado y copiarla aquí. El formato/servicio aún debe acordarse; no usar rutas locales ni datos clínicos.</p>
+<p id="evidence-error" class="error">Ejemplo: falta referencia; conserva la entrada y completa evidencia antes de confirmar.</p>
+<div class="actions"><button disabled>Registrar resultado</button><a class="touch" href="#mov-2">Cancelar ejecución</a></div>
+<details><summary>Ejemplo: resultado pendiente de comprobar</summary><p>Si se pierde la respuesta, conservar datos y referencia [operación-ejemplo-01]. No repetir el guardado automáticamente.</p><button disabled>Consultar resultado de operación</button><p>Es diseño de recuperación, no consulta o idempotencia implementada.</p></details>
+<a class="touch" href="#mov-5">Ver defecto de ejecución fallida de ejemplo</a>
+<footer>Tras confirmar: mostrar ID y aprobado/fallido. En flujo real, defecto solo desde fallo; nueva ejecución conserva historia anterior.</footer>
+</section>
+<section id="mov-5" class="wide" aria-labelledby="title-5">
+<h2 id="title-5">M05 · Registrar defecto</h2>
+<p>Origen: Campaña A → caso A → ejecución E fallida (ejemplo). ID defecto: [generado al guardar].</p>
+<label for="description">Descripción · Obligatorio</label><textarea id="description" disabled aria-invalid="true" aria-describedby="description-error" placeholder="Diferencia reproducible entre esperado y observado"></textarea>
+<p id="description-error" class="error">Ejemplo de validación: describe la diferencia antes de guardar; conserva el texto al fallar.</p>
+<label for="severity">Severidad (catálogo pendiente)</label><select id="severity" disabled><option>Por acordar; sin catálogo inventado</option></select>
+<p>Estado: [por definir] · Evidencia vinculada: [referencia privada de ejecución].</p>
+<div class="actions"><button disabled>Guardar defecto</button><a class="touch" href="#mov-4">Cancelar defecto</a><a class="touch" href="#mov-2">Ver trazabilidad de campaña</a></div>
+<details><summary>Recuperación de guardado incierto (propuesta)</summary><p>Conservar descripción y referencia de operación, comprobar resultado antes de reenviar.</p><button disabled>Consultar resultado de operación</button></details>
+<footer>Cancelar defecto no elimina ejecución fallida. Consulta de trazabilidad no descarta el texto: pendiente de implementación; no se simula persistencia.</footer>
+</section>
+</main>
+</body>
+</html>

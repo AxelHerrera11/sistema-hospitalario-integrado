@@ -1,0 +1,43 @@
+# Demo funcional — Expediente médico electrónico base — 2026-10-29 22:51 -0600 · Windows 11 · PHP 8.2.12
+# Código: integración local 7d34060e (develop 16654473 + PR abiertos de las Semanas 16–17)
+
+$ GET /ui/app.js (cabeceras)
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+$ Dra. López consulta P-0001
+  HTTP 200 {"record":{"medical_record_id":"e0000000-0000-4000-8000-000000000001","record_number":"EXP-P-0001","status":"open","opened_at":"2026-03-02T09:00:00+00:00","closed_at":null},"patient":{"code":"P-0001",
+$ Dr. Pérez (asignación terminada)
+  HTTP 403 {"code":"SIN_VINCULO_ASISTENCIAL"}
+$ Enfermería
+  HTTP 403 {"code":"SIN_VINCULO_ASISTENCIAL"}
+$ P-9999 (no existe)
+  HTTP 403 {"code":"SIN_VINCULO_ASISTENCIAL"}
+$ Recepción abre P-0002
+  HTTP 201 {"created":true,"medical_record_id":"e45e2705-e5df-44b6-ba85-395e8c0e9781","record_number":"EXP-P-0002","status":"open","opened_at":"2026-10-30T04:51:08+00:00","closed_at":null}
+$ Recepción repite la apertura
+  HTTP 200 {"created":false,"medical_record_id":"e45e2705-e5df-44b6-ba85-395e8c0e9781","record_number":"EXP-P-0002","status":"open","opened_at":"2026-10-30T04:51:08+00:00","closed_at":null}
+$ Bitácora de Gobernanza (SQLite del prototipo)
+  expediente_medico.consultado | success
+  expediente_medico.acceso_denegado | denied
+  expediente_medico.acceso_denegado | denied
+  expediente_medico.acceso_denegado | denied
+  expediente_medico.abierto | success
+  expediente_medico.apertura_repetida | success
+  DELETE rechazado: append-only
+$ php artisan route:list --path=medical-record -v
+  GET|HEAD       api/v1/patients/{patientCode}/medical-record App\ExpedienteMedico\ExpedienteMedicoController@consult
+                 ⇂ api
+                 ⇂ tenant
+                 ⇂ App\Http\Middleware\JwtAuth
+                 ⇂ App\Http\Middleware\EnsureHospitalDatabaseTenant
+                 ⇂ App\Rbac\RequirePermission:expediente.ver
+$ php micro-his/expediente-medico/tests/run.php
+== Unitarias (dominio)
+== Caja blanca (ramas de los casos de uso)
+== Caja negra (contrato HTTP)
+== Integración PDO + Gobernanza
+== Seguridad (permisos, datos sensibles, entradas hostiles)
+== Arquitectura (capas y dependencias)
+Resumen: 98 OK, 0 FALLO
+$ phpunit tests/Feature/ExpedienteMedico
+OK (5 tests, 29 assertions)

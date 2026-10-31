@@ -1,0 +1,28 @@
+digraph componentes {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  subgraph cluster_fe { label="Frontend"; color="#94a3b8";
+    pagina [label="ReportsPage\nestado y formulario"];
+    reglas [label="Reglas puras\nerrorDeFiltros, mensajeDeError,\nporcentajeLegible"];
+    guard [label="Guard de rutas\npermiso del menú"];
+  }
+  subgraph cluster_be { label="Backend"; color="#94a3b8";
+    mw [label="Middleware\ntenant, jwt.auth,\nEnsureHospitalDatabaseTenant, rbac"];
+    ctrl [label="ReportesIndicatorController\nHTTP a caso de uso"];
+    uso [label="CalculateCancellationRate"];
+    periodo [label="Period\nIndicatorReading"];
+    puerto [label="EpisodeSummaryReader\n(puerto)", shape=component];
+    pdo [label="PdoEpisodeSummaryReader"];
+  }
+  db [label="HOSPITAL", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  guard -> pagina;
+  pagina -> reglas;
+  pagina -> mw [label="POST /calculate"];
+  mw -> ctrl;
+  ctrl -> uso;
+  uso -> periodo;
+  uso -> puerto;
+  pdo -> puerto [label="implementa", style=dashed];
+  pdo -> db [label="SQL preparado"];
+}

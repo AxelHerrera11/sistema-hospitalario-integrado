@@ -14,7 +14,7 @@
 
 1. **Objeto evaluado:** el flujo «captura de signos vitales, evaluación de umbrales y generación de alerta» de la Semana 8 (`wireframes.md`, user flows 1 y 2, estados y reglas de interacción).
 2. **Marcos:** las 10 heurísticas de Nielsen (H1–H10) y WCAG 2.2 nivel AA. Como los wireframes son de baja fidelidad, se evalúa lo que el diseño *especifica o deja sin especificar*: un criterio que el wireframe no define se marca ⚠️.
-3. **Contraste:** razones calculadas con la fórmula de luminancia relativa de WCAG 2.x sobre fondo blanco con el script [`evidencia/contraste.php`](./evidencia/contraste.php). Los tonos son los de la paleta Tailwind 4; el repositorio aún no define los colores del módulo, así que la tabla fija el mínimo que deberán respetar. Resultado (PHP 8.3.33): **6 de 16 combinaciones no cumplen**.
+3. **Contraste:** razones calculadas con la fórmula de luminancia relativa de WCAG 2.x sobre fondo blanco con el script [`evidencia/contraste.php`](./evidencia/contraste.php). Los tonos son los valores hex de la paleta de Tailwind v3 (el HIS usa Tailwind 4, que define esos colores en OKLCH con tonos muy cercanos); el repositorio aún no define los colores del módulo, así que la tabla fija el mínimo que deberán respetar. Resultado (PHP 8.3.33): **6 de 16 combinaciones no cumplen**.
 
    | Uso en el diseño | Color | Razón | Mínimo | Estado |
    |---|---|---|---|---|

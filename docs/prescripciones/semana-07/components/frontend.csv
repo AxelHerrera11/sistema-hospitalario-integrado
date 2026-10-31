@@ -1,0 +1,7 @@
+componente,estado,responsabilidad,evidencia_o_limite
+AppLayout,"EXISTENTE EN DEVELOP","Shell autenticado y navegación compartida","resources/js/shared/components/AppLayout.vue"
+RBAC permissions,"EXISTENTE EN DEVELOP","Filtrar navegación y proteger rutas por permiso","resources/js/router/permissions.js"
+Medication page,"EXISTENTE EN DEVELOP","Referencia de formulario y consulta del catálogo","resources/js/modules/medicamentos/pages/MedicationsPage.vue"
+Prescriptions navigation item,"EXISTENTE EN DEVELOP; SIN RUTA","Se muestra como próximamente y no navega","NAVIGATION tiene to null; no se encontró ruta de Prescripciones"
+Prescription page,"PROPUESTO","Crear, consultar y firmar según contrato aprobado","No existe pantalla integrada en develop"
+Prescription API client,"PROPUESTO","Consumir API usando el cliente HTTP compartido","No se declara integración de cliente en develop"
