@@ -60,7 +60,8 @@ final class DocumentacionApiTest extends TestCase
     {
         DocumentacionTestIdentity::como('enfermeria');
         $ajeno = $this->getJson('/api/v1/documentacion/openapi-v1')->assertNotFound()->assertJsonPath('code', 'document_not_found');
-        $inexistente = $this->getJson('/api/v1/documentacion/no-existe')->assertNotFound();
+        $inexistente = $this->getJson('/api/v1/documentacion/no-existe', ['X-Request-Id' => 'req-doc-0001'])->assertNotFound();
+        $this->assertSame('req-doc-0001', $inexistente->json('trace_id'));
         $this->assertSame($ajeno->json('message'), $inexistente->json('message'));
     }
 
