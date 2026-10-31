@@ -106,4 +106,21 @@ $withEmptyLog = $manifest($tmp, [
 [$code, $out] = $run([...$base, "--manifest={$withEmptyLog}"]);
 check('CI21', 'Log adicional vacío → se descarta con nota y el gate decide (exit 0), no aborta', $code === 0 && str_contains($out, 'evidencia adicional descartada junit/vacio.log'));
 
+// Semana 17: escáner de secretos y datos personales antes de conservar las evidencias como artefacto.
+$scan = static function (string $dir): array {
+    exec(escapeshellarg(PHP_BINARY).' '.escapeshellarg(__DIR__.'/../bin/escanear-secretos.php').' '.escapeshellarg($dir).' 2>&1', $lines, $code);
+
+    return [$code, implode("\n", $lines)];
+};
+@mkdir("{$tmp}/limpio") && @mkdir("{$tmp}/sucio");
+file_put_contents("{$tmp}/limpio/log.txt", 'APP_KEY=base64:'.str_repeat('A', 43)."=\nusuario medico.e2e@hospital-ficticio.test\n\"password\": \"***\"\n");
+file_put_contents("{$tmp}/sucio/log.txt", implode("\n", ['token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.c2lnbmF0dXJlLWZpY3RpY2lh', '-----BEGIN PRIVATE KEY-----',
+    'APP_KEY=base64:'.base64_encode(str_repeat('k', 32)), 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz012345', 'DB_PASSWORD=Clave-Real-1', 'pgsql://admin:clave@db.local/his', 'contacto ana.gomez@gmail.com']));
+[$code, $out] = $scan("{$tmp}/limpio");
+check('CI22', 'Escáner: clave pública de pruebas, correos .test y contraseñas enmascaradas → exit 0', $code === 0 && str_contains($out, '0 hallazgos'));
+[$code, $out] = $scan("{$tmp}/sucio");
+$types = ['jwt', 'clave_privada', 'app_key', 'bearer', 'password_asignado', 'url_con_credenciales', 'correo_no_ficticio'];
+check('CI23', 'Escáner: JWT, clave privada, APP_KEY real, Bearer, contraseña, URL con credenciales y correo real → exit 1 sin mostrar el valor', $code === 1
+    && array_filter($types, static fn (string $t): bool => !str_contains($out, "  {$t}  ")) === [] && !str_contains($out, 'Clave-Real-1') && !str_contains($out, 'ana.gomez'));
+
 summary('ci');

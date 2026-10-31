@@ -1,0 +1,15 @@
+  paciente  | cama  | inicio_hoy | asignada_por |  reason  
+------------+-------+------------+--------------+----------
+ PAC-E2E-02 | M-201 | t          | recepcion    | Neumonía
+(1 row)
+
+ estancias_totales | con_inicio_1999 
+-------------------+-----------------
+                 1 |               0
+(1 row)
+
+  module  |         action         |   actor   
+----------+------------------------+-----------
+ admision | admision.cama_asignada | recepcion
+(1 row)
+

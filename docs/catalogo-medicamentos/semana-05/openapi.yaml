@@ -18,7 +18,7 @@ paths:
       x-required-permission: medicamentos.ver
       parameters:
         - $ref: '#/components/parameters/TenantId'
-        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 60 } }
+        - { name: q, in: query, required: true, description: 'Ignora mayúsculas y tildes en código, nombre y principio activo; ñ y n son letras distintas. No altera el texto almacenado.', schema: { type: string, minLength: 2, maxLength: 60 } }
         - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 50, default: 50 } }
       responses:
         '200':

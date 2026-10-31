@@ -1,0 +1,32 @@
+@startuml
+title ASII-05 - Trazabilidad requisito -> caso de uso -> componente -> prueba
+left to right direction
+rectangle "RF-01 agendar sin solape" as rf1 #LightYellow
+rectangle "CU Agendar cita" as cu1 #Paleturquoise
+rectangle "AgendarCita" as co1 #LightBlue
+rectangle "prueba: aplicacion: rechaza solape sin persistir" as pr1 #LightGreen
+rf1 --> cu1
+cu1 --> co1
+co1 --> pr1
+rectangle "RF-02 rango" as rf2 #LightYellow
+rectangle "CU Agendar cita" as cu2 #Paleturquoise
+rectangle "Cita::agendar" as co2 #LightBlue
+rectangle "prueba: dominio: rechaza rango de fecha invertido" as pr2 #LightGreen
+rf2 --> cu2
+cu2 --> co2
+co2 --> pr2
+rectangle "RF-03 confirmar" as rf3 #LightYellow
+rectangle "CU Confirmar" as cu3 #Paleturquoise
+rectangle "Cita (estados)" as co3 #LightBlue
+rectangle "prueba: dominio: confirma, cancela y detecta solape" as pr3 #LightGreen
+rf3 --> cu3
+cu3 --> co3
+co3 --> pr3
+rectangle "RF-04 cancelar" as rf4 #LightYellow
+rectangle "CU Cancelar" as cu4 #Paleturquoise
+rectangle "Cita (estados)" as co4 #LightBlue
+rectangle "prueba: dominio: confirma, cancela y detecta solape" as pr4 #LightGreen
+rf4 --> cu4
+cu4 --> co4
+co4 --> pr4
+@enduml

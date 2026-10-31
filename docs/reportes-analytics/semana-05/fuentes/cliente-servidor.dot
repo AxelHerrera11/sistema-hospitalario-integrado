@@ -1,0 +1,16 @@
+digraph cs {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  cliente [label="Cliente: SPA Vue\nvalida formato y presenta\nno calcula ni autoriza"];
+  subgraph cluster_srv { label="Servidor (monolito modular actual)"; color="#94a3b8";
+    api [label="API v1\n/reports/indicators/IND-RA-01/calculate"];
+    uso [label="Caso de uso + dominio\nautoridad del cálculo"];
+  }
+  central [label="CENTRAL\nidentidad, membresías", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  hospital [label="HOSPITAL\ncare_episodes", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  cliente -> api [label="POST JSON\n200, 401, 403, 422, 503"];
+  api -> central [label="validar JWT y permiso"];
+  api -> uso;
+  uso -> hospital [label="SELECT agregado"];
+}

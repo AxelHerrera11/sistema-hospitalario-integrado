@@ -1,0 +1,30 @@
+$ php artisan route:list --json --path=api > routes.json
+$ php micro-his/qa-calidad-versiones/bin/route-guard.php routes.json config/rbac.php route-guard.xml
+# 2026-10-23, con ExpedienteMedicoServiceProvider registrado en bootstrap/providers.php
+OK    DELETE api/v1/admin/sessions/{session}                       RBAC: sesiones.revocar_ajenas
+OK    POST api/v1/admin/tenants                                    RBAC: tenants.crear
+OK    GET api/v1/admin/users                                       RBAC: usuarios.ver
+OK    POST api/v1/admin/users/{user}/deactivate                    RBAC: usuarios.desactivar
+OK    POST api/v1/admin/users/{user}/roles                         RBAC: rbac.asignar
+OK    DELETE api/v1/admin/users/{user}/roles/{role}                RBAC: rbac.asignar
+OK    POST api/v1/altas                                            RBAC: altas.registrar
+OK    GET api/v1/audit-events                                      RBAC: auditoria.ver
+OK    POST api/v1/auth/login                                       Pública por lista explícita.
+OK    POST api/v1/auth/logout                                      Solo autenticación, por lista explícita.
+OK    GET api/v1/auth/me                                           Solo autenticación, por lista explícita.
+OK    POST api/v1/auth/refresh                                     Pública por lista explícita.
+OK    GET api/v1/estancias/{estancia}/internacion                  RBAC: traslados.ver
+OK    GET api/v1/medications                                       RBAC: medicamentos.ver
+OK    POST api/v1/medications                                      RBAC: medicamentos.registrar
+OK    GET api/v1/medications/{medication}                          RBAC: medicamentos.ver
+OK    PATCH api/v1/medications/{medication}/validity               RBAC: medicamentos.cambiar_vigencia
+OK    GET api/v1/occupancy                                         RBAC: ocupacion.ver
+OK    POST api/v1/patients                                         RBAC: pacientes.registrar
+OK    GET api/v1/patients/{code}                                   RBAC: pacientes.ver
+OK    PATCH api/v1/patients/{code}                                 RBAC: pacientes.editar
+OK    GET api/v1/patients/{patientCode}/medical-record             RBAC: expediente.ver
+OK    GET api/v1/permissions                                       RBAC: rbac.permisos.ver
+OK    POST api/v1/traslados                                        RBAC: traslados.registrar
+OK    GET api/v1/wards                                             RBAC: camas.ver
+OK    GET api/v1/wards/{ward}/beds                                 RBAC: camas.ver
+(código de salida: 0)
