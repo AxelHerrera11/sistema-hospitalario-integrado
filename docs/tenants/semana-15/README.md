@@ -26,10 +26,9 @@ Los XML se generan con `phpunit --log-junit`; cada uno lleva en su cabecera el c
 ### Archivos anteriores sin respaldo
 
 `test-summary.md`, `matriz-rf-rnf-tests.md`, `accessibility-report.html`, `coverage/` y
-`test-results/` son de la versión 1.0. Contienen cifras (cobertura, axe, E2E, k6) que no provienen
-de ninguna corrida y XML escritos a mano. **No son evidencia**: prevalecen los archivos de la tabla
-anterior. Quedan como antecedente hasta retirarlos en una entrega aparte, para no superar el límite
-de 400 líneas por PR.
+`test-results/` eran de la versión 1.0, con cifras (cobertura, axe, E2E, k6) que no provenían de
+ninguna corrida y XML escritos a mano. **Se retiraron en la Semana 16** (E-TEN-16-01); la evidencia
+vigente es la de la tabla anterior.
 
 ## Resumen de la corrida
 
@@ -74,4 +73,4 @@ Dependencia de integración: estas pruebas ejercitan el micro-HIS de la cadena d
 1. Medir cobertura con PCOV o Xdebug y publicar el reporte generado.
 2. Pruebas para RF-12 y RF-13; RF-15 requiere implementar antes el aprovisionamiento JIT.
 3. Prueba de carga con k6 sobre `app/Modules/Tenants/micro-his.php` servido por PHP-FPM.
-4. Retirar los archivos v1.0 sin respaldo que se listan arriba.
+4. ~~Retirar los archivos v1.0 sin respaldo~~: hecho en la Semana 16.

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\NotasSoap;
 
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
+use App\TrasladosAltas\ResolutorActorLocal;
 use MicroHis\NotasSoap\Application\CareAssignmentReader;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Application\Icd10Catalog;
@@ -25,6 +27,16 @@ final class SoapNoteApiTest extends TestCase
     {
         parent::setUp();
         CatalogTestIdentity::install($this->app);
+        // jwt.auth deja como tenant el modelo Hospital real que exige EnsureHospitalDatabaseTenant, como en CatalogoLab.
+        $this->app['router']->aliasMiddleware('jwt.auth', 'test.hospital-tenant');
+        $this->app->instance('test.hospital-tenant', new class {
+            public function handle($request, $next)
+            {
+                $request->attributes->set('tenant', new Hospital(['hospital_id' => CatalogTestIdentity::$hospital]));
+
+                return $next($request);
+            }
+        });
         $this->app->instance(ClinicalNoteRepository::class, new InMemoryClinicalNoteRepository(new InMemoryAuditTrail()));
         // Laravel reutiliza el controlador entre peticiones de una misma prueba: las asignaciones se leen por referencia.
         $this->assigned = ['ep1' => ['user-medico']];
@@ -40,6 +52,14 @@ final class SoapNoteApiTest extends TestCase
             }
         });
         $this->app->instance(Icd10Catalog::class, new InMemoryIcd10Catalog(['J18.9' => ['Neumonía no especificada', true]]));
+        // Usuario CENTRAL → referencia local: aquí coinciden; `user-sin-ref` no tiene referencia en este hospital.
+        $this->app->instance(ResolutorActorLocal::class, new class implements ResolutorActorLocal {
+            public function referencia(string $centralUserId): ?string
+            {
+                return $centralUserId === 'user-sin-ref' ? null : $centralUserId;
+            }
+        });
+        config()->set('tenants.hospital_database_tenant_id', 'hospital-a');
         CatalogTestIdentity::as('medico');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
@@ -51,6 +71,20 @@ final class SoapNoteApiTest extends TestCase
         CatalogTestIdentity::as('medico');
         $this->withHeaders(['X-Tenant-ID' => ''])->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertStatus(400)->assertJsonPath('code', 'TENANT_REQUIRED');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-b'])->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertStatus(403)->assertJsonPath('code', 'TENANT_MISMATCH');
+    }
+
+    public function test_hospital_database_guard_and_local_reference_fail_closed(): void
+    {
+        CatalogTestIdentity::as('medico', 'hospital-b');
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b'])->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)
+            ->assertStatus(403)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_MISMATCH');
+        CatalogTestIdentity::as('medico');
+        config()->set('tenants.hospital_database_tenant_id', null);
+        $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
+        config()->set('tenants.hospital_database_tenant_id', 'hospital-a');
+        CatalogTestIdentity::as('sin-ref');
+        CatalogTestIdentity::$roles = ['medico'];
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a'])->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->assertForbidden()->assertJsonPath('code', 'ACTOR_SIN_REFERENCIA_LOCAL');
     }
 
     public function test_the_treating_physician_registers_associates_and_reads_with_a_trace_id(): void

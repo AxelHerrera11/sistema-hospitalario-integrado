@@ -1,0 +1,20 @@
+PASS  C01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  C01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  C02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  C03 médica sin lab-results.validate publica un resultado → 403      esperado 403, obtenido 403
+PASS  C03 recepción sin alertas.ver → 403                                 esperado 403, obtenido 403
+PASS  C03 médica sin alertas.supervisar pide la bandeja de jefatura → 403 esperado 403, obtenido 403
+PASS  C05 result_version_id como arreglo → 422, no 500                     esperado 422, obtenido 422
+PASS  C05 valor 1e400 (infinito) → 422, no 500                             esperado 422, obtenido 422
+PASS  C06 episodio de otro paciente → 422 (trigger de HOSPITAL)            esperado 422, obtenido 422
+PASS  C04 el cuerpo pide otro destinatario, nivel 2 y acusada → 201        esperado 201, obtenido 201
+      destinataria: médica tratante · nivel: 0 · estado: open
+PASS  C07 jefatura (no tratante) acusa por la ruta común → 403            esperado 403, obtenido 403
+PASS  C08 médica tratante con una lectura equivocada → 422                esperado 422, obtenido 422
+PASS  C08 médica tratante con la lectura correcta y otro acusador → 200   esperado 200, obtenido 200
+      estado: acknowledged · acusada por la tratante: sí
+PASS  C09 acusar de nuevo → 409                                            esperado 409, obtenido 409
+PASS  C10 bandeja con X-Request-ID no confiable → 200                      esperado 200, obtenido 200
+      request_id: req-c614cddac2f26785 · Cache-Control: no-store, private
+PASS  C11 HOSPITAL caído → 503                                            esperado 503, obtenido 503
+      código: CRITICAL_ALERTS_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0

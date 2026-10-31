@@ -1,0 +1,17 @@
+%% Cliente-servidor: dos entradas al MISMO núcleo (micro-HIS). La SPA Vue aún no tiene ruta del expediente.
+flowchart LR
+    subgraph Cliente
+        UI["Prototipo public/ui<br/>(fetch + estados.js)"]
+        SPA["SPA Vue del HIS<br/>(propuesta: reutiliza estados.js)"]
+    end
+    subgraph Servidor["Servidor PHP"]
+        FC["public/index.php<br/>identidad simulada X-User-ID"]
+        LV["Laravel /api/v1<br/>tenant → jwt.auth → rbac:expediente.ver<br/>ExpedienteMedicoController"]
+        CORE["Núcleo micro-HIS<br/>Router → MedicalRecordController → casos de uso"]
+    end
+    UI -- "GET/POST /patients/{code}/medical-record" --> FC --> CORE
+    SPA -. "GET /api/v1/patients/{code}/medical-record + Bearer JWT + X-Tenant-ID" .-> LV --> CORE
+    CORE --> H[("HOSPITAL del tenant")]
+    CORE --> A[("audit_log")]
+    classDef prop stroke-dasharray: 5 5
+    class SPA prop

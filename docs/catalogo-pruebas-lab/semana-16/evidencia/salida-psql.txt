@@ -1,0 +1,10 @@
+ code |  name   | version_no | status |     creada_por      
+------+---------+------------+--------+---------------------
+ GLU  | Glucosa |          1 | active | superadmin ficticio
+(1 row)
+
+        module        |        action         | resource_type 
+----------------------+-----------------------+---------------
+ catalogo_laboratorio | prueba_lab.registrada | lab_test
+(1 row)
+
