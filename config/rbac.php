@@ -91,6 +91,7 @@ return [
             'reportes.ver', 'documentacion.ver', 'laboratorio.ver',
             'rbac.autorizar', 'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'muestras.rechazar', 'laboratorio.catalogo.ver', 'laboratorio.ordenes.ver',
+            'laboratorio.ordenes.actualizar',
             'lab-results.read', 'lab-results.create', 'lab-results.correct',
         ],
         'bioquimico' => [
@@ -108,8 +109,6 @@ return [
      * Formato: permiso => roles que lo recibirían si se aprobara.
      */
     'pending' => [
-        // Propuesta de ASII-16 sin activar: actualizar el estado de órdenes.
-        'laboratorio.ordenes.actualizar' => ['tecnico_laboratorio'],
         'notas_soap.transferir_autoria' => ['medico', 'superadmin'],
         'prescripciones.excepcion_alergia' => ['medico', 'superadmin'],
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
@@ -117,7 +116,7 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
-        // Propuesta de ASII-16 sin activar; no concede acceso a ningún rol.
+        // ASII-16: transición de órdenes la ejecuta el técnico de laboratorio.
         'laboratorio.ordenes.actualizar',
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
