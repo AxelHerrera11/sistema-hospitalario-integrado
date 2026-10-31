@@ -1,0 +1,28 @@
+# Demo funcional sobre la integracion local d95e3355 (develop 1736474f + mis ramas abiertas) - 2026-10-30 - Windows 11 - PHP 8.2.33
+# Sin PostgreSQL en este equipo: el recorrido usa rutas, middlewares, JWT simulado y matriz RBAC reales, con la fuente HOSPITAL en memoria.
+
+$ php vendor/bin/phpunit tests/Feature/CentroDocumentacion --testdox
+Time: 00:00.826, Memory: 32.00 MB
+Documentacion Api (Tests\Feature\CentroDocumentacion\DocumentacionApi)
+ ✔ Cada rol ve solo su catalogo
+ ✔ El rol enviado por el cliente se ignora
+ ✔ Entrega el contenido con su tipo y version
+ ✔ Documento ajeno o inexistente responde 404 igual
+ ✔ Sin sesion 401 y rol sin permiso 403
+ ✔ Cada entrada del catalogo apunta a un archivo real
+Documentacion Seguridad (Tests\Feature\CentroDocumentacion\DocumentacionSeguridad)
+ ✔ Matriz de permisos por rol
+ ✔ Aislamiento entre hospitales
+ ✔ No expone rutas ni documentos ajenos
+ ✔ Sin sesion responde 401
+OK (10 tests, 57 assertions)
+
+$ php micro-his/centro-documentacion/tests/run.php
+PASS  rechaza documento sin roles
+PASS  rechaza documento sin titulo
+PASS  rechaza ruta fuera de docs/
+PASS  el medico ve los dos documentos
+PASS  enfermeria no ve documentos de otros roles
+PASS  un documento no visible se trata como inexistente
+PASS  la union de roles de la sesion amplia la visibilidad
+OK: 7 verificaciones aprobadas

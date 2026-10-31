@@ -1,0 +1,30 @@
+@startuml
+title Micro-HIS Centro de Documentacion (ASII-24) - MVC y patron Repository
+
+skinparam componentStyle rectangle
+package "Presentation (MVC)" #Paleturquoise {
+  [public/index.php (router)] as router
+  [DocumentoController] as ctrl
+}
+package "Application" #LightBlue {
+  [PublicarDocumento] as pub
+  [ConsultarDocumentos] as con
+}
+package "Domain" #LightYellow {
+  [Documento (entidad)] as ent
+  [DocumentoRepository (interfaz)] as repo
+}
+package "Infrastructure" #LightGray {
+  [DocumentoRepositoryPDO] as pdo
+  [DocumentoRepositoryInMemory] as mem
+}
+router --> ctrl
+ctrl --> pub
+ctrl --> con
+pub --> ent
+con --> ent
+pub --> repo
+con --> repo
+pdo ..|> repo
+mem ..|> repo
+@enduml

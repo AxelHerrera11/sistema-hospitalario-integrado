@@ -1,0 +1,10 @@
+ code |  name   | unit  | version_no | status |   autor    
+------+---------+-------+------------+--------+------------
+ GLU  | Glucosa | mg/dL |          1 | active | superadmin
+(1 row)
+
+        module        |        action         |   actor    
+----------------------+-----------------------+------------
+ catalogo_laboratorio | prueba_lab.registrada | superadmin
+(1 row)
+

@@ -1,0 +1,8 @@
+flowchart LR
+  A[API modular v1] --> B[Medir 4 semanas]
+  B --> C[Vista materializada local]
+  C --> D[Eventos y réplica en paralelo]
+  D --> E{¿Se cumple un umbral?}
+  E -->|No| A
+  E -->|Sí| F[Extraer lectura con estrangulador]
+  F -. rollback .-> A

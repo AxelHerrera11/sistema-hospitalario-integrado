@@ -1,0 +1,38 @@
+# Recorrido final sobre develop a24bfb36 — 30/10/2026, datos ficticios, APP_DEBUG=false
+## API (Semana 16)
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  médico sin camas.ver → 403 RBAC                                 esperado 403, obtenido 403
+PASS  recepción lista camas UCI → 200                                 esperado 200, obtenido 200
+      camas UCI disponibles: 1
+PASS  médico intenta admitir (sin admisiones.registrar) → 403         esperado 403, obtenido 403
+PASS  recepción admite al paciente 1 en la UCI → 201                  esperado 201, obtenido 201
+PASS  paciente 2 en la misma cama → 409 BED_NOT_AVAILABLE              esperado 409, obtenido 409
+PASS  paciente 1 otra vez → 409 PATIENT_ALREADY_ADMITTED               esperado 409, obtenido 409
+PASS  sin motivo → 422                                                 esperado 422, obtenido 422
+PASS  recepción lista camas UCI de nuevo → 200 (ninguna)              esperado 200, obtenido 200
+      camas UCI disponibles: 0
+## Pantalla en Chrome (Semana 16, con la espera corregida en esta entrega)
+PASS  médico (sin admisiones.registrar) no ve «Admisión y camas» como enlace
+PASS  recepción ve las camas disponibles; la UCI ya está ocupada (M-201 general, M-202 general)
+PASS  admitir sin cama → error local, sin llamar a la API
+PASS  ingreso registrado → confirmación con la cama M-201
+PASS  el mismo paciente otra vez → 409 con el mensaje del servidor
+PASS  375 px: sin desplazamiento horizontal
+6/6 verificaciones
+## Seguridad (Semana 17, con la firma alterada en el medio, corregido en esta entrega), sobre bases recreadas
+PASS  D01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  D01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  D02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  D03 médico sin camas.ver → 403                                      esperado 403, obtenido 403
+PASS  D03 médico sin admisiones.registrar → 403                           esperado 403, obtenido 403
+PASS  D05 patient_id como arreglo → 404, no 500                            esperado 404, obtenido 404
+PASS  D05 reason como arreglo → 422, no 500                                esperado 422, obtenido 422
+PASS  D06 motivo de 501 caracteres → 422                                   esperado 422, obtenido 422
+      código: TEXT_TOO_LONG · campo: reason
+PASS  D04 el cuerpo pide otro autor y otra hora de inicio → 201            esperado 201, obtenido 201
+      inicio del servidor, no 1999: sí
+PASS  D08 listado de camas con X-Request-ID no confiable → 200             esperado 200, obtenido 200
+      campos por cama: bed_id,code,type · request_id: req-9d9d193c061d5004 · Cache-Control: no-store, private
+PASS  D09 HOSPITAL caído → 503                                            esperado 503, obtenido 503
+      código: ADMISSIONS_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0

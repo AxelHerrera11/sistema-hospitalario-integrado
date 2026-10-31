@@ -1,0 +1,57 @@
+%% DESPUÉS (implementado): los casos de uso dependen de interfaces definidas en Application; los detalles las implementan.
+classDiagram
+    direction TB
+    class ConsultLongitudinalRecord {
+        +execute(RequestContext, string) LongitudinalRecord
+    }
+    class OpenMedicalRecord {
+        +execute(RequestContext, string) array
+    }
+    class AccessGuard {
+        +requirePermission(RequestContext, string) void
+        +deny(RequestContext, string, array) void
+    }
+    class AccessAuthorizer {
+        <<interface>>
+        +decide(userId, hospitalId, permissionName) AccessDecision
+    }
+    class MedicalRecordRepository {
+        <<interface>>
+        +findByPatient(patientId) MedicalRecord
+        +open(MedicalRecord, callable) MedicalRecord
+        +episodesOf(patientId) CareEpisode[]
+    }
+    class CareRelationship {
+        <<interface>>
+        +hasActiveAssignment(userRefId, patientId) bool
+    }
+    class PatientDirectory {
+        <<interface>>
+        +findByCode(code) PatientSummary
+    }
+    class ClinicalAccessAudit {
+        <<interface>>
+        +record(RequestContext, action, outcome, ...) void
+    }
+    class HospitalStoresProvider {
+        <<interface>>
+        +forHospital(hospitalId) HospitalStores
+    }
+    ConsultLongitudinalRecord --> AccessGuard
+    OpenMedicalRecord --> AccessGuard
+    AccessGuard --> AccessAuthorizer
+    AccessGuard --> ClinicalAccessAudit
+    ConsultLongitudinalRecord --> HospitalStoresProvider
+    OpenMedicalRecord --> HospitalStoresProvider
+    HospitalStoresProvider ..> MedicalRecordRepository
+    HospitalStoresProvider ..> CareRelationship
+    HospitalStoresProvider ..> PatientDirectory
+
+    RbacAccessAuthorizer ..|> AccessAuthorizer : Integration → Authorize (RBAC)
+    GobernanzaClinicalAudit ..|> ClinicalAccessAudit : Integration → RecordAuditEvent
+    PacientesDirectory ..|> PatientDirectory : Integration → PatientRepository
+    PdoMedicalRecordRepository ..|> MedicalRecordRepository
+    InMemoryMedicalRecordRepository ..|> MedicalRecordRepository
+    PdoCareRelationship ..|> CareRelationship
+    InMemoryCareRelationship ..|> CareRelationship
+    HospitalRegistry ..|> HospitalStoresProvider

@@ -42,6 +42,29 @@ final class HospitalUserAdministrationTest extends TenantAuthTestCase
         $this->assertNotContains($remoteUser, $listedIds);
     }
 
+    public function test_user_with_several_roles_is_counted_once_in_the_listing(): void
+    {
+        $doctor = $this->createTarget('multirol@example.test');
+        $this->addMembership($this->userId, $this->hospitalA, 'admin_hospital');
+        $this->addMembership($doctor, $this->hospitalA, 'medico');
+        $this->addMembership($doctor, $this->hospitalA, 'jefatura_medica');
+        $token = $this->tokenFrom($this->login()->assertOk());
+
+        $response = $this->withHeaders(['X-Tenant-ID' => $this->hospitalA])
+            ->withToken($token)
+            ->getJson('/api/v1/admin/users?per_page=1')
+            ->assertOk()
+            ->assertJsonPath('total', 2)
+            ->assertJsonPath('last_page', 2);
+
+        $doctorRow = collect($this->withHeaders(['X-Tenant-ID' => $this->hospitalA])
+            ->withToken($token)
+            ->getJson('/api/v1/admin/users?per_page=100')
+            ->json('data'))->firstWhere('user_id', $doctor);
+        $this->assertSame(['jefatura_medica', 'medico'], $doctorRow['roles']);
+        $this->assertCount(1, $response->json('data'));
+    }
+
     public function test_admin_session_revocation_is_limited_to_foreign_sessions_in_current_hospital(): void
     {
         $targetId = $this->createTarget('target@example.test');

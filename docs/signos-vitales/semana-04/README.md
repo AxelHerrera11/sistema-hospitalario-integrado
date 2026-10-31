@@ -10,9 +10,11 @@
 
 ## Punto de partida
 
-La Semana 3 dejó cuatro capas con `VitalSignHttpHandler` como entrada y `PdoVitalSignStore` implementando dos puertos. Esta semana se construye sobre las ramas `semana-03-...-core` (#1) y `semana-03-...-adapters-tests` (#2), que todavía no están integradas en `develop`; ver [organización de la entrega](#organización-de-la-entrega).
+La Semana 3 dejó cuatro capas con `VitalSignHttpHandler` como entrada y `PdoVitalSignStore` implementando dos puertos. Esta semana se construye sobre esas tres ramas, que ya están integradas en `develop`: `semana-03-...-core` (#131), `semana-03-...-adapters-tests` (#132) y `semana-03-...-arquitectura` (#133); ver [organización de la entrega](#organización-de-la-entrega).
 
 ## Qué cambió (implementado)
+
+> **Nota.** El MVC de este diagrama y de la sección [Cómo verificar](#cómo-verificar) llega con la rama `mvc-tests` (#530), que se integra antes que este PR; ver [organización de la entrega](#organización-de-la-entrega).
 
 ```mermaid
 flowchart LR
@@ -95,11 +97,13 @@ Para respetar el límite de 400 líneas por PR, la semana se entrega en tres ram
 
 | Rama | Contenido | Se apila sobre | Líneas propias |
 |---|---|---|---|
-| `feature/asii-13-semana-04-signos-vitales-repository-jhos-hgnu` | Puertos, `StoredVitalSign`, adaptadores PDO e InMemory y `tests/repository.php` | Semana 3 `core` + `adapters-tests` | ~210 |
-| `feature/asii-13-semana-04-signos-vitales-mvc-tests-jhos-hgnu` | `Router`, `Controller`, `Request`, `JsonView`, `app.php`, `public/index.php` y `tests/run.php` | Rama `repository` | ~285 (224 añadidas, 60 eliminadas) |
-| `feature/asii-13-semana-04-signos-vitales-docs-jhos-hgnu` | Esta documentación | Semana 3 `arquitectura` | ~250 |
+| `feature/asii-13-semana-04-signos-vitales-repository-jhos-hgnu` (#529) | Puertos, `StoredVitalSign`, adaptadores PDO e InMemory y `tests/repository.php` | Semana 3 `core` + `adapters-tests` | ~210 |
+| `feature/asii-13-semana-04-signos-vitales-mvc-tests-jhos-hgnu` (#530) | `Router`, `Controller`, `Request`, `JsonView`, `app.php`, `public/index.php` y `tests/run.php` | Rama `repository` | ~285 (224 añadidas, 60 eliminadas) |
+| `feature/asii-13-semana-04-signos-vitales-docs-jhos-hgnu` (#531) | Esta documentación | Semana 3 `arquitectura` | ~250 |
 
-Orden de integración: Semana 3 `core`, `adapters-tests`, `arquitectura`; luego `repository`, `mvc-tests` y `docs`. Las pruebas se ejecutan con `repository` y `mvc-tests` integradas.
+Orden de integración: Semana 3 `core`, `adapters-tests`, `arquitectura`; luego `repository` (#529), `mvc-tests` (#530) y `docs` (#531). Las pruebas se ejecutan con `repository` y `mvc-tests` integradas.
+
+**Este PR (#531) se integra después de #530.** Hasta que #530 entre en `develop`, el MVC que describe esta página (`app.php`, `public/index.php`, `Router`, `VitalSignController`, `Request`, `JsonView`) y `tests/repository.php` no existen en `develop`, y por eso los comandos y las salidas de la sección [Cómo verificar](#cómo-verificar) no son reproducibles todavía. Una vez integrado #530, sí lo son.
 
 ## Límites de la Semana 4
 

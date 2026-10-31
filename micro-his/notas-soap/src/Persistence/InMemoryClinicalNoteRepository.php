@@ -8,13 +8,14 @@ use MicroHis\NotasSoap\Application\AuditTrail;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
+use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
 use MicroHis\NotasSoap\Domain\Uuid;
 
 /** Adaptador en memoria del mismo contrato que PdoClinicalNoteStore: pruebas y demo sin base de datos. */
 final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
 {
-    /** @var array<string, array{episode: string, author: string, status: string, content: string}> públicas solo para que las pruebas lean el estado */
+    /** @var array<string, array{episode: string, author: string, status: string, content: string, version: int, supersedes: ?string}> públicas solo para que las pruebas lean el estado */
     public array $notes = [];
     /** @var array<string, list<array{code: string, type: string, description: string}>> */
     public array $diagnoses = [];
@@ -27,14 +28,14 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
     {
         $note = $this->notes[$noteId] ?? null;
         return $note === null ? null : new ClinicalNote($noteId, $note['episode'], $note['author'], $note['status'],
-            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $this->diagnoses[$noteId] ?? []));
+            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $this->diagnoses[$noteId] ?? []), SoapSections::fromJson($note['content']), $note['version'], $note['supersedes']);
     }
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string
     {
         $id = Uuid::v4();
         $this->atomically(function () use ($id, $episodeId, $authorId, $sections): void {
-            $this->notes[$id] = ['episode' => $episodeId, 'author' => $authorId, 'status' => 'draft', 'content' => $sections->toJson()];
+            $this->notes[$id] = ['episode' => $episodeId, 'author' => $authorId, 'status' => 'draft', 'content' => $sections->toJson(), 'version' => 1, 'supersedes' => null];
             $this->audit->record($authorId, 'nota_soap.registrada', 'clinical_note', $id, $episodeId, ['version_no' => 1]);
         });
         return $id;
@@ -42,6 +43,7 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
 
     public function addDiagnosis(ClinicalNote $note, Diagnosis $diagnosis, string $description): void
     {
+        ($this->notes[$note->id]['status'] ?? null) === 'draft' || throw new SoapRuleViolation('NOTE_SIGNED', 409); // igual que el PDO: se vuelve a comprobar al escribir (D-02)
         $id = Uuid::v4();
         $this->atomically(function () use ($id, $note, $diagnosis, $description): void {
             $this->diagnoses[$note->id][] = ['code' => $diagnosis->code, 'type' => $diagnosis->type, 'description' => $description];
@@ -49,7 +51,30 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
         });
     }
 
-    /** Solo para pruebas: la firma real (UC-SOAP-05) aún no está implementada. */
+    public function correct(ClinicalNote $note, SoapSections $sections, string $reason): string
+    {
+        array_filter($this->notes, static fn (array $n): bool => $n['supersedes'] === $note->id) === [] || throw new SoapRuleViolation('NOTE_ALREADY_CORRECTED', 409);
+        $id = Uuid::v4();
+        $this->atomically(function () use ($id, $note, $sections): void {
+            $version = $this->notes[$note->id]['version'] + 1;
+            $this->notes[$id] = ['episode' => $note->episodeId, 'author' => $note->authorId, 'status' => 'draft', 'content' => $sections->toJson(), 'version' => $version, 'supersedes' => $note->id];
+            $this->audit->record($note->authorId, 'nota_soap.corregida', 'clinical_note', $id, $note->episodeId, ['version_no' => $version, 'supersedes_id' => $note->id]);
+        });
+        return $id;
+    }
+
+    public function sign(ClinicalNote $note): void
+    {
+        ($this->notes[$note->id]['status'] ?? null) === 'draft' || throw new SoapRuleViolation('NOTE_SIGNED', 409);
+        $this->atomically(function () use ($note): void {
+            $this->notes[$note->id]['status'] = 'signed';
+            $codes = array_map(static fn (Diagnosis $d): string => $d->code, $note->diagnoses);
+            $primary = array_values(array_filter($note->diagnoses, static fn (Diagnosis $d): bool => $d->type === 'primary'))[0]->code ?? '';
+            $this->audit->record($note->authorId, 'nota_soap.firmada', 'clinical_note', $note->id, $note->episodeId, ['version_no' => $note->versionNo, 'primary_code' => $primary, 'diagnosis_codes' => $codes]);
+        });
+    }
+
+    /** Solo para pruebas: deja la nota firmada sin pasar por el caso de uso ni la auditoría. */
     public function markSigned(string $noteId): void
     {
         $this->notes[$noteId]['status'] = 'signed';

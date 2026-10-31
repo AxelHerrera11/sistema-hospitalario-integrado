@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Sistema Hospitalario Integrado — API v1
+  version: 0.1.0
+  description: >
+    Especificación base del API bajo /api/v1. Autenticación JWT
+    (Authorization: Bearer) y multitenancy por la cabecera X-Tenant-ID,
+    igual que resources/js/plugins/axios.js. Los módulos agregan sus
+    paths conforme sus contratos se fusionan (ASII-05 citas, ASII-27
+    reportes, etc.); esta base se mantiene abierta sin editar sus
+    componentes ya publicados (ISP).
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+    tenantHeader: []
+tags:
+  - name: auth
+    description: Sesiones y tokens
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Inicio de sesión
+      security:
+        - tenantHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthError' }
+        '403':
+          description: Usuario inactivo o sin membresía activa en el hospital
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthError' }
+        '422': { $ref: '#/components/responses/ValidationFailed' }
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Usuario, hospital y roles de la sesión actual
+      responses:
+        '200':
+          description: Sesión actual
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Invalida el token actual
+      responses:
+        '200': { description: Sesión cerrada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Renueva el access token (X-Tenant-ID debe coincidir con el token)
+      description: >
+        El refresh token viaja en la cookie httpOnly `refresh_token` emitida en
+        el login (Path /api/v1/auth); no se envía en el cuerpo y no se requiere
+        cabecera Authorization.
+      security:
+        - tenantHeader: []
+      responses:
+        '200':
+          description: Token renovado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '401':
+          description: Cookie ausente, inválida o expirada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    tenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-ID
+      description: Identificador del tenant (obligatorio en todas las rutas)
+  responses:
+    Unauthorized:
+      description: Token inválido o expirado (hoy solo message)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Tenant del token no coincide con X-Tenant-ID o permiso insuficiente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationFailed:
+      description: Validación fallida con detalle por campo en errors
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ValidationFailed' }
+  schemas:
+    Error:
+      type: object
+      description: >
+        Sobre del acuerdo transversal (formato-respuestas-errores.md). Hoy los
+        fallos de /auth devuelven `error` + `message`; el resto de módulos
+        adopta `code` y `trace_id` cuando se tocan.
+      required: [message]
+      properties:
+        message: { type: string }
+        error: { type: string, description: errorCode actual de los fallos de /auth }
+        code: { type: string, nullable: true, description: código del acuerdo común de respuestas }
+        trace_id: { type: string, nullable: true, description: correlación del acuerdo común de respuestas }
+    AuthError:
+      type: object
+      description: Sobre real de los fallos de /auth (AuthController::failure)
+      required: [error, message]
+      properties:
+        error: { type: string, description: codigo del fallo (por ejemplo invalid_credentials) }
+        message: { type: string }
+    ValidationFailed:
+      type: object
+      required: [message, errors]
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+    Session:
+      type: object
+      description: Respuesta de POST /auth/login y POST /auth/refresh.
+      required: [access_token, token_type, expires_in, user, hospital, roles, roles_version]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: bearer, description: valor real devuelto por el emisor }
+        expires_in: { type: integer, description: vigencia del access token en segundos }
+        user: { $ref: '#/components/schemas/User' }
+        hospital: { $ref: '#/components/schemas/Hospital' }
+        roles: { $ref: '#/components/schemas/Roles' }
+        roles_version: { type: string, description: hash de los roles canónicos }
+    Me:
+      type: object
+      description: Respuesta de GET /auth/me.
+      required: [user, hospital, roles, roles_version]
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        hospital: { $ref: '#/components/schemas/Hospital' }
+        roles: { $ref: '#/components/schemas/Roles' }
+        roles_version: { type: string }
+    User:
+      type: object
+      required: [user_id, email, display_name, permissions]
+      properties:
+        user_id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        display_name: { type: string }
+        permissions:
+          type: array
+          description: Permisos `modulo.accion` efectivos del usuario en el tenant.
+          items: { type: string, example: citas.ver }
+    Hospital:
+      type: object
+      nullable: true
+      required: [hospital_id]
+      properties:
+        hospital_id: { type: string, format: uuid }
+        name: { type: string, nullable: true }
+    Roles:
+      type: array
+      description: Códigos canónicos de rol.
+      items:
+        type: string
+        enum: [superadmin, admin_hospital, medico, enfermeria, recepcion, tecnico_laboratorio, bioquimico, jefatura_medica]

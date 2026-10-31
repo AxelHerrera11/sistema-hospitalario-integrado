@@ -1,0 +1,10 @@
+%% Navegación responsive (Semana 10). Lo marcado [propuesto] no está implementado.
+flowchart LR
+    VW{"Ancho de pantalla"}
+    VW -- "> 960 px" --> D["Escritorio<br/>filtros | tabla"]
+    VW -- "601–960 px" --> T["Tableta<br/>filtros 2 col. sobre tabla"]
+    VW -- "≤ 600 px" --> M["Móvil<br/>campos apilados + tarjetas"]
+    M --> MP["[propuesto] Filtros plegables<br/>Filtros (N activos)"]
+    D & T & M --> DET["Detalle en diálogo<br/>(una columna en móvil)"]
+    D & T & M --> ERR["422 · 401/403 · 503 · vacío<br/>mismos mensajes en todos los anchos"]
+    ERR -- "401/403" --> NOF["Sin filtros, mensaje a ancho completo"]
