@@ -43,7 +43,10 @@ export function prescriptionList(data) {
 }
 
 export function failureMessage(status, body = {}) {
-    if (status === 422 && body?.code === 'ALLERGY_CONFLICT') return 'Conflicto de alergia; la prescripción no se guardó.';
+    if (status === 422 && body?.code === 'ALLERGY_CONFLICT') {
+        const severities = { mild: 'leve', moderate: 'moderada', unknown: 'desconocida', severe: 'grave', life_threatening: 'potencialmente mortal' };
+        return `Conflicto de alergia. Severidad: ${severities[body.severity] ?? 'desconocida'}. La prescripción no se guardó. No hay excepción disponible.`;
+    }
     // FormRequest responde `message`; los errores de dominio (problem+json) responden `title`.
     if (status === 422 && typeof body?.message === 'string') return body.message;
     if (status === 422 && typeof body?.title === 'string') return body.title;
@@ -53,4 +56,27 @@ export function failureMessage(status, body = {}) {
     if (status === 409) return 'La prescripción ya no está en estado borrador.';
     if (status === 503) return 'No se pudo verificar una dependencia clínica; no se confirmó la operación.';
     return 'Prescripciones no está disponible. No se confirmó la operación; intente de nuevo.';
+}
+
+export function patientFromResponse(data) {
+    const patient = data?.patient;
+    if (!patient || typeof patient.patient_id !== 'string' || !/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(patient.patient_id)
+        || !patient.code || !patient.given_name || !patient.family_name) {
+        throw new TypeError('La respuesta del paciente no es válida.');
+    }
+    return { id: patient.patient_id, code: patient.code, name: `${patient.given_name} ${patient.family_name}` };
+}
+
+export function activeMedications(data) {
+    if (!Array.isArray(data?.results)) throw new TypeError('La respuesta de medicamentos no es una lista válida.');
+    return data.results
+        .filter((medication) => medication.validity === 'active' && medication.medication_id && medication.name && medication.code)
+        .map((medication) => ({ id: medication.medication_id, code: medication.code, name: medication.name }));
+}
+
+export async function findPatientPrescriptions(api, code) {
+    const { data } = await api.get(`/patients/${encodeURIComponent(code.trim())}`);
+    const patient = patientFromResponse(data);
+    const response = await api.get(`/patients/${encodeURIComponent(patient.id)}/prescriptions`);
+    return { patient, prescriptions: prescriptionList(response.data) };
 }

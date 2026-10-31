@@ -97,14 +97,14 @@ onMounted(consultar);
             <div class="lab__grid">
                 <label>Código <input v-model="form.code" maxlength="32" :aria-invalid="String(invalido === 'code')"></label>
                 <label>Nombre <input v-model="form.name" maxlength="160" :aria-invalid="String(invalido === 'name')"></label>
-                <label>Tipo de muestra <input v-model="form.specimen_type" :aria-invalid="String(invalido === 'specimen_type')"></label>
+                <label>Tipo de muestra <input v-model="form.specimen_type" maxlength="40" :aria-invalid="String(invalido === 'specimen_type')"></label>
                 <label>Volumen mínimo (mL) <input v-model="form.min_volume_ml" type="number" step="0.1" min="0" :aria-invalid="String(invalido === 'min_volume_ml')"></label>
                 <label>Tipo de resultado
                     <select v-model="form.result_type"><option v-for="t in TIPOS_RESULTADO" :key="t.valor" :value="t.valor">{{ t.etiqueta }}</option></select>
                 </label>
                 <label>Vigente desde <input v-model="form.valid_from" type="date" :min="hoy" :aria-invalid="String(invalido === 'valid_from')"></label>
                 <template v-if="form.result_type === 'numeric'">
-                    <label>Unidad <input v-model="form.unit" :aria-invalid="String(invalido === 'unit')"></label>
+                    <label>Unidad <input v-model="form.unit" maxlength="32" :aria-invalid="String(invalido === 'unit')"></label>
                     <label>Crítico bajo <input v-model="form.critical_low" type="number" step="any" :aria-invalid="String(invalido === 'reference_low')"></label>
                     <label>Referencia baja <input v-model="form.reference_low" type="number" step="any" :aria-invalid="String(invalido === 'reference_low')"></label>
                     <label>Referencia alta <input v-model="form.reference_high" type="number" step="any" :aria-invalid="String(invalido === 'reference_low')"></label>

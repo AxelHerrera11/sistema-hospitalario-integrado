@@ -130,7 +130,8 @@ final class PrescriptionController extends Controller
         return response()->json([
             'code' => 'ALLERGY_CONFLICT',
             'severity' => $severity,
-            'exception_allowed' => $conflict->exceptionAllowed,
+            // Excepción fuera de esta versión; el permiso sigue pendiente.
+            'exception_allowed' => false,
         ], 422)->header('Cache-Control', 'no-store, private');
     }
 

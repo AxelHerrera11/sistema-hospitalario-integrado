@@ -2,7 +2,7 @@
 
 Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 73 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 74 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -44,6 +44,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `laboratorio.ordenes.crear` | Sí | — | Sí | — | — | — | — | — |
 | `laboratorio.ordenes.ver` | Sí | — | Sí | — | — | Sí | Sí | — |
 | `laboratorio.ordenes.cancelar` | Sí | — | Sí | — | — | — | — | — |
+| `laboratorio.ordenes.actualizar` | — | — | — | — | — | — | — | — |
 | `lab-results.read` | Sí | — | — | — | — | Sí | Sí | — |
 | `lab-results.create` | Sí | — | — | — | — | Sí | — | — |
 | `lab-results.correct` | Sí | — | — | — | — | Sí | — | — |
@@ -235,3 +236,9 @@ Solicitada por ASII-25 (expediente médico electrónico base). Decisión de la r
 
 La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
 `local_user_refs`, paciente existente y apertura idempotente con su evento de auditoría en la misma transacción.
+
+## Propuesta ASII-16 (30-oct-2026)
+
+`laboratorio.ordenes.actualizar` se registra en `catalog` y en `pending` para
+`tecnico_laboratorio`, según el contrato propuesto de ASII-16. No se activa ni
+se concede a ningún rol; el proveedor de permisos continúa leyendo solo `roles`.
