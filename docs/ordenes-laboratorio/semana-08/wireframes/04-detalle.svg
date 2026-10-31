@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700" role="img" aria-labelledby="t">
+  <title id="t">Wireframe: detalle y seguimiento de la orden</title>
+  <rect width="960" height="700" fill="#f3f4f6"/>
+  <rect x="0" y="0" width="960" height="60" fill="#1f2937"/>
+  <text x="24" y="37" font-family="system-ui" font-size="19" font-weight="700" fill="#ffffff">Orden ORD-1042</text>
+  <rect x="760" y="18" width="176" height="26" rx="13" fill="#dbeafe"/>
+  <text x="780" y="35" font-family="system-ui" font-size="11" font-weight="700" fill="#1e40af">● EN PROCESO</text>
+
+  <rect x="24" y="84" width="560" height="330" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="44" y="112" font-family="system-ui" font-size="13" font-weight="700" fill="#0f172a">Datos de la orden</text>
+  <text x="44" y="142" font-family="system-ui" font-size="11" fill="#64748b">Paciente</text>
+  <text x="44" y="160" font-family="system-ui" font-size="13" fill="#0f172a">Ana Pérez · EPI-77</text>
+  <text x="300" y="142" font-family="system-ui" font-size="11" fill="#64748b">Nota clínica</text>
+  <text x="300" y="160" font-family="system-ui" font-size="13" fill="#0f172a">NOTA-552</text>
+  <text x="44" y="194" font-family="system-ui" font-size="11" fill="#64748b">Solicitada por</text>
+  <text x="44" y="212" font-family="system-ui" font-size="13" fill="#0f172a">Dra. Méndez · hoy 09:58</text>
+  <text x="300" y="194" font-family="system-ui" font-size="11" fill="#64748b">Prioridad</text>
+  <text x="300" y="212" font-family="system-ui" font-size="13" fill="#0f172a">Urgente</text>
+  <text x="44" y="248" font-family="system-ui" font-size="11" fill="#64748b">Contexto</text>
+  <text x="44" y="266" font-family="system-ui" font-size="12" fill="#334155">Dolor abdominal, descartar infección.</text>
+
+  <text x="44" y="304" font-family="system-ui" font-size="12" font-weight="700" fill="#0f172a">Pruebas</text>
+  <rect x="44" y="316" width="520" height="30" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="56" y="336" font-family="system-ui" font-size="12" fill="#0f172a">GLU · Glucosa</text>
+  <text x="470" y="336" font-family="system-ui" font-size="11" fill="#64748b">Química</text>
+  <rect x="44" y="352" width="520" height="30" rx="4" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="56" y="372" font-family="system-ui" font-size="12" fill="#0f172a">HB · Hemograma</text>
+  <text x="470" y="372" font-family="system-ui" font-size="11" fill="#64748b">Hematología</text>
+
+  <rect x="608" y="84" width="328" height="506" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="628" y="112" font-family="system-ui" font-size="13" font-weight="700" fill="#0f172a">Historial</text>
+  <circle cx="642" cy="146" r="6" fill="#2563eb"/>
+  <line x1="642" y1="152" x2="642" y2="208" stroke="#cbd5e1"/>
+  <text x="660" y="144" font-family="system-ui" font-size="12" font-weight="600" fill="#0f172a">EN PROCESO</text>
+  <text x="660" y="160" font-family="system-ui" font-size="11" fill="#64748b">Laboratorio · hoy 10:12</text>
+  <text x="660" y="176" font-family="system-ui" font-size="10" fill="#94a3b8">corr. a1b2c3</text>
+
+  <circle cx="642" cy="218" r="6" fill="#60a5fa"/>
+  <line x1="642" y1="224" x2="642" y2="280" stroke="#cbd5e1"/>
+  <text x="660" y="216" font-family="system-ui" font-size="12" font-weight="600" fill="#0f172a">TOMADA</text>
+  <text x="660" y="232" font-family="system-ui" font-size="11" fill="#64748b">Enf. Solís · hoy 10:05</text>
+
+  <circle cx="642" cy="290" r="6" fill="#94a3b8"/>
+  <text x="660" y="288" font-family="system-ui" font-size="12" font-weight="600" fill="#0f172a">EMITIDA</text>
+  <text x="660" y="304" font-family="system-ui" font-size="11" fill="#64748b">Dra. Méndez · hoy 09:58</text>
+
+  <text x="628" y="352" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">ACCIONES DISPONIBLES</text>
+  <rect x="628" y="366" width="288" height="34" rx="6" fill="#2563eb"/>
+  <text x="704" y="388" font-family="system-ui" font-size="12" font-weight="600" fill="#ffffff">Marcar con resultado</text>
+  <rect x="628" y="410" width="288" height="34" rx="6" fill="#ffffff" stroke="#b91c1c"/>
+  <text x="708" y="432" font-family="system-ui" font-size="12" fill="#b91c1c">Cancelar orden</text>
+  <text x="628" y="470" font-family="system-ui" font-size="10" fill="#64748b">Solo si el rol y el estado lo permiten.</text>
+  <text x="628" y="486" font-family="system-ui" font-size="10" fill="#64748b">Cancelar exige motivo y no borra el historial.</text>
+
+  <rect x="24" y="438" width="560" height="152" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="44" y="464" font-family="system-ui" font-size="12" font-weight="700" fill="#0f172a">Trazabilidad</text>
+  <text x="44" y="488" font-family="system-ui" font-size="11" fill="#475569">Cada evento guarda estado anterior, nuevo, actor, fecha,</text>
+  <text x="44" y="506" font-family="system-ui" font-size="11" fill="#475569">motivo (si aplica) y correlation_id. El historial no se edita.</text>
+  <text x="44" y="536" font-family="system-ui" font-size="11" fill="#64748b">ID de correlación: a1b2c3d4</text>
+  <rect x="44" y="548" width="150" height="26" rx="4" fill="#ffffff" stroke="#94a3b8"/>
+  <text x="58" y="566" font-family="system-ui" font-size="11" fill="#334155">Copiar enlace</text>
+
+  <rect x="24" y="618" width="912" height="64" rx="8" fill="#fff7ed" stroke="#f59e0b"/>
+  <text x="40" y="640" font-family="system-ui" font-size="11" font-weight="700" fill="#92400e">ANOTACIONES</text>
+  <text x="40" y="658" font-family="system-ui" font-size="11" fill="#78350f">A. Estado con texto e icono. B. Historial con actor, hora y correlación. C. Cancelar solo si el estado lo permite y siempre con motivo. D. Acciones por rol, no por URL.</text>
+</svg>

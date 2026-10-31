@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MicroHis\NotasSoap\Presentation;
 
 use MicroHis\NotasSoap\Application\AssociateDiagnosis;
+use MicroHis\NotasSoap\Application\GetSoapNote;
 use MicroHis\NotasSoap\Application\RegisterSoapNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
@@ -16,8 +17,22 @@ final class SoapNoteController
     public function __construct(
         private readonly RegisterSoapNote $register,
         private readonly AssociateDiagnosis $associate,
+        private readonly GetSoapNote $show,
         private readonly JsonView $view,
     ) {
+    }
+
+    public function show(Request $request, string $noteId): array
+    {
+        return $this->respond(200, function () use ($request, $noteId): array {
+            $note = $this->show->execute($request->actor(), $noteId);
+            $s = $note->sections;
+            return [
+                'clinical_note_id' => $note->id, 'care_episode_id' => $note->episodeId, 'author_user_ref_id' => $note->authorId, 'status' => $note->status,
+                'sections' => ['subjective' => $s?->subjective, 'objective' => $s?->objective, 'assessment' => $s?->assessment, 'plan' => $s?->plan],
+                'diagnoses' => array_map(static fn ($d): array => ['code' => $d->code, 'type' => $d->type], $note->diagnoses),
+            ];
+        });
     }
 
     public function registerNote(Request $request, string $episodeId): array

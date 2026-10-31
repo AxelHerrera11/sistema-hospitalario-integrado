@@ -1,0 +1,32 @@
+Verificación de los SVG del módulo (2026-10-23): cada archivo se carga con simplexml_load_file.
+
+OK   docs/expedientes-medicos/semana-01/01-casos-de-uso.svg  ← fuentes/01-casos-de-uso.mmd
+OK   docs/expedientes-medicos/semana-01/02-actividad.svg  ← fuentes/02-actividad.mmd
+OK   docs/expedientes-medicos/semana-01/03-secuencia.svg  ← fuentes/03-secuencia.mmd
+OK   docs/expedientes-medicos/semana-02/01-dip-antes.svg  ← fuentes/01-dip-antes.mmd
+OK   docs/expedientes-medicos/semana-02/02-dip-despues.svg  ← fuentes/02-dip-despues.mmd
+OK   docs/expedientes-medicos/semana-03/01-c4-contexto.svg  ← fuentes/01-c4-contexto.mmd
+OK   docs/expedientes-medicos/semana-03/02-c4-contenedores.svg  ← fuentes/02-c4-contenedores.mmd
+OK   docs/expedientes-medicos/semana-03/03-componentes-capas.svg  ← fuentes/03-componentes-capas.mmd
+OK   docs/expedientes-medicos/semana-04/01-mvc-repository.svg  ← fuentes/01-mvc-repository.mmd
+OK   docs/expedientes-medicos/semana-04/02-repositorio-compartido.svg  ← fuentes/02-repositorio-compartido.mmd
+OK   docs/expedientes-medicos/semana-05/01-cliente-servidor.svg  ← fuentes/01-cliente-servidor.mmd
+OK   docs/expedientes-medicos/semana-05/02-frontera-microservicio.svg  ← fuentes/02-frontera-microservicio.mmd
+OK   docs/expedientes-medicos/semana-05/03-secuencia-apertura.svg  ← fuentes/03-secuencia-apertura.mmd
+OK   docs/expedientes-medicos/semana-06/01-trazabilidad.svg  ← fuentes/01-trazabilidad.mmd
+OK   docs/expedientes-medicos/semana-07/01-componentes.svg  ← fuentes/01-componentes.mmd
+OK   docs/expedientes-medicos/semana-07/02-refactor-antes.svg  ← fuentes/02-refactor-antes.mmd
+OK   docs/expedientes-medicos/semana-07/03-refactor-despues.svg  ← fuentes/03-refactor-despues.mmd
+OK   docs/expedientes-medicos/semana-08/01-flujo-medico.svg  ← fuentes/01-flujo-medico.mmd
+OK   docs/expedientes-medicos/semana-08/02-flujo-recepcion.svg  ← fuentes/02-flujo-recepcion.mmd
+OK   docs/expedientes-medicos/semana-08/03-flujo-enfermeria-admin.svg  ← fuentes/03-flujo-enfermeria-admin.mmd
+OK   docs/expedientes-medicos/semana-08/wireframes/wf-01-busqueda.svg  (fuente: el propio SVG)
+OK   docs/expedientes-medicos/semana-08/wireframes/wf-02-expediente-longitudinal.svg  (fuente: el propio SVG)
+OK   docs/expedientes-medicos/semana-08/wireframes/wf-03-acceso-denegado.svg  (fuente: el propio SVG)
+OK   docs/expedientes-medicos/semana-08/wireframes/wf-04-confirmacion-apertura.svg  (fuente: el propio SVG)
+OK   docs/expedientes-medicos/semana-08/wireframes/wf-05-errores-recuperables.svg  (fuente: el propio SVG)
+OK   docs/expedientes-medicos/semana-11/01-mapa-navegacion.svg  ← fuentes/01-mapa-navegacion.mmd
+OK   docs/expedientes-medicos/semana-13/01-proceso-revision.svg  ← fuentes/01-proceso-revision.mmd
+OK   docs/expedientes-medicos/semana-14/01-matriz-riesgos.svg  ← fuentes/01-matriz-riesgos.mmd
+
+28 SVG, 0 con XML inválido.

@@ -1,0 +1,12 @@
+%% ANTES (conceptual, no implementado): un solo caso de uso decide acceso, integridad, auditoría y forma de los datos.
+flowchart TB
+    C["ConsultaExpediente::execute()"]
+    C --> P1["¿rol medico/enfermeria? (lee roles)"]
+    C --> P2["SELECT paciente"]
+    C --> P3["SELECT asignación"]
+    C --> P4["SELECT expediente + episodios"]
+    C --> P5["arma arreglo con nombre, contacto, motivos"]
+    C --> P6["INSERT auditoría con el arreglo como detalle"]
+    C --> P7["return arreglo al controlador"]
+    X["Acoplamiento: acceso + integridad + datos sensibles + persistencia en una función;<br/>un cambio de política obliga a tocar SQL y forma de la respuesta"]
+    C --- X

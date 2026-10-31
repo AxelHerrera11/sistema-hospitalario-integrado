@@ -32,7 +32,7 @@ function api(bool $rbacDown = false, array &$log = []): ApiKernel
         'recepcion1' => ['medicos.ver_disponibilidad'],
     ], $rbacDown);
     $sequence = 0;
-    return medicos_api($doctors, new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => ['08:30']]]), new ConfigScheduleProvider(['doc-ana' => [1 => [['08:00', '09:30']]]]),
+    return medicos_api($doctors, new InMemoryAppointmentReader(['doc-ana' => ['2026-10-19' => [['08:30', '09:00']]]]), new ConfigScheduleProvider(['doc-ana' => [1 => [['08:00', '09:30']]]]),
         $permissions, static function () use (&$sequence): string { return 'trace-' . ++$sequence; }, static function (array $entry) use (&$log): void { $log[] = $entry; });
 }
 

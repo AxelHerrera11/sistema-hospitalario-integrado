@@ -49,6 +49,17 @@ El dashboard es un **agregador (API composition)**: no es dueno de los datos cli
 Regla de integracion: ningun modulo lee las tablas de otro; toda dependencia pasa por un
 contrato API versionado (`/api/v1`) a traves del gateway, con JWT y `X-Tenant-ID`.
 
+## Resiliencia, observabilidad, consistencia y migracion (propuesta)
+
+> **Propuesta de diseno** redactada durante la integracion del PR a partir del contrato y la arquitectura de esta semana. No esta implementada ni probada y la autora no la ha confirmado como decision del modulo.
+
+| Aspecto | Propuesta para el dashboard base |
+|---|---|
+| Resiliencia | El tablero compone indicadores de varios proveedores (Citas, Ocupacion): timeout por proveedor y respuesta parcial, de modo que un proveedor caido deja su tarjeta en estado `error` del contrato UI base sin hacer fallar todo `GET /tablero`. Sin reintentos agresivos; un circuit breaker por proveedor evita esperar en cada carga. |
+| Observabilidad | `X-Correlation-ID` propagado a cada proveedor; metricas por proveedor (latencia y errores) y porcentaje de tableros servidos parcialmente; logs con la clave del indicador y el periodo, sin datos clinicos. |
+| Consistencia | Read model eventual: cada indicador refleja el estado del proveedor en el momento de la consulta, por lo que se propone mostrar la hora de calculo por tarjeta. El recurso es de solo lectura (`405` en escritura), asi que no hay transacciones distribuidas. |
+| Migracion razonada | Se mantiene en el monolito modular. Disparador medible para un BFF separado: p95 de `GET /tablero` por encima del objetivo o un numero de proveedores que haga costosa la composicion. Pasos: (1) extraer `ObtenerTablero` a un BFF que conserve `GET /tablero?periodo=`; (2) cache por periodo y rol; (3) el gateway enruta `/tablero` al BFF; (4) para revertir, volver a enrutar al monolito. |
+
 ## Requisitos y criterios de aceptacion
 
 - **RF-01**: exponer `GET /tablero` sobre el Micro-HIS de la Semana 4.
