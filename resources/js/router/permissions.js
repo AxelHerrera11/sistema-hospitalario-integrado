@@ -32,6 +32,7 @@ export const ROUTE_PERMISSIONS = {
     'lab-results': 'lab-results.read',
     reportes: 'reportes.ver',
     alergias: 'alergias.ver',
+    auditoria: 'auditoria.ver',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
@@ -62,7 +63,7 @@ export const NAVIGATION = [
     { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
-    { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
+    { label: 'Auditoría', to: '/auditoria', permission: ROUTE_PERMISSIONS.auditoria },
     { label: 'Documentación', to: null, permission: 'documentacion.ver', soon: true },
 ];
 
