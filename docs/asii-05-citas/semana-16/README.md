@@ -55,7 +55,7 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 - RTF-03 (C-09): las fechas con zona horaria se normalizan a UTC antes de guardar; la prueba lo verifica (`09:00-06:00` -> `15:00+00:00`).
 - RTF-05 (C-06): las rutas exigen la guarda de base HOSPITAL del tenant (`EnsureHospitalDatabaseTenant`).
 
-**Hallazgo nuevo durante la integracion:** El cast `datetime` del modelo `Appointment` descartaba el offset al guardar (`09:00-06:00` quedaba como `09:00`). Lo detecto la prueba de solape y se corrige en el controlador.
+**Hallazgo nuevo durante la integracion:** El cast `datetime` del modelo `Appointment` descartaba el offset al guardar (`09:00-06:00` quedaba como `09:00`). El controlador normaliza a UTC, pero eso no bastaba: el modelo guardaba la hora UTC sin zona y PostgreSQL la leia en la zona de su sesion. La correccion final es `Appointment::$dateFormat = 'Y-m-d H:i:sP'` (#1612).
 
 ## Evidencia
 
@@ -95,11 +95,11 @@ Recepcion de muestras (33), Salas y camas (10) e Indicadores (3): todos necesita
 
 ## Lo que no se verifico y dependencias
 
-- **PostgreSQL real:** en este equipo no hay PostgreSQL ni Docker; las pruebas Feature usan dobles del
-  repositorio/fuente y las rutas, middlewares y matriz RBAC reales. La consulta contra HOSPITAL queda
-  pendiente de un recorrido con base real.
-- **Supuesto pendiente de validar:** la conexion `hospital` no fija `timezone`; se asume UTC como en
-  `config/app.php`. Debe confirmarlo plataforma y fijarse en la configuracion compartida.
+- **PostgreSQL real:** en el equipo de la autora no habia PostgreSQL; las pruebas Feature usan dobles. La integradora
+  recorrio la API completa contra PostgreSQL 17 local con el repositorio, RBAC y guarda reales (alta 201, solape 409,
+  confirmar, cancelar, finalizada inmutable 409, DELETE 405, 404, 403 por rol y por hospital) en la revision de #1612.
+- **Zona horaria (resuelto en #1612):** con un servidor PostgreSQL en `America/Guatemala` la cita quedaba 6 horas
+  despues; ahora se guarda con desfase y no depende de la zona de la sesion.
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-05-semana-16-api-lis671`
   (API y pruebas, PR #1612 hacia `develop`) y parte 2 `feature/asii-05-semana-16-evidencia-lis671`
   (esta evidencia, PR #1616 sobre la parte 1). La parte 2 se reapunta a `develop` cuando se fusione la
