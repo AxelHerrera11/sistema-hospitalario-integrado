@@ -27,17 +27,17 @@ final class LabOrderController extends Controller
         $data = $request->validate([
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'from' => ['nullable', 'date_format:Y-m-d'],
-            'to' => ['nullable', 'date_format:Y-m-d'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
         ]);
         $query = DB::connection('hospital')->table('lab_orders')->where('tenant_id', $tenant)->orderByDesc('created_at');
         if (is_string($request->query('patient_id'))) $query->where('local_patient_id', $request->query('patient_id'));
         if (is_string($request->query('status'))) $query->where('status', $request->query('status'));
-        if (isset($data['from'])) $query->where('created_at', '>=', $data['from'].' 00:00:00');
-        if (isset($data['to'])) $query->where('created_at', '<', date('Y-m-d', strtotime($data['to'].' +1 day')).' 00:00:00');
+        if (isset($data['from'])) $query->where('created_at', '>=', $this->dateBoundary($data['from'], false));
+        if (isset($data['to'])) $query->where('created_at', '<', $this->dateBoundary($data['to'], true));
         $page = (int) ($data['page'] ?? 1);
         $perPage = (int) ($data['per_page'] ?? 50);
-        $total = (clone $query)->count();
+        $total = (clone $query)->reorder()->count();
         $orders = $query->forPage($page, $perPage)->get()->map(fn ($row): array => $this->order($row))->values();
         return $this->json(['lab_orders' => $orders, 'pagination' => [
             'page' => $page, 'per_page' => $perPage, 'total' => $total,
@@ -169,6 +169,14 @@ final class LabOrderController extends Controller
     }
 
     private function order(object $row): array { return (array) $row; }
+    private function dateBoundary(string $value, bool $exclusiveEnd): string
+    {
+        $date = new \DateTimeImmutable($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1) {
+            $date = $exclusiveEnd ? $date->modify('+1 day') : $date;
+        }
+        return $date->format('Y-m-d H:i:sP');
+    }
     private function requestId(Request $request): string { return (string) ($request->header('X-Request-ID') ?: 'req-'.bin2hex(random_bytes(8))); }
     private function json(array $data, int $status, string $requestId): JsonResponse { return response()->json(['data' => $data, 'meta' => ['request_id' => $requestId, 'correlation_id' => $data['lab_order']['correlation_id'] ?? null]], $status)->header('Cache-Control', 'no-store, private'); }
     private function error(string $code, int $status, string $requestId): JsonResponse { return response()->json(['error' => ['code' => $code], 'meta' => ['request_id' => $requestId]], $status)->header('Cache-Control', 'no-store, private'); }
