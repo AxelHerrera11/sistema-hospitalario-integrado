@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, 'hospitalUsers.js'), 'utf8');
-const { accionesPara, confirmacion, etiquetaRol, mensajeDeError, ROLES, rolesAsignables } =
+const { accionesPara, confirmacion, estadoDe, etiquetaRol, iniciales, mensajeDeError, resumen, ROLES, rolesAsignables } =
     await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 const admin = 'a1';
@@ -40,5 +40,16 @@ assert.equal(etiquetaRol('tecnico_laboratorio'), 'Técnico de laboratorio');
 assert.equal(etiquetaRol('otro'), 'otro');
 assert.equal(confirmacion('retirar', activo, 'medico'), '¿Retirar el rol «Medicina» a Ana Gómez?');
 assert.match(confirmacion('desactivar', { email: 'x@demo.test' }), /x@demo\.test/);
+
+
+// Presentación: iniciales, estado en español y resumen de la página.
+assert.equal(iniciales(activo), 'AG');
+assert.equal(iniciales({ email: 'luis.perez@demo.test' }), 'LP');
+assert.equal(iniciales({}), '?');
+assert.deepEqual(estadoDe('active'), { etiqueta: 'Activo', tono: 'ok' });
+assert.equal(estadoDe('inactive').etiqueta, 'Inactivo');
+assert.deepEqual(estadoDe('raro'), { etiqueta: 'raro', tono: 'off' });
+assert.deepEqual(resumen([activo, { status: 'inactive', roles: [] }], 40), { total: 40, activos: 1, sinRoles: 1 });
+assert.deepEqual(resumen(undefined), { total: 0, activos: 0, sinRoles: 0 });
 
 console.log('hospitalUsers.test.mjs: OK');
