@@ -24,8 +24,22 @@
                 aria-label="Navegación principal"
             >
                 <template v-for="item in navigation" :key="item.label">
+                    <details v-if="item.children" class="layout__group" open>
+                        <summary class="layout__group-title">{{ item.label }}</summary>
+                        <div class="layout__group-links">
+                            <router-link
+                                v-for="child in item.children"
+                                :key="child.label"
+                                class="layout__link layout__link--child"
+                                :to="child.to"
+                                @click="closeSidebar"
+                            >
+                                {{ child.label }}
+                            </router-link>
+                        </div>
+                    </details>
                     <router-link
-                        v-if="item.to"
+                        v-else-if="item.to"
                         class="layout__link"
                         :to="item.to"
                         @click="closeSidebar"
@@ -98,9 +112,8 @@ watch(() => auth.token, (token) => {
 const isGuest = computed(() => route.name === 'login');
 const userName = computed(() => auth.user?.display_name ?? 'Usuario');
 
-/* Gating por permisos efectivos: los permisos llegan de la API y el
- * backend sigue siendo la autoridad final. Las entradas sin `to` se
- * muestran como «próximamente» hasta que su módulo registre la ruta. */
+/* Gating por permisos efectivos: los permisos llegan de la API y el backend
+ * sigue siendo la autoridad final. */
 const navigation = computed(() => visibleNavigation(auth.user));
 
 watch(() => route.fullPath, () => {
@@ -260,6 +273,47 @@ async function logout() {
     background: #eef2ff;
 }
 
+.layout__group {
+    margin: 0.15rem 0;
+}
+
+.layout__group-title {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    color: #1e293b;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+
+.layout__group-title::-webkit-details-marker {
+    display: none;
+}
+
+.layout__group-title::before {
+    content: '▸';
+    display: inline-block;
+    width: 1rem;
+}
+
+.layout__group[open] .layout__group-title::before {
+    content: '▾';
+}
+
+.layout__group-title:hover {
+    background: #eef2ff;
+}
+
+.layout__group-links {
+    display: grid;
+    gap: 2px;
+    padding-left: 0.75rem;
+}
+
+.layout__link--child {
+    padding-left: 1.5rem;
+}
+
 .layout__link--soon {
     color: #94a3b8;
     display: flex;
@@ -270,8 +324,6 @@ async function logout() {
 .layout__link--soon small {
     font-size: 0.7rem;
 }
-
-
 .layout__logout {
     border: 1px solid #cbd5e7;
     border-radius: 8px;

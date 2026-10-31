@@ -36,8 +36,8 @@ export const ROUTE_PERMISSIONS = {
     auditoria: 'auditoria.ver',
 };
 
-/** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
- * muestran como «próximamente» hasta que su módulo registre la ruta. */
+/** Entradas de navegación sujetas a permiso. Los grupos contienen únicamente
+ * las opciones que el usuario puede ver según sus permisos efectivos. */
 export const NAVIGATION = [
     { label: 'Inicio', to: '/', permission: null },
     { label: 'Ocupación', to: '/ocupacion', permission: ROUTE_PERMISSIONS.ocupacion },
@@ -48,7 +48,17 @@ export const NAVIGATION = [
     { label: 'Salas y camas', to: '/wards', permission: ROUTE_PERMISSIONS.wards },
     { label: 'Medicamentos', to: '/medicamentos', permission: ROUTE_PERMISSIONS.medicamentos },
     { label: 'Médicos', to: '/medicos', permission: ROUTE_PERMISSIONS.medicos },
-    { label: 'Catálogo de laboratorio', to: '/laboratorio/catalogo', permission: ROUTE_PERMISSIONS['catalogo-lab'] },
+    {
+        label: 'Laboratorio',
+        children: [
+            { label: 'Catálogo de laboratorio', to: '/laboratorio/catalogo', permission: ROUTE_PERMISSIONS['catalogo-lab'] },
+            { label: 'Recepción de muestras', to: '/recepcion-muestras', permission: ROUTE_PERMISSIONS.recepcion },
+            { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
+            { label: 'Órdenes de laboratorio', to: '/lab-orders', permission: ROUTE_PERMISSIONS['lab-orders'] },
+            { label: 'Validación bioquímica', to: '/lab-validation', permission: ROUTE_PERMISSIONS['lab-validation'] },
+            { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
+        ],
+    },
     { label: 'Traslados y altas', to: '/traslados', permission: ROUTE_PERMISSIONS.traslados },
     { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
@@ -59,11 +69,6 @@ export const NAVIGATION = [
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
     { label: 'Prescripciones', to: '/prescripciones', permission: ROUTE_PERMISSIONS.prescripciones },
-    { label: 'Recepción de muestras', to: '/recepcion-muestras', permission: ROUTE_PERMISSIONS.recepcion },
-    { label: 'Ingreso de resultados', to: '/lab-results', permission: ROUTE_PERMISSIONS['lab-results'] },
-    { label: 'Órdenes de laboratorio', to: '/lab-orders', permission: ROUTE_PERMISSIONS['lab-orders'] },
-    { label: 'Validación bioquímica', to: '/lab-validation', permission: ROUTE_PERMISSIONS['lab-validation'] },
-    { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
     { label: 'Auditoría', to: '/auditoria', permission: ROUTE_PERMISSIONS.auditoria },
     { label: 'Documentación de APIs', to: '/documentacion', permission: 'documentacion.ver' },

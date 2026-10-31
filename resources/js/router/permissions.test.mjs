@@ -81,20 +81,29 @@ assert.deepEqual(conTraslados.filter((entry) => entry.to === '/traslados').map((
 assert.equal(visibleNavigation(sessionUser).some((entry) => entry.to === '/traslados'), false);
 
 const laboratoryUser = { permissions: ['laboratorio.ordenes.ver', 'lab-results.read'] };
-assert.deepEqual(visibleNavigation(laboratoryUser).filter((entry) => entry.to?.startsWith('/lab-')).map((entry) => entry.label), ['Ingreso de resultados', 'Órdenes de laboratorio']);
+const laboratoryMenu = visibleNavigation(laboratoryUser).find((entry) => entry.label === 'Laboratorio');
+assert.deepEqual(laboratoryMenu.children.map((entry) => entry.label), ['Ingreso de resultados', 'Órdenes de laboratorio', 'Extensión NativePHP']);
 assert.equal(visibleNavigation({ permissions: ['documentacion.ver'] }).find((entry) => entry.to === '/documentacion').label, 'Documentación de APIs');
 
 // Cada entrada de navegacion declara un permiso del catalogo del backend
 // o es una ruta publica sin permiso (con `to` definido).
 const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');
-NAVIGATION.forEach((entry) => {
-    if (entry.permission === null) {
-        assert.ok(entry.to, `entrada sin permiso debe declarar ruta: ${entry.label}`);
-        assert.equal(entry.to, '/', 'la unica entrada sin permiso es la ruta publica inicial');
-        return;
-    }
-    assert.ok(catalog.includes(`'${entry.permission}'`), `entrada fuera del catalogo del backend: ${entry.to}`);
-});
+function assertCataloguedEntries(entries) {
+    entries.forEach((entry) => {
+        if (Array.isArray(entry.children)) {
+            assert.ok(entry.children.length > 0, `grupo vacío: ${entry.label}`);
+            assertCataloguedEntries(entry.children);
+            return;
+        }
+        if (entry.permission === null) {
+            assert.ok(entry.to, `entrada sin permiso debe declarar ruta: ${entry.label}`);
+            assert.equal(entry.to, '/', 'la unica entrada sin permiso es la ruta publica inicial');
+            return;
+        }
+        assert.ok(catalog.includes(`'${entry.permission}'`), `entrada fuera del catalogo del backend: ${entry.to}`);
+    });
+}
+assertCataloguedEntries(NAVIGATION);
 
 // Las acciones de Pacientes usan el permiso de la accion, no el de lectura.
 assert.equal(ROUTE_PERMISSIONS.patients, 'pacientes.ver');

@@ -109,7 +109,7 @@ const documents = [
     { label: 'Contrato de NativePHP', href: 'https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/blob/develop/docs/nativephp/semana-05/contrato-api.md', description: 'Acciones locales y límites de sincronización.' },
     { label: 'OpenAPI de recepción', href: 'https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/blob/develop/docs/recepcion-muestras/semana-05/openapi.yaml', description: 'Contrato OpenAPI de recepción de muestras.' },
     { label: 'OpenAPI del catálogo', href: 'https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/blob/develop/micro-his/catalogo-pruebas-lab/openapi.yaml', description: 'Contrato OpenAPI del catálogo de pruebas.' },
-    { label: 'Documentación de instalación', href: 'https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/blob/develop/docs/README-INSTALACION-BACKEND.md', description: 'Configuración local, base API y tenant.' },
+    { label: 'README del sistema e instalación', href: 'https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/blob/develop/README.md', description: 'Alcance general, configuración local, base API y tenant.' },
     { label: 'Rutas API del backend', href: 'https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/blob/develop/routes/api.php', description: 'Fuente de verdad de métodos, rutas y middlewares.' },
 ];
 </script>
