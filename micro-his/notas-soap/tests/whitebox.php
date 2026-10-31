@@ -61,7 +61,7 @@ $guard = new TreatingPhysicianGuard(new InMemoryCareAssignmentReader(['ep1' => [
 $resultado = static fn (string $user, ?string $author): string => outcome(fn () => $guard->assertAllowed($user, 'ep1', $author));
 check('W-08', 'Condiciones del guardia · sin autor y tratante pasa; sin autor y no tratante falla; autor ajeno falla aunque sea tratante; autor propio pasa', $resultado('dra.lopez', null) === 'ok' && $resultado('dr.perez', null) === 'NOT_TREATING_PHYSICIAN' && $resultado('dr.ruiz', 'dra.lopez') === 'NOT_TREATING_PHYSICIAN' && $resultado('dra.lopez', 'dra.lopez') === 'ok');
 
-// Defecto D-02: entre la lectura de la nota y la escritura otra sesión puede firmarla, y el diagnóstico se guarda igual.
+// D-02: entre la lectura de la nota y la escritura otra sesión puede firmarla; el repositorio lo vuelve a comprobar al escribir y rechaza.
 [, $repo, $id] = flow();
 $firmaEnMedio = new class($repo) implements ClinicalNoteRepository {
     public function __construct(private readonly InMemoryClinicalNoteRepository $inner)
@@ -86,7 +86,7 @@ $firmaEnMedio = new class($repo) implements ClinicalNoteRepository {
     }
 };
 $carrera = new AssociateDiagnosis(new TreatingPhysicianGuard(new InMemoryCareAssignmentReader(['ep1' => ['dra.lopez']])), new InMemoryIcd10Catalog(['J18.9' => ['Neumonía', true]]), new DiagnosisPolicy(), $firmaEnMedio);
-$carrera->execute('dra.lopez', $id, new Diagnosis('J18.9', 'primary'));
-defect('D-02', 'W-09', 'Una nota firmada entre la lectura y la escritura no recibe el diagnóstico', ($repo->diagnoses[$id] ?? []) === []);
+$rechazo = outcome(fn () => $carrera->execute('dra.lopez', $id, new Diagnosis('J18.9', 'primary')));
+check('W-09', 'Una nota firmada entre la lectura y la escritura no recibe el diagnóstico y responde NOTE_SIGNED (D-02)', $rechazo === 'NOTE_SIGNED' && ($repo->diagnoses[$id] ?? []) === []);
 
 summary();

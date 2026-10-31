@@ -12,7 +12,7 @@ return [
         'superadmin' => [
             'citas.ver', 'citas.crear', 'citas.confirmar',
             'citas.cancelar', 'reportes.ver', 'reportes.exportar',
-            'documentacion.ver', 'admision.ver', 'expediente.ver',
+            'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir',
             'medicamentos.ver', 'laboratorio.ver', 'auditoria.ver',
             'signos_vitales.corregir', 'alertas.supervisar',
             'admisiones.registrar', 'admisiones.ver', 'camas.asignar',
@@ -27,6 +27,7 @@ return [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
@@ -42,13 +43,16 @@ return [
             'medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            // ASII-25: calidad de versiones (ejecuciones automatizadas y quality gate), decisión del 30/10/2026.
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
         ],
         'medico' => [
             // ASII-08: el médico da el alta y consulta la estancia.
             'altas.registrar', 'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
-            'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
+            // ASII-25: el médico abre el expediente longitudinal; enfermería solo lo consulta.
+            'expediente.ver', 'expediente.abrir', 'medicamentos.ver', 'laboratorio.ver',
             'signos_vitales.corregir',
             'admisiones.ver', 'alergias.resolver', 'notas_soap.ver',
             'notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.firmar',
@@ -118,7 +122,7 @@ return [
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
         'citas.cancelar', 'reportes.ver', 'reportes.exportar',
-        'documentacion.ver', 'admision.ver', 'expediente.ver',
+        'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir',
         'medicamentos.ver', 'laboratorio.ver', 'auditoria.ver',
         'signos_vitales.corregir', 'alertas.supervisar',
         'admisiones.registrar', 'admisiones.ver', 'camas.asignar',
@@ -139,5 +143,6 @@ return [
         'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
         'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         'traslados.registrar', 'altas.registrar', 'traslados.ver',
+        'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
     ],
 ];

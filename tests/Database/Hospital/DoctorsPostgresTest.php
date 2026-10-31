@@ -114,6 +114,30 @@ final class DoctorsPostgresTest extends TestCase
         $this->assertSame(['08:00', '08:20', '08:40', '09:00', '09:20', '09:40'], $slots, 'horario 08:00-10:00 con bloques de 20 minutos');
     }
 
+    public function test_la_inyeccion_sql_se_guarda_como_texto_en_postgresql(): void
+    {
+        $license = "X'); DROP TABLE doctor_profiles;--";
+
+        $created = $this->send('POST', '/doctors', ['license_number' => $license] + self::ALTA);
+        $byEquality = $this->send('GET', '/availability', query: ['specialty' => "NEURO' OR '1'='1", 'date' => '2026-10-19']);
+        $byPath = $this->send('POST', "/doctors/x' OR '1'='1/specialties", ['specialty_code' => 'CARD', 'valid_from' => '2026-02-01']);
+
+        $this->assertSame(201, $created['status']);
+        $this->assertSame(mb_strtoupper($license), $this->hospital()->scalar('SELECT license_number FROM doctor_profiles'), 'la tabla existe y guarda el texto literal');
+        $this->assertSame([422, 'SPECIALTY_INACTIVE'], [$byEquality['status'], $byEquality['body']['code']]);
+        $this->assertSame([404, 'ROUTE_NOT_FOUND'], [$byPath['status'], $byPath['body']['code']]);
+    }
+
+    public function test_los_campos_desmesurados_no_llegan_a_postgresql(): void
+    {
+        $tooLong = $this->send('POST', '/doctors', ['license_number' => str_repeat('L', 10_000)] + self::ALTA);
+        $limit = $this->send('POST', '/doctors', ['license_number' => str_repeat('L', 64)] + self::ALTA);
+
+        $this->assertSame([422, 'PAYLOAD_INVALID'], [$tooLong['status'], $tooLong['body']['code']]);
+        $this->assertSame(201, $limit['status']);
+        $this->assertSame(1, (int) $this->hospital()->scalar('SELECT count(*) FROM doctor_profiles'));
+    }
+
     /** Médico con CARD principal y NEURO secundaria desde enero, y horario de lunes 08:00-10:00 en NEURO (el trigger exige el vínculo). */
     private function doctorWithSchedule(int $slotMinutes = 30): string
     {
