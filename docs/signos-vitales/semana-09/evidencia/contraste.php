@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Evidencia de la Semana 9: razón de contraste WCAG 2.x (luminancia relativa) de los colores que el diseño de la Semana 8
- * usa para la severidad, «no evaluado», errores y texto de ayuda. Los tonos son los de la paleta Tailwind 4 (la que usa el HIS);
+ * usa para la severidad, «no evaluado», errores y texto de ayuda. Los tonos son los valores hex de Tailwind v3 (el HIS usa Tailwind 4, que los define en OKLCH);
  * el repositorio todavía no define los colores del módulo, así que la tabla fija el mínimo que deberá respetar.
  * Uso: php docs/signos-vitales/semana-09/evidencia/contraste.php
  */

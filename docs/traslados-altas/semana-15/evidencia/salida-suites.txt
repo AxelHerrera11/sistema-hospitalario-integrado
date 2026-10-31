@@ -1,0 +1,8 @@
+# php micro-his/traslados-altas/tests/run.php — 21/10/2026, develop 159de67
+OK: 101 verificaciones aprobadas
+# TRASLADOS_PG_DSN=…his_hospital_traslados_test php micro-his/traslados-altas/tests/postgres.php
+OK: 20 verificaciones aprobadas
+# node --test micro-his/traslados-altas/tests/ui-mensajes.test.mjs
+ℹ tests 7
+ℹ pass 7
+ℹ fail 0

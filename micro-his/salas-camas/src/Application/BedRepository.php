@@ -7,5 +7,6 @@ use MicroHis\SalasCamas\Domain\Bed;
 
 interface BedRepository
 {
+    public function listByWardId(string $wardId): array;
     public function insertBed(Bed $bed): Bed;
 }

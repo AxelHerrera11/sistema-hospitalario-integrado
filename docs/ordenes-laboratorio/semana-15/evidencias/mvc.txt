@@ -1,0 +1,13 @@
+PASS  sin usuario → 401
+PASS  el controlador delega la emisión → 201
+PASS  consulta JSON de la orden → 200
+PASS  la View HTML lista las pruebas
+PASS  la View escapa el texto dinámico
+PASS  PATCH a COLLECTED → 200
+PASS  transición inválida → 409
+PASS  cancelación con motivo → 200 CANCELLED
+PASS  orden inexistente → 404
+PASS  ruta desconocida → 404
+PASS  listado filtrado por estado → 1
+PASS  per_page fuera de rango → 422
+OK: verificaciones MVC aprobadas

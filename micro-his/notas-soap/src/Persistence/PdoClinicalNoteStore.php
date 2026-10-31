@@ -8,6 +8,7 @@ use MicroHis\NotasSoap\Application\AuditTrail;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
+use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
 use MicroHis\NotasSoap\Domain\Uuid;
 use PDO;
@@ -22,18 +23,19 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
 
     public function find(string $noteId): ?ClinicalNote
     {
-        $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
+        $note = $this->rows('SELECT care_episode_id, author_user_ref_id, status, content FROM clinical_notes WHERE clinical_note_id = ?', [$noteId])[0] ?? null;
         $diagnoses = $this->rows("SELECT code, type FROM diagnoses WHERE clinical_note_id = ? AND status = 'active'", [$noteId]);
         return $note === null ? null : new ClinicalNote($noteId, $note['care_episode_id'], $note['author_user_ref_id'], $note['status'],
-            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $diagnoses));
+            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $diagnoses), SoapSections::fromJson($note['content']));
     }
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string
     {
         $id = Uuid::v4();
-        $this->transaction(function () use ($id, $episodeId, $authorId, $sections): void {
-            $this->pdo->prepare("INSERT INTO clinical_notes (clinical_note_id, care_episode_id, author_user_ref_id, note_type, content) VALUES (?, ?, ?, 'soap', ?)")
-                ->execute([$id, $episodeId, $authorId, $sections->toJson()]);
+        $recordId = $this->openMedicalRecord($episodeId);
+        $this->transaction(function () use ($id, $recordId, $episodeId, $authorId, $sections): void {
+            $this->pdo->prepare("INSERT INTO clinical_notes (clinical_note_id, medical_record_id, care_episode_id, author_user_ref_id, note_type, content, version_no) VALUES (?, ?, ?, ?, 'soap', ?, 1)")
+                ->execute([$id, $recordId, $episodeId, $authorId, $sections->toJson()]);
             $this->audit->record($authorId, 'nota_soap.registrada', 'clinical_note', $id, $episodeId, ['version_no' => 1]);
         });
         return $id;
@@ -47,6 +49,13 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
                 ->execute([$id, $note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
             $this->audit->record($note->authorId, 'diagnostico.asociado', 'diagnosis', $id, $note->episodeId, ['clinical_note_id' => $note->id, 'code' => $diagnosis->code, 'type' => $diagnosis->type]);
         });
+    }
+
+    /** El expediente abierto del paciente del episodio. Crearlo es de Expediente: sin él no se escribe (409) en lugar de inventarlo. */
+    private function openMedicalRecord(string $episodeId): string
+    {
+        $record = $this->rows("SELECT r.medical_record_id FROM care_episodes e JOIN medical_records r ON r.local_patient_id = e.local_patient_id AND r.status = 'open' WHERE e.care_episode_id = ?", [$episodeId])[0] ?? null;
+        return $record['medical_record_id'] ?? throw new SoapRuleViolation('MEDICAL_RECORD_NOT_FOUND', 409);
     }
 
     /** Todo o nada: si falla cualquier INSERT (incluida la auditoría) se revierte y se informa un error de persistencia. */

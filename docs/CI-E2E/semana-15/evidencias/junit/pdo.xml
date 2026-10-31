@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.pdo" tests="15" failures="0">
+    <testcase name="[P01] El agregado se reconstruye con estado, plan y resultado" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P02] La evidencia conserva ruta y huella" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P03] find() de otro tenant devuelve null (aislamiento por consulta)" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P04] Un resultado ya guardado no se sobrescribe aunque se fuerce el objeto" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P05] latestDecision devuelve la última insertada; las anteriores se conservan" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P06] latestDecision de otro tenant → null" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P07] Hallazgos sobreviven la serialización" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P08] Un id con comillas se trata como dato, no como SQL" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P09] listByTenant con LIMIT ligado como entero" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P10] Tabla ausente → QaStorageFailure (no PDOException)" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P11] La API responde 503 QA_STORAGE_UNAVAILABLE" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P12] Fila corrupta (plan_json inválido) → QaStorageFailure" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P13a] El esquema rechaza un status fuera del enum (CHECK)" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P13] Plan vacío guardado (viola regla de dominio) → QaStorageFailure (no 422)" classname="qa-calidad.pdo" time="0.000"/>
+    <testcase name="[P14] Fallo a mitad de la transacción → rollback, sin resultado parcial" classname="qa-calidad.pdo" time="0.000"/>
+  </testsuite>
+</testsuites>

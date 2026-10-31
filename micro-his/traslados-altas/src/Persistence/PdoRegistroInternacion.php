@@ -55,11 +55,17 @@ final class PdoRegistroInternacion implements RegistroInternacion
 
     public function leerCama(string $camaId, DateTimeImmutable $t): ?CamaDestino
     {
-        $cama = $this->fila('SELECT status, NOT EXISTS (SELECT 1 FROM bed_stays s WHERE s.bed_id = b.bed_id
-                AND tstzrange(s.started_at, COALESCE(s.ended_at, \'infinity\'), \'[)\') && tstzrange(CAST(:t AS timestamptz), \'infinity\', \'[)\')) AS libre
-            FROM beds b WHERE b.bed_id = :id FOR UPDATE OF b', ['id' => $camaId, 't' => $t->format(self::MARCA)]);
+        // Dos sentencias a propósito (defecto hallado en la Semana 15 con conexiones independientes): en READ COMMITTED,
+        // una subconsulta dentro de la misma sentencia que espera el FOR UPDATE usa la instantánea previa a la espera y
+        // no ve la estancia que otra transacción acaba de confirmar. La comprobación posterior toma una instantánea nueva.
+        $cama = $this->fila('SELECT status FROM beds WHERE bed_id = :id FOR UPDATE', ['id' => $camaId]);
+        if ($cama === null) {
+            return null;
+        }
+        $libre = $this->fila('SELECT NOT EXISTS (SELECT 1 FROM bed_stays WHERE bed_id = :id AND tstzrange(started_at, COALESCE(ended_at, \'infinity\'), \'[)\')
+            && tstzrange(CAST(:t AS timestamptz), \'infinity\', \'[)\')) AS libre', ['id' => $camaId, 't' => $t->format(self::MARCA)]);
 
-        return $cama === null ? null : new CamaDestino($camaId, $cama['status'], (bool) $cama['libre']);
+        return new CamaDestino($camaId, $cama['status'], (bool) $libre['libre']);
     }
 
     public function cerrarEstancia(string $estanciaId, DateTimeImmutable $t): void

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600" font-family="Segoe UI, sans-serif" font-size="12">
+
+  <text x="20" y="26" font-size="17" font-weight="bold">ASII-23 - Semana 8 - Wireframe de estados de la pantalla Reportes</text>
+  <text x="20" y="46" fill="#666">Estados reales del componente ReportsPage.vue; zorro gris sin estetica final (wireframe).</text>
+
+  <!-- Estado 1: resultado exitoso -->
+  <g>
+    <rect x="20" y="70" width="400" height="238" rx="8" fill="#FFFFFF" stroke="#78909C"/>
+    <text x="36" y="94" font-weight="bold" font-size="13">Estado A: resultado ok (25.00 %)</text>
+
+    <rect x="36" y="106" width="368" height="20" fill="#ECEFF1" stroke="#B0BEC5"/>
+    <text x="42" y="120" fill="#555">Reportes (h1, aria-labelledby reportes-title)</text>
+
+    <rect x="36" y="134" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="44" y="149" fill="#555">Desde [date] 2026-01-01</text>
+    <rect x="216" y="134" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="224" y="149" fill="#555">Hasta [date] 2026-02-01</text>
+    <rect x="36" y="160" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="44" y="175" fill="#555">Sala (service_code)</text>
+    <rect x="282" y="160" width="100" height="22" fill="#E8F5E9" stroke="#2E7D32"/>
+    <text x="288" y="175" fill="#1B5E20">Calcular</text>
+
+    <rect x="36" y="196" width="368" height="48" fill="#F3E5F5" stroke="#6A1B9A"/>
+    <text x="44" y="216" font-weight="bold">25.00 %</text>
+    <text x="44" y="232" fill="#444">Cancelados sobre hospitalizaciones finalizadas (TCI-1.0)</text>
+
+    <rect x="36" y="252" width="368" height="26" fill="#F5F5F5" stroke="#B0BEC5"/>
+    <text x="42" y="268" fill="#666">IND-RA-01 (TCI-1.0) - calculado 2026-10-26T13:18-06:00</text>
+
+    <text x="36" y="296" fill="#999" font-size="10">role="status" para el resultado; botones habilitados.</text>
+  </g>
+
+  <!-- Estado 2: N/A sin datos -->
+  <g>
+    <rect x="470" y="70" width="400" height="238" rx="8" fill="#FFFFFF" stroke="#78909C"/>
+    <text x="486" y="94" font-weight="bold" font-size="13">Estado B: SIN_DATOS_EN_PERIODO (N/A)</text>
+
+    <rect x="486" y="106" width="368" height="20" fill="#ECEFF1" stroke="#B0BEC5"/>
+    <text x="492" y="120" fill="#555">Reportes (h1, aria-labelledby reportes-title)</text>
+
+    <rect x="486" y="134" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="494" y="149" fill="#555">Desde [date] 2019-01-01</text>
+    <rect x="666" y="134" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="674" y="149" fill="#555">Hasta [date] 2019-02-01</text>
+    <rect x="282+450" y="160" width="0" height="0" fill="none"/>
+    <rect x="486" y="160" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="494" y="175" fill="#555">Sala (service_code)</text>
+    <rect x="732" y="160" width="100" height="22" fill="#E8F5E9" stroke="#2E7D32"/>
+    <text x="738" y="175" fill="#1B5E20">Calcular</text>
+
+    <rect x="486" y="196" width="368" height="48" fill="#ECEFF1" stroke="#455A64"/>
+    <text x="494" y="216" font-weight="bold">N/A</text>
+    <text x="494" y="232" fill="#444">Sin episodios en el periodo (SIN_DATOS_EN_PERIODO):</text>
+
+    <rect x="486" y="252" width="368" height="26" fill="#F5F5F5" stroke="#B0BEC5"/>
+    <text x="492" y="268" fill="#666">IND-RA-01 (TCI-1.0) - sin porcentaje publicado</text>
+
+    <text x="486" y="296" fill="#999" font-size="10">Nunca se muestra 0 % sin datos (fallo honesto).</text>
+  </g>
+
+  <!-- Estado 3: error -->
+  <g>
+    <rect x="20" y="330" width="400" height="196" rx="8" fill="#FFFFFF" stroke="#BF360C"/>
+    <text x="36" y="354" font-weight="bold" font-size="13">Estado C: error de periodo (422)</text>
+
+    <rect x="36" y="366" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="44" y="381" fill="#555">Desde [date] 2026-02-01</text>
+    <rect x="216" y="366" width="170" height="22" fill="#FAFAFA" stroke="#B0BEC5"/>
+    <text x="224" y="381" fill="#555">Hasta [date] 2026-01-01</text>
+    <rect x="282" y="392" width="100" height="22" fill="#E8F5E9" stroke="#2E7D32"/>
+    <text x="288" y="407" fill="#1B5E20">Calcular</text>
+
+    <rect x="36" y="424" width="368" height="40" fill="#FBE9E7" stroke="#D84315"/>
+    <text x="44" y="443" font-weight="bold" fill="#B71C1C">Revisa el periodo indicado.</text>
+    <text x="44" y="456" fill="#5D4037">role="alert" - visible para lector de pantalla</text>
+
+    <text x="36" y="516" fill="#999" font-size="10">El detalle tecnico del servidor nunca se muestra (mensajeDeError).</text>
+  </g>
+
+  <!-- Estado 4: sin permiso -->
+  <g>
+    <rect x="470" y="330" width="400" height="196" rx="8" fill="#FFFFFF" stroke="#BF360C"/>
+    <text x="486" y="354" font-weight="bold" font-size="13">Estado D: sin permiso (403 RBAC)</text>
+
+    <rect x="486" y="366" width="368" height="40" fill="#FBE9E7" stroke="#D84315"/>
+    <text x="494" y="385" font-weight="bold" fill="#B71C1C">No tienes permiso para consultar reportes.</text>
+    <text x="494" y="398" fill="#5D4037">role="alert"; la entrada del menu ya esta oculta.</text>
+
+    <text x="486" y="430" fill="#888" font-size="11">Filtros: no se muestran; el guard bloquea antes de pintar el formulario.</text>
+    <text x="486" y="450" fill="#888" font-size="11">La decision final de permiso vive en el API, no en el SPA.</text>
+  </g>
+
+  <text x="20" y="584" fill="#8a8a8a">Contraste yaria: textos siempre con etiqueta visible; wireframe sin datos personales.</text>
+</svg>

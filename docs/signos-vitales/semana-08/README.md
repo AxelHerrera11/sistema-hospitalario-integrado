@@ -12,7 +12,7 @@
 
 ## Objetivo
 
-Que el médico tratante registre signos vitales sin equivocarse de unidad, entienda al instante si hubo una alerta y de qué gravedad, y que nunca confunda «sin alerta» con «no evaluado». Los mensajes usan los `code` reales del [contrato de la Semana 5](../semana-05/contrato-api.md). Los wireframes están en [wireframes.md](./wireframes.md).
+Que el médico tratante registre signos vitales sin equivocarse de unidad, entienda al instante si hubo una alerta y de qué gravedad, y que nunca confunda «sin alerta» con «no evaluado». Los mensajes usan los `code` reales del [contrato de la Semana 5](../semana-05/contrato-api.md); la elección de unidad y `UNIT_NOT_SUPPORTED` vienen de la [propuesta de la Semana 7](../semana-07/contratos-io.md) y **aún no están implementados**. Los wireframes están en [wireframes.md](./wireframes.md).
 
 ## Roles y permisos
 

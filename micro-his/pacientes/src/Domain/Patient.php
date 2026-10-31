@@ -40,7 +40,8 @@ final readonly class Patient
             null, trim((string)($d['global_id'] ?? '')), trim((string)($d['code'] ?? '')),
             trim((string)($d['given_name'] ?? '')), trim((string)($d['family_name'] ?? '')),
             (string)($d['birth_date'] ?? ''), (string)($d['sex'] ?? ''),
-            isset($d['contact']) ? trim((string)$d['contact']) : null
+            isset($d['contact']) ? trim((string)$d['contact']) : null,
+            trim((string)($d['status'] ?? 'active'))
         );
     }
 
