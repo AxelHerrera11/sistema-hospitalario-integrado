@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, 'resumen.js'), 'utf8');
-const { estadoDePagina, filasPorEstado, textoIndicador, mensajeDeError } =
+const { estadoDePagina, filasPorEstado, textoIndicador, mensajeDeError, fechaLocal, enlaceDisponible } =
     await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 assert.equal(estadoDePagina(null, true), 'cargando');
@@ -21,4 +21,10 @@ assert.equal(
 assert.match(mensajeDeError(503), /intente de nuevo/);
 assert.match(mensajeDeError(401), /sesión/);
 
-console.log('resumen.test.mjs: 7 verificaciones OK');
+// 23:30 hora local sigue siendo el mismo día aunque en UTC ya sea el siguiente.
+assert.equal(fechaLocal(new Date(2026, 9, 30, 23, 30)), '2026-10-30');
+const resolver = (ruta) => ({ matched: ruta === '/reportes' ? [{}] : [] });
+assert.equal(enlaceDisponible(resolver, '/reportes'), true);
+assert.equal(enlaceDisponible(resolver, '/citas'), false);
+
+console.log('resumen.test.mjs: 10 verificaciones OK');
