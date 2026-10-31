@@ -18,8 +18,7 @@ use MicroHis\ExpedienteMedico\Persistence\HospitalRegistry;
  * Integra el micro-HIS del expediente médico con la API v1, con el patrón de TrasladosAltasServiceProvider.
  *
  * Registrado en bootstrap/providers.php después de TrasladosAltasServiceProvider (autorizado por Cindy, 2026-10-23).
- * Solo se publica la consulta: la apertura necesita un permiso que aún no está en el catálogo RBAC, y declarar
- * `rbac:` con un permiso no catalogado rompe el contrato de rutas del grupo.
+ * Consulta con expediente.ver y apertura con expediente.abrir (activado en config/rbac.php para medico y superadmin).
  */
 final class ExpedienteMedicoServiceProvider extends ServiceProvider
 {
@@ -45,6 +44,8 @@ final class ExpedienteMedicoServiceProvider extends ServiceProvider
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
             Route::get('patients/{patientCode}/medical-record', [ExpedienteMedicoController::class, 'consult'])
                 ->middleware('rbac:expediente.ver');
+            Route::post('patients/{patientCode}/medical-record', [ExpedienteMedicoController::class, 'open'])
+                ->middleware('rbac:expediente.abrir');
         });
     }
 }
