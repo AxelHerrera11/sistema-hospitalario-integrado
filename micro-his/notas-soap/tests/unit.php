@@ -54,5 +54,6 @@ check('U-12', 'Uuid::v4 genera identificadores con formato v4 y distintos entre 
 // Defecto D-01 (equivalencia): el texto «vacío» incluye espacios que trim() no reconoce.
 check('U-13', 'SoapSections rechaza una sección con solo espacio duro (U+00A0)', violation(fn () => new SoapSections("\u{00A0}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
 check('U-14', 'SoapSections rechaza una sección con solo espacio de ancho cero (U+200B)', violation(fn () => new SoapSections("\u{200B}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
+check('U-15', 'Diagnosis rechaza un código con forma distinta de CIE-10 (inyección, espacios, minúsculas) y acepta J18, J18.9 y S72.001A', violation(fn () => new Diagnosis("J18.9'; DROP TABLE diagnoses; --", 'primary')) === 'DIAGNOSIS_INVALID 422' && violation(fn () => new Diagnosis(' J18.9', 'primary')) === 'DIAGNOSIS_INVALID 422' && violation(fn () => new Diagnosis('j18.9', 'primary')) === 'DIAGNOSIS_INVALID 422' && (new Diagnosis('J18', 'primary'))->code === 'J18' && (new Diagnosis('S72.001A', 'secondary'))->code === 'S72.001A');
 
 summary();
