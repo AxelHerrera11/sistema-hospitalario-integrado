@@ -43,6 +43,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `laboratorio.ordenes.crear` | Sí | — | Sí | — | — | — | — | — |
 | `laboratorio.ordenes.ver` | Sí | — | Sí | — | — | Sí | Sí | — |
 | `laboratorio.ordenes.cancelar` | Sí | — | Sí | — | — | — | — | — |
+| `laboratorio.ordenes.actualizar` | — | — | — | — | — | — | — | — |
 | `lab-results.read` | Sí | — | — | — | — | Sí | Sí | — |
 | `lab-results.create` | Sí | — | — | — | — | Sí | — | — |
 | `lab-results.correct` | Sí | — | — | — | — | Sí | — | — |
@@ -225,3 +226,9 @@ El alta corresponde a cualquier médico con permiso vigente en el hospital del c
 La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
 `local_user_refs`, estancia esperada, cama de destino disponible y transacción. La política entra en
 vigor al integrar este cambio; publicar los nombres no la activó.
+
+## Propuesta ASII-16 (30-oct-2026)
+
+`laboratorio.ordenes.actualizar` se registra en `catalog` y en `pending` para
+`tecnico_laboratorio`, según el contrato propuesto de ASII-16. No se activa ni
+se concede a ningún rol; el proveedor de permisos continúa leyendo solo `roles`.
