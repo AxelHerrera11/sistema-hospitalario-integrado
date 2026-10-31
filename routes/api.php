@@ -22,6 +22,8 @@ Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
     Route::prefix('admin')->group(function (): void {
         Route::get('/users', [HospitalUserController::class, 'index'])
             ->middleware('rbac:usuarios.ver');
+        Route::post('/users', [HospitalUserController::class, 'store'])
+            ->middleware('rbac:usuarios.crear');
         Route::post('/users/{user}/roles', [HospitalUserController::class, 'assign'])
             ->middleware('rbac:rbac.asignar');
         Route::delete('/users/{user}/roles/{role}', [HospitalUserController::class, 'revoke'])
