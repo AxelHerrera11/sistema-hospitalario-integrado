@@ -59,7 +59,7 @@ $falla = new class implements AlertNotifier {
 };
 [$api, $repo] = servidor($falla);
 [$estado, $cuerpo] = enviar($api, 'POST', $ruta, 'dra.lopez', ['heart_rate' => 138] + $hora);
-sonda('P-2', 'C-11', "canal de notificación caído: respuesta {$estado} {$cuerpo['code']}, pero la medición quedó guardada ({$repo->audits[0]['event']}) y auditada: " . count($repo->audits) . ' eventos');
+sonda('P-2', 'C-11', "canal de notificación caído: respuesta {$estado} {$cuerpo['code']}; la medición quedó guardada y auditada ({$repo->audits[0]['event']}): " . count($repo->audits) . ' eventos' . (isset($cuerpo['notification']) ? ", notification {$cuerpo['notification']}" : ''));
 
 // P-3 · C-04: fecha de medición futura o muy antigua.
 [$api] = servidor();

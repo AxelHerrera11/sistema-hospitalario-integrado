@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use MicroHis\SignosVitales\Application\AlertNotifier;
 use MicroHis\SignosVitales\Application\EpisodeContext;
+use MicroHis\SignosVitales\Domain\Assessment;
 use MicroHis\SignosVitales\Domain\GlucoseRule;
 use MicroHis\SignosVitales\Domain\HeartRateRule;
 use MicroHis\SignosVitales\Domain\NoAlertRule;
@@ -111,4 +113,29 @@ check('InMemory: persistencia no disponible -> 500 y sin notificación nueva', $
 
 $controller = file_get_contents(__DIR__ . '/../src/Presentation/VitalSignController.php') . file_get_contents(__DIR__ . '/../src/Presentation/Router.php');
 check('el controlador y el router no contienen SQL, PDO ni reglas de umbral', preg_match('/\b(SELECT|INSERT|UPDATE|DELETE|PDO|Severity|ThresholdEvaluator)\b/', $controller) === 0);
+// Correcciones de la revisión técnica (Semana 13): fecha futura (H-R-03) y fallo del canal después del COMMIT (H-R-01).
+$reloj = static fn (): DateTimeImmutable => new DateTimeImmutable('2026-10-14 08:30:00');
+$fallos = [];
+$mkRouter = static function (AlertNotifier $canal, InMemoryVitalSignRepository $repo) use ($reloj, &$fallos): Router {
+    return signos_vitales_router(new InMemoryCareEpisodeReader(['ep1' => ['dra.lopez' => new EpisodeContext(true, 45)]]), $repo, $canal, $reloj, static function (string $id, Throwable $e) use (&$fallos): void {
+        $fallos[] = [$id, $e->getMessage()];
+    });
+};
+$repo = new InMemoryVitalSignRepository();
+$r = $mkRouter(new QueuedAlertNotifier(), $repo);
+check('RF-SV-01: measured_at 5 min adelante (tolerancia de reloj) -> 201', post($r, $lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => '2026-10-14 08:35:00'])['status'] === 201);
+check('RF-SV-01: measured_at 5 min y 1 s adelante -> 422 MEASURED_AT_INVALID sin guardar', $status(post($r, $lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => '2026-10-14 08:35:01'])) === '422 MEASURED_AT_INVALID' && count($repo->audits) === 1);
+check('RF-SV-01: measured_at del año 2099 -> 422 MEASURED_AT_INVALID', $status(post($r, $lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => '2099-01-01 00:00:00'])) === '422 MEASURED_AT_INVALID');
+$canalCaido = new class implements AlertNotifier {
+    public function notify(string $vitalSignId, Assessment $assessment): void
+    {
+        throw new RuntimeException('canal_caido');
+    }
+};
+$repo = new InMemoryVitalSignRepository();
+$respuesta = post($mkRouter($canalCaido, $repo), $lopez, 'ep1', ['heart_rate' => 138] + $hora);
+check('RF-SV-07: canal caído tras el COMMIT -> 201 ALERT_GENERATED con notification failed, no 500', $respuesta['status'] === 201 && $respuesta['body']['code'] === 'ALERT_GENERATED' && $respuesta['body']['notification'] === 'failed');
+check('RF-SV-07: la medición queda guardada una vez y el fallo se registra con su id, sin valores', array_column($repo->audits, 'event') === ['signo_vital.registrado', 'signo_vital.alerta_generada'] && count($fallos) === 1 && $fallos[0][0] === $respuesta['body']['vital_sign_id']);
+check('RF-SV-07: con el canal sano la alerta es queued y sin alerta es not_required', post($mkRouter(new QueuedAlertNotifier(), new InMemoryVitalSignRepository()), $lopez, 'ep1', ['heart_rate' => 138] + $hora)['body']['notification'] === 'queued'
+    && post($mkRouter(new QueuedAlertNotifier(), new InMemoryVitalSignRepository()), $lopez, 'ep1', ['heart_rate' => 80] + $hora)['body']['notification'] === 'not_required');
 echo 'Todas las pruebas pasaron.' . PHP_EOL;
