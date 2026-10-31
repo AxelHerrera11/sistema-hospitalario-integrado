@@ -114,9 +114,11 @@ disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
 
-- **PostgreSQL real:** en este equipo no hay PostgreSQL ni Docker; las pruebas Feature usan dobles del
-  repositorio/fuente y las rutas, middlewares y matriz RBAC reales. La consulta contra HOSPITAL queda
-  pendiente de un recorrido con base real.
+- **PostgreSQL real:** en el equipo de la autora no habia PostgreSQL; las pruebas Feature usan dobles. La
+  integradora recorrio vista previa, CSV (con la celda `=...` neutralizada), 403, 404, 422 y otro hospital
+  contra PostgreSQL 17 local en la revision de #1615.
+- **Zona horaria (corregido en este PR):** `date_from`, `date_to` y la fecha agrupada se calculaban en la zona
+  de la sesion de PostgreSQL; ahora `PdoReportSource` usa `hospitals.timezone` del tenant, como Medicos (#1046).
 - PDF sigue sin libreria aprobada por el grupo (406 `report_format_unsupported`).
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-27-semana-16-api-lis671`
   (API y pruebas, PR #1615 hacia `develop`) y parte 2 `feature/asii-27-semana-16-evidencia-lis671`

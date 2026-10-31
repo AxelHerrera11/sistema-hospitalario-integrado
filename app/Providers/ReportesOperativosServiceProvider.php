@@ -21,7 +21,7 @@ final class ReportesOperativosServiceProvider extends ServiceProvider
     {
         require_once base_path('micro-his/reportes-operativos/bootstrap.php');
 
-        $this->app->bind(ReportSource::class, static fn (): ReportSource => new PdoReportSource(static fn () => DB::connection('hospital')->getPdo()));
+        $this->app->bind(ReportSource::class, static fn (): ReportSource => new PdoReportSource(static fn () => DB::connection('hospital')->getPdo(), static fn (): string => in_array($z = request()->attributes->get('tenant')?->timezone, \DateTimeZone::listIdentifiers(), true) ? $z : (string) config('app.timezone', 'UTC')));
         $this->app->when(ReportesOperativosController::class)->needs('$definiciones')->give(static fn (): array => [new CitasPorServicioReport()]);
         $this->app->when(ReportesOperativosController::class)->needs('$exportadores')->give(static fn (): array => [new CsvReportExporter()]);
     }
