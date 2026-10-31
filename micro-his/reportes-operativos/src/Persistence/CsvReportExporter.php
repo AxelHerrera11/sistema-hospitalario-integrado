@@ -33,6 +33,10 @@ final class CsvReportExporter implements ReportExporter
 
     private function cell(string $value): string
     {
+        // Evita inyección de fórmulas al abrir el CSV en una hoja de cálculo (hallazgo RTF-01, semana 13).
+        if (preg_match('/^[=+\-@\t\r]/', $value) === 1) {
+            $value = "'" . $value;
+        }
         return preg_match('/[",\n]/', $value) === 1 ? '"' . str_replace('"', '""', $value) . '"' : $value;
     }
 }
