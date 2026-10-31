@@ -1,0 +1,22 @@
+@startuml
+title ASII-26 - Secuencia de la solicitud REST
+actor "Usuario (rol)" as u
+participant "SPA Vue" as spa
+participant "Router REST" as r
+participant "TableroController" as c
+participant "ObtenerTablero" as uc
+participant "IndicadorRepository" as repo
+u -> spa : abre Inicio
+spa -> r : GET /api/v1/tablero?periodo=2026-11
+r -> c : mostrar(entrada)
+alt sin periodo
+  c --> r : 422 periodo_requerido
+  r --> spa : 422 {code, message}
+else periodo presente
+  c -> uc : ejecutar(periodo)
+  uc -> repo : porPeriodo(periodo)
+  uc -> uc : calcula cumple_meta
+  c --> r : 200 read model
+  r --> spa : 200 {data}
+end
+@enduml

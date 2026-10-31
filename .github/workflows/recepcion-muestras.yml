@@ -1,0 +1,48 @@
+name: Recepción Laravel y Vue
+on:
+  pull_request:
+    paths: ['app/Modules/Reception/**', 'app/Providers/ReceptionServiceProvider.php', 'app/Http/Controllers/Api/V1/ReceptionController.php', 'resources/js/modules/recepcion-muestras/**', 'tests/**/Reception/**', 'database/migrations/hospital/**', '.github/workflows/recepcion-muestras.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reception:
+    runs-on: ubuntu-latest
+    services:
+      hospital:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_hospital_test
+          POSTGRES_PASSWORD: postgres
+        ports: ['55433:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+      central:
+        image: postgres:16
+        env:
+          POSTGRES_DB: his_central_test
+          POSTGRES_PASSWORD: postgres
+        ports: ['55431:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, pdo_sqlite, mbstring
+      - run: composer install --no-interaction --prefer-dist
+      - run: cp .env.example .env
+      - name: Extensión hospitalaria de prueba
+        run: PGPASSWORD=postgres psql -h 127.0.0.1 -p 55433 -U postgres -d his_hospital_test -c 'CREATE EXTENSION IF NOT EXISTS btree_gist'
+      - run: php artisan test tests/Unit/Reception tests/Feature/Reception
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci && npm run build
+      - run: npm install --no-save --package-lock=false playwright @axe-core/playwright
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          npm run dev -- --host 127.0.0.1 --port 5179 > /tmp/reception-vite.log 2>&1 &
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:5179/tests/Browser/Reception/index.html && break || sleep 1; done
+          node tests/Browser/Reception/run.cjs

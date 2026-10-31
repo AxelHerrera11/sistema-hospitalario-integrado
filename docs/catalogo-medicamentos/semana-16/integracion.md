@@ -71,6 +71,6 @@ Prueba de humo por HTTP real (20/10/2026, `php artisan serve` con `tenant`, `jwt
 | No hay acceso a staging ni on-premise | Infraestructura del curso | No hay evidencia de despliegue real; solo ejecución local |
 | ~~No existen los modelos `User` y `Tenant`~~ **Resuelto** | Tenants (ASII-25), integrado en #657 | `tenant` y `jwt.auth` reales comprobados por HTTP. Las pruebas Feature siguen sustituyendo la identidad porque `jwt.auth` consulta la base CENTRAL |
 | No existe la tabla `medication` (slice H5) | Esquema HOSPITAL (`openspec/.../tasks.md` 3.5) | Sin migración ni semilla: el API responde 503 contra la base real |
-| ~~Permisos de escritura pendientes~~ **Resuelto** | RBAC (@Mar-03): catalogados en #622 y activados en #627 solo para `admin_hospital` | Los demás roles siguen con 403 auditado |
+| ~~Permisos de escritura pendientes~~ **Resuelto** | RBAC: catalogados en #622 y activados en #627 solo para `admin_hospital` | Los demás roles siguen con 403 auditado |
 | `limit` del contrato no se aplica | Propio | La API siempre devuelve como máximo 50; se corregirá o se ajustará el contrato |
 | ~~Sin PostgreSQL de prueba~~ **Resuelto en local** | Entorno | PostgreSQL 17 desechable: suite `Database` OK. No sustituye a staging |

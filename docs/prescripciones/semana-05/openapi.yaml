@@ -65,6 +65,8 @@ components:
           enum: [moderate, unknown, severe, life_threatening]
         exception_allowed:
           type: boolean
+          const: false
+          description: La excepción queda fuera de esta versión. Siempre false mientras el permiso siga pendiente.
     Error:
       type: object
       properties:

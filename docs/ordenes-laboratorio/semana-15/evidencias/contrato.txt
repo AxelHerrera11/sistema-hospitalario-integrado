@@ -1,0 +1,7 @@
+PASS  POST /api/v1/lab-orders: ['200', '201', '400', '401', '403', '422', '503']
+PASS  GET /api/v1/lab-orders: ['200', '400', '401', '403', '422', '503']
+PASS  GET /api/v1/lab-orders/{labOrderId}: ['200', '400', '401', '403', '404', '503']
+PASS  PATCH /api/v1/lab-orders/{labOrderId}/status: ['200', '400', '401', '403', '404', '409', '422', '503']
+PASS  POST /api/v1/lab-orders/{labOrderId}/cancel: ['200', '400', '401', '403', '404', '409', '422', '503']
+PASS  reason declara minLength 5 y maxLength 250
+OK: contrato OpenAPI consistente (6 verificaciones)

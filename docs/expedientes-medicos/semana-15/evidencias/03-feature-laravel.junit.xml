@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="CLI Arguments" tests="4" assertions="24" errors="0" failures="0" skipped="0" time="0.382361">
+    <testsuite name="Tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest" file="C:\Users\cindy\Desktop\Análisis\sistema-hospitalario-integrado-SistenasII-2026-G3\tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest.php" tests="4" assertions="24" errors="0" failures="0" skipped="0" time="0.382361">
+      <testcase name="test_treating_physician_reads_the_longitudinal_record_and_the_access_is_audited" file="C:\Users\cindy\Desktop\Análisis\sistema-hospitalario-integrado-SistenasII-2026-G3\tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest.php" line="67" class="Tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest" classname="Tests.Feature.ExpedienteMedico.ExpedienteMedicoApiTest" assertions="8" time="0.301684"/>
+      <testcase name="test_identity_tenant_and_permission_are_enforced_before_the_micro_his" file="C:\Users\cindy\Desktop\Análisis\sistema-hospitalario-integrado-SistenasII-2026-G3\tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest.php" line="81" class="Tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest" classname="Tests.Feature.ExpedienteMedico.ExpedienteMedicoApiTest" assertions="8" time="0.025881"/>
+      <testcase name="test_clinical_relationship_and_local_reference_are_required" file="C:\Users\cindy\Desktop\Análisis\sistema-hospitalario-integrado-SistenasII-2026-G3\tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest.php" line="96" class="Tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest" classname="Tests.Feature.ExpedienteMedico.ExpedienteMedicoApiTest" assertions="7" time="0.027988"/>
+      <testcase name="test_opening_is_not_published_until_rbac_catalogues_its_permission" file="C:\Users\cindy\Desktop\Análisis\sistema-hospitalario-integrado-SistenasII-2026-G3\tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest.php" line="107" class="Tests\Feature\ExpedienteMedico\ExpedienteMedicoApiTest" classname="Tests.Feature.ExpedienteMedico.ExpedienteMedicoApiTest" assertions="1" time="0.026808"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
