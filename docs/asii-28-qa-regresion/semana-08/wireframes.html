@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASII-28 · Seis wireframes UX propuestos</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eee;color:#171717;font:16px/1.5 system-ui,sans-serif}header,main{max-width:1320px;margin:auto;padding:24px}h1{font-size:26px}h2{font-size:21px}h3{font-size:17px}nav{display:flex;gap:14px;flex-wrap:wrap}a{color:#202020;text-underline-offset:3px}a:focus-visible{outline:3px solid #333;outline-offset:4px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}section{background:#fff;border:2px solid #555;padding:22px;scroll-margin:12px;min-width:0}label{display:block;margin-top:10px;font-weight:600}input,textarea,select{display:block;width:100%;font:inherit;padding:8px;border:1px solid #666;margin:5px 0}textarea{min-height:70px;resize:vertical}input:disabled,textarea:disabled,select:disabled,button:disabled{color:#333;opacity:1;background:#f7f7f7}button{font:inherit;border:1px solid #555;padding:8px 12px;margin:8px 6px 0 0}.note,.state{padding:10px;border:1px dashed #666;margin:12px 0}.error{border:2px solid #333;padding:10px}.meta{font-size:14px}ul{padding-left:22px}dl{display:grid;grid-template-columns:1fr 1fr;gap:6px}dt{font-weight:600}dd{margin:0}footer{margin-top:16px;border-top:1px solid #777;padding-top:10px}@media(max-width:850px){.grid{grid-template-columns:1fr}header,main{padding:14px}section{padding:16px}dl{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>QA funcional · Wireframes iniciales</h1>
+<p><strong>PROPUESTA UX, no interfaz implementada.</strong> Todos los datos son ejemplos/placeholder. Controles deshabilitados; solo los enlaces navegan por esta maqueta. Sin API, scripts, envío o almacenamiento.</p>
+<nav aria-label="Índice de wireframes"><a href="#wf-1">1 Panel</a><a href="#wf-2">2 Campañas</a><a href="#wf-3">3 Caso</a><a href="#wf-4">4 Detalle</a><a href="#wf-5">5 Ejecución</a><a href="#wf-6">6 Defecto</a></nav>
+</header>
+<main class="grid">
+<section id="wf-1" aria-labelledby="title-1">
+<h2 id="title-1">WF-01 · Panel principal QA</h2>
+<p class="meta">Analista QA · Ámbito autorizado: [pendiente de definir]</p>
+<nav aria-label="Navegación QA propuesta"><a href="#wf-2">Campañas</a><a href="#wf-3">Diseñar caso</a><a href="#wf-6">Defectos</a></nav>
+<h3>Resumen de actividad (ejemplo)</h3>
+<dl><dt>Campañas</dt><dd>[n]</dd><dt>Casos pendientes</dt><dd>[n]</dd><dt>Defectos reportados</dt><dd>[n]</dd></dl>
+<h3>Ejecuciones recientes</h3><p>[Caso] · [campaña] · [resultado]</p>
+<div class="state">Vacío: aún no hay actividad. Empieza diseñando un caso.</div>
+<p class="error">Error propuesto: no se pudo cargar el resumen. Reintenta.</p>
+<button disabled>Reintentar resumen</button>
+<footer>Sin cifras reales ni dashboard existente.</footer>
+</section>
+<section id="wf-2" aria-labelledby="title-2">
+<h2 id="title-2">WF-02 · Campañas de regresión</h2>
+<a href="#wf-1">Volver al panel</a>
+<label for="campaign-search">Buscar campaña</label><input id="campaign-search" disabled placeholder="Nombre o identificación">
+<label for="campaign-filter">Estado (taxonomía pendiente)</label><select id="campaign-filter" disabled><option>Todos / por definir</option></select>
+<h3>[Campaña A — ejemplo]</h3><p>Estado: [por definir] · Casos asociados: [n]</p>
+<a href="#wf-4">Abrir campaña de ejemplo</a>
+<div class="state">Sin resultados: revisa la búsqueda o elimina filtros.</div>
+<button disabled>Limpiar filtros</button><button disabled>Crear campaña (futuro)</button>
+<p class="error">Carga fallida: conserva filtros y ofrece reintento.</p>
+<footer>Campañas aún no implementadas.</footer>
+</section>
+<section id="wf-3" aria-labelledby="title-3">
+<h2 id="title-3">WF-03 · Diseñar caso manual</h2>
+<a href="#wf-1">Volver al panel</a><p>ID: [generado al guardar, no editable]</p>
+<label for="case-title">Título / propósito * (purpose)</label><input id="case-title" disabled placeholder="Ej.: revisar formulario QA">
+<label for="case-requirement">Requisito relacionado (extensión propuesta)</label><input id="case-requirement" disabled placeholder="Referencia por acordar">
+<label for="case-preconditions">Precondiciones (extensión propuesta)</label><textarea id="case-preconditions" disabled placeholder="Condiciones previas ficticias"></textarea>
+<label for="case-steps">Pasos de prueba * (steps)</label><textarea id="case-steps" disabled placeholder="1. Abrir formulario&#10;2. Revisar campos"></textarea>
+<label for="case-expected">Resultado esperado * (expected)</label><textarea id="case-expected" disabled placeholder="Campos visibles"></textarea>
+<p class="error">Ejemplo de validación: escribe los pasos; no se acepta solo espacios.</p>
+<button disabled>Guardar caso</button><a href="#wf-1">Cancelar (navegación de maqueta)</a>
+<footer>Éxito propuesto: caso guardado, mostrar ID. Solo purpose/steps/expected corresponden al alta CLI actual; sin envío desde esta página.</footer>
+</section>
+<section id="wf-4" aria-labelledby="title-4">
+<h2 id="title-4">WF-04 · Detalle de campaña</h2>
+<a href="#wf-2">Volver a campañas</a><p>[Campaña A] · Estado: [por definir]</p>
+<p>Responsable: [sin asignar; campo propuesto, no contrato actual]</p>
+<h3>Casos asociados (ejemplo)</h3>
+<p>[Caso A] · Ejecuciones: [n] · Último resultado: [aprobado/fallido, si existe]</p>
+<a href="#wf-3">Consultar diseño de ejemplo</a> · <a href="#wf-5">Ejecutar caso de ejemplo</a>
+<button disabled>Asociar caso diseñado</button>
+<div class="state">Campaña vacía: asocia un caso antes de ejecutar.</div>
+<p class="error">Sin permiso: no mostrar datos ni acciones protegidas.</p>
+<footer>Trazabilidad propuesta: campaña → caso → ejecución → evidencia / defecto.</footer>
+</section>
+<section id="wf-5" aria-labelledby="title-5">
+<h2 id="title-5">WF-05 · Ejecución manual y evidencia</h2>
+<a href="#wf-4">Volver a campaña</a><p>[Caso A] · [Campaña A]</p>
+<h3>Pasos y esperado</h3><p>1. Abrir formulario · Esperado: campos visibles (ejemplo).</p>
+<label for="run-observation">Resultado obtenido / observaciones *</label><textarea id="run-observation" disabled placeholder="Describe lo observado sin datos clínicos"></textarea>
+<label for="run-result">Comparación y resultado *</label><select id="run-result" disabled><option>Seleccionar aprobado o fallido</option><option>Aprobado: coincide</option><option>Fallido: no coincide</option></select>
+<label for="run-evidence">Referencia de evidencia * (contrato conceptual LSP)</label><input id="run-evidence" disabled placeholder="Referencia privada autorizada, no ruta local">
+<p class="error">Sin evidencia: conservar borrador local y solicitar referencia antes de confirmar; política final pendiente.</p>
+<button disabled>Confirmar registro</button><a href="#wf-4">Cancelar</a>
+<div class="state">Tras confirmar: mostrar ID y resultado. Solo fallo permite iniciar defecto.</div>
+<a href="#wf-6">Ver registro de defecto de ejemplo (solo fallo en el flujo futuro)</a>
+<footer>Registrar nueva ejecución no sustituye el historial.</footer>
+</section>
+<section id="wf-6" aria-labelledby="title-6">
+<h2 id="title-6">WF-06 · Registrar defecto</h2>
+<a href="#wf-5">Volver a ejecución de ejemplo</a><p>ID defecto: [generado al guardar]</p>
+<p>Origen de ejemplo: [Campaña A] → [Caso A] → [Ejecución fallida E].</p>
+<label for="defect-description">Descripción *</label><textarea id="defect-description" disabled placeholder="Diferencia reproducible entre esperado y observado"></textarea>
+<label for="defect-severity">Severidad (catálogo pendiente)</label><select id="defect-severity" disabled><option>Por acordar; sin valores inventados</option></select>
+<p>Estado: [por definir] · Evidencia vinculada: [referencia privada de la ejecución]</p>
+<button disabled>Guardar defecto</button><a href="#wf-4">Cancelar / consultar trazabilidad</a>
+<div class="state">Éxito propuesto: ID del defecto y vínculo a su ejecución fallida.</div>
+<p class="error">Origen aprobado o no autorizado: rechazar registro, sin alterar ejecución.</p>
+<footer>No solicitar pacientes, contraseñas, tokens o datos clínicos.</footer>
+</section>
+</main>
+</body>
+</html>

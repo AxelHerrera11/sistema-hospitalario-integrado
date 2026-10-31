@@ -76,7 +76,7 @@ Un campo con tipo incorrecto (número, arreglo, `null`, booleano) o un JSON malf
 |---|---|---|
 | `401` | `UNAUTHENTICATED` | Sin actor autenticado o token inválido |
 | `403` | `FORBIDDEN` | El actor no tiene el permiso de la ruta o el tenant no coincide; el cuerpo incluye `permission` |
-| `403` | `NOT_TREATING_PHYSICIAN` | Sin `care_assignment` activo en el episodio, o no es el autor de la nota (RF-SOAP-03) |
+| `403` | `NOT_TREATING_PHYSICIAN` | Sin `care_assignment` activo en el episodio, o no es el autor de la nota (RF-SOAP-03). En la lectura (`GET`) se responde `404 NOTE_NOT_FOUND`, igual que ante una nota inexistente, para no revelar qué identificadores existen |
 | `404` | `ROUTE_NOT_FOUND` / `NOTE_NOT_FOUND` | Ruta inexistente / nota inexistente |
 | `409` | `DIAGNOSIS_DUPLICATED` / `PRIMARY_DIAGNOSIS_EXISTS` | Código ya asociado / segundo principal (RF-SOAP-05) |
 | `409` | `NOTE_SIGNED` | La nota firmada no acepta diagnósticos (RF-SOAP-07) |

@@ -48,6 +48,7 @@ class RoleMatrixTest extends TestCase
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
+            'altas.registrar', 'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
@@ -63,6 +64,7 @@ class RoleMatrixTest extends TestCase
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'enfermeria' => [
+            'traslados.registrar', 'traslados.ver',
             'citas.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver',
             'admisiones.ver', 'notas_soap.ver', 'signos_vitales.ver',

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <title>WF-03 Acceso denegado y sin vínculo asistencial</title>
+  <rect width="900" height="420" fill="#fff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold">WF-03 · Acceso denegado (dos variantes) — ningún dato clínico</text>
+  <rect x="20" y="44" width="600" height="150" fill="#f7f7f7" stroke="#555"/>
+  <text x="32" y="66" font-weight="bold">Resultado</text>
+  <rect x="32" y="76" width="576" height="104" fill="#ececec" stroke="#555" stroke-width="2"/>
+  <rect x="32" y="76" width="8" height="104" fill="#555"/>
+  <text x="50" y="98" font-weight="bold">Acceso denegado</text>
+  <text x="50" y="120" font-size="12">Su rol no tiene permiso para esta acción en este hospital. Si cree que es un error,</text>
+  <text x="50" y="136" font-size="12">comunique el código de seguimiento a su jefatura.</text>
+  <text x="50" y="160" font-size="12" font-family="Consolas, monospace">Código de seguimiento: trace-5f187a6a2d6f</text>
+  <rect x="20" y="210" width="600" height="120" fill="#f7f7f7" stroke="#555"/>
+  <rect x="32" y="222" width="576" height="94" fill="#ececec" stroke="#555" stroke-width="2"/>
+  <rect x="32" y="222" width="8" height="94" fill="#555"/>
+  <text x="50" y="244" font-weight="bold">Sin vínculo asistencial</text>
+  <text x="50" y="266" font-size="12">Solo el personal asignado a un episodio activo del paciente puede ver su expediente.</text>
+  <text x="50" y="282" font-size="12">El intento quedó registrado.</text>
+  <g fill="#c62828" font-weight="bold" font-size="12">
+    <circle cx="612" cy="98" r="10"/><text x="608" y="102" fill="#fff">1</text>
+    <circle cx="612" cy="160" r="10"/><text x="608" y="164" fill="#fff">2</text>
+    <circle cx="612" cy="244" r="10"/><text x="608" y="248" fill="#fff">3</text>
+  </g>
+  <g font-size="12">
+    <text x="640" y="70" font-weight="bold">Anotaciones</text>
+    <text x="640" y="94">1 403 ACCESO_DENEGADO (RBAC): role="alert",</text>
+    <text x="652" y="110">color + borde + título (no solo color).</text>
+    <text x="640" y="134">2 trace_id visible para soporte; el mismo</text>
+    <text x="652" y="150">valor queda en la auditoría (rbac_trace).</text>
+    <text x="640" y="174">3 403 SIN_VINCULO_ASISTENCIAL: también</text>
+    <text x="652" y="190">si el código no existe (no se revela).</text>
+    <text x="640" y="214">Sin botón «Reintentar»: no es recuperable</text>
+    <text x="652" y="230">por la persona usuaria.</text>
+  </g>
+  <text x="20" y="360" font-size="12" fill="#555">Implementado en estados.js (MENSAJES) y vista.js (pintarEstado). Capturas reales: semana-11/evidencias/d-04 y m-03.</text>
+</svg>

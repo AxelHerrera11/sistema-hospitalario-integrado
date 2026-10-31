@@ -1,0 +1,55 @@
+# QA/CI: permisos, datos sensibles y endurecimiento del pipeline (Semana 17) — 2026-10-29 22:13 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php micro-his/qa-calidad-versiones/tests/ci.php | grep -E 'CI2[23]|pruebas,'
+OK    [CI22] Escáner: clave pública de pruebas, correos .test y contraseñas enmascaradas → exit 0
+OK    [CI23] Escáner: JWT, clave privada, APP_KEY real, Bearer, contraseña, URL con credenciales y correo real → exit 1 sin mostrar el valor
+[ci] 23 pruebas, 0 fallos.
+(código de salida: 0)
+
+# Escaneo de los artefactos reales del pipeline local de la Semana 16 (carpeta qa-evidence):
+$ php micro-his/qa-calidad-versiones/bin/escanear-secretos.php /tmp/…/qa-evidence
+42 archivos revisados, 0 hallazgos
+(código de salida: 0)
+
+$ php micro-his/qa-calidad-versiones/tests/blackbox.php | grep -iE 'rbac|tenant|401|403|503|pruebas,'
+== Permisos y tenant ==
+OK    [BN01] Sin identidad → 401 AUTH_REQUIRED
+OK    [BN02] Sin X-Tenant-ID → 400 TENANT_REQUIRED
+OK    [BN03] X-Tenant-ID distinto al del token → 403 TENANT_MISMATCH
+OK    [BN04] Observador (solo ver) intenta planificar → 403 RBAC_DENIED
+OK    [BN21] Listado respeta el tenant: H1 ve sus 2 ejecuciones
+OK    [BN22] RBAC no disponible → 503 RBAC_UNAVAILABLE (falla cerrado)
+OK    [BN23] Almacén caído → 503 QA_STORAGE_UNAVAILABLE sin detalle técnico
+[blackbox] 23 pruebas, 0 fallos.
+(código de salida: 0)
+
+$ grep -nE '^on:|pull_request_target|^permissions:|contents: read|secrets\.|add-mask|E2E_ALLOW_SEED|continue-on-error' .github/workflows/qa-ci-e2e.yml
+9:on:
+16:permissions:
+17:  contents: read
+62:        continue-on-error: true
+225:          echo "::add-mask::$jwt"
+226:          echo "::add-mask::$pass"
+244:        run: E2E_ALLOW_SEED=1 php tests/E2E/fixtures/seed-e2e.php
+257:        continue-on-error: true # informativa hasta su primera ejecución verde en CI
+(código de salida: 0)
+
+$ grep -hoE 'uses: [^ ]+@[^ ]+' .github/workflows/qa-ci-e2e.yml | sort | uniq -c
+      4 uses: actions/checkout@v4
+      1 uses: actions/download-artifact@v4
+      3 uses: actions/setup-node@v4
+      4 uses: actions/upload-artifact@v4
+      4 uses: shivammathur/setup-php@v2
+(código de salida: 0)
+
+$ grep -nE 'PR_BODY|HEAD_REF|github.event.pull_request' .github/workflows/branch-protection.yml
+15:      PR_BODY: ${{ github.event.pull_request.body }}
+16:      HEAD_REF: ${{ github.head_ref }}
+18:      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+24:          if [ "${#PR_BODY}" -lt 80 ]; then
+31:          if [ "$BASE_REF" = "main" ] && [ "$HEAD_REF" = "develop" ]; then
+35:          if printf '%s\n' "$HEAD_REF" | grep -qE '^(feature|fix|docs|test|chore|refactor)/asii-[0-9]{2}-[a-z0-9._-]+$'; then
+36:            echo "Branch name OK: $HEAD_REF"
+45:          if [ "$HEAD_REF" != "develop" ]; then
+(código de salida: 0)
