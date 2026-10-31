@@ -4,6 +4,7 @@ namespace Tests\Database\Hospital;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use MicroHis\NotasSoap\Application\CatalogUnavailable;
 use MicroHis\NotasSoap\Persistence\PdoIcd10Catalog;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\TestCase;
@@ -48,6 +49,14 @@ class NotasSoapIcd10CatalogPostgresTest extends TestCase
         foreach ($rows as [$code, $description]) {
             $this->assertSame($description, $catalog->description($code), $code);
         }
+    }
+
+    public function test_a_migrated_but_empty_catalog_is_unavailable_and_not_an_invalid_code(): void
+    {
+        DB::connection('hospital')->delete('DELETE FROM icd10_codes');
+
+        $this->expectException(CatalogUnavailable::class);
+        $this->catalog()->description('J18.9');
     }
 
     private function catalog(): PdoIcd10Catalog

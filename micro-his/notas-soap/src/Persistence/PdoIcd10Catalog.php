@@ -21,7 +21,11 @@ final class PdoIcd10Catalog implements Icd10Catalog
         try {
             $stmt = $this->pdo->prepare('SELECT description FROM icd10_codes WHERE code = ? AND active IS TRUE');
             $stmt->execute([$code]);
-            return $stmt->fetchColumn() ?: null;
+            $description = $stmt->fetchColumn() ?: null;
+            // Tabla migrada pero sin códigos activos (aún sin cargar): es un catálogo no disponible, no un código inválido.
+            $description !== null || $this->pdo->query('SELECT 1 FROM icd10_codes WHERE active IS TRUE LIMIT 1')->fetchColumn() !== false
+                || throw new CatalogUnavailable('icd10_sin_cargar');
+            return $description;
         } catch (\PDOException $e) {
             throw new CatalogUnavailable('icd10_no_disponible', 0, $e);
         }
