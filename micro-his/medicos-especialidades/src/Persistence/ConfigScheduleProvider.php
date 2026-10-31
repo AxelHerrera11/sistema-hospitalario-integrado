@@ -18,4 +18,9 @@ final class ConfigScheduleProvider implements DoctorScheduleProvider
     {
         return isset($this->weekly[$doctorId]) ? ($this->weekly[$doctorId][(int) date('N', strtotime($date))] ?? []) : null;
     }
+
+    public function schedulesFor(array $doctorIds, string $date): array
+    {
+        return array_combine($doctorIds, array_map(fn (string $id): ?array => $this->scheduleFor($id, $date), $doctorIds));
+    }
 }

@@ -15,6 +15,9 @@ use App\Providers\SalasCamasServiceProvider;
 use App\Providers\TenantsServiceProvider;
 use App\Providers\TrasladosAltasServiceProvider;
 use App\Providers\CitasServiceProvider;
+use App\Providers\CentroDocumentacionServiceProvider;
+use App\Providers\DashboardServiceProvider;
+use App\Providers\ReportesOperativosServiceProvider;
 use App\Providers\LabModulesServiceProvider;
 
 return [
@@ -26,6 +29,8 @@ return [
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
     TenantsServiceProvider::class,
     GobernanzaAuditoriaServiceProvider::class,
+    // Calidad de versiones (ASII-25) después de Gobernanza: reutiliza RecordAuditEvent y Authorize.
+    \App\QaCalidad\QaCalidadServiceProvider::class,
     // Alertas críticas (ASII-21): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
     \App\Providers\AlertasCriticasServiceProvider::class,
     MedicationCatalogServiceProvider::class,
@@ -41,6 +46,9 @@ return [
     ReportesServiceProvider::class,
     TrasladosAltasServiceProvider::class,
     CitasServiceProvider::class,
+    CentroDocumentacionServiceProvider::class,
+    DashboardServiceProvider::class,
+    ReportesOperativosServiceProvider::class,
     LabModulesServiceProvider::class,
     // Alergias después de Traslados: reutiliza su ResolutorActorLocal (local_user_refs).
     AlergiasServiceProvider::class,

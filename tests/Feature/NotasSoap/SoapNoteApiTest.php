@@ -12,6 +12,7 @@ use MicroHis\NotasSoap\Application\Icd10Catalog;
 use MicroHis\NotasSoap\Persistence\InMemoryAuditTrail;
 use MicroHis\NotasSoap\Persistence\InMemoryClinicalNoteRepository;
 use MicroHis\NotasSoap\Persistence\InMemoryIcd10Catalog;
+use Illuminate\Testing\TestResponse;
 use Tests\Feature\MedicationCatalog\CatalogTestIdentity;
 use Tests\TestCase;
 
@@ -94,6 +95,66 @@ final class SoapNoteApiTest extends TestCase
         $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertCreated();
         $this->getJson("/api/v1/soap-notes/$id")->assertOk()->assertJsonPath('sections.plan', 'Amoxicilina')->assertJsonPath('diagnoses.0.code', 'J18.9')
             ->assertJsonPath('author_user_ref_id', 'user-medico')->assertJsonStructure(['trace_id']);
+    }
+
+    /** La firma no lleva cuerpo: se envía vacío, como lo haría el cliente. */
+    private function sign(string $id): TestResponse
+    {
+        return $this->post("/api/v1/soap-notes/$id/sign", [], ['Accept' => 'application/json']);
+    }
+
+    public function test_the_author_signs_a_complete_note_and_it_becomes_immutable(): void
+    {
+        $id = $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id');
+        $this->sign($id)->assertStatus(422)->assertJsonPath('code', 'SOAP_INCOMPLETE');
+        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertCreated();
+        $this->sign($id)->assertOk()->assertJsonPath('status', 'signed')->assertHeader('X-Trace-Id');
+        $this->sign($id)->assertStatus(409)->assertJsonPath('code', 'NOTE_SIGNED');
+        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'secondary'])->assertStatus(409)->assertJsonPath('code', 'NOTE_SIGNED');
+        $this->getJson("/api/v1/soap-notes/$id")->assertOk()->assertJsonPath('status', 'signed');
+    }
+
+    public function test_signing_needs_its_own_permission_and_the_authoring_physician(): void
+    {
+        $id = $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id');
+        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertCreated();
+        CatalogTestIdentity::as('enfermeria');
+        $this->sign($id)->assertForbidden()->assertJsonPath('code', 'RBAC_DENIED');
+        CatalogTestIdentity::as('medico');
+        $this->assigned = [];
+        $this->sign($id)->assertForbidden()->assertJsonPath('code', 'NOT_TREATING_PHYSICIAN');
+        $this->assigned = ['ep1' => ['local-medico']];
+        $this->sign('no-existe')->assertNotFound()->assertJsonPath('code', 'NOTE_NOT_FOUND');
+    }
+
+    public function test_a_signed_note_is_corrected_into_a_new_draft_version_that_is_signed_again(): void
+    {
+        $body = ['correction_reason' => 'Plan corregido', 'plan' => 'Amoxicilina 500 mg'] + self::SOAP;
+        $id = $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id');
+        $this->postJson("/api/v1/soap-notes/$id/corrections", $body)->assertStatus(409)->assertJsonPath('code', 'NOTE_NOT_SIGNED');
+        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertCreated();
+        $this->sign($id)->assertOk();
+        $this->postJson("/api/v1/soap-notes/$id/corrections", ['correction_reason' => ' '] + $body)->assertStatus(422)->assertJsonPath('code', 'CORRECTION_REASON_INVALID');
+        $new = $this->postJson("/api/v1/soap-notes/$id/corrections", $body)->assertCreated()->assertJsonPath('supersedes_id', $id)->assertJsonPath('status', 'draft')->assertHeader('X-Trace-Id')->json('clinical_note_id');
+        $this->postJson("/api/v1/soap-notes/$id/corrections", $body)->assertStatus(409)->assertJsonPath('code', 'NOTE_ALREADY_CORRECTED');
+        $this->getJson("/api/v1/soap-notes/$new")->assertOk()->assertJsonPath('version_no', 2)->assertJsonPath('supersedes_id', $id)->assertJsonPath('sections.plan', 'Amoxicilina 500 mg');
+        $this->getJson("/api/v1/soap-notes/$id")->assertOk()->assertJsonPath('status', 'signed')->assertJsonPath('version_no', 1)->assertJsonPath('sections.plan', 'Amoxicilina');
+    }
+
+    public function test_correcting_needs_its_own_permission_and_the_authoring_physician(): void
+    {
+        $id = $this->postJson('/api/v1/care-episodes/ep1/soap-notes', self::SOAP)->json('clinical_note_id');
+        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertCreated();
+        $this->sign($id)->assertOk();
+        $body = ['correction_reason' => 'Plan corregido'] + self::SOAP;
+        CatalogTestIdentity::as('enfermeria');
+        $this->postJson("/api/v1/soap-notes/$id/corrections", $body)->assertForbidden()->assertJsonPath('code', 'RBAC_DENIED');
+        CatalogTestIdentity::as('medico');
+        $this->assigned = [];
+        $this->postJson("/api/v1/soap-notes/$id/corrections", $body)->assertForbidden()->assertJsonPath('code', 'NOT_TREATING_PHYSICIAN');
+        $this->assigned = ['ep1' => ['local-medico']];
+        $this->postJson('/api/v1/soap-notes/no-existe/corrections', $body)->assertNotFound()->assertJsonPath('code', 'NOTE_NOT_FOUND');
+        $this->postJson("/api/v1/soap-notes/$id/corrections", ['correction_reason' => ['x']] + $body)->assertStatus(422)->assertJsonPath('code', 'PAYLOAD_INVALID');
     }
 
     public function test_permissions_follow_the_real_rbac_matrix(): void

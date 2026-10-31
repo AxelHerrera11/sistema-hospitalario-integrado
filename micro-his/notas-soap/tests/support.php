@@ -13,7 +13,7 @@ use MicroHis\NotasSoap\Presentation\Request;
 require __DIR__ . '/../app.php';
 
 const SOAP = ['subjective' => 'Tos de 3 días', 'objective' => 'T 38.4 °C', 'assessment' => 'Neumonía', 'plan' => 'Amoxicilina'];
-const GRANTS = ['dra.lopez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.ver'], 'dr.perez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.ver'], 'enf.ruiz' => ['notas_soap.ver']];
+const GRANTS = ['dra.lopez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.firmar', 'notas_soap.corregir', 'notas_soap.ver'], 'dr.perez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.ver'], 'enf.ruiz' => ['notas_soap.ver']];
 $tally = ['ok' => 0, 'fail' => 0, 'defects' => 0];
 
 /** Prueba que debe pasar: si falla, la suite termina con código 1. */

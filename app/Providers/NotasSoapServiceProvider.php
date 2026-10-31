@@ -47,6 +47,8 @@ final class NotasSoapServiceProvider extends ServiceProvider
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
             Route::post('care-episodes/{episode}/soap-notes', [SoapNoteController::class, 'store'])->middleware('rbac:notas_soap.crear');
             Route::post('soap-notes/{note}/diagnoses', [SoapNoteController::class, 'associateDiagnosis'])->middleware('rbac:notas_soap.asociar_diagnostico');
+            Route::post('soap-notes/{note}/sign', [SoapNoteController::class, 'sign'])->middleware('rbac:notas_soap.firmar');
+            Route::post('soap-notes/{note}/corrections', [SoapNoteController::class, 'correct'])->middleware('rbac:notas_soap.corregir');
             Route::get('soap-notes/{note}', [SoapNoteController::class, 'show'])->middleware('rbac:notas_soap.ver');
         });
     }

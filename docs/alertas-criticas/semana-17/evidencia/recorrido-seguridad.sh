@@ -10,13 +10,15 @@ paso() { # paso <descripción> <esperado> <curl args...>
   local cuerpo obtenido; cuerpo=$(curl -s -D "$CAB" -w '\n%{http_code}' "$@"); obtenido=${cuerpo##*$'\n'}; ULTIMO=${cuerpo%$'\n'*}
   printf '%s  %-70s esperado %s, obtenido %s\n' "$([ "$obtenido" = "$esperado" ] && echo PASS || echo FAIL)" "$d" "$esperado" "$obtenido"
 }
+# Cambia un carácter del medio de la firma: el último solo lleva 4 bits de datos y, si es «w», cambiarlo por «x» deja la misma firma.
+alterada() { local i=$((${#1} - 10)) c; c=${1:$i:1}; [ "$c" = A ] && c=B || c=A; echo "${1:0:$i}$c${1:$((i + 1))}"; }
 campo() { php -r '$j = json_decode($argv[1], true); foreach (explode(".", $argv[2]) as $k) { $j = $j[$k] ?? null; } echo is_scalar($j) ? $j : json_encode($j);' "$ULTIMO" "$1"; }
 MED=$(token "$E2E_MEDICO_EMAIL"); BIO=$(token bioquimico.e2e@hospital-ficticio.test); JEF=$(token jefatura.e2e@hospital-ficticio.test); REC=$(token recepcion.e2e@hospital-ficticio.test)
 [ -n "$MED" ] && [ -n "$BIO" ] && [ -n "$JEF" ] && [ -n "$REC" ] || { echo "FAIL  login de médica, bioquímico, jefatura o recepción"; exit 1; }
 AL="$B/api/v1/critical-alerts"; BQ=(-H "X-Tenant-ID: $H" -H "Authorization: Bearer $BIO" -H "$J"); M=(-H "X-Tenant-ID: $H" -H "Authorization: Bearer $MED" -H "$J")
 evento() { echo "{\"result_version_id\":\"$1\",\"lab_test_id\":\"$T\",\"patient_id\":\"$P\",\"episode_id\":\"${3:-$E}\",\"value\":${2:-32}$4}"; }
 paso 'C01 sin token → 401' 401 -H "X-Tenant-ID: $H" "$AL"
-paso 'C01 token con la firma alterada → 401' 401 -H "X-Tenant-ID: $H" -H "Authorization: Bearer ${MED%?}x" "$AL"
+paso 'C01 token con la firma alterada → 401' 401 -H "X-Tenant-ID: $H" -H "Authorization: Bearer $(alterada "$MED")" "$AL"
 paso 'C02 token del hospital A con X-Tenant-ID del B → 403' 403 -H "X-Tenant-ID: $OTRO" -H "Authorization: Bearer $MED" "$AL"
 paso 'C03 médica sin lab-results.validate publica un resultado → 403' 403 -X POST "${M[@]}" -d "$(evento "$(uuidgen)")" "$AL/result-validated"
 paso 'C03 recepción sin alertas.ver → 403' 403 -H "X-Tenant-ID: $H" -H "Authorization: Bearer $REC" "$AL"

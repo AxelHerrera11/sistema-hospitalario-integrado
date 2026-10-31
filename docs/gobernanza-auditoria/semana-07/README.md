@@ -53,3 +53,17 @@ TENANTS_AUDIT_DIR=/tmp/ten php micro-his/gobernanza-auditoria/tests/hash_compat.
 ## Limitaciones conocidas
 
 `hash_compat.php` necesita exportar el archivo de la rama de Tenants. Sin `TENANTS_AUDIT_DIR`, se informa como OMITIDA y no cuenta como aprobada.
+
+## Seguimiento tras la integración (2026-10-31)
+
+Estado verificado sobre `develop`; las secciones anteriores se conservan como registro de la entrega.
+
+| Punto | Estado actual | Evidencia |
+|---|---|---|
+| RM-01 y DU-01 (un solo algoritmo de cadena para los dos escritores) | Resuelto: `AuditLogRepository` de Tenants ya está en `develop` y comparte el formato de `AuditChainHasher`. | `tests/hash_compat.php` corre sin `TENANTS_AUDIT_DIR` contra el código de `develop`: 3 pruebas, 0 fallos. La cadena real de la base local (escrita por ambos) se verifica completa con `GET /api/v1/audit-events/integrity`. |
+| RM-02 (denegaciones RBAC en la bitácora) | Resuelto: `TenantsServiceProvider` enlaza `DenialRecorder` con `AuditDenials`, que escribe en `audit_log`. | `GovernanceHttpTest::test_medico_is_denied_before_filters_and_denial_is_persisted_once`. |
+| Limitación de `hash_compat.php` | Ya no aplica: la prueba se ejecuta por defecto. | `php micro-his/gobernanza-auditoria/tests/run.php` → «TODAS LAS SUITES APROBADAS». |
+
+Los componentes de esta semana siguen siendo los del diagrama; la integración agregó, sin cambiar sus límites, el
+adaptador Laravel (`AuditEventController`, con `integrity` y `catalog` en la Semana 16) y la pantalla Vue
+`resources/js/modules/auditoria/pages/AuditPage.vue`.

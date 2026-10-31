@@ -36,6 +36,8 @@ final class GobernanzaAuditoriaServiceProvider extends ServiceProvider
 
         $this->app->singleton(PdoAuditLog::class, fn () => new PdoAuditLog(DB::connection('central')->getPdo()));
         $this->app->bind(AuditLogger::class, PdoAuditLog::class);
+        $this->app->bind(AuditChainVerifier::class, fn () => new AuditChainVerifier(DB::connection('central')->getPdo()));
+        $this->app->bind(AuditFilterCatalog::class, fn () => new AuditFilterCatalog(DB::connection('central')->getPdo()));
         $this->app->bind(AuditEventReader::class, PdoAuditLog::class);
         $this->app->bind(Clock::class, SystemClock::class);
         $this->app->bind(FailureReporter::class, LaravelLogFailureReporter::class);
@@ -60,6 +62,8 @@ final class GobernanzaAuditoriaServiceProvider extends ServiceProvider
         Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', 'rbac:'.AuditPermissions::VIEW])
             ->group(function (): void {
                 Route::get('audit-events', [AuditEventController::class, 'index']);
+                Route::get('audit-events/integrity', [AuditEventController::class, 'integrity']);
+                Route::get('audit-events/catalog', [AuditEventController::class, 'catalog']);
             });
     }
 }

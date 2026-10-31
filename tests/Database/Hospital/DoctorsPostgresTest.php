@@ -114,6 +114,52 @@ final class DoctorsPostgresTest extends TestCase
         $this->assertSame(['08:00', '08:20', '08:40', '09:00', '09:20', '09:40'], $slots, 'horario 08:00-10:00 con bloques de 20 minutos');
     }
 
+    public function test_la_inyeccion_sql_se_guarda_como_texto_en_postgresql(): void
+    {
+        $license = "X'); DROP TABLE doctor_profiles;--";
+
+        $created = $this->send('POST', '/doctors', ['license_number' => $license] + self::ALTA);
+        $byEquality = $this->send('GET', '/availability', query: ['specialty' => "NEURO' OR '1'='1", 'date' => '2026-10-19']);
+        $byPath = $this->send('POST', "/doctors/x' OR '1'='1/specialties", ['specialty_code' => 'CARD', 'valid_from' => '2026-02-01']);
+
+        $this->assertSame(201, $created['status']);
+        $this->assertSame(mb_strtoupper($license), $this->hospital()->scalar('SELECT license_number FROM doctor_profiles'), 'la tabla existe y guarda el texto literal');
+        $this->assertSame([422, 'SPECIALTY_INACTIVE'], [$byEquality['status'], $byEquality['body']['code']]);
+        $this->assertSame([404, 'ROUTE_NOT_FOUND'], [$byPath['status'], $byPath['body']['code']]);
+    }
+
+    public function test_los_errores_del_cliente_que_postgresql_detecta_no_son_un_500(): void
+    {
+        $id = $this->send('POST', '/doctors', self::ALTA)['body']['doctor_profile_id'];
+        $assoc = ['specialty_code' => 'NEURO', 'valid_from' => '2026-02-01'];
+
+        $notUuid = $this->send('POST', '/doctors/doc-x/specialties', $assoc);
+        $badRef = $this->send('POST', '/doctors', ['local_user_ref_id' => 'u-ana', 'license_number' => 'COL-2'] + self::ALTA);
+        $missingRef = $this->send('POST', '/doctors', ['local_user_ref_id' => '00000000-0000-4000-8000-0000000000aa', 'license_number' => 'COL-3'] + self::ALTA);
+        $sameUser = $this->send('POST', '/doctors', ['license_number' => 'COL-4'] + self::ALTA);
+        $unknown = $this->send('POST', '/doctors/00000000-0000-4000-8000-0000000000bb/specialties', $assoc);
+        $known = $this->send('POST', "/doctors/$id/specialties", $assoc);
+
+        $this->assertSame([404, 'DOCTOR_NOT_FOUND'], [$notUuid['status'], $notUuid['body']['code']], 'id que no es uuid');
+        $this->assertSame([422, 'PAYLOAD_INVALID'], [$badRef['status'], $badRef['body']['code']], 'referencia de usuario que no es uuid');
+        $this->assertSame([422, 'USER_REF_NOT_FOUND'], [$missingRef['status'], $missingRef['body']['code']], 'referencia de usuario inexistente');
+        $this->assertSame([409, 'USER_ALREADY_REGISTERED'], [$sameUser['status'], $sameUser['body']['code']], 'usuario con perfil activo');
+        $this->assertSame([404, 'DOCTOR_NOT_FOUND'], [$unknown['status'], $unknown['body']['code']], 'uuid válido pero inexistente');
+        $this->assertSame(201, $known['status']);
+        $this->assertSame(1, (int) $this->hospital()->scalar('SELECT count(*) FROM doctor_profiles'), 'ninguno de los rechazos dejó un perfil');
+        $this->assertSame(2, (int) $this->hospital()->scalar('SELECT count(*) FROM local_access_audits'), 'solo el alta y la asociación válidas se auditaron');
+    }
+
+    public function test_los_campos_desmesurados_no_llegan_a_postgresql(): void
+    {
+        $tooLong = $this->send('POST', '/doctors', ['license_number' => str_repeat('L', 10_000)] + self::ALTA);
+        $limit = $this->send('POST', '/doctors', ['license_number' => str_repeat('L', 64)] + self::ALTA);
+
+        $this->assertSame([422, 'PAYLOAD_INVALID'], [$tooLong['status'], $tooLong['body']['code']]);
+        $this->assertSame(201, $limit['status']);
+        $this->assertSame(1, (int) $this->hospital()->scalar('SELECT count(*) FROM doctor_profiles'));
+    }
+
     /** Médico con CARD principal y NEURO secundaria desde enero, y horario de lunes 08:00-10:00 en NEURO (el trigger exige el vínculo). */
     private function doctorWithSchedule(int $slotMinutes = 30): string
     {

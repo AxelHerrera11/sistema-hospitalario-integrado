@@ -10,13 +10,15 @@ paso() { # paso <descripción> <esperado> <curl args...>
   local cuerpo obtenido; cuerpo=$(curl -s -D "$CAB" -w '\n%{http_code}' "$@"); obtenido=${cuerpo##*$'\n'}; ULTIMO=${cuerpo%$'\n'*}
   printf '%s  %-70s esperado %s, obtenido %s\n' "$([ "$obtenido" = "$esperado" ] && echo PASS || echo FAIL)" "$d" "$esperado" "$obtenido"
 }
+# Cambia un carácter del medio de la firma: el último solo lleva 4 bits de datos y, si es «w», cambiarlo por «x» deja la misma firma.
+alterada() { local i=$((${#1} - 10)) c; c=${1:$i:1}; [ "$c" = A ] && c=B || c=A; echo "${1:0:$i}$c${1:$((i + 1))}"; }
 campo() { php -r '$j = json_decode($argv[1], true); foreach (explode(".", $argv[2]) as $k) { $j = $j[$k] ?? null; } echo is_scalar($j) ? $j : json_encode($j);' "$ULTIMO" "$1"; }
 MED=$(token "$E2E_MEDICO_EMAIL"); REC=$(token recepcion.e2e@hospital-ficticio.test); SUP=$(token superadmin.e2e@hospital-ficticio.test)
 [ -n "$MED" ] && [ -n "$REC" ] && [ -n "$SUP" ] || { echo "FAIL  login de médico, recepción o superadmin"; exit 1; }
 CAT="$B/api/v1/lab-tests"; A=(-H "X-Tenant-ID: $H" -H "Authorization: Bearer $SUP" -H "$J"); HOY=$(date +%F)
 glu() { echo "{\"code\":\"GLU\",\"name\":\"Glucosa\",\"specimen_type\":\"serum\",\"min_volume_ml\":0.5,\"result_type\":\"numeric\",\"unit\":\"mg/dL\",\"reference_low\":70,\"reference_high\":100,\"critical_low\":40,\"critical_high\":400,\"valid_from\":\"$HOY\"$1}"; }
 paso 'L01 sin token → 401' 401 -H "X-Tenant-ID: $H" "$CAT"
-paso 'L01 token con la firma alterada → 401' 401 -H "X-Tenant-ID: $H" -H "Authorization: Bearer ${SUP%?}x" "$CAT"
+paso 'L01 token con la firma alterada → 401' 401 -H "X-Tenant-ID: $H" -H "Authorization: Bearer $(alterada "$SUP")" "$CAT"
 paso 'L02 token del hospital A con X-Tenant-ID del B → 403' 403 -H "X-Tenant-ID: $OTRO" -H "Authorization: Bearer $MED" "$CAT"
 paso 'L03 recepción sin laboratorio.catalogo.ver → 403' 403 -H "X-Tenant-ID: $H" -H "Authorization: Bearer $REC" "$CAT"
 paso 'L03 médico consulta pero no administra → 403' 403 -X POST -H "X-Tenant-ID: $H" -H "Authorization: Bearer $MED" -H "$J" -d "$(glu)" "$CAT"

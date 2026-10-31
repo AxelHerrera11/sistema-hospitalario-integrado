@@ -10,12 +10,14 @@ paso() { # paso <descripción> <esperado> <curl args...>
   local cuerpo obtenido; cuerpo=$(curl -s -D "$CAB" -w '\n%{http_code}' "$@"); obtenido=${cuerpo##*$'\n'}; ULTIMO=${cuerpo%$'\n'*}
   printf '%s  %-70s esperado %s, obtenido %s\n' "$([ "$obtenido" = "$esperado" ] && echo PASS || echo FAIL)" "$d" "$esperado" "$obtenido"
 }
+# Cambia un carácter del medio de la firma: el último solo lleva 4 bits de datos y, si es «w», cambiarlo por «x» deja la misma firma.
+alterada() { local i=$((${#1} - 10)) c; c=${1:$i:1}; [ "$c" = A ] && c=B || c=A; echo "${1:0:$i}$c${1:$((i + 1))}"; }
 campo() { php -r '$j = json_decode($argv[1], true); foreach (explode(".", $argv[2]) as $k) { $j = $j[$k] ?? null; } echo is_scalar($j) ? $j : json_encode($j);' "$ULTIMO" "$1"; }
 MED=$(token "$E2E_MEDICO_EMAIL"); ADM=$(token "$E2E_ADMIN_EMAIL"); REC=$(token recepcion.e2e@hospital-ficticio.test)
 [ -n "$MED" ] && [ -n "$ADM" ] && [ -n "$REC" ] || { echo "FAIL  login de médico, administrador o recepción"; exit 1; }
 ALERTA="$B/api/v1/patients/$P/allergy-alert"; ALTA="$B/api/v1/patients/$P/allergies"; A=(-H "X-Tenant-ID: $H" -H "Authorization: Bearer $MED")
 paso 'A01 sin token → 401' 401 -H "X-Tenant-ID: $H" "$ALERTA"
-paso 'A01 token con la firma alterada → 401' 401 -H "X-Tenant-ID: $H" -H "Authorization: Bearer ${MED%?}x" "$ALERTA"
+paso 'A01 token con la firma alterada → 401' 401 -H "X-Tenant-ID: $H" -H "Authorization: Bearer $(alterada "$MED")" "$ALERTA"
 paso 'A02 token del hospital A con X-Tenant-ID del B → 403' 403 -H "X-Tenant-ID: $OTRO" -H "Authorization: Bearer $MED" "$ALERTA"
 paso 'A03 admin_hospital sin alergias.ver → 403' 403 -H "X-Tenant-ID: $H" -H "Authorization: Bearer $ADM" "$ALERTA"
 paso 'A03 recepción sin alergias.registrar → 403' 403 -X POST -H "X-Tenant-ID: $H" -H "Authorization: Bearer $REC" -H "$J" \

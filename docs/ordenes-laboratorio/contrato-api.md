@@ -1,9 +1,7 @@
 # Contrato API de órdenes de laboratorio
 
-Estado: contrato previo al código, preparado para la coordinación del grupo.
-`origin/develop` todavía **no** contiene las tablas HOSPITAL `lab_tests`,
-`lab_orders`, `lab_order_items` ni `specimens`; este documento no declara
-implementación ni autoriza crear alertas sin `lab_result_versions`.
+Estado: contrato implementado parcialmente en la Semana 16; la integración queda
+sujeta a las pruebas de PostgreSQL, RBAC y tenant descritas en el PR.
 
 Autoría del módulo: `ASII-16 — Órdenes de laboratorio` (equipo de laboratorio).
 Este contrato se preparó en el marco del plan transversal de integración del
@@ -18,7 +16,7 @@ recepción y resultados antes de escribir código.
 |---|---|
 | Autenticación | `Authorization: Bearer <token>` validado por el middleware de auth del grupo |
 | Hospital | `X-Tenant-ID`; selecciona una única base HOSPITAL autorizada |
-| Idempotencia | `Idempotency-Key` obligatoria y única por hospital durante 24 horas |
+| Idempotencia | `Idempotency-Key` obligatoria y única por hospital; reutilizarla con otro cuerpo devuelve `409` |
 | Trazabilidad | `X-Correlation-ID` opcional; el servidor genera un UUID si falta |
 | Permiso | `laboratorio.ordenes.crear` (aún no existe en el RBAC de `develop`) |
 
@@ -77,6 +75,22 @@ Respuesta `201`:
 Permiso: `laboratorio.ordenes.ver`. Los filtros son opcionales; `per_page`
 admite de 1 a 100. Solo devuelve órdenes de la base HOSPITAL seleccionada.
 
+La respuesta incluye la página solicitada y el total calculado antes de aplicar
+el ordenamiento:
+
+```json
+{
+  "data": {
+    "lab_orders": [],
+    "pagination": {"page": 1, "per_page": 25, "total": 0, "last_page": 1}
+  },
+  "meta": {"request_id": "req-...", "correlation_id": "uuid"}
+}
+```
+
+`from` y `to` aceptan una fecha `YYYY-MM-DD` (el límite `to` es exclusivo al
+inicio del día siguiente) o una fecha ISO-8601 con hora y zona horaria.
+
 `GET /api/v1/lab-orders/{lab_order_id}`
 
 Permiso: `laboratorio.ordenes.ver`. Incluye los ítems y la versión de catálogo
@@ -92,7 +106,7 @@ puede pasar a `CANCELLED`; la cancelación conserva orden e ítems como evidenci
 
 ## Errores
 
-Todos devuelven `error.code`, un `error.message` seguro y `meta.correlation_id`
+Todos devuelven `error.code` y `meta.request_id`; las respuestas exitosas incluyen también `meta.correlation_id`
 cuando la solicitud alcanza el handler.
 
 | HTTP | Código | Condición |
@@ -107,6 +121,8 @@ cuando la solicitud alcanza el handler.
 | 422 | `DUPLICATE_LAB_TEST` | Una prueba aparece más de una vez |
 | 422 | `INACTIVE_LAB_TEST` | La versión de catálogo no está activa o vigente |
 | 422 | `PATIENT_EPISODE_MISMATCH` | El episodio no corresponde al paciente |
+| 400 | `IDEMPOTENCY_KEY_REQUIRED` | Falta el encabezado `Idempotency-Key` |
+| 422 | `EPISODE_NOT_OPEN` | El episodio no está abierto |
 | 503 | `LAB_ORDER_UNAVAILABLE` | Dependencia o base HOSPITAL no disponible |
 
 ## Propiedad y dependencias

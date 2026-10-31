@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DoctorApiController;
 use App\Http\Controllers\Api\V1\OccupancyController;
 use App\Http\Controllers\Api\V1\LabModulesController;
+use App\Http\Controllers\Api\V1\LabOrderController;
 use App\Http\Controllers\Api\V1\ReportesIndicatorController;
 use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +23,8 @@ Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
     Route::prefix('admin')->group(function (): void {
         Route::get('/users', [HospitalUserController::class, 'index'])
             ->middleware('rbac:usuarios.ver');
+        Route::post('/users', [HospitalUserController::class, 'store'])
+            ->middleware('rbac:usuarios.crear');
         Route::post('/users/{user}/roles', [HospitalUserController::class, 'assign'])
             ->middleware('rbac:rbac.asignar');
         Route::delete('/users/{user}/roles/{role}', [HospitalUserController::class, 'revoke'])
@@ -50,6 +53,12 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->
     Route::get('/lab-results', [LabModulesController::class, 'results'])->middleware('rbac:lab-results.read');
     Route::post('/lab-results/{resultId}/capture', [LabModulesController::class, 'capture'])->middleware('rbac:lab-results.create');
     Route::post('/lab-results/{resultId}/correct', [LabModulesController::class, 'correct'])->middleware('rbac:lab-results.correct');
+
+    Route::get('/lab-orders', [LabOrderController::class, 'index'])->middleware('rbac:laboratorio.ordenes.ver');
+    Route::post('/lab-orders', [LabOrderController::class, 'store'])->middleware('rbac:laboratorio.ordenes.crear');
+    Route::get('/lab-orders/{id}', [LabOrderController::class, 'show'])->middleware('rbac:laboratorio.ordenes.ver');
+    Route::patch('/lab-orders/{id}/status', [LabOrderController::class, 'advance'])->middleware('rbac:laboratorio.ordenes.actualizar');
+    Route::post('/lab-orders/{id}/cancellation', [LabOrderController::class, 'cancel'])->middleware('rbac:laboratorio.ordenes.cancelar');
 });
 
 Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, 'rbac:reportes.ver'])->group(function (): void {
@@ -58,10 +67,12 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, 'r
 
 // Médicos y especialidades (ASII-04): cada operación declara su propio permiso; usa la base HOSPITAL de esta instancia.
 Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
+    // Límite de tasa por usuario (MED-14): las escrituras son raras; la consulta de disponibilidad es más frecuente.
+    // El prefijo separa los contadores: sin él, todas las rutas `throttle:N,1` del usuario comparten uno.
     Route::post('/doctors', [DoctorApiController::class, 'register'])
-        ->middleware('rbac:medicos.registrar');
+        ->middleware(['rbac:medicos.registrar', 'throttle:30,1,medicos-escritura']);
     Route::post('/doctors/{doctor}/specialties', [DoctorApiController::class, 'associateSpecialty'])
-        ->middleware('rbac:medicos.asociar_especialidad');
+        ->middleware(['rbac:medicos.asociar_especialidad', 'throttle:30,1,medicos-escritura']);
     Route::get('/availability', [DoctorApiController::class, 'availability'])
-        ->middleware('rbac:medicos.ver_disponibilidad');
+        ->middleware(['rbac:medicos.ver_disponibilidad', 'throttle:120,1,medicos-lectura']);
 });

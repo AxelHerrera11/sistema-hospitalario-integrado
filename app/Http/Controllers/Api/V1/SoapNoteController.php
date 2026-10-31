@@ -34,6 +34,16 @@ final class SoapNoteController extends Controller
         return $this->forward($request, 'POST', '/soap-notes/' . rawurlencode($note) . '/diagnoses');
     }
 
+    public function correct(Request $request, string $note): JsonResponse
+    {
+        return $this->forward($request, 'POST', '/soap-notes/' . rawurlencode($note) . '/corrections');
+    }
+
+    public function sign(Request $request, string $note): JsonResponse
+    {
+        return $this->forward($request, 'POST', '/soap-notes/' . rawurlencode($note) . '/sign');
+    }
+
     public function show(Request $request, string $note): JsonResponse
     {
         return $this->forward($request, 'GET', '/soap-notes/' . rawurlencode($note));

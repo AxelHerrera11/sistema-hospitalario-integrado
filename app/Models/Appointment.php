@@ -29,6 +29,9 @@ class Appointment extends Model
 
     protected $guarded = [];
 
+    /** timestamptz: con desfase, para que PostgreSQL no lo lea en la zona horaria de su sesión. */
+    protected $dateFormat = 'Y-m-d H:i:sP';
+
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',

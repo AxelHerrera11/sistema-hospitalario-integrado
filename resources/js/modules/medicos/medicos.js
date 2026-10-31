@@ -12,6 +12,11 @@ export const PERMISSIONS = {
     associate: 'medicos.asociar_especialidad',
 };
 
+/** Longitudes máximas que también aplica el servidor (422 `PAYLOAD_INVALID` si se superan). */
+export const LIMITS = { license: 64, userRef: 64, specialtyCode: 32, doctorId: 64 };
+
+const tooLong = (value, max) => String(value ?? '').length > max;
+
 /** Fecha ISO `AAAA-MM-DD` que existe en el calendario (rechaza 2026-02-30). */
 export function isRealDate(value) {
     if (typeof value !== 'string' || ! /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -29,6 +34,10 @@ export function availabilityError({ specialty, date }) {
         return 'Indica el código de la especialidad.';
     }
 
+    if (tooLong(specialty, LIMITS.specialtyCode)) {
+        return `El código de la especialidad admite hasta ${LIMITS.specialtyCode} caracteres.`;
+    }
+
     return isRealDate(date) ? '' : 'Indica una fecha válida (AAAA-MM-DD).';
 }
 
@@ -40,6 +49,14 @@ export function doctorErrors({ local_user_ref_id, license_number, specialty_code
     for (const [field, value] of Object.entries(required)) {
         if (! String(value ?? '').trim()) {
             errors[field] = 'Este campo es obligatorio.';
+        }
+    }
+
+    const max = { local_user_ref_id: LIMITS.userRef, license_number: LIMITS.license, specialty_code: LIMITS.specialtyCode };
+
+    for (const [field, value] of Object.entries(required)) {
+        if (! errors[field] && tooLong(value, max[field])) {
+            errors[field] = `Admite hasta ${max[field]} caracteres.`;
         }
     }
 
@@ -60,6 +77,14 @@ export function associationErrors({ doctor_id, specialty_code, valid_from, valid
 
     if (! String(specialty_code ?? '').trim()) {
         errors.specialty_code = 'Este campo es obligatorio.';
+    }
+
+    if (! errors.doctor_id && tooLong(doctor_id, LIMITS.doctorId)) {
+        errors.doctor_id = `Admite hasta ${LIMITS.doctorId} caracteres.`;
+    }
+
+    if (! errors.specialty_code && tooLong(specialty_code, LIMITS.specialtyCode)) {
+        errors.specialty_code = `Admite hasta ${LIMITS.specialtyCode} caracteres.`;
     }
 
     if (! isRealDate(valid_from)) {
@@ -102,6 +127,10 @@ export function failureMessage(code, status) {
 
     if (status === 403) {
         return 'No tienes permiso para esta operación.';
+    }
+
+    if (status === 429) {
+        return 'Demasiadas solicitudes. Espera un momento antes de intentar de nuevo.';
     }
 
     if (status === 503 || status >= 500 || code === 'DOCTOR_PERSISTENCE_ERROR') {
