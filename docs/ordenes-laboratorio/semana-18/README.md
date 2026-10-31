@@ -6,7 +6,7 @@
 - Estudiante: Javier Alexander Fajardo López (`Javifa2324`)
 - Rama: `feature/asii-16-semana-18-evaluacion-ordenes-javifa2324`
 - Destino: `develop`
-- Dependencias: PR #1673 (Semana 16) y la revisión de la Semana 17
+- Dependencias: PR #1673 (Semana 16, ya fusionado en `develop`) y la revisión de la Semana 17
 - Issue relacionado: `Refs #343`
 
 ## Objetivo
