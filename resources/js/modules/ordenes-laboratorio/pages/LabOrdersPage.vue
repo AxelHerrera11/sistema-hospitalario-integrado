@@ -3,7 +3,7 @@ import { onMounted, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 
 const orders = ref([]); const loading = ref(false); const error = ref(''); const notice = ref('');
-const form = reactive({ local_patient_id: '', care_episode_id: '', lab_test_id: '', priority: 'routine', idempotency_key: '' });
+const form = reactive({ local_patient_id: '', care_episode_id: '', lab_test_id: '', priority: 'ROUTINE', idempotency_key: '' });
 const message = (e) => e.response?.data?.error?.code ?? 'No fue posible completar la operación.';
 
 async function load() {
@@ -13,19 +13,19 @@ async function load() {
 async function create() {
     notice.value = ''; error.value = '';
     try {
-        const payload = { ...form, idempotency_key: form.idempotency_key || crypto.randomUUID(), items: [{ lab_test_id: form.lab_test_id }] };
-        await api.post('/lab-orders', payload); notice.value = 'Orden emitida en HOSPITAL.'; Object.assign(form, { local_patient_id: '', care_episode_id: '', lab_test_id: '', idempotency_key: '' }); await load();
+        const payload = { ...form, items: [{ lab_test_id: form.lab_test_id }] };
+        await api.post('/lab-orders', payload, { headers: { 'Idempotency-Key': form.idempotency_key || crypto.randomUUID() } }); notice.value = 'Orden emitida en HOSPITAL.'; Object.assign(form, { local_patient_id: '', care_episode_id: '', lab_test_id: '', idempotency_key: '' }); await load();
     } catch (e) { error.value = message(e); }
 }
 async function advance(order) {
-    const next = { issued: 'collected', collected: 'in_process', in_process: 'resulted', resulted: 'validated' }[order.status];
+    const next = { REQUESTED: 'COLLECTED', COLLECTED: 'IN_PROCESS', IN_PROCESS: 'RESULTED', RESULTED: 'VALIDATED' }[order.status];
     if (!next) return;
     try { await api.patch(`/lab-orders/${order.lab_order_id}/status`, { status: next }); await load(); } catch (e) { error.value = message(e); }
 }
 async function cancel(order) {
     const reason = window.prompt('Motivo de cancelación (mínimo 5 caracteres):');
     if (!reason) return;
-    try { await api.post(`/lab-orders/${order.lab_order_id}/cancel`, { reason }); await load(); } catch (e) { error.value = message(e); }
+    try { await api.post(`/lab-orders/${order.lab_order_id}/cancellation`, { reason }, { headers: { 'Idempotency-Key': crypto.randomUUID() } }); await load(); } catch (e) { error.value = message(e); }
 }
 onMounted(load);
 </script>
@@ -38,13 +38,13 @@ onMounted(load);
             <label>Paciente (UUID)<input v-model="form.local_patient_id" required></label>
             <label>Episodio (UUID)<input v-model="form.care_episode_id" required></label>
             <label>Prueba (UUID)<input v-model="form.lab_test_id" required></label>
-            <label>Prioridad<select v-model="form.priority"><option value="routine">Rutina</option><option value="urgent">Urgente</option><option value="stat">STAT</option></select></label>
+            <label>Prioridad<select v-model="form.priority"><option value="ROUTINE">Rutina</option><option value="URGENT">Urgente</option><option value="STAT">STAT</option></select></label>
             <button type="submit">Emitir orden</button>
         </form>
         <p v-if="error" class="orders__error" role="alert">{{ error }}</p><p v-if="notice" role="status">{{ notice }}</p>
         <p v-if="loading" role="status">Consultando órdenes…</p>
         <table v-else class="orders__table"><caption>Órdenes del hospital actual</caption><thead><tr><th>Paciente</th><th>Prioridad</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
-            <tr v-for="order in orders" :key="order.lab_order_id"><td>{{ order.local_patient_id }}</td><td>{{ order.priority }}</td><td>{{ order.status }}</td><td><button v-if="!['validated','cancelled'].includes(order.status)" @click="advance(order)">Avanzar</button><button v-if="!['validated','cancelled'].includes(order.status)" @click="cancel(order)">Cancelar</button></td></tr>
+            <tr v-for="order in orders" :key="order.lab_order_id"><td>{{ order.local_patient_id }}</td><td>{{ order.priority }}</td><td>{{ order.status }}</td><td><button v-if="!['VALIDATED','CANCELLED'].includes(order.status)" @click="advance(order)">Avanzar</button><button v-if="!['VALIDATED','CANCELLED'].includes(order.status)" @click="cancel(order)">Cancelar</button></td></tr>
             <tr v-if="!orders.length"><td colspan="4">No hay órdenes registradas.</td></tr>
         </tbody></table>
     </section>

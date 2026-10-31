@@ -56,7 +56,7 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->
     Route::post('/lab-orders', [LabOrderController::class, 'store'])->middleware('rbac:laboratorio.ordenes.crear');
     Route::get('/lab-orders/{id}', [LabOrderController::class, 'show'])->middleware('rbac:laboratorio.ordenes.ver');
     Route::patch('/lab-orders/{id}/status', [LabOrderController::class, 'advance'])->middleware('rbac:laboratorio.ordenes.actualizar');
-    Route::post('/lab-orders/{id}/cancel', [LabOrderController::class, 'cancel'])->middleware('rbac:laboratorio.ordenes.cancelar');
+    Route::post('/lab-orders/{id}/cancellation', [LabOrderController::class, 'cancel'])->middleware('rbac:laboratorio.ordenes.cancelar');
 });
 
 Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, 'rbac:reportes.ver'])->group(function (): void {

@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 final class LabOrderController extends Controller
 {
     private const TRANSITIONS = [
-        'issued' => 'collected', 'collected' => 'in_process', 'in_process' => 'resulted', 'resulted' => 'validated',
+        'REQUESTED' => 'COLLECTED', 'COLLECTED' => 'IN_PROCESS', 'IN_PROCESS' => 'RESULTED', 'RESULTED' => 'VALIDATED',
     ];
 
     public function __construct(private readonly ResolutorActorLocal $actors) {}
@@ -35,15 +35,28 @@ final class LabOrderController extends Controller
         [$tenant, $actor] = $this->context($request);
         $data = $request->validate([
             'local_patient_id' => ['required', 'uuid'], 'care_episode_id' => ['required', 'uuid'],
-            'clinical_note_id' => ['nullable', 'uuid'], 'priority' => ['required', 'in:routine,urgent,stat'],
-            'clinical_context' => ['nullable', 'string', 'max:2000'], 'idempotency_key' => ['required', 'string', 'max:100'],
-            'correlation_id' => ['nullable', 'uuid'], 'items' => ['required', 'array', 'min:1', 'max:20'],
+            'clinical_note_id' => ['nullable', 'uuid'], 'priority' => ['nullable', 'in:ROUTINE,URGENT,STAT'],
+            'clinical_context' => ['nullable', 'string', 'max:2000'],
+            'items' => ['required', 'array', 'min:1', 'max:20'],
             'items.*.lab_test_id' => ['required', 'uuid'],
         ]);
+        $idempotencyKey = trim((string) $request->header('Idempotency-Key'));
+        if ($idempotencyKey === '') return $this->error('IDEMPOTENCY_KEY_REQUIRED', 400, $this->requestId($request));
+        $testIds = array_map(static fn (array $item): string => $item['lab_test_id'], $data['items']);
+        if (count($testIds) !== count(array_unique($testIds))) return $this->error('DUPLICATE_LAB_TEST', 422, $this->requestId($request));
+        $data['priority'] = strtoupper((string) ($data['priority'] ?? 'ROUTINE'));
+        $data['idempotency_key'] = $idempotencyKey;
+        $data['request_hash'] = hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
         $db = DB::connection('hospital');
         return $db->transaction(function () use ($db, $data, $tenant, $actor, $request): JsonResponse {
             $existing = $db->table('lab_orders')->where('tenant_id', $tenant)->where('idempotency_key', $data['idempotency_key'])->first();
-            if ($existing) return $this->json(['lab_order' => $this->order($existing)], 200, $this->requestId($request));
+            if ($existing) {
+                if (!hash_equals((string) $existing->idempotency_request_hash, $data['request_hash'])) return $this->error('IDEMPOTENCY_CONFLICT', 409, $this->requestId($request));
+                return $this->json(['lab_order' => $this->order($existing)], 200, $this->requestId($request));
+            }
+            $episodeOpen = $db->table('care_episodes')->where('care_episode_id', $data['care_episode_id'])
+                ->where('local_patient_id', $data['local_patient_id'])->where('status', 'open')->exists();
+            if (!$episodeOpen) return $this->error('EPISODE_NOT_OPEN', 422, $this->requestId($request));
             $tests = [];
             foreach ($data['items'] as $item) {
                 $test = $db->table('lab_tests')->where('lab_test_id', $item['lab_test_id'])->where('status', 'active')->first();
@@ -51,12 +64,12 @@ final class LabOrderController extends Controller
                 $tests[] = $test;
             }
             $id = (string) Str::uuid();
-            $correlation = $data['correlation_id'] ?? (string) Str::uuid();
+            $correlation = (string) ($request->header('X-Correlation-ID') ?: Str::uuid());
             $db->table('lab_orders')->insert([
                 'lab_order_id' => $id, 'tenant_id' => $tenant, 'local_patient_id' => $data['local_patient_id'],
                 'care_episode_id' => $data['care_episode_id'], 'clinical_note_id' => $data['clinical_note_id'] ?? null,
                 'ordered_by_user_ref_id' => $actor, 'priority' => $data['priority'], 'clinical_context' => $data['clinical_context'] ?? null,
-                'status' => 'issued', 'idempotency_key' => $data['idempotency_key'], 'correlation_id' => $correlation,
+                'status' => 'REQUESTED', 'idempotency_key' => $data['idempotency_key'], 'idempotency_request_hash' => $data['request_hash'], 'correlation_id' => $correlation,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
             foreach ($tests as $test) $db->table('lab_order_items')->insert([
@@ -64,7 +77,7 @@ final class LabOrderController extends Controller
                 'test_code' => $test->code, 'test_name' => $test->name, 'created_at' => now(),
             ]);
             $db->table('lab_order_events')->insert([
-                'lab_order_id' => $id, 'event_seq' => 1, 'from_status' => null, 'to_status' => 'issued',
+                'lab_order_id' => $id, 'event_seq' => 1, 'from_status' => null, 'to_status' => 'REQUESTED',
                 'actor_user_ref_id' => $actor, 'occurred_at' => now(), 'correlation_id' => $correlation,
             ]);
             return $this->json(['lab_order' => $this->showOrder($db, $tenant, $id)], 201, $this->requestId($request));
@@ -81,7 +94,7 @@ final class LabOrderController extends Controller
     public function advance(Request $request, string $id): JsonResponse
     {
         [$tenant, $actor] = $this->context($request);
-        $data = $request->validate(['status' => ['required', 'in:collected,in_process,resulted,validated']]);
+        $data = $request->validate(['status' => ['required', 'in:COLLECTED,IN_PROCESS,RESULTED,VALIDATED']]);
         $db = DB::connection('hospital');
         return $db->transaction(function () use ($db, $tenant, $actor, $id, $data, $request): JsonResponse {
             $order = $db->table('lab_orders')->where('tenant_id', $tenant)->where('lab_order_id', $id)->lockForUpdate()->first();
@@ -98,14 +111,15 @@ final class LabOrderController extends Controller
     {
         [$tenant, $actor] = $this->context($request);
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:250']]);
+        if (trim((string) $request->header('Idempotency-Key')) === '') return $this->error('IDEMPOTENCY_KEY_REQUIRED', 400, $this->requestId($request));
         $db = DB::connection('hospital');
         return $db->transaction(function () use ($db, $tenant, $actor, $id, $data, $request): JsonResponse {
             $order = $db->table('lab_orders')->where('tenant_id', $tenant)->where('lab_order_id', $id)->lockForUpdate()->first();
             if (!$order) return $this->error('LAB_ORDER_NOT_FOUND', 404, $this->requestId($request));
-            if (in_array($order->status, ['validated', 'cancelled'], true)) return $this->error('LAB_ORDER_CANCELLATION_INVALID', 409, $this->requestId($request));
-            $db->table('lab_orders')->where('lab_order_id', $id)->update(['status' => 'cancelled', 'updated_at' => now()]);
+            if (in_array($order->status, ['VALIDATED', 'CANCELLED'], true)) return $this->error('LAB_ORDER_CANCELLATION_INVALID', 409, $this->requestId($request));
+            $db->table('lab_orders')->where('lab_order_id', $id)->update(['status' => 'CANCELLED', 'updated_at' => now()]);
             $seq = ((int) $db->table('lab_order_events')->where('lab_order_id', $id)->max('event_seq')) + 1;
-            $db->table('lab_order_events')->insert(['lab_order_id' => $id, 'event_seq' => $seq, 'from_status' => $order->status, 'to_status' => 'cancelled', 'actor_user_ref_id' => $actor, 'occurred_at' => now(), 'correlation_id' => $order->correlation_id, 'reason' => $data['reason']]);
+            $db->table('lab_order_events')->insert(['lab_order_id' => $id, 'event_seq' => $seq, 'from_status' => $order->status, 'to_status' => 'CANCELLED', 'actor_user_ref_id' => $actor, 'occurred_at' => now(), 'correlation_id' => $order->correlation_id, 'reason' => $data['reason']]);
             return $this->json(['lab_order' => $this->showOrder($db, $tenant, $id)], 200, $this->requestId($request));
         });
     }
@@ -128,6 +142,6 @@ final class LabOrderController extends Controller
 
     private function order(object $row): array { return (array) $row; }
     private function requestId(Request $request): string { return (string) ($request->header('X-Request-ID') ?: 'req-'.bin2hex(random_bytes(8))); }
-    private function json(array $data, int $status, string $requestId): JsonResponse { return response()->json(['data' => $data, 'meta' => ['request_id' => $requestId]], $status)->header('Cache-Control', 'no-store, private'); }
+    private function json(array $data, int $status, string $requestId): JsonResponse { return response()->json(['data' => $data, 'meta' => ['request_id' => $requestId, 'correlation_id' => $data['lab_order']['correlation_id'] ?? null]], $status)->header('Cache-Control', 'no-store, private'); }
     private function error(string $code, int $status, string $requestId): JsonResponse { return response()->json(['error' => ['code' => $code], 'meta' => ['request_id' => $requestId]], $status)->header('Cache-Control', 'no-store, private'); }
 }
