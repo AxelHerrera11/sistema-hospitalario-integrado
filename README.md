@@ -169,13 +169,14 @@ rutas administrativas activas son:
 | Método | Ruta | Permiso y alcance |
 |---|---|---|
 | GET | `/admin/users` | `usuarios.ver`, hospital activo |
+| POST | `/admin/users` | `usuarios.crear`, alta con primer rol en el hospital activo |
 | POST | `/admin/users/{user}/roles` | `rbac.asignar`, hospital activo |
 | DELETE | `/admin/users/{user}/roles/{role}` | `rbac.asignar`, hospital activo |
 | POST | `/admin/users/{user}/deactivate` | `usuarios.desactivar`, solo acceso local |
 | POST | `/admin/tenants` | `tenants.crear`, solo superadmin; queda inactivo hasta provisionamiento |
 | DELETE | `/admin/sessions/{session}` | `sesiones.revocar_ajenas`, hospital activo |
 
-No hay endpoint de registro/activación de usuarios ni de edición de tenants.
+No hay endpoint de edición de tenants.
 Los endpoints clínicos de pacientes, admisiones, EMR, laboratorio y reportes
 están pendientes y se construirán por módulos.
 

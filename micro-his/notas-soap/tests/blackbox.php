@@ -60,6 +60,26 @@ foreach ([$post(SOAP), $post([], 'enf.ruiz'), $dx('J18.9', 'secondary')] as $res
 check('B-14', 'Trazabilidad · éxitos y errores llevan un trace_id UUID en el cuerpo', $trace);
 check('B-15', 'Privacidad · la auditoría guarda identificadores y no el texto clínico (RNF-SOAP-05)', $audit->events !== [] && !str_contains(json_encode($audit->events, JSON_UNESCAPED_UNICODE), 'Tos de 3 días'));
 
+// UC-SOAP-05 · firma por el API: permiso propio, trace_id y estado final.
+$firmable = $post(SOAP)['body']['clinical_note_id'];
+send($api, 'POST', "/api/v1/soap-notes/$firmable/diagnoses", 'dra.lopez', ['code' => 'J18.9', 'type' => 'primary']);
+$sign = static fn (string $note, ?string $actor): array => send($api, 'POST', "/api/v1/soap-notes/$note/sign", $actor, []);
+$firmada = $sign($firmable, 'dra.lopez');
+check('B-18', 'Firma · sin identidad 401; sin notas_soap.firmar 403 FORBIDDEN; la autora 200 signed con trace_id; otra vez 409 NOTE_SIGNED', $state($sign($firmable, null)) === '401 UNAUTHENTICATED' && $state($sign($firmable, 'enf.ruiz')) === '403 FORBIDDEN'
+    && $firmada['status'] === 200 && $firmada['body']['status'] === 'signed' && preg_match(Uuid::PATTERN, $firmada['body']['trace_id'] ?? '') === 1 && $state($sign($firmable, 'dra.lopez')) === '409 NOTE_SIGNED');
+check('B-19', 'Firma · sin diagnóstico principal 422 SOAP_INCOMPLETE y la nota sigue en borrador; id inexistente 404', (function () use ($post, $sign, $state, $repo): bool {
+    $borrador = $post(SOAP)['body']['clinical_note_id'];
+    return $state($sign($borrador, 'dra.lopez')) === '422 SOAP_INCOMPLETE' && $repo->notes[$borrador]['status'] === 'draft' && $state($sign('no-existe', 'dra.lopez')) === '404 NOTE_NOT_FOUND';
+})());
+
+// UC-SOAP-06 · corrección por el API: permiso propio, motivo obligatorio y versión 2 en borrador.
+$corregir = static fn (?string $actor, array $body): array => send($api, 'POST', "/api/v1/soap-notes/$firmable/corrections", $actor, $body);
+$cuerpo = ['correction_reason' => 'Plan corregido', 'plan' => 'Amoxicilina 500 mg'] + SOAP;
+$corregida = $corregir('dra.lopez', $cuerpo);
+check('B-20', 'Corrección · sin identidad 401; sin notas_soap.corregir 403; sin motivo 422; la autora 201 en borrador con trace_id; la segunda 409 NOTE_ALREADY_CORRECTED', $state($corregir(null, $cuerpo)) === '401 UNAUTHENTICATED' && $state($corregir('enf.ruiz', $cuerpo)) === '403 FORBIDDEN'
+    && $state($corregir('dra.lopez', ['correction_reason' => ''] + $cuerpo)) === '422 CORRECTION_REASON_INVALID' && $corregida['status'] === 201 && $corregida['body']['status'] === 'draft' && $corregida['body']['supersedes_id'] === $firmable
+    && preg_match(Uuid::PATTERN, $corregida['body']['trace_id'] ?? '') === 1 && $state($corregir('dra.lopez', $cuerpo)) === '409 NOTE_ALREADY_CORRECTED');
+
 // Defectos conocidos.
 check('B-16', 'Una sección con solo espacio duro (U+00A0) se rechaza como vacía', $state($post(['subjective' => "\u{00A0}"] + SOAP)) === '422 SOAP_SECTION_INVALID');
 check('B-17', 'Quien no atiende el episodio recibe la misma respuesta ante una nota existente y una inexistente', $state($get($noteId, 'enf.ruiz')) === $state($get('no-existe', 'enf.ruiz')));

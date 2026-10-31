@@ -28,6 +28,7 @@ async function abrir(p, codigo) {
     await p.evaluate(() => document.querySelector('a[href="/admision"]').click()); // navegación interna: el token vive en memoria
     await p.waitForSelector('#adm-codigo');
     await p.$eval('#adm-codigo', (e, v) => { e.value = v; e.dispatchEvent(new Event('input')); }, codigo);
+    await p.waitForSelector('.adm form button[type=submit]:not([disabled])'); // tras un ingreso, «Buscar» espera la recarga de camas
     await p.click('.adm form button[type=submit]');
     // Las camas llegan después del paciente: se espera la lista o el aviso de que no hay.
     await p.waitForFunction(() => document.querySelector('.adm__cama') || document.querySelector('.adm fieldset p')?.textContent.startsWith('No hay camas'));

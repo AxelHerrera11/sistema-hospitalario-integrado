@@ -61,6 +61,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.alergias },
         },
         {
+            path: '/auditoria',
+            name: 'auditoria',
+            component: () => import('@/modules/auditoria/pages/AuditPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.auditoria },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),
@@ -84,6 +90,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['admin-users'] },
         },
         {
+            path: '/calidad-versiones',
+            name: 'qa-calidad',
+            component: () => import('@/modules/qa-calidad/pages/QualityRunsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['qa-calidad'] },
+        },
+        {
             path: '/prototipos/tenants-responsive',
             name: 'tenants-responsive-prototype',
             component: () => import('@/modules/tenants/pages/ResponsivePrototypePage.vue'),
@@ -93,6 +105,13 @@ const router = createRouter({
             name: 'patients',
             component: () => import('@/modules/patients/pages/PatientsPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.patients },
+        },
+        {
+            path: '/expediente',
+            name: 'expediente',
+            component: () => import('@/modules/expediente/pages/MedicalRecordPage.vue'),
+            // Consulta clínica (expediente.ver) o gestión de médicos tratantes (expediente.asignar): basta uno.
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.expediente, permissions: ['expediente.asignar'] },
         },
         {
             path: '/wards',
@@ -117,6 +136,12 @@ const router = createRouter({
             name: 'lab-results',
             component: () => import('@/modules/laboratorio/pages/LabResultsPage.vue'),
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-results'] },
+        },
+        {
+            path: '/lab-orders',
+            name: 'lab-orders',
+            component: () => import('@/modules/ordenes-laboratorio/pages/LabOrdersPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['lab-orders'] },
         },
         {
             path: '/reportes',

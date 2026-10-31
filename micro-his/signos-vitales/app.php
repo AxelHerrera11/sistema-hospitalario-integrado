@@ -22,15 +22,15 @@ use MicroHis\SignosVitales\Presentation\VitalSignController;
 require __DIR__ . '/bootstrap.php';
 
 /** Raíz de composición: el mismo MVC funciona con cualquier adaptador del Repository (PDO o InMemory). Reglas del perfil ilustrativo adulto-2026.1. */
-function signos_vitales_router(CareEpisodeReader $episodes, VitalSignRepository $vitalSigns, AlertNotifier $notifier): Router
+function signos_vitales_router(CareEpisodeReader $episodes, VitalSignRepository $vitalSigns, AlertNotifier $notifier, ?Closure $clock = null, ?Closure $onNotificationFailure = null): Router
 {
     $view = new JsonView();
     $evaluator = new ThresholdEvaluator([new HeartRateRule(), new OxygenSaturationRule(), new GlucoseRule(), new RespiratoryRateRule(), new NoAlertRule('weight'), new NoAlertRule('height')]);
-    return new Router(new VitalSignController(new RecordVitalSigns($episodes, $evaluator, $vitalSigns, $notifier), new GetVitalSign($episodes, $vitalSigns), $view), $view);
+    return new Router(new VitalSignController(new RecordVitalSigns($episodes, $evaluator, $vitalSigns, $notifier, $clock, $onNotificationFailure), new GetVitalSign($episodes, $vitalSigns), $view), $view);
 }
 
 /** Servidor API v1 (Semana 5): el mismo Router detrás de autenticación, permisos RBAC y trace_id. */
-function signos_vitales_api(CareEpisodeReader $episodes, VitalSignRepository $vitalSigns, AlertNotifier $notifier, PermissionChecker $permissions, ?Closure $traceIds = null, ?Closure $log = null): ApiKernel
+function signos_vitales_api(CareEpisodeReader $episodes, VitalSignRepository $vitalSigns, AlertNotifier $notifier, PermissionChecker $permissions, ?Closure $traceIds = null, ?Closure $log = null, ?Closure $clock = null, ?Closure $onNotificationFailure = null): ApiKernel
 {
-    return new ApiKernel(signos_vitales_router($episodes, $vitalSigns, $notifier), $permissions, new JsonView(), $traceIds, $log);
+    return new ApiKernel(signos_vitales_router($episodes, $vitalSigns, $notifier, $clock, $onNotificationFailure),$permissions, new JsonView(), $traceIds, $log);
 }

@@ -2,7 +2,7 @@
 
 Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 69 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 77 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -20,6 +20,11 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `documentacion.ver` | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí |
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
+| `expediente.abrir` | Sí | — | Sí | — | — | — | — | — |
+| `expediente.asignar` | Sí | Sí | — | — | — | — | — | Sí |
+| `qa.ejecuciones.ver` | Sí | Sí | — | — | — | — | — | — |
+| `qa.ejecuciones.registrar` | Sí | Sí | — | — | — | — | — | — |
+| `qa.gates.evaluar` | Sí | Sí | — | — | — | — | — | — |
 | `medicamentos.ver` | Sí | Sí | Sí | Sí | — | — | — | — |
 | `medicamentos.registrar` | — | Sí | — | — | — | — | — | — |
 | `medicamentos.cambiar_vigencia` | — | Sí | — | — | — | — | — | — |
@@ -62,6 +67,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `rbac.permisos.ver` | Sí | Sí | — | — | — | — | — | — |
 | `rbac.denegaciones.ver` | Sí | Sí | — | — | — | — | — | — |
 | `usuarios.ver` | Sí | Sí | — | — | — | — | — | — |
+| `usuarios.crear` | Sí | Sí | — | — | — | — | — | — |
 | `usuarios.desactivar` | Sí | Sí | — | — | — | — | — | — |
 | `tenants.crear` | Sí | — | — | — | — | — | — | — |
 | `sesiones.revocar_ajenas` | Sí | Sí | — | — | — | — | — | — |
@@ -226,6 +232,25 @@ El alta corresponde a cualquier médico con permiso vigente en el hospital del c
 La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
 `local_user_refs`, estancia esperada, cama de destino disponible y transacción. La política entra en
 vigor al integrar este cambio; publicar los nombres no la activó.
+
+## Activación de la apertura del expediente
+
+Solicitada por ASII-25 (expediente médico electrónico base). Decisión de la responsable del módulo, 30/10/2026:
+`expediente.abrir` para `medico` y `superadmin`. Enfermería conserva solo la consulta con `expediente.ver`
+(sin vínculo asistencial vigente, la consulta sigue respondiendo 403). Los demás roles no reciben la concesión.
+
+La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
+`local_user_refs`, paciente existente y apertura idempotente con su evento de auditoría en la misma transacción.
+
+## Activación de calidad de versiones
+
+Solicitada por ASII-25 (QA, pruebas E2E y CI; adaptación «gestión de ejecuciones automatizadas y calidad de
+versiones»). Decisión de la responsable del módulo, 30/10/2026: `qa.ejecuciones.ver`, `qa.ejecuciones.registrar`
+y `qa.gates.evaluar` para `superadmin` y `admin_hospital`. Ningún rol clínico ni de laboratorio los recibe.
+
+Las ejecuciones son metadatos de pruebas (versión, commit, suites, resultados y evidencias), sin datos clínicos.
+La autorización no sustituye las reglas del módulo: tenant de la petición, transición de estados válida y
+evaluación del quality gate con la política versionada.
 
 ## Propuesta ASII-16 (30-oct-2026)
 

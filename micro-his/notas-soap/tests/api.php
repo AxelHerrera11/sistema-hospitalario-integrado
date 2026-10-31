@@ -25,7 +25,7 @@ require __DIR__ . '/../app.php';
 
 /** Roles ficticios: la Dra. López (médica tratante de ep1), el Dr. Pérez (médico sin asignación activa) y la enfermera Ruiz (solo lectura). */
 const GRANTS = [
-    'dra.lopez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.ver'],
+    'dra.lopez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.firmar', 'notas_soap.corregir', 'notas_soap.ver'],
     'dr.perez' => ['notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.ver'],
     'enf.ruiz' => ['notas_soap.ver'],
 ];

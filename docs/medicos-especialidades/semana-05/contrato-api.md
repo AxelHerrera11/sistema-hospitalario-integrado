@@ -1,5 +1,7 @@
 # Contrato API REST — Médicos v1
 
+> **Estado:** el contrato de la Semana 5 sigue vigente. Las Semanas 16 a 18 lo integraron en Laravel y **precisaron** su comportamiento real (códigos de error de la plataforma, límites, zona horaria, `slot_minutes`); eso está en la sección final [«Actualización de las Semanas 16 a 18»](#actualización-de-las-semanas-16-a-18-api-en-laravel). Donde difieran, manda esa sección.
+
 Contrato que consumen Citas (Lis), Admisión (Axel), Órdenes (Javier) y Prescripciones (María). La versión legible por máquina está en [openapi.yaml](./openapi.yaml).
 
 ## Convenciones
@@ -21,7 +23,7 @@ Contrato que consumen Citas (Lis), Admisión (Axel), Órdenes (Javier) y Prescri
 | `GET` | `/api/v1/specialties` | `medicos.ver_disponibilidad` | `200` | propuesto |
 | `GET` | `/api/v1/doctors/{doctor_profile_id}` | `medicos.ver_disponibilidad` | `200` | propuesto |
 
-Los tres permisos vienen de RNF-MED-01 (Semana 2) y no están todavía en el [catálogo de RBAC](../../rbac/semana-05/permisos.md): se proponen a María (ASII-02) con esta matriz inicial (supuesto SD-MED-11):
+Los tres permisos vienen de RNF-MED-01 (Semana 2). **Actualización (Semanas 16 a 18):** ya están en el catálogo de RBAC de la plataforma (`config/rbac.php`) y los exigen las rutas de Laravel; el rol `superadmin` también los tiene y `enfermeria` no tiene ninguno. Matriz de la propuesta original (supuesto SD-MED-11), vigente salvo lo anterior:
 
 | Rol | `medicos.registrar` | `medicos.asociar_especialidad` | `medicos.ver_disponibilidad` |
 |---|---|---|---|
@@ -73,7 +75,7 @@ Sin médicos vigentes para la especialidad: `200` con `code: "NO_DOCTORS_FOR_SPE
 
 ## Propiedad de datos
 
-Médicos es dueño de `doctor_profiles`, `doctor_specialties` y del catálogo `specialties`, y del horario (`doctor_schedules`, propuesto a Javier). Lee `appointments` (Citas) solo a través de `AppointmentReader` para restar las franjas ocupadas; nunca escribe en tablas de otro módulo. Los consumidores obtienen médicos y franjas por este contrato, no por SQL.
+Médicos es dueño de `doctor_profiles`, `doctor_specialties` y del catálogo `specialties`, y lee el horario de `doctor_schedules` (entidad 28, aprobada por este módulo el 20 de octubre de 2026; su migración la mantiene el módulo de verificación de base de datos, ASII-09). Lee `appointments` (Citas) solo a través de `AppointmentReader` para restar las franjas ocupadas; nunca escribe en tablas de otro módulo. Los consumidores obtienen médicos y franjas por este contrato, no por SQL.
 
 ## Consistencia
 
@@ -83,3 +85,69 @@ Médicos es dueño de `doctor_profiles`, `doctor_specialties` y del catálogo `s
 ## Versionado
 
 Los campos nuevos se agregan sin romper a los clientes. Un cambio incompatible sube a `/api/v2` y `/api/v1` se mantiene mientras haya consumidores.
+
+## Actualización de las Semanas 16 a 18: API en Laravel
+
+Las tres rutas se exponen en Laravel (`routes/api.php`, `DoctorApiController`) con `tenant` y `jwt.auth`, y cada una declara su permiso. El `Router` del micro-HIS se reutiliza tal cual, así que **los códigos y estados del módulo no cambian**. Lo que sigue es lo que se verificó contra el servidor real (21 de 21 verificaciones, ver [e2e-real.md](../semana-18/e2e-real.md)) y que el contrato original no decía.
+
+### Autenticación y cabeceras
+
+| Cabecera | Obligatoria | Detalle |
+|---|---|---|
+| `Authorization: Bearer <JWT>` | Sí | Se obtiene en `POST /api/v1/auth/login` |
+| `X-Tenant-ID` | Sí | UUID del hospital; debe coincidir con el del token |
+| `X-User-ID` | **No** | Solo existe en el micro-HIS aislado. En Laravel el cliente no puede fijar el actor: se resuelve en el servidor a `local_user_refs.local_user_ref_id` |
+
+### Respuestas que emite el módulo
+
+Llevan `trace_id` en el cuerpo y `X-Trace-Id` en la cabecera (16 caracteres hexadecimales, distinto en cada petición) y `Cache-Control: no-store, private`. Códigos y estados del contrato original, más:
+
+| HTTP | `code` | Cuándo |
+|---|---|---|
+| `403` | `ACTOR_NOT_PROVISIONED` | El usuario autenticado no tiene una referencia local activa en el hospital: no se escribe nada |
+| `404` | `DOCTOR_NOT_FOUND` | También cuando el identificador no es un uuid |
+| `409` | `LICENSE_ALREADY_REGISTERED` | La licencia se compara sin espacios y en mayúsculas: ` col-9 ` es `COL-9` |
+| `409` | `USER_ALREADY_REGISTERED` | El usuario local ya tiene un perfil de médico activo |
+| `422` | `USER_REF_NOT_FOUND` | `local_user_ref_id` es un uuid que no existe |
+| `422` | `PAYLOAD_INVALID` | Ahora también: `specialty` ausente en la disponibilidad, texto que supera el límite y `local_user_ref_id` que no es uuid |
+| `503` | `DOCTOR_STORAGE_UNAVAILABLE` | La base HOSPITAL no responde. Un RBAC caído, en cambio, lo informa la plataforma como `503 RBAC_UNAVAILABLE` o `RBAC_CONTEXT_UNAVAILABLE` (en lugar de `AUTHORIZATION_UNAVAILABLE`) |
+
+El `500 DOCTOR_PERSISTENCE_ERROR` queda para fallos reales de la base: ya no se usa para entradas inválidas del cliente.
+
+### Respuestas que emite la plataforma (formato propio)
+
+No pasan por el módulo y **no** usan `{"code", "trace_id"}` en todos los casos:
+
+| HTTP | Cuerpo | Cuándo |
+|---|---|---|
+| `401` | `{"error": "TOKEN_MISSING", "message": ...}` | Sin token (`jwt.auth`) |
+| `400` | `{"error": "TENANT_REQUIRED", ...}` | Falta `X-Tenant-ID` |
+| `403` | `{"error": "TENANT_MISMATCH", ...}` | El hospital de la cabecera no es el del token |
+| `403` | `{"code": "RBAC_DENIED", "trace_id": "trace-..."}` | Sin el permiso de la ruta (sustituye a `FORBIDDEN`; no incluye `permission`) |
+| `429` | `{"message": "Too Many Attempts."}` | Límite de tasa; trae `Retry-After` y `X-RateLimit-*`, sin `trace_id` |
+
+Una `GET` a una ruta que no existe bajo `/api/v1` no responde `404 ROUTE_NOT_FOUND` en Laravel: la plataforma sirve la aplicación web (HTML con `200`). Es un comportamiento de la plataforma, no del módulo.
+
+### Límites
+
+| Qué | Valor |
+|---|---|
+| Longitud de `license_number` y `local_user_ref_id` | hasta 64 caracteres |
+| Longitud de `specialty_code` (alta, asociación y consulta) | hasta 32 caracteres |
+| Longitud del identificador de médico en la ruta | hasta 64 caracteres |
+| Escrituras (`POST`) | 30 por minuto y usuario |
+| Consulta de disponibilidad | 120 por minuto y usuario |
+
+Los contadores de escritura y de consulta son independientes. El límite solo funciona con una caché compartida y persistente (`CACHE_STORE=database` o equivalente): con `array` no cuenta nada.
+
+### Disponibilidad
+
+- Las franjas salen de `doctor_schedules`: cada fila trae su `slot_minutes` (5 a 240) y la consulta parte el horario en bloques de ese tamaño, no de 30 minutos fijos.
+- Una franja se ofrece libre solo si ninguna cita activa (`scheduled` o `confirmed`) la solapa: una cita de 08:15 a 08:45 ocupa 08:00 y 08:30 con bloques de 30 minutos.
+- Las horas son **locales del hospital** (`hospitals.timezone` del tenant; si no es una zona válida, la de la aplicación). Una cita que cruza la medianoche ocupa su parte de cada día.
+- `status` es `OK` (con `slots`, que puede ser `[]`) o `SCHEDULE_NOT_CONFIGURED` (el médico no tiene horario vigente en esa fecha). La respuesta nunca incluye datos del paciente.
+- Rendimiento medido (RNF-MED-04): un día con 20 médicos, p95 ~13 ms; 14 consultas seguidas, p95 145 a 194 ms (ver [rendimiento.md](../semana-18/rendimiento.md)).
+
+### Lo que el contrato sigue sin ofrecer
+
+No hay rutas para **cargar horarios**, **listar especialidades o médicos**, ni para **dar de baja** a un médico o cerrar la vigencia de una especialidad. Las dos filas «propuesto» de la tabla de endpoints siguen sin implementarse.

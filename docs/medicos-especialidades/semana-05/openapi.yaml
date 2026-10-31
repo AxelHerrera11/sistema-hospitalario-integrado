@@ -1,12 +1,16 @@
 openapi: 3.0.3
 info:
   title: Médicos, especialidades y disponibilidad (ASII-04)
-  version: 1.0.0
-  description: API v1 del micro-HIS de Médicos. El actor llega del contexto autenticado (X-User-ID solo en el micro-HIS).
+  version: 1.1.0
+  description: >-
+    API v1 de Médicos. Versión 1.1.0 (Semanas 16 a 18): describe también el comportamiento en Laravel (Bearer JWT y X-Tenant-ID;
+    X-User-ID existe solo en el micro-HIS aislado), los límites de longitud y de tasa y los códigos nuevos. Las respuestas de la
+    plataforma (401, 400 y 403 de tenant, 429) tienen su propio formato; ver docs/medicos-especialidades/semana-05/contrato-api.md.
 servers:
   - url: http://localhost:8004/api/v1
 security:
-  - actor: []
+  - bearer: []
+    tenant: []
 paths:
   /doctors:
     post:
@@ -23,12 +27,13 @@ paths:
         '409': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
         '500': { $ref: '#/components/responses/Error' }
+        '429': { description: 'Límite de tasa (30 escrituras o 120 consultas por minuto y usuario); trae Retry-After', content: { application/json: { schema: { type: object, properties: { message: { type: string, example: Too Many Attempts. } } } } } }
         '503': { $ref: '#/components/responses/Error' }
   /doctors/{doctorId}/specialties:
     post:
       summary: Asociar especialidad (permiso medicos.asociar_especialidad)
       parameters:
-        - { name: doctorId, in: path, required: true, schema: { type: string } }
+        - { name: doctorId, in: path, required: true, schema: { type: string, maxLength: 64 }, description: 'uuid del médico; si no es un uuid, 404 DOCTOR_NOT_FOUND' }
       requestBody:
         required: true
         content:
@@ -41,22 +46,27 @@ paths:
         '404': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
+        '429': { description: Límite de tasa (30 escrituras o 120 consultas por minuto y usuario); trae Retry-After, content: { application/json: { schema: { type: object, properties: { message: { type: string, example: Too Many Attempts. } } } } } }
         '503': { $ref: '#/components/responses/Error' }
   /availability:
     get:
       summary: Franjas libres por médico de una especialidad en una fecha (permiso medicos.ver_disponibilidad)
+      description: Las franjas se parten con el slot_minutes de cada horario y descuentan las citas activas que las solapan. Las horas son locales del hospital.
       parameters:
-        - { name: specialty, in: query, required: true, schema: { type: string, example: NEURO } }
+        - { name: specialty, in: query, required: true, schema: { type: string, example: NEURO, maxLength: 32 } }
         - { name: date, in: query, required: true, schema: { type: string, format: date } }
       responses:
         '200': { description: Disponibilidad, content: { application/json: { schema: { $ref: '#/components/schemas/Availability' } } } }
         '401': { $ref: '#/components/responses/Error' }
         '403': { $ref: '#/components/responses/Error' }
         '422': { $ref: '#/components/responses/Error' }
+        '429': { description: Límite de tasa (30 escrituras o 120 consultas por minuto y usuario); trae Retry-After, content: { application/json: { schema: { type: object, properties: { message: { type: string, example: Too Many Attempts. } } } } } }
         '503': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
-    actor: { type: apiKey, in: header, name: X-User-ID }
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT, description: Token de /api/v1/auth/login }
+    tenant: { type: apiKey, in: header, name: X-Tenant-ID, description: UUID del hospital; debe coincidir con el del token }
+    actor: { type: apiKey, in: header, name: X-User-ID, description: Solo en el micro-HIS aislado; en Laravel el actor se resuelve en el servidor }
   responses:
     Error:
       description: Error con código estable y trace_id
@@ -68,7 +78,7 @@ components:
             type: object
             required: [code, trace_id]
             properties:
-              code: { type: string, example: LICENSE_ALREADY_REGISTERED }
+              code: { type: string, example: LICENSE_ALREADY_REGISTERED, description: 'Entre otros: LICENSE_ALREADY_REGISTERED, USER_ALREADY_REGISTERED (409), USER_REF_NOT_FOUND, PAYLOAD_INVALID, SPECIALTY_INACTIVE (422), DOCTOR_NOT_FOUND (404), ACTOR_NOT_PROVISIONED (403), DOCTOR_STORAGE_UNAVAILABLE (503)' }
               permission: { type: string, description: Solo en 403 }
               trace_id: { type: string }
   schemas:
@@ -76,9 +86,9 @@ components:
       type: object
       required: [local_user_ref_id, license_number, specialty_code, valid_from]
       properties:
-        local_user_ref_id: { type: string }
-        license_number: { type: string }
-        specialty_code: { type: string }
+        local_user_ref_id: { type: string, maxLength: 64, description: 'uuid de local_user_refs' }
+        license_number: { type: string, maxLength: 64, description: Se guarda sin espacios y en mayúsculas }
+        specialty_code: { type: string, maxLength: 32 }
         valid_from: { type: string, format: date }
     DoctorCreated:
       type: object
@@ -87,7 +97,7 @@ components:
       type: object
       required: [specialty_code, valid_from]
       properties:
-        specialty_code: { type: string }
+        specialty_code: { type: string, maxLength: 32 }
         is_primary: { type: boolean, default: false }
         valid_from: { type: string, format: date }
         valid_to: { type: string, format: date, nullable: true }

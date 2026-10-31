@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
+use MicroHis\NotasSoap\Domain\CorrectionPolicy;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
+use MicroHis\NotasSoap\Domain\SignaturePolicy;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
 use MicroHis\NotasSoap\Domain\Uuid;
@@ -54,5 +56,22 @@ check('U-12', 'Uuid::v4 genera identificadores con formato v4 y distintos entre 
 // Defecto D-01 (equivalencia): el texto «vacío» incluye espacios que trim() no reconoce.
 check('U-13', 'SoapSections rechaza una sección con solo espacio duro (U+00A0)', violation(fn () => new SoapSections("\u{00A0}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
 check('U-14', 'SoapSections rechaza una sección con solo espacio de ancho cero (U+200B)', violation(fn () => new SoapSections("\u{200B}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
+check('U-15', 'Diagnosis rechaza un código con forma distinta de CIE-10 (inyección, espacios, minúsculas) y acepta J18, J18.9 y S72.001A', violation(fn () => new Diagnosis("J18.9'; DROP TABLE diagnoses; --", 'primary')) === 'DIAGNOSIS_INVALID 422' && violation(fn () => new Diagnosis(' J18.9', 'primary')) === 'DIAGNOSIS_INVALID 422' && violation(fn () => new Diagnosis('j18.9', 'primary')) === 'DIAGNOSIS_INVALID 422' && (new Diagnosis('J18', 'primary'))->code === 'J18' && (new Diagnosis('S72.001A', 'secondary'))->code === 'S72.001A');
+
+
+// UC-SOAP-05 · SignaturePolicy: completitud antes de firmar.
+$signer = new SignaturePolicy();
+$completa = new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('J18.9', 'primary'), new Diagnosis('I10', 'secondary')], new SoapSections('s', 'o', 'a', 'p'));
+check('U-16', 'SignaturePolicy deja firmar una nota con cuatro secciones y exactamente un diagnóstico principal', violation(fn () => $signer->assertCanSign($completa)) === '');
+check('U-17', 'SignaturePolicy rechaza firmar sin diagnóstico principal o sin secciones (SOAP_INCOMPLETE 422)', violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('I10', 'secondary')], new SoapSections('s', 'o', 'a', 'p')))) === 'SOAP_INCOMPLETE 422'
+    && violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('J18.9', 'primary')]))) === 'SOAP_INCOMPLETE 422');
+check('U-18', 'SignaturePolicy rechaza firmar dos veces (NOTE_SIGNED 409) y antes que la completitud', violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'signed'))) === 'NOTE_SIGNED 409');
+// UC-SOAP-06 · CorrectionPolicy: solo se corrige lo firmado y con motivo.
+$corrector = new CorrectionPolicy();
+$firmada = new ClinicalNote('n1', 'ep1', 'dra.lopez', 'signed');
+check('U-19', 'CorrectionPolicy deja corregir una nota firmada con motivo', violation(fn () => $corrector->assertCanCorrect($firmada, 'Dosis mal registrada')) === '');
+check('U-20', 'CorrectionPolicy rechaza corregir un borrador (NOTE_NOT_SIGNED 409), antes de mirar el motivo', violation(fn () => $corrector->assertCanCorrect($note(), 'Motivo')) === 'NOTE_NOT_SIGNED 409' && violation(fn () => $corrector->assertCanCorrect($note(), '')) === 'NOTE_NOT_SIGNED 409');
+check('U-21', 'CorrectionPolicy exige motivo: vacío, solo espacios o U+00A0 -> CORRECTION_REASON_INVALID 422; 500 caracteres pasan y 501 no', violation(fn () => $corrector->assertCanCorrect($firmada, '  ')) === 'CORRECTION_REASON_INVALID 422' && violation(fn () => $corrector->assertCanCorrect($firmada, "\u{00A0}")) === 'CORRECTION_REASON_INVALID 422'
+    && violation(fn () => $corrector->assertCanCorrect($firmada, str_repeat('a', 500))) === '' && violation(fn () => $corrector->assertCanCorrect($firmada, str_repeat('a', 501))) === 'CORRECTION_REASON_INVALID 422');
 
 summary();

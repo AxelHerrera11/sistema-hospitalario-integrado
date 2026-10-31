@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MicroHis\Medicos\Application\AppointmentReader;
 use MicroHis\Medicos\Application\DoctorRepository;
+use MicroHis\Medicos\Domain\DoctorRuleViolation;
 use MicroHis\Medicos\Domain\Period;
 use MicroHis\Medicos\Domain\SpecialtyLink;
 use PDO;
@@ -51,6 +52,9 @@ final class PdoDoctorStore implements AppointmentReader, DoctorRepository
 
     public function specialtiesOf(string $doctorId): ?array
     {
+        if (!$this->isValidKey($doctorId)) {
+            return null; // un id que no es uuid no puede existir en PostgreSQL: es "no encontrado", no una falla de la base
+        }
         $profile = $this->rows("SELECT valid_from, valid_to FROM doctor_profiles WHERE doctor_profile_id = ? AND status = 'active'", [$doctorId])[0] ?? null;
         $links = $this->rows("SELECT specialty_id, is_primary, valid_from, valid_to FROM doctor_specialties WHERE doctor_profile_id = ? AND status = 'active'", [$doctorId]);
 
@@ -76,15 +80,27 @@ final class PdoDoctorStore implements AppointmentReader, DoctorRepository
     /** Citas que solapan el día de la zona del hospital, recortadas a [00:00, 24:00]: una cita que cruza la medianoche ocupa su parte del día. */
     public function busyIntervals(string $doctorId, string $date): array
     {
+        return $this->busyIntervalsFor([$doctorId], $date)[$doctorId];
+    }
+
+    /** Una sola consulta para todos los médicos (sin una consulta por médico). */
+    public function busyIntervalsFor(array $doctorIds, string $date): array
+    {
+        $result = array_fill_keys($doctorIds, []);
+        if ($doctorIds === []) {
+            return $result;
+        }
         $dayStart = new DateTimeImmutable($date . ' 00:00:00', $this->zone);
         $dayEnd = $dayStart->modify('+1 day');
-        $rows = $this->rows("SELECT starts_at, ends_at FROM appointments WHERE doctor_profile_id = ? AND starts_at < ? AND ends_at > ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
-            [$doctorId, $this->instant($dayEnd), $this->instant($dayStart)]);
+        $marks = implode(', ', array_fill(0, count($doctorIds), '?'));
+        $rows = $this->rows("SELECT doctor_profile_id, starts_at, ends_at FROM appointments WHERE doctor_profile_id IN ($marks) AND starts_at < ? AND ends_at > ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
+            [...array_values($doctorIds), $this->instant($dayEnd), $this->instant($dayStart)]);
         $local = fn (string $at): DateTimeImmutable => (new DateTimeImmutable($at, new DateTimeZone('UTC')))->setTimezone($this->zone);
-        return array_map(static function (array $row) use ($local, $dayStart, $dayEnd): array {
+        foreach ($rows as $row) {
             [$from, $to] = [$local($row['starts_at']), $local($row['ends_at'])];
-            return [$from <= $dayStart ? '00:00' : $from->format('H:i'), $to >= $dayEnd ? '24:00' : $to->format('H:i')];
-        }, $rows);
+            $result[$row['doctor_profile_id']][] = [$from <= $dayStart ? '00:00' : $from->format('H:i'), $to >= $dayEnd ? '24:00' : $to->format('H:i')];
+        }
+        return $result;
     }
 
     /** Instante comparable con `starts_at`: ISO con zona en PostgreSQL (timestamptz); UTC sin zona en SQLite, donde se guarda como texto. */
@@ -127,8 +143,31 @@ final class PdoDoctorStore implements AppointmentReader, DoctorRepository
             $this->pdo->commit();
         } catch (\PDOException $e) {
             $this->pdo->inTransaction() && $this->pdo->rollBack();
-            throw new \RuntimeException('persistencia_no_disponible', 0, $e);
+            throw self::clientError($e) ?? new \RuntimeException('persistencia_no_disponible', 0, $e);
         }
+    }
+
+    /**
+     * Violaciones que PostgreSQL detecta y que son error del cliente, no de la base: uuid mal formado (22P02),
+     * usuario local inexistente (FK, 23503) y licencia o usuario ya registrados (unicidad, 23505). El resto sigue siendo 500.
+     */
+    private static function clientError(\PDOException $e): ?DoctorRuleViolation
+    {
+        $message = $e->getMessage();
+        return match (true) {
+            $e->getCode() === '22P02' => new DoctorRuleViolation('PAYLOAD_INVALID', 422),
+            $e->getCode() === '23503' && str_contains($message, 'local_user_ref_id') => new DoctorRuleViolation('USER_REF_NOT_FOUND', 422),
+            $e->getCode() === '23505' && str_contains($message, 'doctor_profiles_license_number_unique') => new DoctorRuleViolation('LICENSE_ALREADY_REGISTERED', 409),
+            $e->getCode() === '23505' && str_contains($message, 'doctor_profiles_active_open_user_unique') => new DoctorRuleViolation('USER_ALREADY_REGISTERED', 409),
+            default => null,
+        };
+    }
+
+    /** En PostgreSQL las claves son uuid; en SQLite (pruebas) son texto libre. */
+    private function isValidKey(string $id): bool
+    {
+        return $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'pgsql'
+            || preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id) === 1;
     }
 
     private function rows(string $sql, array $params, int $mode = PDO::FETCH_ASSOC): array
