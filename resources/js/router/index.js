@@ -84,6 +84,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['admin-users'] },
         },
         {
+            path: '/calidad-versiones',
+            name: 'qa-calidad',
+            component: () => import('@/modules/qa-calidad/pages/QualityRunsPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS['qa-calidad'] },
+        },
+        {
             path: '/prototipos/tenants-responsive',
             name: 'tenants-responsive-prototype',
             component: () => import('@/modules/tenants/pages/ResponsivePrototypePage.vue'),
