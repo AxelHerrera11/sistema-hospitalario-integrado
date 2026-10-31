@@ -44,6 +44,8 @@ return [
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
+            // ASII-08: el médico da el alta y consulta la estancia.
+            'altas.registrar', 'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
@@ -60,6 +62,8 @@ return [
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'enfermeria' => [
+            // ASII-08: enfermería traslada y consulta la estancia.
+            'traslados.registrar', 'traslados.ver',
             'citas.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver',
             'admisiones.ver', 'notas_soap.ver', 'signos_vitales.ver',
@@ -130,5 +134,6 @@ return [
         'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
         'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
         'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
+        'traslados.registrar', 'altas.registrar', 'traslados.ver',
     ],
 ];

@@ -10,7 +10,7 @@ use MicroHis\MedicationCatalog\Domain\Medication;
 interface MedicationLookup
 {
     /** @return list<Medication> */
-    public function search(string $term): array;
+    public function search(string $term, int $limit = 50): array;
 
     public function findById(string $id): ?Medication;
 }

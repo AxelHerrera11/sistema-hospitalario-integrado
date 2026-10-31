@@ -1,0 +1,20 @@
+@startuml
+!include <C4/C4_Context>
+
+title C4 - Contexto del Micro-HIS de Citas (ASII-05)
+
+Person(usuario, "Recepcion / Medico", "Solicita, confirma y cancela citas")
+System(microhis, "Micro-HIS Citas", "Gestion de agenda de citas con anti-solape")
+System_Ext(shi, "Sistema Hospitalario Integrado", "Aporta pacientes y medicos")
+
+Rel(usuario, microhis, "solicita, confirma, cancela")
+Rel(microhis, shi, "consulta referencia de paciente/doctor", "contrato")
+Rel(microhis, usuario, "cita agendada/confirmada/cancelada")
+
+note right of microhis
+  Micro-HIS educativo y aislado:
+  no persiste datos de otros modulos,
+  solo consume sus referencias por contrato.
+end note
+
+@enduml

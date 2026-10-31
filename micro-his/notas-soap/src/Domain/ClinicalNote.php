@@ -8,7 +8,7 @@ namespace MicroHis\NotasSoap\Domain;
 final readonly class ClinicalNote
 {
     /** @param list<Diagnosis> $diagnoses */
-    public function __construct(public string $id, public string $episodeId, public string $authorId, public string $status = 'draft', public array $diagnoses = [])
+    public function __construct(public string $id, public string $episodeId, public string $authorId, public string $status = 'draft', public array $diagnoses = [], public ?SoapSections $sections = null)
     {
     }
 

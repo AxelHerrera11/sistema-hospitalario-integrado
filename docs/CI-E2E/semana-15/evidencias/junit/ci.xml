@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.ci" tests="21" failures="0">
+    <testcase name="[CI01] PHPUnit real (--log-junit): 5 casos, 0 fallos" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI02] node --test real: cuenta casos anidados, 1 fallo y 1 omitida" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI03] Archivo inexistente → RuntimeException" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI04] XML que no es JUnit (p. ej. página de error) → RuntimeException" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI05] Reporte con entidad externa (XXE) → rechazado sin leer el archivo referido" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI06] JUnitWriter produce XML que el lector reconoce (y escapa caracteres)" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI07] collect() calcula SHA-256 y tamaño reales" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI08] Archivo existente pero fuera de la raíz (../fuera.txt) → null" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI09] collect() fuera de la raíz lanza en vez de registrar" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI10] Pública y solo-autenticada por lista explícita → OK" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI11] tenant + JWT + permiso del catálogo → OK (GET|HEAD normalizado)" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI12] Sin tenant / sin JWT / sin RBAC → FALLO cada una" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI13] Permiso que no está en el catálogo (usuarios.crear) → FALLO" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI14] Obligatorias verdes → exit 0 y resumen APROBADO" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI15] gate-decision.json guarda veredicto y huellas de evidencia" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI16] Con --db el registro queda en SQLite (adaptador PDO real)" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI17] E2E obligatoria con un fallo y una omitida → exit 1 RECHAZADO" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI18] Etapa E2E que no publicó reporte → exit 2 BLOQUEADO con nota" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI19] Sin --sha → exit 3 (error de configuración, nunca aprobado)" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI20] Ambiente production → exit 3" classname="qa-calidad.ci" time="0.000"/>
+    <testcase name="[CI21] Log adicional vacío → se descarta con nota y el gate decide (exit 0), no aborta" classname="qa-calidad.ci" time="0.000"/>
+  </testsuite>
+</testsuites>

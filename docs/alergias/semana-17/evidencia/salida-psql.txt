@@ -1,0 +1,15 @@
+  paciente  |        allergen_name         | status | autor  
+------------+------------------------------+--------+--------
+ PAC-E2E-01 | <img src=x onerror=alert(1)> | active | medico
+(1 row)
+
+ alergias_de_pac_e2e_02 
+------------------------
+                      0
+(1 row)
+
+  module  |       action       | actor  
+----------+--------------------+--------
+ alergias | alergia.registrada | medico
+(1 row)
+

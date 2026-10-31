@@ -18,8 +18,9 @@ require __DIR__ . '/../bootstrap.php';
 $conectar = static fn (): PDO => new PDO((string) getenv('TRASLADOS_PG_DSN'), getenv('TRASLADOS_PG_USER') ?: 'postgres',
     (string) getenv('TRASLADOS_PG_PASSWORD'), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 try {
-    // Dos conexiones: la autorización se consulta antes y fuera de la transacción de la operación (RF-TA-03).
-    $consola = new ConsolaTraslados(new PdoRegistroInternacion($conectar()), new AutorizadorReferenciaActiva($conectar()),
+    // Dos conexiones, abiertas solo si la solicitud es válida: la autorización se consulta antes y fuera de la
+    // transacción de la operación (RF-TA-03).
+    $consola = new ConsolaTraslados(static fn (): array => [new PdoRegistroInternacion($conectar()), new AutorizadorReferenciaActiva($conectar())],
         (string) getenv('TRASLADOS_ACTOR_REF'));
     $respuesta = $consola->atender(array_slice($argv, 1));
 } catch (PDOException) {
