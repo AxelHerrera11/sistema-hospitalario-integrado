@@ -66,6 +66,7 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 | Prototipo de la Semana 11 (guion de la Semana 12) | 27 de 27 comprobaciones; 16 de 16 pares de color |
 | Matriz de amenazas | 18 amenazas: 15 probadas, 1 verificada por lectura, 2 parciales (MED-08 y MED-13), 0 abiertas |
 | Rendimiento (RNF-MED-04), [rendimiento.md](./rendimiento.md) | Un día con 20 médicos: p95 de 120 a ~13 ms. Ventana de 14 días: p95 de 1561 a 145–194 ms (límite 500 ms) |
+| Contraste, teclado, reflow y estructura de la pantalla, [accesibilidad.md](./accesibilidad.md) | 27 de 27 comprobaciones WCAG 2.2 AA (antes de corregir: 24 de 26); peor contraste del módulo 6,7:1; 14 controles con contorno de foco de 3 px |
 | Backend real de punta a punta, [e2e-real.md](./e2e-real.md) | 21 de 21 verificaciones (Laravel, JWT, tenant, RBAC y PostgreSQL 16) y 6 capturas con sesión real |
 
 ## Pendientes técnicos declarados
@@ -74,7 +75,8 @@ Resultados ejecutados el 22 de octubre de 2026 en el equipo del autor, cada uno 
 |---|---|---|
 | 1 | ~~Integrar los PR en orden~~ **Hecho** | `develop` ya tiene las rutas, el adaptador PostgreSQL, la pantalla y las pruebas |
 | 2 | ~~Servidor API y cliente HTTP de la Semana 5 (#372)~~ **Integrado** | El cliente `DoctorApiClient` está en `develop`; las rutas de Laravel hacen de servidor |
-| 3 | Contraste y teclado sobre la pantalla `/medicos` | Se probó contra el backend real con sesión real (21 de 21 verificaciones y 6 capturas, ver [e2e-real.md](./e2e-real.md)), pero el contraste y el teclado solo se midieron sobre el prototipo de la Semana 12 |
+| 3 | Prueba con lector de pantalla y con más navegadores | El contraste y el teclado de `/medicos` se midieron sobre la pantalla real (27 de 27, ver [accesibilidad.md](./accesibilidad.md)), pero solo en Chrome, con API simulado y sin lector de pantalla |
+| 3b | Idioma de la plataforma (`APP_LOCALE=en` hace que todas las páginas declaren `lang="en"`) | Hallazgo de accesibilidad 3.1.1 que no es del módulo; propuesto `APP_LOCALE=es` a su dueño |
 | 4 | MED-13 (parcial): `EnsureHospitalDatabaseTenant` rechaza otro hospital, pero la conexión `hospital` no cambia por tenant | El aislamiento entre varios hospitales depende de una base por hospital; decisión de la plataforma |
 | 5 | MED-08: las lecturas de disponibilidad no se auditan | Parcial |
 | 6 | Despliegue final | Sin staging u on-premise ni semillas aprobadas de `specialties` y `local_user_refs` |
