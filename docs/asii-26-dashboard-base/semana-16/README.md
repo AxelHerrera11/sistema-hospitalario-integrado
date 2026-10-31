@@ -58,6 +58,11 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 **Correccion del 2026-10-30 (parte 1):** `?fecha[]=...` provocaba un 500 (`Array to string conversion`); ahora termina en 422
 `validation_failed` con el sobre comun (prueba en `DashboardApiTest`).
 
+**Correccion del 2026-10-30 (parte 2):** la pantalla pedia la fecha con `toISOString()` (UTC): en UTC-6,
+despues de las 18:00 mostraba las citas del dia siguiente; ahora usa `fechaLocal()`. Ademas, "Ver detalle"
+enlazaba a `/citas`, que no existe en el router; el enlace solo aparece si la ruta resuelve. Pruebas en
+`resumen.test.mjs`.
+
 ## Evidencia
 
 Ejecutado el 2026-10-30 sobre la parte 1 actualizada con `origin/develop` (PHP 8.2.33, PHPUnit 11.5.55).
@@ -95,7 +100,7 @@ OK (3 tests, 17 assertions)
 
 ```text
 $ node resources/js/modules/dashboard/resumen.test.mjs
-resumen.test.mjs: 7 verificaciones OK
+resumen.test.mjs: 10 verificaciones OK
 ```
 
 ```text
@@ -107,9 +112,9 @@ transforming...
 ✓ 164 modules transformed.
 rendering chunks...
 computing gzip size...
-public/build/assets/app-CxDAZbnx.js                       155.49 kB │ gzip: 59.65 kB
+public/build/assets/app-QoXLRGeq.js                       155.70 kB │ gzip: 59.72 kB
 (... se omiten 40 lineas con los assets de otras paginas; la pantalla de inicio va en app-*.js ...)
-✓ built in 10.40s
+✓ built in 7.27s
 ```
 
 La suite Feature completa del repositorio (`php vendor/bin/phpunit --testsuite Feature`) termina con
