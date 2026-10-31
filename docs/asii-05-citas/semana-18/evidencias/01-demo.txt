@@ -1,0 +1,30 @@
+# Demo funcional sobre la integracion local d95e3355 (develop 1736474f + mis ramas abiertas) - 2026-10-30 - Windows 11 - PHP 8.2.33
+# Sin PostgreSQL en este equipo: el recorrido usa rutas, middlewares, JWT simulado y matriz RBAC reales, con la fuente HOSPITAL en memoria.
+
+$ php vendor/bin/phpunit tests/Feature/Citas --testdox
+Time: 00:01.184, Memory: 38.00 MB
+Appointment Api (Tests\Feature\Citas\AppointmentApi)
+ ✔ Sin sesion responde 401 y rol sin permiso responde 403
+ ✔ Recepcion agenda y consulta la cita
+ ✔ Valida en el borde con el sobre comun
+ ✔ El solape se traduce a 409 appointments overlap
+ ✔ Transiciones de estado y cita finalizada inmutable
+ ✔ Cita inexistente 404 y borrado fisico 405
+ ✔ Sin base hospital asignada la guarda real responde 503
+Citas Seguridad (Tests\Feature\Citas\CitasSeguridad)
+ ✔ Matriz de permisos por rol
+ ✔ Aislamiento entre hospitales
+ ✔ No expone datos internos ni trazas utiles
+OK (10 tests, 72 assertions)
+
+$ cd docs/asii-05-citas/semana-15 && php -d zend.assertions=1 -d assert.exception=1 tests/pruebas_semana15.php
+  [OK] [UNIT-01] Cita::agendar crea la cita en estado scheduled
+  [OK] [UNIT-02] Cita::agendar rechaza rango invertido
+  [OK] [UNIT-03] AgendarCita persiste y ListarCitas filtra por paciente
+  [OK] [WB-01] Cita::seSolapaCon cubre todas sus condiciones
+  [OK] [WB-02] Router::despachar recorre sus 5 caminos (404, 405, 422, error, exito)
+  [OK] [BB-01] particion valida: POST /citas responde 201
+  [OK] [BB-02] valor limite: cita contigua (inicia cuando termina otra) se acepta
+  [OK] [BB-03] particion invalida: solape de un minuto responde 409
+  [OK] [BB-04] particion invalida: rango invertido responde 409 cita_rango_invalido
+Resumen: 9 pruebas, 0 fallidas.
