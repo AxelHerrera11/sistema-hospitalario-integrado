@@ -124,9 +124,10 @@ disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
 
-- **PostgreSQL real:** en este equipo no hay PostgreSQL ni Docker; las pruebas Feature usan dobles del
-  repositorio/fuente y las rutas, middlewares y matriz RBAC reales. La consulta contra HOSPITAL queda
-  pendiente de un recorrido con base real.
+- **PostgreSQL real:** en el equipo de la autora no habia PostgreSQL; las pruebas Feature usan dobles. La
+  integradora recorrio `GET /api/v1/dashboard/resumen` contra PostgreSQL 17 local en la revision de #1614
+  (conteo por estado, indicador, tarjetas vacias sin `citas.ver`, 422 y otro hospital 403) y corrigio alli
+  que el dia se cortaba en la zona de la sesion: ahora se usa `hospitals.timezone` del tenant.
 - Las tarjetas de ocupacion y laboratorio se agregaran cuando esos modulos publiquen su contrato de lectura para composicion.
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-26-semana-16-api-lis671`
   (API y pruebas, PR #1614 hacia `develop`) y parte 2 `feature/asii-26-semana-16-evidencia-lis671`
