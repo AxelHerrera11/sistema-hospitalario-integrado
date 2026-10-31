@@ -79,6 +79,7 @@ final class DashboardApiTest extends TestCase
 
         DashboardTestIdentity::como('recepcion');
         $this->getJson('/api/v1/dashboard/resumen?fecha=2026-13-40')->assertStatus(422)->assertJsonPath('code', 'validation_failed');
+        $this->getJson('/api/v1/dashboard/resumen?fecha[]=2026-11-02')->assertStatus(422)->assertJsonPath('code', 'validation_failed');
 
         $this->caida = true;
         $this->getJson('/api/v1/dashboard/resumen')->assertStatus(503)->assertJsonPath('code', 'dashboard_source_unavailable');
