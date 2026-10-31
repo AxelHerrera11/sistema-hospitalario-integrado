@@ -96,5 +96,11 @@ check('csv termina cada fila con salto de linea', str_ends_with($csv, "\n") && s
 check('el exportador acepta csv', $exporter->supports('CSV'));
 check('el exportador rechaza pdf', !$exporter->supports('pdf'));
 
+$formula = $exporter->export($definition, [['appointment_id' => 'a-3', 'starts_at' => '2026-10-11', 'status' => 'scheduled', 'reason' => '=HYPERLINK("x")']]);
+check('csv neutraliza formulas (inyeccion CSV)', str_contains($formula, '"\'=HYPERLINK(""x"")"'));
+
+$porServicio = new \MicroHis\ReportesOperativos\Domain\CitasPorServicioReport();
+check('citas por servicio declara sus columnas', $porServicio->columns() === ['fecha', 'servicio', 'estado', 'total']);
+
 echo "\n" . ($failures === 0 ? "OK: {$total} verificaciones aprobadas" : "ERROR: {$failures} de {$total} verificaciones fallaron") . "\n";
 exit($failures === 0 ? 0 : 1);

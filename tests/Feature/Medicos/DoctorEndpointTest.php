@@ -99,6 +99,28 @@ final class DoctorEndpointTest extends TestCase
             ->assertJsonPath('doctors.0.slots', ['08:00', '09:00']);
     }
 
+    public function test_toda_respuesta_del_modulo_lleva_trace_id_en_el_cuerpo_y_en_la_cabecera(): void
+    {
+        $responses = [
+            $this->postJson('/api/v1/doctors', self::ALTA),
+            $this->postJson('/api/v1/doctors', ['license_number' => ['x']] + self::ALTA),
+            $this->getJson('/api/v1/availability?specialty=NEURO&date=2026-10-19'),
+            $this->getJson('/api/v1/availability?specialty=NEURO&date=2026-02-30'),
+        ];
+        $seen = [];
+        foreach ($responses as $response) {
+            $trace = $response->json('trace_id');
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $trace, "estado {$response->status()}");
+            $this->assertSame($trace, $response->headers->get('X-Trace-Id'));
+            $seen[$trace] = true;
+        }
+        $this->assertCount(4, $seen, 'cada respuesta tiene su propio identificador');
+
+        $this->app->bind(Router::class, static fn () => throw new \PDOException('simulated'));
+        $down = $this->postJson('/api/v1/doctors', self::ALTA)->assertStatus(503);
+        $this->assertSame($down->json('trace_id'), $down->headers->get('X-Trace-Id'));
+    }
+
     public function test_las_reglas_del_modulo_conservan_su_codigo_y_estado(): void
     {
         $this->postJson('/api/v1/doctors', ['specialty_code' => 'NO-EXISTE'] + self::ALTA)->assertStatus(422)->assertJsonPath('code', 'SPECIALTY_INACTIVE');
