@@ -27,6 +27,7 @@ return [
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
@@ -42,6 +43,8 @@ return [
             'medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            // ASII-25: calidad de versiones (ejecuciones automatizadas y quality gate), decisión del 30/10/2026.
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
         ],
         'medico' => [
             // ASII-08: el médico da el alta y consulta la estancia.
@@ -140,5 +143,6 @@ return [
         'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
         'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         'traslados.registrar', 'altas.registrar', 'traslados.ver',
+        'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
     ],
 ];

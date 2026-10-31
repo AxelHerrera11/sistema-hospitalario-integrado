@@ -2,7 +2,7 @@
 
 Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 74 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 77 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -21,6 +21,9 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
 | `expediente.abrir` | Sí | — | Sí | — | — | — | — | — |
+| `qa.ejecuciones.ver` | Sí | Sí | — | — | — | — | — | — |
+| `qa.ejecuciones.registrar` | Sí | Sí | — | — | — | — | — | — |
+| `qa.gates.evaluar` | Sí | Sí | — | — | — | — | — | — |
 | `medicamentos.ver` | Sí | Sí | Sí | Sí | — | — | — | — |
 | `medicamentos.registrar` | — | Sí | — | — | — | — | — | — |
 | `medicamentos.cambiar_vigencia` | — | Sí | — | — | — | — | — | — |
@@ -236,6 +239,16 @@ Solicitada por ASII-25 (expediente médico electrónico base). Decisión de la r
 
 La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
 `local_user_refs`, paciente existente y apertura idempotente con su evento de auditoría en la misma transacción.
+
+## Activación de calidad de versiones
+
+Solicitada por ASII-25 (QA, pruebas E2E y CI; adaptación «gestión de ejecuciones automatizadas y calidad de
+versiones»). Decisión de la responsable del módulo, 30/10/2026: `qa.ejecuciones.ver`, `qa.ejecuciones.registrar`
+y `qa.gates.evaluar` para `superadmin` y `admin_hospital`. Ningún rol clínico ni de laboratorio los recibe.
+
+Las ejecuciones son metadatos de pruebas (versión, commit, suites, resultados y evidencias), sin datos clínicos.
+La autorización no sustituye las reglas del módulo: tenant de la petición, transición de estados válida y
+evaluación del quality gate con la política versionada.
 
 ## Propuesta ASII-16 (30-oct-2026)
 

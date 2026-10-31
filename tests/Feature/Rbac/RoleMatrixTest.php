@@ -31,6 +31,7 @@ class RoleMatrixTest extends TestCase
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
@@ -46,6 +47,7 @@ class RoleMatrixTest extends TestCase
             'medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
         ],
         'medico' => [
             'altas.registrar', 'traslados.ver',

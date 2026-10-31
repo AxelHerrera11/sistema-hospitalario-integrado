@@ -25,6 +25,8 @@ return [
     // Tenants después de RBAC: enlaza DenialRecorder a AuditDenials (persistencia de denegaciones).
     TenantsServiceProvider::class,
     GobernanzaAuditoriaServiceProvider::class,
+    // Calidad de versiones (ASII-25) después de Gobernanza: reutiliza RecordAuditEvent y Authorize.
+    \App\QaCalidad\QaCalidadServiceProvider::class,
     // Alertas críticas (ASII-21): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
     \App\Providers\AlertasCriticasServiceProvider::class,
     MedicationCatalogServiceProvider::class,
