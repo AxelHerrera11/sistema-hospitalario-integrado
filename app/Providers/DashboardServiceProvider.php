@@ -22,7 +22,7 @@ final class DashboardServiceProvider extends ServiceProvider
     {
         require_once base_path('micro-his/dashboard-base/bootstrap.php');
 
-        $this->app->bind(CitasDelDia::class, static fn (): CitasDelDia => new PdoCitasDelDia(static fn () => DB::connection('hospital')->getPdo()));
+        $this->app->bind(CitasDelDia::class, static fn (): CitasDelDia => new PdoCitasDelDia(static fn () => DB::connection('hospital')->getPdo(), static fn (): string => in_array($z = request()->attributes->get('tenant')?->timezone, \DateTimeZone::listIdentifiers(), true) ? $z : (string) config('app.timezone', 'UTC')));
     }
 
     public function boot(): void

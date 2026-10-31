@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MicroHis\Medicos\Application;
 
 use MicroHis\Medicos\Domain\DoctorRuleViolation;
+use MicroHis\Medicos\Domain\Limits;
 use MicroHis\Medicos\Domain\Period;
 use MicroHis\Medicos\Domain\SpecialtyLink;
 
@@ -20,6 +21,9 @@ final class RegisterDoctor
         if (trim($userRef) === '' || trim($license) === '') {
             throw new DoctorRuleViolation('PAYLOAD_INVALID', 422);
         }
+        Limits::within($userRef, Limits::USER_REF);
+        Limits::within($license, Limits::LICENSE);
+        Limits::within($specialtyCode, Limits::SPECIALTY_CODE);
         $license = mb_strtoupper(trim($license)); // D-01: ' col-9' y 'COL-9' son la misma licencia
         $primary = new SpecialtyLink($this->catalog->activeSpecialtyId($specialtyCode) ?? throw new DoctorRuleViolation('SPECIALTY_INACTIVE', 422), true, new Period($validFrom));
         if ($this->profiles->licenseExists($license)) {

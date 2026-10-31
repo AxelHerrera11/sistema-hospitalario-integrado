@@ -45,9 +45,9 @@ foreach (['pdo', 'memoria'] as $adapter) {
     check($t('N-07c código de 41 caracteres → 422 CODIGO_PACIENTE_INVALIDO'), code(call($router, 'GET', str_repeat('P', 41))) === '422 CODIGO_PACIENTE_INVALIDO');
     check($t("N-07d código con inyección SQL → 422"), code(call($router, 'GET', "P-0001' OR '1'='1")) === '422 CODIGO_PACIENTE_INVALIDO');
 
-    // N-08 Apertura con la matriz REAL: el permiso propuesto no existe en config/rbac.php → nadie puede abrir.
-    check($t('N-08 apertura sin activar el permiso propuesto → 403 para recepción y medicina'), code(call($router, 'POST', 'P-0002', RECEP_MORA)) === '403 ACCESO_DENEGADO'
-        && code(call($router, 'POST', 'P-0002', DRA_LOPEZ)) === '403 ACCESO_DENEGADO');
+    // N-08 Apertura con la matriz REAL: expediente.abrir está activo para medicina, no para recepción.
+    check($t('N-08 apertura con la matriz activa → 403 para recepción, 201 para medicina'), code(call($router, 'POST', 'P-0002', RECEP_MORA)) === '403 ACCESO_DENEGADO'
+        && code(call($router, 'POST', 'P-0002', DRA_LOPEZ)) === '201 ');
 
     // N-09..N-10 Apertura con la concesión PROPUESTA activada solo en esta prueba.
     ['router' => $router, 'audit' => $audit] = make_app($adapter, proposed: true);

@@ -17,6 +17,9 @@ final class PdoCareAssignmentReader implements CareAssignmentReader
 
     public function isTreating(string $userId, string $episodeId): bool
     {
+        if (!PostgresIds::usable($this->pdo, $userId, $episodeId)) {
+            return false;
+        }
         // La asignación cuelga del perfil médico; el usuario local está en doctor_profiles.local_user_ref_id. Misma vigencia que el trigger de clinical_notes.
         $stmt = $this->pdo->prepare("SELECT 1 FROM care_assignments a JOIN doctor_profiles p ON p.doctor_profile_id = a.doctor_profile_id WHERE p.local_user_ref_id = ? AND a.care_episode_id = ? AND a.status = 'active' AND a.valid_from <= ? AND a.valid_to IS NULL");
         $stmt->execute([$userId, $episodeId, gmdate('Y-m-d H:i:s') . '+00']);

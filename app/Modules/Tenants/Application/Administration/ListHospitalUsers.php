@@ -19,14 +19,17 @@ final class ListHospitalUsers
         ?string $status,
         int $perPage,
     ): LengthAwarePaginator {
+        // whereExists y no join: con un join cada rol es una fila y paginate() cuenta filas, no usuarios.
         $users = DB::connection('central')->table('central_users as u')
-            ->join('hospital_memberships as m', 'm.user_id', '=', 'u.user_id')
-            ->where('m.hospital_id', $hospitalId)
-            ->where('m.status', 'active')
-            ->where('m.valid_from', '<=', now())
-            ->where(fn ($query) => $query
-                ->whereNull('m.valid_to')
-                ->orWhere('m.valid_to', '>', now()))
+            ->whereExists(fn ($membership) => $membership
+                ->from('hospital_memberships as m')
+                ->whereColumn('m.user_id', 'u.user_id')
+                ->where('m.hospital_id', $hospitalId)
+                ->where('m.status', 'active')
+                ->where('m.valid_from', '<=', now())
+                ->where(fn ($query) => $query
+                    ->whereNull('m.valid_to')
+                    ->orWhere('m.valid_to', '>', now())))
             ->when($status !== null, fn ($query) => $query->where('u.status', $status))
             ->when($search !== null, function ($query) use ($search): void {
                 $term = '%'.mb_strtolower(trim($search)).'%';
@@ -35,7 +38,6 @@ final class ListHospitalUsers
                     ->orWhereRaw('LOWER(u.display_name) LIKE ?', [$term]));
             })
             ->select('u.user_id', 'u.email', 'u.display_name', 'u.status')
-            ->distinct()
             ->orderBy('u.display_name')
             ->orderBy('u.user_id')
             ->paginate($perPage);
