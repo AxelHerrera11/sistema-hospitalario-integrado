@@ -31,7 +31,9 @@ if ($dsn !== false && $dsn !== '') {
 }
 // Bitácora de acceso en stderr, una línea JSON por petición y sin el cuerpo (observabilidad sin datos clínicos).
 $log = static fn (array $entry) => error_log(json_encode(['event' => 'api_access'] + $entry, JSON_UNESCAPED_SLASHES));
-$api = signos_vitales_api(...$parts, permissions: $permissions, traceIds: static fn (): string => $traceId, log: $log);
+// El fallo del canal de notificación se registra con el id de la medición y la causa, nunca con valores clínicos.
+$notificationFailure = static fn (string $id, Throwable $e) => error_log(json_encode(['event' => 'notification_failed', 'vital_sign_id' => $id, 'cause' => $e::class], JSON_UNESCAPED_SLASHES));
+$api = signos_vitales_api(...$parts, permissions: $permissions, traceIds: static fn (): string => $traceId, log: $log, onNotificationFailure: $notificationFailure);
 
 $raw = (string) file_get_contents('php://input');
 $body = $raw === '' ? [] : json_decode($raw, true);

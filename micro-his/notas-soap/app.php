@@ -9,8 +9,10 @@ use MicroHis\NotasSoap\Application\GetSoapNote;
 use MicroHis\NotasSoap\Application\Icd10Catalog;
 use MicroHis\NotasSoap\Application\PermissionChecker;
 use MicroHis\NotasSoap\Application\RegisterSoapNote;
+use MicroHis\NotasSoap\Application\SignSoapNote;
 use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
+use MicroHis\NotasSoap\Domain\SignaturePolicy;
 use MicroHis\NotasSoap\Presentation\ApiKernel;
 use MicroHis\NotasSoap\Presentation\JsonView;
 use MicroHis\NotasSoap\Presentation\Router;
@@ -26,6 +28,7 @@ function notas_soap_router(ClinicalNoteRepository $notes, CareAssignmentReader $
         new RegisterSoapNote($guard, $notes),
         new AssociateDiagnosis($guard, $catalog, new DiagnosisPolicy(), $notes),
         new GetSoapNote($guard, $notes),
+        new SignSoapNote($guard, new SignaturePolicy(), $notes),
         $view,
     );
     return new Router($controller, $view);

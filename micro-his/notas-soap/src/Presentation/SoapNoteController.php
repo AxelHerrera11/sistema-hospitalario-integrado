@@ -7,6 +7,7 @@ namespace MicroHis\NotasSoap\Presentation;
 use MicroHis\NotasSoap\Application\AssociateDiagnosis;
 use MicroHis\NotasSoap\Application\GetSoapNote;
 use MicroHis\NotasSoap\Application\RegisterSoapNote;
+use MicroHis\NotasSoap\Application\SignSoapNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
@@ -18,6 +19,7 @@ final class SoapNoteController
         private readonly RegisterSoapNote $register,
         private readonly AssociateDiagnosis $associate,
         private readonly GetSoapNote $show,
+        private readonly SignSoapNote $signer,
         private readonly JsonView $view,
     ) {
     }
@@ -51,6 +53,14 @@ final class SoapNoteController
             $diagnosis = new Diagnosis($request->text('code'), $request->text('type'));
             $this->associate->execute($actor, $noteId, $diagnosis);
             return ['clinical_note_id' => $noteId, 'code' => $diagnosis->code, 'type' => $diagnosis->type];
+        });
+    }
+
+    public function sign(Request $request, string $noteId): array
+    {
+        return $this->respond(200, function () use ($request, $noteId): array {
+            $this->signer->execute($request->actor(), $noteId);
+            return ['clinical_note_id' => $noteId, 'status' => 'signed'];
         });
     }
 

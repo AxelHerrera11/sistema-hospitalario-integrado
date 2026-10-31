@@ -55,6 +55,19 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
         });
     }
 
+    public function sign(ClinicalNote $note): void
+    {
+        $this->transaction(function () use ($note): void {
+            $lock = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql' ? ' FOR UPDATE' : '';
+            $row = $this->rows('SELECT status, version_no FROM clinical_notes WHERE clinical_note_id = ?' . $lock, [$note->id])[0] ?? null;
+            ($row['status'] ?? null) === 'draft' || throw new SoapRuleViolation('NOTE_SIGNED', 409); // otra sesión pudo firmarla tras leerla
+            $this->pdo->prepare("UPDATE clinical_notes SET status = 'signed', signed_at = CURRENT_TIMESTAMP WHERE clinical_note_id = ?")->execute([$note->id]);
+            $codes = array_map(static fn (Diagnosis $d): string => $d->code, $note->diagnoses);
+            $primary = array_values(array_filter($note->diagnoses, static fn (Diagnosis $d): bool => $d->type === 'primary'))[0]->code ?? '';
+            $this->audit->record($note->authorId, 'nota_soap.firmada', 'clinical_note', $note->id, $note->episodeId, ['version_no' => (int) $row['version_no'], 'primary_code' => $primary, 'diagnosis_codes' => $codes]);
+        });
+    }
+
     /** Otra sesión pudo firmar la nota tras leerla (D-02): se vuelve a comprobar dentro de la transacción, con la fila bloqueada contra la firma concurrente. Mitigación del módulo; la regla en la base (trigger) es de ASII-09. */
     private function assertStillDraft(string $noteId): void
     {

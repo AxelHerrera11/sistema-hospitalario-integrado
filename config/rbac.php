@@ -26,7 +26,7 @@ return [
             'pacientes.ver', 'pacientes.registrar', 'pacientes.editar',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
-            'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+            'usuarios.ver', 'usuarios.crear', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
             'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
@@ -42,7 +42,7 @@ return [
             'ocupacion.ver',
             'medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
-            'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            'usuarios.ver', 'usuarios.crear', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
             'expediente.asignar',
             // ASII-25: calidad de versiones (ejecuciones automatizadas y quality gate), decisión del 30/10/2026.
             'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
@@ -92,6 +92,7 @@ return [
             'reportes.ver', 'documentacion.ver', 'laboratorio.ver',
             'rbac.autorizar', 'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'muestras.rechazar', 'laboratorio.catalogo.ver', 'laboratorio.ordenes.ver',
+            'laboratorio.ordenes.actualizar',
             'lab-results.read', 'lab-results.create', 'lab-results.correct',
         ],
         'bioquimico' => [
@@ -110,8 +111,6 @@ return [
      * Formato: permiso => roles que lo recibirían si se aprobara.
      */
     'pending' => [
-        // Propuesta de ASII-16 sin activar: actualizar el estado de órdenes.
-        'laboratorio.ordenes.actualizar' => ['tecnico_laboratorio'],
         'notas_soap.transferir_autoria' => ['medico', 'superadmin'],
         'prescripciones.excepcion_alergia' => ['medico', 'superadmin'],
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
@@ -119,7 +118,7 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
-        // Propuesta de ASII-16 sin activar; no concede acceso a ningún rol.
+        // ASII-16: transición de órdenes la ejecuta el técnico de laboratorio.
         'laboratorio.ordenes.actualizar',
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
@@ -138,7 +137,7 @@ return [
         'pacientes.ver', 'pacientes.registrar', 'pacientes.editar',
         'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
         'rbac.permisos.ver', 'rbac.denegaciones.ver',
-        'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+        'usuarios.ver', 'usuarios.crear', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
         'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
         'prescripciones.excepcion_alergia', 'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
         'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',

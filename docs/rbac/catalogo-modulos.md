@@ -67,6 +67,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `rbac.permisos.ver` | Sí | Sí | — | — | — | — | — | — |
 | `rbac.denegaciones.ver` | Sí | Sí | — | — | — | — | — | — |
 | `usuarios.ver` | Sí | Sí | — | — | — | — | — | — |
+| `usuarios.crear` | Sí | Sí | — | — | — | — | — | — |
 | `usuarios.desactivar` | Sí | Sí | — | — | — | — | — | — |
 | `tenants.crear` | Sí | — | — | — | — | — | — | — |
 | `sesiones.revocar_ajenas` | Sí | Sí | — | — | — | — | — | — |
