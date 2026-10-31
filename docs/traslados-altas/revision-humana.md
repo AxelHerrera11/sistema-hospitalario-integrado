@@ -9,6 +9,6 @@
 ## Qué no implica este registro
 
 - **No es una aprobación independiente** de los PR. `.github/BRANCH_PROTECTION.md` exige en `develop` la aprobación de otra persona, y ningún PR de ASII-08 la tiene.
-- **El registro del 21/10/2026 no agrega pruebas funcionales.** Los resultados de cada semana son los de las ejecuciones automatizadas registradas en su evidencia. Las únicas pruebas propias informadas son las del 30/10/2026, con el alcance de su fila.
+- **El registro del 21/10/2026 no agrega pruebas funcionales.** Los resultados de cada semana son los de las ejecuciones automatizadas registradas en su evidencia. Las únicas pruebas propias informadas son las dos del 30/10/2026, cada una con el alcance de su fila.
 - **No incluye** las semanas 1 y 2: sus declaraciones de IA, redactadas en otras sesiones, siguen como estaban hasta que la autora confirme si su revisión también las cubre.
-- **No incluye** entregas posteriores a `e3f0ca4`. Cada nueva revisión se registra aquí solo cuando la autora la confirma.
+- **No incluye** entregas posteriores a `e3f0ca4`, salvo el alcance de las filas del 30/10/2026. Cada nueva revisión se registra aquí solo cuando la autora la confirma.
