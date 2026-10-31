@@ -4,18 +4,27 @@ declare(strict_types=1);
 
 namespace MicroHis\Medicos\Persistence;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MicroHis\Medicos\Application\AppointmentReader;
 use MicroHis\Medicos\Application\DoctorRepository;
 use MicroHis\Medicos\Domain\Period;
 use MicroHis\Medicos\Domain\SpecialtyLink;
 use PDO;
 
-/** Adaptador PDO del Repository (y lector de Citas); cada caso de uso solo ve su puerto (ISP). Siempre con sentencias preparadas. */
-final class PdoDoctorStore implements DoctorRepository, AppointmentReader
+/**
+ * Adaptador PDO del Repository (y lector de Citas); cada caso de uso solo ve su puerto (ISP). Siempre con sentencias preparadas.
+ * Sirve para PostgreSQL (esquema HOSPITAL) y para el subconjunto SQLite de las pruebas: las diferencias de dialecto se resuelven aquí.
+ */
+final class PdoDoctorStore implements AppointmentReader, DoctorRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    private readonly DateTimeZone $zone;
+
+    /** @param string $timezone zona en que se leen las horas de las citas (`starts_at` es timestamptz en PostgreSQL). */
+    public function __construct(private readonly PDO $pdo, string $timezone = 'UTC')
     {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->zone = new DateTimeZone($timezone);
     }
 
     public function activeSpecialtyId(string $code): ?string
@@ -30,12 +39,13 @@ final class PdoDoctorStore implements DoctorRepository, AppointmentReader
 
     public function createDoctor(string $userRef, string $license, SpecialtyLink $primary, string $actorId): string
     {
-        $id = 'doc-' . bin2hex(random_bytes(4));
+        $id = self::uuid();
         $this->transaction(function () use ($id, $userRef, $license, $primary, $actorId): void {
             $this->pdo->prepare('INSERT INTO doctor_profiles (doctor_profile_id, local_user_ref_id, license_number, valid_from) VALUES (?, ?, ?, ?)')
                 ->execute([$id, $userRef, $license, $primary->period->from]);
             $this->insertLink($id, $primary, $actorId, 'medico_registrado');
         });
+
         return $id;
     }
 
@@ -43,6 +53,7 @@ final class PdoDoctorStore implements DoctorRepository, AppointmentReader
     {
         $profile = $this->rows("SELECT valid_from, valid_to FROM doctor_profiles WHERE doctor_profile_id = ? AND status = 'active'", [$doctorId])[0] ?? null;
         $links = $this->rows("SELECT specialty_id, is_primary, valid_from, valid_to FROM doctor_specialties WHERE doctor_profile_id = ? AND status = 'active'", [$doctorId]);
+
         return $profile === null ? null : [
             new Period($profile['valid_from'], $profile['valid_to']),
             array_map(static fn (array $r) => new SpecialtyLink($r['specialty_id'], (bool) $r['is_primary'], new Period($r['valid_from'], $r['valid_to'])), $links),
@@ -62,16 +73,49 @@ final class PdoDoctorStore implements DoctorRepository, AppointmentReader
             ORDER BY p.doctor_profile_id", [$specialtyId, $date, $date, $date, $date], PDO::FETCH_COLUMN);
     }
 
-    public function busySlots(string $doctorId, string $date): array
+    /** Citas que solapan el día de la zona del hospital, recortadas a [00:00, 24:00]: una cita que cruza la medianoche ocupa su parte del día. */
+    public function busyIntervals(string $doctorId, string $date): array
     {
-        return $this->rows("SELECT substr(starts_at, 12, 5) FROM appointments WHERE doctor_profile_id = ? AND substr(starts_at, 1, 10) = ? AND status IN ('scheduled', 'confirmed')", [$doctorId, $date], PDO::FETCH_COLUMN);
+        $dayStart = new DateTimeImmutable($date . ' 00:00:00', $this->zone);
+        $dayEnd = $dayStart->modify('+1 day');
+        $rows = $this->rows("SELECT starts_at, ends_at FROM appointments WHERE doctor_profile_id = ? AND starts_at < ? AND ends_at > ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
+            [$doctorId, $this->instant($dayEnd), $this->instant($dayStart)]);
+        $local = fn (string $at): DateTimeImmutable => (new DateTimeImmutable($at, new DateTimeZone('UTC')))->setTimezone($this->zone);
+        return array_map(static function (array $row) use ($local, $dayStart, $dayEnd): array {
+            [$from, $to] = [$local($row['starts_at']), $local($row['ends_at'])];
+            return [$from <= $dayStart ? '00:00' : $from->format('H:i'), $to >= $dayEnd ? '24:00' : $to->format('H:i')];
+        }, $rows);
+    }
+
+    /** Instante comparable con `starts_at`: ISO con zona en PostgreSQL (timestamptz); UTC sin zona en SQLite, donde se guarda como texto. */
+    private function instant(DateTimeImmutable $moment): string
+    {
+        $utc = $moment->setTimezone(new DateTimeZone('UTC'));
+
+        return $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql' ? $utc->format('Y-m-d H:i:sP') : $utc->format('Y-m-d H:i:s');
+    }
+
+    /** UUID v4: `doctor_profile_id` es uuid en HOSPITAL y en SQLite se guarda como texto. */
+    private static function uuid(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr(ord($bytes[6]) & 0x0F | 0x40);
+        $bytes[8] = chr(ord($bytes[8]) & 0x3F | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 
     private function insertLink(string $doctorId, SpecialtyLink $link, string $actorId, string $event): void
     {
-        $this->pdo->prepare('INSERT INTO doctor_specialties (doctor_profile_id, specialty_id, is_primary, valid_from, valid_to) VALUES (?, ?, ?, ?, ?)')
-            ->execute([$doctorId, $link->specialtyId, (int) $link->isPrimary, $link->period->from, $link->period->to]);
-        $this->pdo->prepare('INSERT INTO local_access_audits (event, actor_id, detail) VALUES (?, ?, ?)')->execute([$event, $actorId, $doctorId . ':' . $link->specialtyId]);
+        $insert = $this->pdo->prepare('INSERT INTO doctor_specialties (doctor_profile_id, specialty_id, is_primary, valid_from, valid_to) VALUES (?, ?, ?, ?, ?)');
+        $insert->bindValue(1, $doctorId);
+        $insert->bindValue(2, $link->specialtyId);
+        $insert->bindValue(3, $link->isPrimary, PDO::PARAM_BOOL);
+        $insert->bindValue(4, $link->period->from);
+        $insert->bindValue(5, $link->period->to);
+        $insert->execute();
+        $this->pdo->prepare("INSERT INTO local_access_audits (correlation_id, actor_user_ref_id, module, action, resource_type, resource_id) VALUES (?, ?, 'medicos', ?, 'doctor_profile', ?)")
+            ->execute([self::uuid(), $actorId, 'medicos.'.$event, $doctorId]);
     }
 
     /** Todo o nada: si falla cualquier INSERT (incluida la auditoría) se revierte y se informa un error de persistencia. */
@@ -91,6 +135,7 @@ final class PdoDoctorStore implements DoctorRepository, AppointmentReader
     {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
+
         return $stmt->fetchAll($mode);
     }
 }

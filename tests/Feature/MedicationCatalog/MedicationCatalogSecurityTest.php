@@ -43,13 +43,63 @@ final class MedicationCatalogSecurityTest extends TestCase
         CatalogTestIdentity::as('admin_hospital');
         $this->postJson('/api/v1/medications', ['code' => 'ibu-400', 'name' => 'Ibuprofeno', 'active_ingredient' => 'Ibuprofeno',
             'pharmacological_group' => 'AINE', 'validity' => 'inactive', 'medication_id' => '999', 'hospital_id' => 'hospital-b'])
-            ->assertStatus(201)->assertJsonPath('medication.validity', 'active')->assertJsonPath('medication.medication_id', '2');
+            ->assertStatus(422)->assertJsonPath('error', 'MEDICATION_INVALID')->assertJsonPath('field', 'validity');
+        $this->assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM medications')->fetchColumn());
+    }
+
+    public function test_t2b_validity_change_rejects_unknown_fields_without_writing(): void
+    {
+        CatalogTestIdentity::as('admin_hospital');
+        $id = (string) $this->pdo->query('SELECT medication_id FROM medications')->fetchColumn();
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive', 'hospital_id' => 'hospital-b'])
+            ->assertStatus(422)->assertJsonPath('field', 'hospital_id');
+        $this->assertSame('active', $this->pdo->query('SELECT validity FROM medications')->fetchColumn());
+    }
+
+    public function test_t2c_limit_is_applied_and_validated(): void
+    {
+        $this->pdo->exec("INSERT INTO medications (code, name, active_ingredient, pharmacological_group, validity)
+            VALUES ('AMX-250', 'Amoxicilina 250 mg', 'Amoxicilina', 'Antibiótico', 'active')");
+        $this->getJson('/api/v1/medications?q=amox')->assertOk()->assertJsonPath('count', 2);
+        $this->getJson('/api/v1/medications?q=amox&limit=1')->assertOk()->assertJsonPath('count', 1);
+        foreach (['0', '51', 'abc', '1.5', '-1'] as $limit) {
+            $this->getJson('/api/v1/medications?q=amox&limit='.$limit)->assertStatus(422)->assertJsonPath('field', 'limit');
+        }
     }
 
     public function test_t3_tenant_comes_from_the_context_not_from_headers_or_body(): void
     {
         $this->withHeaders(['X-Tenant-ID' => 'hospital-b'])->getJson('/api/v1/medications?q=amox&hospital_id=hospital-b')
             ->assertStatus(403)->assertJsonPath('code', 'TENANT_MISMATCH');
+    }
+
+    public function test_t3b_member_of_another_hospital_cannot_read_or_change_this_catalog(): void
+    {
+        $id = (string) $this->pdo->query('SELECT medication_id FROM medications')->fetchColumn();
+        $before = $this->pdo->query('SELECT * FROM medications')->fetchAll(PDO::FETCH_ASSOC);
+        $mismatch = 'HOSPITAL_DATABASE_TENANT_MISMATCH';
+
+        // Membresía válida en hospital-b, instancia con la base de hospital-a.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b']);
+        CatalogTestIdentity::as('admin_hospital', 'hospital-b');
+        $this->getJson('/api/v1/medications?q=amox')->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->getJson("/api/v1/medications/{$id}")->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->postJson('/api/v1/medications', ['code' => 'X-1', 'name' => 'X', 'active_ingredient' => 'X',
+            'pharmacological_group' => 'X'])->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])
+            ->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->assertSame($before, $this->pdo->query('SELECT * FROM medications')->fetchAll(PDO::FETCH_ASSOC));
+        $this->assertSame([], CatalogTestIdentity::$audited);
+
+        // El mismo rol en el hospital dueño de la base conserva el acceso.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
+        CatalogTestIdentity::as('admin_hospital', 'hospital-a');
+        $this->getJson('/api/v1/medications?q=amox')->assertOk()->assertJsonPath('count', 1);
+        $this->patchJson("/api/v1/medications/{$id}/validity", ['validity' => 'inactive'])->assertOk();
+
+        // Sin hospital asignado a la base se cierra el paso.
+        config(['tenants.hospital_database_tenant_id' => null]);
+        $this->getJson('/api/v1/medications?q=amox')->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
     }
 
     public function test_t4_errors_do_not_leak_internals_and_are_not_cached(): void

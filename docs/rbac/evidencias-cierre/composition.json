@@ -1,0 +1,21 @@
+[
+  {
+    "base": "0926ad987527b3f9faef03ddd02045dbb981ccef"
+  },
+  {
+    "ref": "feature/asii-02-semana-16-rbac-cobertura-modulos-mar-03",
+    "sha": "f568eb903da31065578838e83fa82926be9f4095"
+  },
+  {
+    "ref": "HEAD",
+    "sha": "5a5d69e948a0bce578c269a4d385985b02cca6cd"
+  },
+  {
+    "local_changes": [
+      "resources/js/modules/patients/pages/PatientsPage.vue",
+      "resources/js/router/index.js",
+      "resources/js/router/permissions.js",
+      "resources/js/router/permissions.test.mjs"
+    ]
+  }
+]

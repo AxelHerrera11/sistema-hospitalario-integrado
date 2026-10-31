@@ -1,0 +1,54 @@
+%% Secuencia de la consulta autorizada (UC-02) con los nombres reales de clases y métodos del micro-HIS.
+sequenceDiagram
+    autonumber
+    actor U as Médico tratante
+    participant UI as Interfaz (public/ui/app.js)
+    participant R as Router
+    participant MC as MedicalRecordController
+    participant CL as ConsultLongitudinalRecord
+    participant G as AccessGuard
+    participant RB as RbacAccessAuthorizer → Authorize (RBAC)
+    participant HR as HospitalRegistry
+    participant PD as PacientesDirectory → PatientRepository
+    participant REL as PdoCareRelationship
+    participant REP as PdoMedicalRecordRepository
+    participant AU as GobernanzaClinicalAudit → RecordAuditEvent
+
+    U->>UI: Escribe P-0001 y pulsa «Consultar expediente»
+    UI->>UI: validarCodigo() (si falla: mensaje en el campo, no se envía)
+    UI->>R: GET /patients/P-0001/medical-record (X-User-ID, X-Tenant-ID)
+    R->>MC: consult(request, "P-0001")
+    MC->>MC: request.context() (401/400 si faltan cabeceras)
+    MC->>CL: execute(context, "P-0001")
+    CL->>CL: PatientSummary::assertCode() (422)
+    CL->>G: requirePermission(context, "expediente.ver")
+    G->>RB: decide(usuario, hospital, permiso)
+    alt permiso denegado
+        RB-->>G: allowed=false, trace_id
+        G->>AU: record(acceso_denegado, denied, rbac_trace)
+        G-->>MC: ExpedienteRuleViolation 403 ACCESO_DENEGADO
+    else permiso concedido
+        RB-->>G: allowed=true
+        CL->>HR: forHospital(hospital) (503 si no hay base)
+        CL->>PD: findByCode("P-0001")
+        CL->>REL: hasActiveAssignment(usuario, paciente)
+        alt sin paciente o sin vínculo
+            CL->>AU: record(acceso_denegado, sin_vinculo_asistencial)
+            CL-->>MC: 403 SIN_VINCULO_ASISTENCIAL
+        else vínculo activo
+            CL->>REP: findByPatient(paciente) (404 si no hay expediente)
+            CL->>REP: episodesOf(paciente)
+            CL->>CL: new LongitudinalRecord() (integridad: mismo paciente)
+            CL->>AU: record(consultado, success, episodios=3)
+            alt bitácora caída
+                AU-->>CL: AuditUnavailable
+                CL-->>MC: 503 AUDITORIA_NO_DISPONIBLE (sin datos)
+            else evento persistido
+                CL-->>MC: LongitudinalRecord
+                MC->>MC: LongitudinalPresenter.longitudinal()
+            end
+        end
+    end
+    MC-->>UI: JSON + Cache-Control: no-store
+    UI->>UI: interpretar() → éxito / denegado / error / vacío
+    UI-->>U: Ficha, resumen y línea de tiempo (motivo plegado)

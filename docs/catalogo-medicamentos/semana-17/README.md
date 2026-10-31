@@ -11,6 +11,8 @@
 | Flujo funcional con PostgreSQL | **Hecho (local)** | Tabla H5 `medications` (#766), adaptador (#774) e interfaz (#776). Recorrido real interfaz → API → PostgreSQL 11/11 y fallo 4/4: [evidencia-funcional.md](./evidencia-funcional.md) |
 | Instalación reproducible | **Hecho (local)** | [instalacion-local.md](./instalacion-local.md) |
 | Despliegue final | **Bloqueado** | No hay entorno staging u on-premise autorizado |
+| Aislamiento entre hospitales | **Corregido el 30/10/2026** | M2b en [amenazas.md](./amenazas.md); #1561 |
+| Búsqueda con tildes con locale C | **Corregida el 30/10/2026** | `MedicationCatalogPostgresTest` sobre un clúster con locale C; #1563 |
 
 **La Semana 17 no se declara completa:** el despliegue final depende de un entorno staging u on-premise autorizado. El esquema H5 (#766) y la aprobación RBAC de las escrituras (#627) ya están integrados.
 

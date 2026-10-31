@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" role="img" aria-labelledby="t">
+  <title id="t">Wireframe móvil: emisión de orden</title>
+  <rect width="390" height="844" fill="#f3f4f6"/>
+  <rect width="390" height="56" fill="#1f2937"/>
+  <text x="16" y="34" font-family="system-ui" font-size="17" font-weight="700" fill="#fff">Nueva orden</text>
+  <text x="330" y="34" font-family="system-ui" font-size="11" fill="#d1d5db">Paso 2/3</text>
+
+  <rect x="16" y="68" width="358" height="34" rx="6" fill="#92400e"/>
+  <text x="30" y="89" font-family="system-ui" font-size="11" fill="#fff">Sin conexión: los datos se conservan en este dispositivo</text>
+
+  <rect x="16" y="116" width="358" height="86" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="30" y="138" font-family="system-ui" font-size="10" font-weight="700" fill="#475569">CONTEXTO DEL EXPEDIENTE</text>
+  <text x="30" y="160" font-family="system-ui" font-size="13" font-weight="600" fill="#0f172a">Ana Pérez · EPI-77</text>
+  <text x="30" y="178" font-family="system-ui" font-size="11" fill="#475569">Nota NOTA-552 · Abierto</text>
+  <text x="30" y="194" font-family="system-ui" font-size="10" fill="#64748b">Datos de solo lectura (no editables aquí)</text>
+  <text x="344" y="148" font-family="system-ui" font-size="14" fill="#2563eb">▾</text>
+
+  <text x="16" y="228" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">PRUEBAS</text>
+  <rect x="16" y="238" width="358" height="34" rx="6" fill="#fff" stroke="#94a3b8"/>
+  <text x="30" y="259" font-family="system-ui" font-size="12" fill="#64748b">Buscar prueba activa…</text>
+  <rect x="120" y="246" width="10" height="10" rx="5" fill="#2563eb"/>
+  <text x="30" y="294" font-family="system-ui" font-size="11" fill="#475569">Sugerencias</text>
+  <rect x="16" y="304" width="358" height="44" rx="6" fill="#fff" stroke="#e2e8f0"/>
+  <text x="30" y="322" font-family="system-ui" font-size="12" fill="#0f172a">GLU · Glucosa</text>
+  <text x="30" y="338" font-family="system-ui" font-size="10" fill="#64748b">Química · vigente</text>
+  <rect x="316" y="310" width="44" height="32" rx="6" fill="#eff6ff"/>
+  <text x="330" y="332" font-family="system-ui" font-size="18" fill="#2563eb">+</text>
+  <rect x="16" y="354" width="358" height="44" rx="6" fill="#fff" stroke="#e2e8f0"/>
+  <text x="30" y="372" font-family="system-ui" font-size="12" fill="#0f172a">HB · Hemograma</text>
+  <text x="30" y="388" font-family="system-ui" font-size="10" fill="#64748b">Hematología · vigente</text>
+  <rect x="316" y="360" width="44" height="32" rx="6" fill="#eff6ff"/>
+  <text x="330" y="382" font-family="system-ui" font-size="18" fill="#2563eb">+</text>
+
+  <text x="16" y="424" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">SELECCIONADAS (1)</text>
+  <rect x="16" y="434" width="160" height="30" rx="15" fill="#dbeafe"/>
+  <text x="30" y="453" font-family="system-ui" font-size="11" fill="#1e40af">GLU · Glucosa ✕</text>
+
+  <text x="16" y="492" font-family="system-ui" font-size="11" font-weight="700" fill="#475569">PRIORIDAD</text>
+  <rect x="16" y="502" width="108" height="36" rx="6" fill="#2563eb"/>
+  <text x="42" y="525" font-family="system-ui" font-size="11" font-weight="600" fill="#fff">Rutina</text>
+  <rect x="132" y="502" width="108" height="36" rx="6" fill="#fff" stroke="#cbd5e1"/>
+  <text x="158" y="525" font-family="system-ui" font-size="11" fill="#334155">Urgente</text>
+  <rect x="248" y="502" width="126" height="36" rx="6" fill="#fff" stroke="#cbd5e1"/>
+  <text x="278" y="525" font-family="system-ui" font-size="11" fill="#334155">STAT</text>
+
+  <rect x="16" y="560" width="358" height="80" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="30" y="582" font-family="system-ui" font-size="10" fill="#475569">Al emitir se crea un evento inicial. Si la red falla,</text>
+  <text x="30" y="600" font-family="system-ui" font-size="10" fill="#475569">puedes reintentar con la misma clave y no se duplica.</text>
+  <text x="30" y="622" font-family="system-ui" font-size="10" fill="#64748b">Borrador guardado hace 12 s.</text>
+
+  <rect x="16" y="700" width="358" height="50" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  <text x="30" y="730" font-family="system-ui" font-size="11" fill="#475569">1 prueba · Hospital A</text>
+  <rect x="16" y="764" width="358" height="44" rx="8" fill="#2563eb"/>
+  <text x="118" y="791" font-family="system-ui" font-size="13" font-weight="700" fill="#fff">Revisar y emitir</text>
+
+  <text x="16" y="20" font-family="system-ui" font-size="9" fill="#fbbf24">A</text>
+  <text x="366" y="20" font-family="system-ui" font-size="9" fill="#fbbf24">B</text>
+  <text x="16" y="228" font-family="system-ui" font-size="9" fill="#fbbf24">C</text>
+  <text x="16" y="560" font-family="system-ui" font-size="9" fill="#fbbf24">D</text>
+</svg>

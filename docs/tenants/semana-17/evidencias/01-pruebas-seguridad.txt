@@ -1,0 +1,52 @@
+# Tenants: pruebas de permisos y datos sensibles (Semana 17) — 2026-10-29 22:17 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Tenants/MicroHisSmokeTest.php --testdox | grep -E '✔|✘|^OK|Tests:'
+ ✔ Admin needs totp and each challenge is single use
+ ✔ Refresh rotates and reusing an old refresh revokes the session
+ ✔ Logout invalidates the access token immediately
+ ✔ Same user in two hospitals keeps roles and revocations isolated
+ ✔ Failed logins lock the membership and errors use real http status
+ ✔ Token session and error responses are never cacheable
+ ✔ State survives between requests through the state file
+OK (7 tests, 62 assertions)
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Tenants/AdminRoleManagementTest.php tests/Feature/Tenants/HospitalUserAdministrationTest.php tests/Feature/Tenants/MultiTenantIsolationFeatureTest.php tests/Feature/Tenants/RefreshTokenFeatureTest.php tests/Feature/Tenants/RevokeSessionFeatureTest.php --testdox | grep -E '✔|✘|^OK|Tests:'
+ ✔ Admin assigns laboratory roles and revocation invalidates their tokens
+ ✔ Superadmin assigns role and revokes target sessions with audit
+ ✔ Admin hospital cannot grant superadmin
+ ✔ Admin cannot change own roles
+ ✔ Revoke role invalidates target token and records audit
+ ✔ Approved admin capabilities reach their authorized operations
+ ✔ Admin hospital can only use its approved admin permissions
+ ✔ Hospital user listing is paged and isolated from other hospitals
+ ✔ Admin session revocation is limited to foreign sessions in current hospital
+ ✔ Admin cannot revoke own session
+ ✔ Non admin role cannot use administrative capabilities
+ ✔ Rbac denial is persisted with contract fields
+ ✔ Deactivation revokes only target access in the current hospital
+ ✔ Deactivation requires admin membership in the target hospital
+ ✔ Token of hospital a cannot be used against hospital b
+ ✔ User list only shows the admin hospital
+ ✔ Same user and device keep roles and sessions per hospital
+ ✔ Failed logins lock only the membership of that hospital
+ ✔ Suspended hospital blocks login
+ ✔ Refresh rotates both tokens and keeps the session
+ ✔ Invalid or missing refresh token is rejected
+ ✔ Reusing a rotated refresh token revokes the session
+ ✔ Access token stays valid only while its session is alive
+ ✔ Logout revokes own session immediately
+ ✔ Admin force revokes every session of a user
+ ✔ Revoking an unknown user returns 404
+ ✔ Non admin cannot force revoke
+OK (27 tests, 181 assertions)
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Tenants tests/Unit/Tenants | grep -E '^(OK|Tests:)'
+OK (107 tests, 540 assertions)
+(código de salida: 0)
+
+# Comprobación adicional del 2026-10-29 22:18: cabecera por defecto de Laravel en una respuesta de la API
+$ php -r '… $kernel->handle(Request::create("/api/v1/auth/login", "POST")) …'
+400 Cache-Control: no-cache, private

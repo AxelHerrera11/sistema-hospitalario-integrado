@@ -1,3 +1,15 @@
+---
+marp: true
+paginate: true
+size: 16:9
+style: |
+  section { font-size: 22px; color: #0f172a; }
+  h1 { color: #1e3a8a; font-size: 34px; }
+  h2 { color: #1e3a8a; font-size: 32px; }
+  table { font-size: 18px; }
+  code { font-size: 18px; }
+---
+
 # Segundo parcial — Traslados, altas y liberación de camas (ASII-08)
 
 Presentación breve en 5 diapositivas (Markdown; cada `---` separa una). Cubre la etapa de experiencia de usuario, semanas 8 a 11. No se declara ninguna defensa oral ni solicitud del docente.

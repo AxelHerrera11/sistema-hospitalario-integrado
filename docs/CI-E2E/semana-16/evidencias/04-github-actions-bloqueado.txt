@@ -1,0 +1,15 @@
+# Estado de GitHub Actions en la organización — consultado el 2026-10-29 21:42 -0600
+
+$ gh run list -R compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3 --workflow 'QA CI y E2E' --limit 5
+2026-10-24T03:27:17Z  failure  feature/asii-27-semana-14-sqa-lis671
+2026-10-24T03:27:12Z  failure  feature/asii-27-semana-11-prototipo-lis671
+2026-10-24T03:27:06Z  failure  feature/asii-27-semana-09-usabilidad-accesibilidad-lis671
+2026-10-24T03:26:35Z  failure  feature/asii-26-semana-14-sqa-lis671
+2026-10-24T03:26:27Z  failure  feature/asii-26-semana-11-prototipo-lis671
+
+$ gh api repos/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/check-runs/120664904550/annotations   # job 'E2E en ambiente aislado' del PR #1181
+failure: The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings
+notice: "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+
+$ gh run list -R compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3 --limit 200 --json createdAt -q 'max_by(.createdAt).createdAt'   # última ejecución registrada
+2026-10-24T07:04:26Z

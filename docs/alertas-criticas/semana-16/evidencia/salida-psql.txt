@@ -1,0 +1,12 @@
+ direction | measured_value | escalation_level |      destinatario       |    status    |     acusada_por     
+-----------+----------------+------------------+-------------------------+--------------+---------------------
+ low       |             32 |                0 | Medico Ficticio E2E     | acknowledged | Medico Ficticio E2E
+ high      |            500 |                1 | (jefatura del servicio) | open         | 
+(2 rows)
+
+     action      | count 
+-----------------+-------
+ alerta.acusada  |     1
+ alerta.generada |     2
+(2 rows)
+

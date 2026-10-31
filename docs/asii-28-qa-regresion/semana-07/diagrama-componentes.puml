@@ -1,0 +1,55 @@
+@startuml
+title ASII-28 Semana 7 - Componentes implementados y propuestas
+left to right direction
+skinparam componentStyle rectangle
+actor "Analista QA\nentrada CLI" as Actor
+component "demo.php / bootstrap.php\ncomposición implementada" as Demo
+package "Presentation (implementada)" {
+  component CaseController as Controller
+  component "CaseView\nproyección JSON explícita" as View
+}
+package "Application (implementada)" {
+  component DesignCase as UseCase
+}
+package "Domain (implementado)" {
+  component "ManualCase readonly\nregla RF-01" as Model
+  interface "CaseRepository\nsave / find" as Port
+  component "StorageFailure\nerror común" as Error
+}
+package "Persistence (implementada)" {
+  component InMemoryCaseRepository as Memory
+  component "PdoCaseRepository\nprepare / execute" as Adapter
+}
+database "SQLite en memoria\nqa_manual_cases\nesquema demo/tests" as DB
+package "PROPUESTO - no implementado" #FFF2CC {
+  component "Cliente / adaptador REST\nseguridad y ámbito pendientes" as REST
+  component "Campañas / ejecuciones\nevidencias / defectos / trazabilidad" as Future
+}
+Actor --> Demo : JSON por STDIN
+Demo --> Controller : compone e invoca
+Demo --> Adapter : inyecta conexión
+Demo --> DB : prepara esquema aislado
+Controller --> UseCase : requiere execute
+Controller --> View : requiere created
+Controller --> Error : captura
+UseCase --> Model : construye
+UseCase --> Port : requiere save
+View --> Model : lee cuatro campos
+Port --> Model : tipo del contrato
+Adapter ..|> Port : ofrece
+Memory ..|> Port : ofrece
+Adapter --> Model : reconstruye
+Memory --> Model : conserva
+Adapter --> Error : traduce PDOException
+Memory --> Error : rechaza duplicado
+Adapter --> DB : INSERT / SELECT preparados
+note bottom of Future
+  Sin flechas hacia el núcleo que impliquen integración existente.
+  La vista de Semana 3 cubría el diseño completo; aquí se concreta RF-01.
+end note
+legend bottom
+  Blanco: implementado. Amarillo: propuesto.
+  Flechas: dependencia/invocación; triángulo: implementación de interfaz.
+  CLI status/body no es API HTTP; no hay PostgreSQL ni datos clínicos.
+endlegend
+@enduml

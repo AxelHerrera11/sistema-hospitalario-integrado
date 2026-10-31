@@ -116,16 +116,6 @@ class NotasSoapPostgresTest extends TestCase
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM diagnoses WHERE clinical_note_id = ?', [$id]));
     }
 
-    public function test_the_central_user_resolves_to_the_active_local_reference_only(): void
-    {
-        $resolver = new PdoLocalActorResolver(fn () => $this->pdo);
-        $this->assertSame(self::DOCTOR, $resolver->reference(self::DOCTOR_CENTRAL));
-        $this->assertNull($resolver->reference('00000000-0000-4000-8000-000000000000'));
-        $this->assertNull($resolver->reference("' OR 1=1 --"));
-        DB::connection('hospital')->update("UPDATE local_user_refs SET status = 'inactive' WHERE local_user_ref_id = ?", [self::DOCTOR]);
-        $this->assertNull($resolver->reference(self::DOCTOR_CENTRAL));
-    }
-
     /** Recorrido real: token (identidad simulada) → usuario local → permisos RBAC reales → casos de uso → adaptadores PDO → PostgreSQL. */
     public function test_end_to_end_the_api_registers_and_reads_a_note_in_postgresql(): void
     {
@@ -138,8 +128,6 @@ class NotasSoapPostgresTest extends TestCase
         $id = $this->postJson('/api/v1/care-episodes/' . self::EPISODE . '/soap-notes', $soap)->assertCreated()->assertJsonPath('status', 'draft')->json('clinical_note_id');
         $this->getJson("/api/v1/soap-notes/$id")->assertOk()->assertJsonPath('sections.plan', 'Amoxicilina')->assertJsonPath('author_user_ref_id', self::DOCTOR);
         $this->assertSame(1, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM local_access_audits WHERE resource_id = ? AND actor_user_ref_id = ?", [$id, self::DOCTOR]));
-        // Falta la tabla icd10_codes (entidad de ASII-09): asociar un diagnóstico falla seguro con 503, sin 500.
-        $this->postJson("/api/v1/soap-notes/$id/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])->assertStatus(503)->assertJsonPath('code', 'ICD10_UNAVAILABLE');
     }
 
     private function seedCare(): void

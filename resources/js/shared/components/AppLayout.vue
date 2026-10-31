@@ -89,6 +89,12 @@ const auth = useAuthStore();
 const sidebarOpen = ref(false);
 const logoutError = ref('');
 
+watch(() => auth.token, (token) => {
+    if (token) {
+        logoutError.value = '';
+    }
+});
+
 const isGuest = computed(() => route.name === 'login');
 const userName = computed(() => auth.user?.display_name ?? 'Usuario');
 

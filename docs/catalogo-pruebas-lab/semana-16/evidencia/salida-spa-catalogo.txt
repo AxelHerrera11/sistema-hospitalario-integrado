@@ -1,0 +1,7 @@
+PASS  recepción (sin laboratorio.catalogo.ver) no ve «Catálogo de laboratorio»
+PASS  técnico ve GLU vigente y no ve el formulario de alta
+PASS  rangos incoherentes → error local, sin llamar a la API
+PASS  alta de HB → 201 y aparece en la tabla vigente
+PASS  GLU otra vez → 409 con el mensaje del servidor
+PASS  375 px: la página no se desplaza en horizontal (la tabla sí, dentro de su contenedor)
+6/6 verificaciones

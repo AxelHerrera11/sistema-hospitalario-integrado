@@ -1,0 +1,37 @@
+/*
+ * Propuesta responsive ASII-24 (Semana 10). Mobile-first: los estilos base son para movil (< 768 px)
+ * y se amplian con min-width. Usa los tokens de la guia de estilos de la Semana 8.
+ */
+:root { --toque: 48px; --gutter: 16px; }
+
+/* Layout: en movil el menu es una barra inferior fija con las 3-4 acciones del rol. */
+.app { display: block; padding-bottom: calc(var(--toque) + 16px); }
+.menu-inferior { position: fixed; inset: auto 0 0 0; display: flex; justify-content: space-around;
+  background: var(--superficie); border-top: 1px solid var(--borde); padding-bottom: env(safe-area-inset-bottom); }
+.menu-inferior a { flex: 1; min-height: var(--toque); display: grid; place-items: center; font-size: .8rem; }
+main { padding: var(--gutter); }
+.btn { min-height: var(--toque); width: 100%; }
+.barra-accion { position: sticky; bottom: calc(var(--toque) + 8px); background: var(--fondo); padding: 8px 0; }
+input, select { font-size: 16px; } /* evita el zoom automatico de iOS al enfocar */
+/* Catalogo: buscador fijo arriba, tarjetas de documento a todo el ancho, lectura de manual sin columnas. */
+.buscador { position: sticky; top: 0; background: var(--fondo); padding: 8px 0; z-index: 1; }
+.catalogo { display: grid; gap: 12px; }
+.documento { padding: 12px; border: 1px solid var(--borde); border-radius: 8px; background: var(--superficie); }
+.manual { max-width: 70ch; line-height: 1.6; }
+.manual img, .manual table { max-width: 100%; overflow-x: auto; display: block; }
+
+@media (min-width: 768px) {
+  .app { display: grid; grid-template-columns: 72px 1fr; padding-bottom: 0; }
+  .menu-inferior { position: static; flex-direction: column; justify-content: flex-start; border: 0; border-right: 1px solid var(--borde); }
+  .btn { width: auto; }
+  .barra-accion { position: static; }
+  .catalogo { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .app { grid-template-columns: 220px 1fr; }
+  .menu-inferior a { place-items: center start; padding: 0 12px; font-size: 1rem; }
+  main { padding: 24px; max-width: 1120px; }
+  .catalogo { grid-template-columns: repeat(3, 1fr); }
+  .lectura { display: grid; grid-template-columns: 240px 1fr; } /* indice lateral + contenido */
+}

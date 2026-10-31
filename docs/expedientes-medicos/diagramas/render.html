@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Render Mermaid — expediente</title></head>
+<body style="background:#fff">
+<pre id="log">cargando…</pre>
+<div id="work"></div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>
+mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict', flowchart: { htmlLabels: true } });
+async function renderAll() {
+  const log = [];
+  const files = await (await fetch('/list')).json();
+  let i = 0;
+  for (const p of files) {
+    try {
+      const src = await (await fetch('/src?p=' + encodeURIComponent(p))).text();
+      const { svg } = await mermaid.render('d' + (i++), src, document.getElementById('work'));
+      // El SVG se guarda como archivo XML: los vacíos HTML (<br>) deben cerrarse.
+      const xmlSafe = svg.replace(/<br\s*>/g, '<br/>').replace(/&nbsp;/g, '&#160;');
+      const withBg = xmlSafe.replace('<svg ', '<svg style="background-color: white;" ').replace(/style="background-color: white;" ([^>]*?)style="/, '$1style="background-color: white; ');
+      const r = await fetch('/save?p=' + encodeURIComponent(p), { method: 'POST', body: withBg });
+      log.push('OK ' + p + ' ' + (await r.text()));
+    } catch (e) {
+      log.push('ERROR ' + p + ': ' + (e.message || e).toString().slice(0, 300));
+    }
+  }
+  document.getElementById('log').textContent = log.join('\n');
+  window.__done = log;
+}
+renderAll();
+</script>
+</body></html>
