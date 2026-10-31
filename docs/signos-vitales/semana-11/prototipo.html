@@ -44,6 +44,7 @@ const SIG=[['hr','Frecuencia cardiaca','lpm',1],['spo2','Saturación de oxígeno
 const NOM=Object.fromEntries(SIG.map(s=>[s[0],s[1]])),UNI={glu:['mg/dL','mmol/L'],temp:['°C','°F']};
 const LIM={hr:[0,300],rr:[0,100],sys:[0,300],dia:[0,200],spo2:[0,100],wt:[0,1000],ht:[0,300],glu:[0,2000],temp:[25,45]},REG={hr:[40,50,91,131],rr:[8,11,21,25],glu:[53,69,181,400],spo2:[91,95,Infinity,Infinity]};
 const S={v:{},u:{},errs:{},paso:1,last:null,skip:false,list:[{when:'14/10 06:00',sev:0,txt:'FC 80 lpm · Peso 70 kg'}]};
+if(Q.has('ultima'))S.ultima={glu:'mmol/L'};
 if(Q.has('demo')){S.v={hr:'138',spo2:'94'};if(Q.get('demo')==='glu'){S.v.glu='5,5';S.u.glu='mmol/L'}}
 $('#pac').textContent=EDAD<18?'Pablo Ruiz · exp-5102 · Nac. 02/05/2017 ('+EDAD+' a) · Episodio EP-2':'María Gómez · exp-7734 · Nac. 14/03/1981 ('+EDAD+' a) · Episodio EP-1';
 if(Q.get('rol')==='enfermeria')$('#rol').value='enfermeria';
@@ -58,7 +59,7 @@ function validar(){const e={},c={};let n=0;for(const [k,l] of SIG){const raw=S.v
  if(c.sys&&c.dia&&c.sys<c.dia)e.dia='La presión sistólica no puede ser menor que la diastólica.';if(!n)e._='Ingrese al menos un signo vital.';return {e,c}}
 function evaluar(c){const f=EDAD<18?[]:Object.keys(c).map(k=>[k,sev(k,c[k])]).filter(a=>a[1]>0).sort((a,b)=>b[1]-a[1]);return {max:EDAD<18?-1:f[0]?f[0][1]:0,f:f,c:c}}
 const val=(k,x)=>fmt(x)+' '+(k==='glu'?'mg/dL':k==='temp'?'°C':SIG.find(s=>s[0]===k)[2]);
-const seg=k=>`<fieldset class="seg"><legend>Unidad de ${NOM[k].toLowerCase()}</legend>${UNI[k].map(u=>`<label><input type="radio" name="u_${k}" value="${u}"${S.u[k]===u?' checked':''}><span>${u}</span></label>`).join('')}</fieldset>`;
+const seg=k=>`<fieldset class="seg"><legend>Unidad de ${NOM[k].toLowerCase()}${(S.sug||[]).includes(k)&&S.u[k]?' · la última que usó en esta sesión: confírmela':''}</legend>${UNI[k].map(u=>`<label><input type="radio" name="u_${k}" value="${u}"${S.u[k]===u?' checked':''}><span>${u}</span></label>`).join('')}</fieldset>`;
 const campo=(k,l,u)=>`<div class="f"><label for="${k}">${l}${u?' ('+u+')':''}</label><input type="text" id="${k}" inputmode="decimal" autocomplete="off" value="${esc(S.v[k]||'')}"${S.errs[k]?` aria-invalid="true" aria-describedby="${k}e"`:''}>${UNI[k]?seg(k):''}<p class="warn" id="${k}w" role="status">${warnU(k)?'⚠ '+esc(warnU(k)):''}</p>${S.errs[k]?`<p class="err" id="${k}e">${S.errs[k]}</p>`:''}</div>`;
 const bar=h=>`<div class="bar">${h}</div>`,btn=(a,t,m)=>`<button class="btn${m?' main':''}" data-act="${a}">${t}</button>`;
 const lab=s=>s===2?'<span class="chip c2">■ Crítica</span>':s===1?'<span class="chip c1">▲ Advertencia</span>':'<span class="chip c0">✓ Sin valores fuera de umbral</span>';
@@ -80,12 +81,12 @@ revision(){return `<h1 tabindex="-1">Revisión de mediciones</h1><div class="car
 function render(){const [r]=(location.hash.replace('#/','')||'episodio').split('/'),ruta=V[r]?r:'episodio',p=+location.hash.split('/')[2];if(ruta==='captura'&&p)S.paso=p;
  if(ruta!=='episodio'&&!medico()){go('#/episodio');return}main.innerHTML=V[ruta]();document.title=(main.querySelector('h1')||{textContent:''}).textContent+' · Signos vitales';const h=main.querySelector('h1');h&&h.focus();
  $('#live').textContent=ruta==='resultado'?(S.last||{max:0}).max>0?'Alerta generada':'Medición registrada':ruta==='error'?'No sabemos si se guardó':''}
-function registrar(){if($('#sim').checked&&!S.skip){go('#/error');return}S.skip=false;const r=evaluar(validar().c);S.last=r;
+function registrar(){if($('#sim').checked&&!S.skip){go('#/error');return}S.skip=false;const r=evaluar(validar().c);S.last=r;S.ultima={};for(const k of ['glu','temp'])if(S.u[k]&&S.v[k])S.ultima[k]=S.u[k];
  S.list.unshift({when:'14/10 08:30',sev:r.max,txt:r.max<0?'Sin perfil de umbrales para esta edad':r.f.length?r.f.map(a=>NOM[a[0]]+' '+val(a[0],r.c[a[0]])).join(' · '):'Sin valores fuera de umbral'});go('#/resultado')}
 document.addEventListener('input',e=>{const k=e.target.id;if(SIG.some(s=>s[0]===k)){S.v[k]=e.target.value;const w=$('#'+k+'w');w&&(w.textContent=warnU(k)?'⚠ '+warnU(k):'')}});
-document.addEventListener('change',e=>{if(e.target.name&&e.target.name.startsWith('u_')){S.u[e.target.name.slice(2)]=e.target.value;const k=e.target.name.slice(2),w=$('#'+k+'w');w&&(w.textContent=warnU(k)?'⚠ '+warnU(k):'')}});
+document.addEventListener('change',e=>{if(e.target.name&&e.target.name.startsWith('u_')){S.u[e.target.name.slice(2)]=e.target.value;const k=e.target.name.slice(2),w=$('#'+k+'w');S.sug=(S.sug||[]).filter(x=>x!==k);e.target.closest('fieldset').querySelector('legend').textContent='Unidad de '+NOM[k].toLowerCase();w&&(w.textContent=warnU(k)?'⚠ '+warnU(k):'')}});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act]');if(!a)return;const t=a.dataset.act;
- if(t==='nueva'||t==='otra'){S.v={};S.u={};S.errs={};S.paso=1;S.last=null;go('#/captura/1')}
+ if(t==='nueva'||t==='otra'){S.v={};S.u={...S.ultima};S.sug=Object.keys(S.u);S.errs={};S.paso=1;S.last=null;go('#/captura/1')}
  else if(t==='sig'||t==='conf'){const v=validar();S.errs=v.e;const cur=SIG.filter(s=>s[3]===S.paso).map(s=>s[0]),ks=Object.keys(v.e);
   if(t==='sig'){if(cur.some(k=>v.e[k])){render();const f=main.querySelector('[aria-invalid]');f&&f.focus()}else{S.errs={};S.paso++;go('#/captura/'+S.paso)}}
   else if(ks.length){const st=ks[0]==='_'?1:SIG.find(s=>s[0]===ks[0])[3];if(movil()&&st!==S.paso){S.paso=st;go('#/captura/'+st)}else{render();const f=main.querySelector('[aria-invalid]')||main.querySelector('[role=alert]');f&&f.focus()}}else go('#/confirmar')}
