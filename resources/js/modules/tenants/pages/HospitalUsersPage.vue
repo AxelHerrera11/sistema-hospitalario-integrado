@@ -1,12 +1,44 @@
 <template>
     <section class="users">
-        <header>
+        <header class="users__header">
+            <div>
             <p class="users__eyebrow">Administración</p>
             <h1>Usuarios del hospital</h1>
             <p class="users__subtitle">
                 {{ auth.hospital?.name || 'Hospital de la sesión' }} · personal con acceso y sus roles en este hospital
             </p>
+            </div>
+            <button v-if="permissions.crear && !creating" type="button" @click="openCreate">Crear usuario</button>
         </header>
+
+        <form v-if="creating" class="users__create" aria-labelledby="create-title" novalidate @submit.prevent="createUser">
+            <h2 id="create-title">Nuevo usuario en {{ auth.hospital?.name || 'este hospital' }}</h2>
+            <div class="users__grid">
+                <label>Nombre completo
+                    <input ref="firstField" v-model="form.display_name" maxlength="120" autocomplete="off" :aria-invalid="Boolean(formErrors.display_name)" aria-describedby="err-name">
+                    <small id="err-name" class="users__field-error">{{ formErrors.display_name }}</small>
+                </label>
+                <label>Correo
+                    <input v-model="form.email" type="email" maxlength="254" autocomplete="off" :aria-invalid="Boolean(formErrors.email)" aria-describedby="err-email">
+                    <small id="err-email" class="users__field-error">{{ formErrors.email }}</small>
+                </label>
+                <label>Rol inicial
+                    <select v-model="form.role_code" :aria-invalid="Boolean(formErrors.role_code)" aria-describedby="err-role">
+                        <option value="" disabled>Elija un rol…</option>
+                        <option v-for="role in rolesParaAlta(auth.roles)" :key="role.valor" :value="role.valor">{{ role.etiqueta }}</option>
+                    </select>
+                    <small id="err-role" class="users__field-error">{{ formErrors.role_code }}</small>
+                </label>
+                <label>Contraseña temporal
+                    <input v-model="form.password" type="password" maxlength="128" autocomplete="new-password" :aria-invalid="Boolean(formErrors.password)" aria-describedby="err-pass">
+                    <small id="err-pass" :class="formErrors.password ? 'users__field-error' : 'users__muted'">{{ formErrors.password || 'Mínimo 12 caracteres, con mayúscula, minúscula, número y símbolo.' }}</small>
+                </label>
+            </div>
+            <div class="users__create-actions">
+                <button type="submit" :disabled="busy">Crear usuario</button>
+                <button type="button" class="users__secondary" :disabled="busy" @click="closeCreate">Cancelar</button>
+            </div>
+        </form>
 
         <ul class="users__stats" aria-label="Resumen">
             <li><strong>{{ stats.total }}</strong><span>Usuarios con acceso</span></li>
@@ -98,12 +130,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import api from '@/plugins/axios';
 import { can } from '@/router/permissions';
 import { useAuthStore } from '@/stores/auth';
 import {
-    accionesPara, confirmacion, estadoDe, etiquetaRol, iniciales, mensajeDeError, resumen, rolesAsignables,
+    accionesPara, confirmacion, erroresDeAlta, estadoDe, etiquetaRol, iniciales, mensajeDeError, resumen, rolesAsignables, rolesParaAlta,
 } from '@/modules/tenants/hospitalUsers';
 
 const auth = useAuthStore();
@@ -117,10 +149,16 @@ const busy = ref(false);
 const errorMessage = ref('');
 const notice = ref('');
 const selected = reactive({});
+const creating = ref(false);
+const firstField = ref(null);
+const emptyForm = () => ({ display_name: '', email: '', role_code: '', password: '' });
+const form = reactive(emptyForm());
+const formErrors = ref({});
 
 const permissions = computed(() => ({
     asignar: can(auth.user, 'rbac.asignar'),
     desactivar: can(auth.user, 'usuarios.desactivar'),
+    crear: can(auth.user, 'usuarios.crear'),
 }));
 const canManage = computed(() => permissions.value.asignar || permissions.value.desactivar);
 const stats = computed(() => resumen(users.value, total.value));
@@ -191,6 +229,33 @@ function deactivate(user) {
         `Acceso de ${user.display_name} revocado en este hospital.`);
 }
 
+async function openCreate() {
+    Object.assign(form, emptyForm());
+    formErrors.value = {};
+    creating.value = true;
+    await nextTick();
+    firstField.value?.focus();
+}
+
+function closeCreate() {
+    creating.value = false;
+    Object.assign(form, emptyForm());
+}
+
+// La contraseña temporal no se guarda en la pantalla: se limpia al crear o cancelar.
+function createUser() {
+    formErrors.value = erroresDeAlta(form);
+    if (Object.keys(formErrors.value).length) {
+        return;
+    }
+    const name = form.display_name.trim();
+    const role = form.role_code;
+    run(async () => {
+        await api.post('/admin/users', { ...form, email: form.email.trim(), display_name: name });
+        closeCreate();
+    }, `Usuario ${name} creado con el rol «${etiquetaRol(role)}».`);
+}
+
 onMounted(() => loadUsers(1));
 </script>
 
@@ -201,6 +266,14 @@ onMounted(() => loadUsers(1));
 .users__eyebrow { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #1d4ed8; }
 .users h1 { font-size: 1.6rem; font-weight: 700; margin: 0.15rem 0 0.25rem; }
 .users__subtitle { color: #475569; }
+.users__header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.users__create { margin: 1.25rem 0 0; padding: 1rem 1.25rem; border: 1px solid #bfdbfe; border-radius: 8px; background: #f8fafc; }
+.users__create h2 { margin: 0 0 0.75rem; font-size: 1.1rem; font-weight: 700; }
+.users__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1rem; }
+.users__grid label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem; font-weight: 600; color: #334155; }
+.users__grid small { min-height: 1.1rem; font-weight: 400; font-size: 0.8rem; }
+.users__field-error { color: #b91c1c; }
+.users__create-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
 .users__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; margin: 1.25rem 0; padding: 0; list-style: none; }
 .users__stats li { display: flex; flex-direction: column; padding: 0.85rem 1rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; }
 .users__stats strong { font-size: 1.5rem; font-weight: 700; }
@@ -240,6 +313,7 @@ onMounted(() => loadUsers(1));
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (max-width: 720px) {
     .users__stats { grid-template-columns: 1fr; }
+    .users__grid { grid-template-columns: 1fr; }
     .users__search { flex-wrap: wrap; }
     .users__search input { flex-basis: 100%; }
     .users thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

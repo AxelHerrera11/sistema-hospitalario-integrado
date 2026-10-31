@@ -52,6 +52,7 @@ const MENSAJES = {
     ROLE_ALREADY_ASSIGNED: 'El usuario ya tiene ese rol en este hospital.',
     MEMBERSHIP_NOT_FOUND: 'El usuario ya no tiene ese rol o acceso en este hospital.',
     ACTOR_NO_ACTIVE_MEMBERSHIP: 'Su usuario no tiene una membresía activa en este hospital.',
+    EMAIL_TAKEN: 'Ya existe una cuenta con ese correo.',
 };
 
 /** Mensaje seguro: primero el código conocido; si no, uno genérico por estado. Nunca el detalle interno. */
@@ -64,6 +65,9 @@ export function mensajeDeError(datos, estado) {
     }
     if (estado === 403) {
         return 'No tiene permiso para esta acción.';
+    }
+    if (estado === 422 && datos?.errors?.password) {
+        return 'La contraseña no cumple la política: 12 caracteres con mayúscula, minúscula, número y símbolo.';
     }
     if (estado === 422) {
         return 'Revise los datos enviados.';
@@ -108,4 +112,35 @@ export function resumen(usuarios, total) {
         activos: lista.filter((u) => u.status === 'active').length,
         sinRoles: lista.filter((u) => (u.roles ?? []).length === 0).length,
     };
+}
+
+/** Roles para el alta: el rol superadmin solo lo ofrece a quien ya es superadmin (SUPERADMIN_REQUIRES_SUPERADMIN). */
+export function rolesParaAlta(rolesDelActor) {
+    const esSuperadmin = (rolesDelActor ?? []).includes('superadmin');
+
+    return ROLES.filter((rol) => esSuperadmin || rol.valor !== 'superadmin');
+}
+
+/**
+ * Validación previa del formulario de alta, con la misma política que el backend (CreateHospitalUser):
+ * devuelve un mensaje por campo; un objeto vacío significa que se puede enviar.
+ */
+export function erroresDeAlta(datos) {
+    const errores = {};
+    const clave = datos?.password ?? '';
+
+    if ((datos?.display_name ?? '').trim().length < 2) {
+        errores.display_name = 'Escriba el nombre completo.';
+    }
+    if (! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((datos?.email ?? '').trim())) {
+        errores.email = 'Escriba un correo válido.';
+    }
+    if (! datos?.role_code) {
+        errores.role_code = 'Elija el rol inicial.';
+    }
+    if (clave.length < 12 || ! /[A-Z]/.test(clave) || ! /[a-z]/.test(clave) || ! /\d/.test(clave) || ! /[^A-Za-z0-9]/.test(clave)) {
+        errores.password = 'Mínimo 12 caracteres, con mayúscula, minúscula, número y símbolo.';
+    }
+
+    return errores;
 }

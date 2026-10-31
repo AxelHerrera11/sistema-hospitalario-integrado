@@ -5,7 +5,9 @@ import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, 'hospitalUsers.js'), 'utf8');
-const { accionesPara, confirmacion, estadoDe, etiquetaRol, iniciales, mensajeDeError, resumen, ROLES, rolesAsignables } =
+const {
+    accionesPara, confirmacion, erroresDeAlta, estadoDe, etiquetaRol, iniciales, mensajeDeError, resumen, ROLES, rolesAsignables, rolesParaAlta,
+} =
     await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 const admin = 'a1';
@@ -51,5 +53,20 @@ assert.equal(estadoDe('inactive').etiqueta, 'Inactivo');
 assert.deepEqual(estadoDe('raro'), { etiqueta: 'raro', tono: 'off' });
 assert.deepEqual(resumen([activo, { status: 'inactive', roles: [] }], 40), { total: 40, activos: 1, sinRoles: 1 });
 assert.deepEqual(resumen(undefined), { total: 0, activos: 0, sinRoles: 0 });
+
+// Alta de usuario: superadmin solo para superadmin y validación previa con la política del backend.
+assert.equal(rolesParaAlta(['admin_hospital']).length, 7);
+assert.ok(! rolesParaAlta(['admin_hospital']).some((r) => r.valor === 'superadmin'));
+assert.equal(rolesParaAlta(['superadmin']).length, 8);
+assert.equal(rolesParaAlta(undefined).length, 7);
+const alta = { display_name: 'Dra. Nueva', email: 'nueva@demo.test', role_code: 'medico', password: 'Temporal-2026!x' };
+assert.deepEqual(erroresDeAlta(alta), {});
+assert.deepEqual(Object.keys(erroresDeAlta({})).sort(), ['display_name', 'email', 'password', 'role_code']);
+for (const clave of ['Corta-1!', 'sin-mayusculas-2026!', 'SinNumerosNiNada!', 'SinSimbolos2026x']) {
+    assert.ok(erroresDeAlta({ ...alta, password: clave }).password, clave);
+}
+assert.ok(erroresDeAlta({ ...alta, email: 'sin-arroba' }).email);
+assert.equal(mensajeDeError({ error: 'EMAIL_TAKEN' }, 409), 'Ya existe una cuenta con ese correo.');
+assert.match(mensajeDeError({ errors: { password: ['x'] } }, 422), /12 caracteres/);
 
 console.log('hospitalUsers.test.mjs: OK');
