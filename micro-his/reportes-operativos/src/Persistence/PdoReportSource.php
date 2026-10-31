@@ -17,23 +17,23 @@ use Throwable;
  */
 final class PdoReportSource implements ReportSource
 {
-    /** @param Closure(): PDO $conexion */
-    public function __construct(private readonly Closure $conexion)
+    /** @param Closure(): PDO $conexion @param (Closure(): string)|null $zona zona del hospital: fechas y filtros se calculan en ella, no en la de la sesión */
+    public function __construct(private readonly Closure $conexion, private readonly ?Closure $zona = null)
     {
     }
 
     public function citas(ReportFilters $filters): array
     {
-        $sql = "SELECT to_char(a.starts_at, 'YYYY-MM-DD') AS fecha, s.name AS servicio, a.status AS estado, count(*)::text AS total
+        $sql = "SELECT to_char(a.starts_at AT TIME ZONE :zona, 'YYYY-MM-DD') AS fecha, s.name AS servicio, a.status AS estado, count(*)::text AS total
                 FROM appointments a JOIN specialties s ON s.specialty_id = a.specialty_id WHERE true";
-        $parametros = [];
+        $parametros = ['zona' => $zona = $this->zona === null ? 'UTC' : ($this->zona)()];
         if ($filters->dateFrom !== null) {
-            $sql .= ' AND a.starts_at >= CAST(:desde AS date)';
-            $parametros['desde'] = $filters->dateFrom;
+            $sql .= ' AND a.starts_at >= CAST(:desde AS date)::timestamp AT TIME ZONE :zona_desde';
+            $parametros += ['desde' => $filters->dateFrom, 'zona_desde' => $zona];
         }
         if ($filters->dateTo !== null) {
-            $sql .= " AND a.starts_at < CAST(:hasta AS date) + interval '1 day'";
-            $parametros['hasta'] = $filters->dateTo;
+            $sql .= ' AND a.starts_at < (CAST(:hasta AS date) + 1)::timestamp AT TIME ZONE :zona_hasta';
+            $parametros += ['hasta' => $filters->dateTo, 'zona_hasta' => $zona];
         }
         foreach (['status' => 'a.status', 'doctor_profile_id' => 'a.doctor_profile_id'] as $filtro => $columna) {
             if (isset($filters->extra[$filtro])) {

@@ -19,13 +19,28 @@ final class PdoScheduleProvider implements DoctorScheduleProvider
 
     public function scheduleFor(string $doctorId, string $date): ?array
     {
-        $vigente = "doctor_profile_id = ? AND status = 'active' AND valid_from <= ? AND (valid_to IS NULL OR valid_to > ?)";
-        if ($this->rows("SELECT 1 FROM doctor_schedules WHERE $vigente", [$doctorId, $date, $date], PDO::FETCH_COLUMN) === []) {
-            return null;
+        return $this->schedulesFor([$doctorId], $date)[$doctorId];
+    }
+
+    /** Una sola consulta para todos los médicos: sin filas vigentes -> null; con filas pero ninguna ese día de la semana -> []. */
+    public function schedulesFor(array $doctorIds, string $date): array
+    {
+        $result = array_fill_keys($doctorIds, null);
+        if ($doctorIds === []) {
+            return $result;
         }
+        $marks = implode(', ', array_fill(0, count($doctorIds), '?'));
+        $rows = $this->rows("SELECT doctor_profile_id, weekday, start_minute, end_minute, slot_minutes FROM doctor_schedules
+            WHERE doctor_profile_id IN ($marks) AND status = 'active' AND valid_from <= ? AND (valid_to IS NULL OR valid_to > ?) ORDER BY start_minute",
+            [...array_values($doctorIds), $date, $date]);
         $weekday = (int) date('N', strtotime($date));
-        $windows = $this->rows("SELECT start_minute, end_minute, slot_minutes FROM doctor_schedules WHERE $vigente AND weekday = ? ORDER BY start_minute", [$doctorId, $date, $date, $weekday]);
-        return array_map(static fn (array $w): array => [self::clock((int) $w['start_minute']), self::clock((int) $w['end_minute']), (int) $w['slot_minutes']], $windows);
+        foreach ($rows as $w) {
+            $result[$w['doctor_profile_id']] ??= [];
+            if ((int) $w['weekday'] === $weekday) {
+                $result[$w['doctor_profile_id']][] = [self::clock((int) $w['start_minute']), self::clock((int) $w['end_minute']), (int) $w['slot_minutes']];
+            }
+        }
+        return $result;
     }
 
     private static function clock(int $minute): string

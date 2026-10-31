@@ -38,19 +38,22 @@ final class DoctorApiController extends Controller
 
     private function handle(Request $request, string $path): JsonResponse
     {
+        $trace = bin2hex(random_bytes(8));
         try {
             $actor = $this->actors->localUserRef((string) $request->user('api')?->getAuthIdentifier());
             if ($actor === null) {
-                return $this->failure(403, 'ACTOR_NOT_PROVISIONED');
+                return $this->failure(403, 'ACTOR_NOT_PROVISIONED', $trace);
             }
             $result = app(Router::class, ['timezone' => $this->hospitalTimezone($request)])->dispatch(new DoctorRequest(
                 $request->method(), $path, ['X-User-ID' => $actor], $request->query(), $request->json()->all(),
             ));
         } catch (\PDOException) { // incluye QueryException
-            return $this->failure(503, 'DOCTOR_STORAGE_UNAVAILABLE');
+            return $this->failure(503, 'DOCTOR_STORAGE_UNAVAILABLE', $trace);
         }
 
-        return response()->json(json_decode($result['body'], true), $result['status'])->header('Cache-Control', 'no-store, private');
+        // Contrato de la Semana 5: toda respuesta, también la de error, lleva `trace_id` en el cuerpo y en `X-Trace-Id`.
+        return response()->json(json_decode($result['body'], true) + ['trace_id' => $trace], $result['status'])
+            ->header('Cache-Control', 'no-store, private')->header('X-Trace-Id', $trace);
     }
 
     /** Zona del hospital del tenant (`hospitals.timezone`): las horas de las citas se leen y se informan en ella. Sin una zona válida, la de la aplicación. */
@@ -62,8 +65,9 @@ final class DoctorApiController extends Controller
         return is_string($zone) && in_array($zone, \DateTimeZone::listIdentifiers(), true) ? $zone : (string) config('app.timezone', 'UTC');
     }
 
-    private function failure(int $status, string $code): JsonResponse
+    private function failure(int $status, string $code, string $trace): JsonResponse
     {
-        return response()->json(['code' => $code], $status)->header('Cache-Control', 'no-store, private');
+        return response()->json(['code' => $code, 'trace_id' => $trace], $status)
+            ->header('Cache-Control', 'no-store, private')->header('X-Trace-Id', $trace);
     }
 }

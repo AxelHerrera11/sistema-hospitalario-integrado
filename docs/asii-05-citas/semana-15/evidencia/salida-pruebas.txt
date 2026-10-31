@@ -1,0 +1,12 @@
+$ php -d zend.assertions=1 -d assert.exception=1 tests/pruebas_semana15.php
+  [OK] [UNIT-01] Cita::agendar crea la cita en estado scheduled
+  [OK] [UNIT-02] Cita::agendar rechaza rango invertido
+  [OK] [UNIT-03] AgendarCita persiste y ListarCitas filtra por paciente
+  [OK] [WB-01] Cita::seSolapaCon cubre todas sus condiciones
+  [OK] [WB-02] Router::despachar recorre sus 5 caminos (404, 405, 422, error, exito)
+  [OK] [BB-01] particion valida: POST /citas responde 201
+  [OK] [BB-02] valor limite: cita contigua (inicia cuando termina otra) se acepta
+  [OK] [BB-03] particion invalida: solape de un minuto responde 409
+  [OK] [BB-04] particion invalida: rango invertido responde 409 cita_rango_invalido
+
+Resumen: 9 pruebas, 0 fallidas.
