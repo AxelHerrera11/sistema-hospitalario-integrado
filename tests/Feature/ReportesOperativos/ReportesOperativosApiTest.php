@@ -107,6 +107,7 @@ final class ReportesOperativosApiTest extends TestCase
             ->assertStatus(422)->assertJsonPath('code', 'report_range_too_long');
         $this->getJson('/api/v1/reportes/citas-por-servicio/export?date_from=2026-11-01&format=pdf', ['X-Request-Id' => 'req-reporte-01'])
             ->assertStatus(406)->assertJsonPath('code', 'report_format_unsupported')->assertJsonPath('trace_id', 'req-reporte-01');
+        $this->get('/api/v1/reportes/citas-por-servicio/export?date_from=2026-11-01&format[]=csv')->assertStatus(406)->assertJsonPath('code', 'report_format_unsupported');
         $this->assertSame([], $this->consultas, 'los filtros invalidos no llegan a la base');
 
         $this->fuenteCaida = true;

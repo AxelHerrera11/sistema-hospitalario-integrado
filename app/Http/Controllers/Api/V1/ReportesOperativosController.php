@@ -53,7 +53,7 @@ final class ReportesOperativosController extends Controller
 
     public function exportar(Request $request, string $reporte): JsonResponse|Response
     {
-        $formato = strtolower((string) $request->query('format', 'csv'));
+        $formato = is_string($valor = $request->query('format', 'csv')) ? strtolower($valor) : '';
         $exportador = current(array_filter($this->exportadores, static fn (ReportExporter $e): bool => $e->supports($formato)));
         if ($exportador === false) {
             return $this->error($request, 406, 'report_format_unsupported', 'El formato solicitado no está disponible; use csv.');
