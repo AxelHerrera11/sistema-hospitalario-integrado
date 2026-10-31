@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+use MicroHis\NotasSoap\Client\HttpTransport;
+use MicroHis\NotasSoap\Client\KernelTransport;
+use MicroHis\NotasSoap\Client\SoapNoteApiClient;
+use MicroHis\NotasSoap\Client\SoapNoteApiError;
+use MicroHis\NotasSoap\Client\SoapNoteApiUnavailable;
+use MicroHis\NotasSoap\Client\StreamTransport;
 use MicroHis\NotasSoap\Domain\Uuid;
 use MicroHis\NotasSoap\Persistence\InMemoryAuditTrail;
 use MicroHis\NotasSoap\Persistence\InMemoryCareAssignmentReader;
@@ -85,4 +91,50 @@ $memory = notas_soap_api(new InMemoryClinicalNoteRepository(new InMemoryAuditTra
 $nota = send($memory, 'POST', $notes, 'dra.lopez', SOAP)['body']['clinical_note_id'];
 $r = send($memory, 'POST', "/api/v1/soap-notes/$nota/diagnoses", 'dra.lopez', ['code' => 'J18.9', 'type' => 'primary']);
 check('resiliencia: InMemory con catálogo CIE-10 caído -> 503 ICD10_UNAVAILABLE con trace_id UUID', $status($r) === '503 ICD10_UNAVAILABLE' && preg_match(Uuid::PATTERN, $r['body']['trace_id']) === 1);
+[$api, $pdo] = server();
+$pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'enf.ruiz', 'active')");
+$client = new SoapNoteApiClient(new KernelTransport($api), 'dra.lopez');
+$nota = $client->registerNote('ep1', ...array_values(SOAP));
+$client->associateDiagnosis($nota, 'J18.9', 'primary');
+$leida = (new SoapNoteApiClient(new KernelTransport($api), 'enf.ruiz'))->note($nota);
+check('cliente: registra, asocia J18.9 y enfermería con notas_soap.ver lee secciones y diagnósticos', $leida['sections']['plan'] === 'Amoxicilina' && $leida['diagnoses'] === [['code' => 'J18.9', 'type' => 'primary']]);
+check('seguridad: lectura con permiso pero sin asignación activa -> 404 NOTE_NOT_FOUND (no revela que la nota existe)', $status(send($api, 'GET', "/api/v1/soap-notes/$nota", 'dr.perez')) === '404 NOTE_NOT_FOUND');
+try {
+    $client->associateDiagnosis($nota, 'J18.9', 'secondary');
+    check('cliente: código repetido -> SoapNoteApiError 409 con código y trace_id del servidor', false);
+} catch (SoapNoteApiError $e) {
+    check('cliente: código repetido -> SoapNoteApiError 409 con código y trace_id del servidor', $e->status === 409 && $e->errorCode === 'DIAGNOSIS_DUPLICATED' && $e->traceId === TRACE);
+}
+
+/** Transporte que falla las primeras $failures llamadas y después delega; cuenta los intentos. */
+$flaky = static fn (int $failures, ?HttpTransport $inner = null): HttpTransport => new class ($failures, $inner) implements HttpTransport {
+    public int $calls = 0;
+
+    public function __construct(private int $failures, private readonly ?HttpTransport $inner)
+    {
+    }
+
+    public function send(string $method, string $path, string $actorId, array $body = []): array
+    {
+        $this->calls++;
+        return $this->failures-- > 0 || $this->inner === null ? throw new SoapNoteApiUnavailable() : $this->inner->send($method, $path, $actorId, $body);
+    }
+};
+$once = $flaky(1, new KernelTransport($api));
+check('resiliencia: la lectura se reintenta una vez si el servidor no responde', (new SoapNoteApiClient($once, 'enf.ruiz'))->note($nota)['status'] === 'draft' && $once->calls === 2);
+foreach (['lectura' => [static fn (SoapNoteApiClient $c) => $c->note($nota), 2], 'registro' => [static fn (SoapNoteApiClient $c) => $c->registerNote('ep1', 'a', 'b', 'c', 'd'), 1]] as $op => [$call, $expected]) {
+    $down = $flaky(PHP_INT_MAX);
+    try {
+        $call(new SoapNoteApiClient($down, 'dra.lopez'));
+        check("resiliencia: $op sin servidor -> SoapNoteApiUnavailable", false);
+    } catch (SoapNoteApiUnavailable) {
+        check("resiliencia: $op sin servidor -> SoapNoteApiUnavailable tras {$down->calls} intento(s), sin reintentos infinitos", $down->calls === $expected);
+    }
+}
+try {
+    (new SoapNoteApiClient(new StreamTransport('http://127.0.0.1:1', 0.5), 'dra.lopez'))->note($nota);
+    check('cliente HTTP real: puerto cerrado -> SoapNoteApiUnavailable', false);
+} catch (SoapNoteApiUnavailable) {
+    check('cliente HTTP real: puerto cerrado -> SoapNoteApiUnavailable', true);
+}
 echo 'Todas las pruebas del API pasaron.' . PHP_EOL;

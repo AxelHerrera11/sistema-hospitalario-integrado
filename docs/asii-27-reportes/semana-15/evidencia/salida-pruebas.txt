@@ -1,0 +1,12 @@
+$ php -d zend.assertions=1 -d assert.exception=1 tests/pruebas_semana15.php
+  [OK] [UNIT-01] Reporte::generar conserva periodo y contenido
+  [OK] [UNIT-02] Reporte::generar sin periodo lanza excepcion 422
+  [OK] [UNIT-03] GenerarReporte::listar filtra por periodo
+  [OK] [WB-01] ReporteController recorre sus 4 caminos
+  [OK] [WB-02] Router::despachar recorre sus 5 caminos (404, 405, 422, error, exito)
+  [OK] [BB-01] particion valida: POST /reportes responde 201
+  [OK] [BB-02] particion invalida: POST sin periodo responde 422 reporte_invalido
+  [OK] [BB-03] particion valida sin datos: periodo sin reportes devuelve lista vacia
+  [OK] [BB-04] particion invalida: GET sin periodo responde 422 periodo_requerido
+
+Resumen: 9 pruebas, 0 fallidas.

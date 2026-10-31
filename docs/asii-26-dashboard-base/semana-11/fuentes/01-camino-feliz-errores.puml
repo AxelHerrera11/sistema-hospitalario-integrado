@@ -1,0 +1,12 @@
+@startuml
+title ASII-26 - Camino feliz y errores criticos (Semana 11)
+start
+:Iniciar sesion → Inicio (cargando → tarjetas) → Como se calcula → Inicio;
+if (respuesta del servidor) then (2xx)
+  #palegreen:Confirmacion con el resultado concreto;
+else (error)
+  :Servicio caido: 503 / error de red\nPeriodo invalido: 422 periodo_requerido\nSin datos: 200 con total: 0\nSesion expirada: 401 unauthenticated;
+  :Mensaje accionable, datos conservados, foco en el error;
+endif
+stop
+@enduml

@@ -20,6 +20,7 @@ final class RegisterDoctor
         if (trim($userRef) === '' || trim($license) === '') {
             throw new DoctorRuleViolation('PAYLOAD_INVALID', 422);
         }
+        $license = mb_strtoupper(trim($license)); // D-01: ' col-9' y 'COL-9' son la misma licencia
         $primary = new SpecialtyLink($this->catalog->activeSpecialtyId($specialtyCode) ?? throw new DoctorRuleViolation('SPECIALTY_INACTIVE', 422), true, new Period($validFrom));
         if ($this->profiles->licenseExists($license)) {
             throw new DoctorRuleViolation('LICENSE_ALREADY_REGISTERED', 409);
