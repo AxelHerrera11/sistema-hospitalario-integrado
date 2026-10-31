@@ -16,7 +16,7 @@ class RoleMatrixTest extends TestCase
         'superadmin' => [
             'citas.ver', 'citas.crear', 'citas.confirmar',
             'citas.cancelar', 'reportes.ver', 'reportes.exportar',
-            'documentacion.ver', 'admision.ver', 'expediente.ver',
+            'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir',
             'medicamentos.ver', 'laboratorio.ver', 'auditoria.ver',
             'signos_vitales.corregir', 'alertas.supervisar',
             'admisiones.registrar', 'admisiones.ver', 'camas.asignar',
@@ -51,7 +51,7 @@ class RoleMatrixTest extends TestCase
             'altas.registrar', 'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
-            'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
+            'expediente.ver', 'expediente.abrir', 'medicamentos.ver', 'laboratorio.ver',
             'signos_vitales.corregir',
             'admisiones.ver', 'alergias.resolver', 'notas_soap.ver',
             'notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.firmar',
