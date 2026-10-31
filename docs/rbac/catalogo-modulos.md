@@ -43,6 +43,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `laboratorio.ordenes.crear` | Sí | — | Sí | — | — | — | — | — |
 | `laboratorio.ordenes.ver` | Sí | — | Sí | — | — | Sí | Sí | — |
 | `laboratorio.ordenes.cancelar` | Sí | — | Sí | — | — | — | — | — |
+| `laboratorio.ordenes.actualizar` | — | — | — | — | — | — | — | — |
 | `lab-results.read` | Sí | — | — | — | — | Sí | Sí | — |
 | `lab-results.create` | Sí | — | — | — | — | Sí | — | — |
 | `lab-results.correct` | Sí | — | — | — | — | Sí | — | — |
@@ -211,3 +212,9 @@ La autorización no sustituye validación de duplicados, reglas de vigencia,
 auditoría ni selección de la conexión hospitalaria. Las pruebas de este cambio
 verifican matriz y middleware RBAC; no acreditan endpoints de medicamentos.
 La política entra en vigor al integrar este cambio; #622 por sí solo no la activa.
+
+## Propuesta ASII-16 (30-oct-2026)
+
+`laboratorio.ordenes.actualizar` se registra en `catalog` y en `pending` para
+`tecnico_laboratorio`, según el contrato propuesto de ASII-16. No se activa ni
+se concede a ningún rol; el proveedor de permisos continúa leyendo solo `roles`.

@@ -32,11 +32,11 @@ ALLERGY_CONFLICT muestra severidad traducida y confirma que no se guardó.
 ## RBAC y alcance
 
 Se excluye exactamente diagnosticos.png del escáner de permisos documentados.
-No se cambiaron documentos ni archivos de otros módulos; config/rbac.php permanece intacto.
+En el PR original no se cambiaron archivos de otros módulos ni config/rbac.php.
 La revisión de duplicados remotos fue confirmada por María: ningún PR abierto toca Prescripciones.
 María autorizó commit, push y PR hacia develop; ningún permiso pendiente se activa.
 
-## Verificación
+## Verificación inicial (antes de iniciar PostgreSQL)
 
 - composer install --no-interaction --prefer-dist: completado (108 instalaciones).
 - php micro-his/prescripciones/tests/run.php: OK, 86 verificaciones aprobadas.
@@ -53,3 +53,55 @@ María autorizó commit, push y PR hacia develop; ningún permiso pendiente se a
   Se deja visible; no se agregaron excepciones para ocultar permisos de Órdenes.
 - Suites combinadas: 54 tests, 3857 assertions, 1 failure (el mismo de Órdenes).
 - Pint --test sobre los tres PHP cambiados: passed.
+
+## Seguimiento RBAC y ejecución local (30-oct-2026)
+
+Por decisión de Mar-03, laboratorio.ordenes.actualizar se registra en catalog y
+pending para tecnico_laboratorio, como propuesta ASII-16 sin activar. No cambia
+roles ni se agrega el permiso a excepciones. La matriz documental tiene una fila
+sin concesiones y la decisión fechada; RoleMatrixTest ya admite este estado.
+El escáner RBAC excluye además los archivos prescripciones.test.mjs y muestras.yml.
+La primera ejecución encontró el primer nombre como falso permiso: fallo de
+nuestro control documental RBAC; se corrigió sin tocar otros módulos.
+
+Validación local, no CI. PostgreSQL 16.15, bases aisladas de semana 16 existentes,
+con btree_gist confirmado en HOSPITAL mediante psql. Las variables se fijaron
+solo en el proceso de pruebas; no se editó .env:
+
+```powershell
+$env:CENTRAL_DB_HOST="127.0.0.1"; $env:CENTRAL_DB_PORT="55431"
+$env:CENTRAL_DB_DATABASE="his_prescriptions_s16_central_test"
+$env:CENTRAL_DB_USERNAME="postgres"; $env:CENTRAL_DB_PASSWORD="postgres"
+$env:HOSPITAL_DB_HOST="127.0.0.1"; $env:HOSPITAL_DB_PORT="55433"
+$env:HOSPITAL_DB_DATABASE="his_prescriptions_s16_hospital_test"
+$env:HOSPITAL_DB_USERNAME="postgres"; $env:HOSPITAL_DB_PASSWORD="postgres"
+```
+
+Las salidas completas se guardan localmente en evidencia-local/*.log
+(ignoradas por Git); se conserva también rbac-feature-inicial.log.
+Feature Prescriptions usa dobles; CentralRolesTest de RBAC usa SQLite en memoria.
+La evidencia PostgreSQL real corresponde a las pruebas de integridad.
+
+Resultados finales de esta ejecución local (duración informada por PHPUnit):
+
+| Prueba | Tests | Aserciones | Fallos/errores | Duración | Salida completa local |
+|---|---:|---:|---:|---|---|
+| PrescriptionIntegrityTest | 13 | 172 | 0/0 | 32.188 s | [log](evidencia-local/prescription-integrity.log) |
+| Feature Prescriptions | 14 | 62 | 0/0 | 0.507 s | [log](evidencia-local/prescriptions-feature.log) |
+| Feature Rbac (repetición final) | 40 | 4039 | 0/0 | 16.271 s | [log](evidencia-local/rbac-feature-final.log) |
+| Grupo database-integrity | 184 | 2095 | 0/0 | 8 min 00.447 s | [log](evidencia-local/database-integrity.log) |
+| MigrationLayoutTest | 3 | 18 | 0/0 | 0.330 s | [log](evidencia-local/migration-layout.log) |
+
+Cada comando usa php vendor/bin/phpunit seguido de la ruta solicitada o
+--group database-integrity. No se suman los resultados: el grupo también incluye
+PrescriptionIntegrityTest y MigrationLayoutTest.
+La primera ejecución RBAC tuvo 40 tests, 3841 aserciones y 1 fallo (2.488 s):
+el falso permiso prescripciones.test.mjs. Al corregirlo se detectó por inspección
+el mismo caso con muestras.yml; ambos nombres exactos se excluyeron del escáner.
+Clasificación: nuestro control documental RBAC, corregido; no hubo fallos finales
+de otros módulos ni del entorno. La ejecución inicial sin PostgreSQL queda arriba
+como antecedente; estos resultados posteriores acreditan las bases aisladas.
+Pint --test pasó para config/rbac.php y PublishedContractsTest.php.
+Ambos contenedores estaban detenidos, se iniciaron únicamente con docker start y
+se restauraron a detenidos con docker stop al terminar. No se borraron contenedores
+ni volúmenes, ni se usaron bases de desarrollo. Sin commit, push o PR nuevos.
