@@ -8,7 +8,7 @@ agrega pruebas y documentacion; la implementacion es la de S16 y no cambio.
 | Comprobacion | Resultado |
 |---|---|
 | `php -l tests/Feature/CentroDocumentacion/DocumentacionSeguridadTest.php` | Sin errores de sintaxis |
-| `php vendor/bin/phpunit tests/Feature/CentroDocumentacion --testdox` | OK: 10 pruebas, 56 aserciones |
+| `php vendor/bin/phpunit tests/Feature/CentroDocumentacion --testdox` | OK: 10 pruebas, 57 aserciones |
 | Pruebas nuevas de seguridad | 4: matriz, tenant, rutas internas, sin sesion |
 | S16: rutas, middlewares y matriz RBAC | Reales; catalogo en configuracion |
 
