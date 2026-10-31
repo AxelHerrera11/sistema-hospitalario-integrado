@@ -19,6 +19,7 @@ final class ApiKernel
     private const PERMISSIONS = [
         ['POST', '#^/care-episodes/[\w.-]+/soap-notes$#', 'notas_soap.crear'],
         ['POST', '#^/soap-notes/[\w.-]+/diagnoses$#', 'notas_soap.asociar_diagnostico'],
+        ['GET', '#^/soap-notes/[\w.-]+$#', 'notas_soap.ver'],
     ];
 
     /** @var \Closure(): string */

@@ -17,15 +17,23 @@ final readonly class SearchController
     }
 
     /** @return array{status: int, body: array} */
-    public function search(string $term): array
+    public function search(string $term, mixed $limit = null): array
     {
         try {
-            $results = array_map(CatalogResponse::medication(...), $this->lookup->search($term));
+            $results = array_map(CatalogResponse::medication(...), $limit === null
+                ? $this->lookup->search($term)
+                : $this->lookup->search($term, self::limit($limit)));
 
             return ['status' => 200, 'body' => ['results' => $results, 'count' => count($results)]];
         } catch (MedicationRuleViolation|PersistenceFailure $error) {
             return CatalogResponse::failure($error);
         }
+    }
+
+    /** El parámetro llega como texto; lo que no sea un entero queda fuera de rango y lo rechaza el caso de uso. */
+    private static function limit(mixed $value): int
+    {
+        return is_string($value) && preg_match('/^[0-9]{1,4}$/', $value) === 1 ? (int) $value : 0;
     }
 
     /** @return array{status: int, body: array} */

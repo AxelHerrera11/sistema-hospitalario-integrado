@@ -4,6 +4,8 @@ Estado al 21-oct-2026. Nada de esto se resolvió modificando archivos de otros m
 
 ## D-01
 
+> **Cerrado el 29-oct-2026.** Los 25 micro-HIS de `develop` tienen `tests/run.php` y pasan; ver [semana-16](semana-16/README.md). Se conserva el texto original como historial.
+
 **Módulos micro-HIS sin `tests/run.php`.** En `origin/develop` 5e6f0044, `bin/micro-his-suites.php` marca 4 de 14 módulos como *skipped*; con la política propuesta (omitidas no permitidas en obligatorias) el gate local queda **RECHAZADO** ([evidencia](semana-15/evidencias/06-gate-summary.md)).
 
 | Módulo | Responsable (autor en git) | Qué tiene |
@@ -23,7 +25,7 @@ Estado al 21-oct-2026. Nada de esto se resolvió modificando archivos de otros m
 |---|---|---|---|---|
 | B-01 | Permisos `qa.ejecuciones.ver`, `qa.ejecuciones.registrar`, `qa.gates.evaluar` y la cuenta de servicio de CI | María (RBAC) | Aprobación o nombres alternativos | `StaticAccessGate`; API solo en el micro-HIS. Comentario en [semana-05/contrato-api.md](semana-05/contrato-api.md#permisos-propuesta-pendiente) |
 | B-02 | Tablas `qa_*` (opcionales) | Javier (BD) | Decidir si el historial vive en CENTRAL | SQLite por ejecución como artefacto. Comentario en [semana-04/propuesta-bd-javier.md](semana-04/propuesta-bd-javier.md) |
-| B-03 | Primera ejecución del workflow en GitHub (job e2e con PostgreSQL) | Cindy | Abrir el PR (requiere autorización de Cindy) | Verificado localmente todo lo que no usa PostgreSQL |
+| B-03 | Primera ejecución del workflow en GitHub (job e2e con PostgreSQL) | Organización (facturación) | El PR ya está integrado; GitHub no inicia jobs desde el 24-oct por facturación | Pipeline on-premise con `pipeline-local.sh` (semana 16) |
 | B-04 | Umbrales `qg-0.1-propuesta` y qué suites son obligatorias | Grupo | Aprobación | Pint, Database y E2E de pila completa informativos |
 | B-05 | Reparto manual / automatizado | Madelin | Acordar la matriz | Propuesta en [semana-05/contratos-integracion.md](semana-05/contratos-integracion.md) (C-06) |
 | B-06 | Formato común de errores | Lis | Acuerdo de grupo | E2E acepta `{error}` y `{code}` tal como están |

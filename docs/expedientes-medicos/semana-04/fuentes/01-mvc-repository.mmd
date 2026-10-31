@@ -1,0 +1,50 @@
+%% MVC + Repository del micro-HIS: el controlador no tiene SQL ni reglas; el Repository vive en el límite de Application.
+classDiagram
+    direction LR
+    class Router {
+        +dispatch(Request) array
+    }
+    class MedicalRecordController {
+        <<Controller>>
+        +consult(Request, patientCode) array
+        +open(Request, patientCode) array
+        -respond(callable) array
+    }
+    class JsonView {
+        <<View>>
+        +render(status, data) array
+    }
+    class LongitudinalPresenter {
+        <<View model>>
+        +longitudinal(LongitudinalRecord) array
+        +opened(MedicalRecord, created) array
+    }
+    class ConsultLongitudinalRecord {
+        <<Model: caso de uso>>
+    }
+    class OpenMedicalRecord {
+        <<Model: caso de uso>>
+    }
+    class MedicalRecordRepository {
+        <<interface>>
+        +findByPatient(patientId) MedicalRecord
+        +open(MedicalRecord, callable confirm) MedicalRecord
+        +episodesOf(patientId) CareEpisode[]
+    }
+    class PdoMedicalRecordRepository {
+        -PDO pdo
+        +prepare() / execute()
+    }
+    class InMemoryMedicalRecordRepository {
+        +records
+        +down
+    }
+    Router --> MedicalRecordController
+    MedicalRecordController --> ConsultLongitudinalRecord
+    MedicalRecordController --> OpenMedicalRecord
+    MedicalRecordController --> LongitudinalPresenter
+    MedicalRecordController --> JsonView
+    ConsultLongitudinalRecord --> MedicalRecordRepository
+    OpenMedicalRecord --> MedicalRecordRepository
+    PdoMedicalRecordRepository ..|> MedicalRecordRepository
+    InMemoryMedicalRecordRepository ..|> MedicalRecordRepository

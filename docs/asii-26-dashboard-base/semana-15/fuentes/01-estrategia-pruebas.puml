@@ -1,0 +1,18 @@
+@startuml
+title ASII-26 - Estrategia de pruebas (Semana 15)
+skinparam componentStyle rectangle
+package "Caja negra (API REST, Semana 5)" #LightGreen {
+  [BB-01..BB-04\nparticiones y valores limite] as bb
+}
+package "Caja blanca" #LightYellow {
+  [WB-01 logica del dominio/controlador] as wb1
+  [WB-02 Router::despachar (caminos)] as wb2
+}
+package "Unitarias (Semana 4)" #LightBlue {
+  [UNIT-01..UNIT-03\nIndicador y casos de uso] as unit
+}
+bb --> wb2 : HTTP simulado
+wb2 --> wb1
+wb1 --> unit
+note right of bb : solo entradas y salidas\nsegun contrato-api.yaml
+@enduml

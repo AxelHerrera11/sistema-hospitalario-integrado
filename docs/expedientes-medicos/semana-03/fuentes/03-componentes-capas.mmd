@@ -1,0 +1,42 @@
+%% C4 nivel 3 / UML de paquetes: componentes por capa. Las flechas son dependencias de código (use/implements).
+flowchart TB
+    subgraph PRE["Presentation"]
+        Router --> MedicalRecordController
+        MedicalRecordController --> LongitudinalPresenter
+        MedicalRecordController --> JsonView
+        Request
+    end
+    subgraph APL["Application"]
+        ConsultLongitudinalRecord --> AccessGuard
+        OpenMedicalRecord --> AccessGuard
+        P1{{"AccessAuthorizer · ClinicalAccessAudit · Clock"}}
+        P2{{"HospitalStoresProvider → MedicalRecordRepository · PatientDirectory · CareRelationship"}}
+    end
+    subgraph DOM["Domain"]
+        MedicalRecord
+        CareEpisode
+        LongitudinalRecord
+        PatientSummary
+    end
+    subgraph PER["Persistence"]
+        PdoMedicalRecordRepository
+        InMemoryMedicalRecordRepository
+        PdoCareRelationship
+        HospitalRegistry
+    end
+    subgraph INT["Integration"]
+        RbacAccessAuthorizer
+        GobernanzaClinicalAudit
+        PacientesDirectory
+    end
+    MedicalRecordController --> ConsultLongitudinalRecord
+    MedicalRecordController --> OpenMedicalRecord
+    APL --> DOM
+    AccessGuard --> P1
+    ConsultLongitudinalRecord --> P2
+    PER -. implementa .-> P2
+    INT -. implementa .-> P1
+    PacientesDirectory -. implementa .-> P2
+    RbacAccessAuthorizer --> RB["MicroHis\Rbac Authorize"]
+    GobernanzaClinicalAudit --> GB["MicroHis\Gobernanza RecordAuditEvent"]
+    PacientesDirectory --> PA["MicroHis\Pacientes PatientRepository"]

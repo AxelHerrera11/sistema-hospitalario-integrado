@@ -1,0 +1,46 @@
+# Ensayo de despliegue on-premise del expediente — 2026-10-29 · Windows 11 · PHP 8.2.12
+# Destino: carpeta local srv-his-expediente (releases/, shared/, current). Script: micro-his/qa-calidad-versiones/bin/desplegar-micro-his.sh
+# Releases: develop 6e841849f99a; candidato 9a55b0c9134d = develop + código de esta entrega (commit local, mismo árbol de micro-his/expediente-medico que el PR);
+# 2987a7fc2dfa = candidato + un archivo PHP con error de sintaxis (commit local de ensayo, nunca publicado).
+
+## Paso 1 — release anterior: develop
+[2026-10-29 21:57:50 -0600] P3 plataforma: PHP 8.2.12 pdo_sqlite=sí
+[2026-10-29 21:57:50 -0600] release activo antes del despliegue: ninguno
+[2026-10-29 21:57:50 -0600] release 6e841849f99a exportado con git archive (149 archivos)
+[2026-10-29 21:57:59 -0600] sintaxis PHP del release: OK
+[2026-10-29 21:57:59 -0600] V1 salud /ui/ en 6e841849f99a → HTTP 200
+[2026-10-29 21:57:59 -0600] DESPLEGADO: current → 6e841849f99a (servidor en 127.0.0.1:8296, pid 976)
+[2026-10-29 21:57:59 -0600] simulacro: servidor detenido
+
+## Paso 2 — release nuevo: develop + código de la Semana 17 (commit local 9a55b0c9134d)
+[2026-10-29 21:57:59 -0600] P3 plataforma: PHP 8.2.12 pdo_sqlite=sí
+[2026-10-29 21:58:00 -0600] release activo antes del despliegue: 6e841849f99a
+[2026-10-29 21:58:00 -0600] release 9a55b0c9134d exportado con git archive (150 archivos)
+[2026-10-29 21:58:08 -0600] sintaxis PHP del release: OK
+[2026-10-29 21:58:09 -0600] V1 salud /ui/ en 9a55b0c9134d → HTTP 200
+[2026-10-29 21:58:09 -0600] DESPLEGADO: current → 9a55b0c9134d (servidor en 127.0.0.1:8296, pid 1139)
+## Paso 3 — validaciones posteriores sobre el servidor desplegado
+V2 consulta médica tratante: 200
+V3 sin identidad: {"code":"IDENTIDAD_REQUERIDA"}
+V4 apertura y repetición: 201 / 200
+V5 bitácora (datos en shared/, fuera del release):
+    expediente_medico.consultado | success
+    expediente_medico.abierto | success
+    expediente_medico.apertura_repetida | success
+[21:58:09] servidor detenido
+
+## Paso 4 — ensayo de release defectuoso (commit local 2987a7fc2dfa con un error de sintaxis)
+[2026-10-29 21:58:09 -0600] P3 plataforma: PHP 8.2.12 pdo_sqlite=sí
+[2026-10-29 21:58:10 -0600] release activo antes del despliegue: 9a55b0c9134d
+[2026-10-29 21:58:10 -0600] release 2987a7fc2dfa exportado con git archive (151 archivos)
+[2026-10-29 21:58:13 -0600] error de sintaxis: micro-his/expediente-medico/src/Roto.php
+[2026-10-29 21:58:19 -0600] FALLÓ la verificación de 2987a7fc2dfa
+[2026-10-29 21:58:19 -0600] V1 salud /ui/ en 9a55b0c9134d → HTTP 200
+[2026-10-29 21:58:19 -0600] ROLLBACK: current sigue en 9a55b0c9134d y responde
+[2026-10-29 21:58:19 -0600] simulacro: servidor detenido
+código de salida del despliegue: 2
+
+## Estado final
+current = 9a55b0c9134d
+releases = 2987a7fc2dfa 6e841849f99a 9a55b0c9134d
+puerto cerrado (ningún servidor queda en ejecución)

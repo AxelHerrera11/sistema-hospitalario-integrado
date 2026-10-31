@@ -7,6 +7,7 @@
 | Preparación y reversión | Completo | [Bitácora de despliegue](./bitacora-despliegue.md) |
 | Flujo real local | Verificado en S16 | JWT, tenant, RBAC, Laravel y PostgreSQL: HTTP 11/11; SPA 6/6 |
 | Despliegue final | Bloqueado | No existe entorno autorizado y quedan dependencias externas |
+| Aislamiento entre hospitales | Corregido el 30/10/2026 (#1561) | T02 y T15 en la [matriz](./matriz-amenazas.md) |
 
 La parte independiente de Semana 17 queda completa. No se declara un despliegue en staging ni producción: RBAC debe aprobar los permisos, identidad debe sincronizar `local_user_refs` y Plataforma/Tenants debe escoger una base HOSPITAL aislada por hospital.
 

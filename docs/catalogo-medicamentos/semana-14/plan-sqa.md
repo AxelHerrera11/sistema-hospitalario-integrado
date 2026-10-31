@@ -14,6 +14,18 @@ Atributos: calidad funcional, confiabilidad, seguridad y trazabilidad del catál
 | M6 | Operaciones del API v1 con permiso verificado por prueba HTTP | 4/4 | Pruebas de Laravel (Semana 16) | — | **Objetivo** (no hay rutas Laravel) | Ninguna ruta sin prueba de 401, 403 y 200 |
 | M7 | Tiempo de respuesta p95 de la búsqueda | ≤ 300 ms | Logs con `trace_id` (Semana 17) | — | **Objetivo** (sin entorno desplegado) | Revisar el índice o la consulta |
 
+## Valores vigentes (30/10/2026)
+
+La tabla anterior conserva la línea base de la Semana 14. Estos son los valores actuales.
+
+| ID | Valor | Estado |
+|---|---|---|
+| M1 | `run.php` 47 y `casos.php` 17, sin fallos | Medido |
+| M3 | 0 divergencias en `metricas.php` | **Cumple**; AV3 corregido |
+| M4 | Máximo 354 líneas en los PR del 30/10/2026 | Medido |
+| M6 | 4 de 4 operaciones con permiso probado por HTTP, además del rechazo de otro hospital | **Medido**, `tests/Feature/MedicationCatalog` |
+| M7 | p95 de 384 ms con 20 búsquedas, en el servidor de desarrollo de PHP sin opcache y con 1 registro | **No cumple en local**; no representa producción. Repetir con opcache y volumen real |
+
 ## Matriz de riesgos
 
 | Riesgo | Probabilidad | Impacto | Nivel | Control |
@@ -21,7 +33,7 @@ Atributos: calidad funcional, confiabilidad, seguridad y trazabilidad del catál
 | R1 Un éxito se informa sin confirmar la persistencia | Baja | Alto | Medio | P1, D1 |
 | R2 Los adaptadores difieren en resultados (AV3) | **Ocurrido** | Medio | Alto | P2, D2 |
 | R3 Escritura sin permiso al integrar en Laravel | Media | Alto | Alto | P3, D3 |
-| R4 Acceso a datos de otro hospital | Baja | Alto | Medio | P3, D3 |
+| R4 Acceso a datos de otro hospital | **Ocurrió**: lo halló la auditoría del 30/10/2026; corregido en #1561 | Alto | Medio | P3, D3 |
 | R5 Un PR mayor de 400 o que mezcla módulos | Media | Medio | Medio | P4, D4 |
 | R6 Documentación que presenta lo propuesto como hecho | Media | Medio | Medio | P5, D5 |
 
@@ -37,7 +49,7 @@ Atributos: calidad funcional, confiabilidad, seguridad y trazabilidad del catál
 | D1 | Detectivo | Mutación manual: tragar el fallo debe hacer fallar las pruebas | Autora | Cada parte con código |
 | D2 | Detectivo | `metricas.php` M3 = 0 | Autora | Antes de cada PR |
 | D3 | Detectivo | Pruebas HTTP de 401, 403, `TENANT_MISMATCH` y 200 por operación | Autora; revisión del moderador | Semana 16–17 |
-| D4 | Detectivo | `Validate ASII PR` y la aprobación requerida en `develop` | GitHub y revisor (@rortizs) | Cada PR |
+| D4 | Detectivo | `Validate ASII PR` y la aprobación requerida en `develop` | GitHub y revisor por confirmar | Cada PR |
 | D5 | Detectivo | Revisión técnica formal (Semana 13) | Moderador y revisores (propuestos) | Una vez por entrega |
 
 ## Calendario

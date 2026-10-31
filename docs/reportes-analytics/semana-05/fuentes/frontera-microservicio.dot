@@ -1,0 +1,17 @@
+digraph frontera {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  api [label="API Gateway / monolito\nJWT, tenant, RBAC"];
+  subgraph cluster_ms { label="Frontera candidata: servicio Reportes"; color="#1e3a8a"; style=dashed;
+    servicio [label="Servicio de indicadores\nfórmula TCI-1.0"];
+    vista [label="Vista de lectura propia\nresumen por periodo y sala\n(futuro)", style="rounded,dashed,filled"];
+  }
+  eventos [label="Eventos de cierre y cancelación\ncontrato por acordar", style="rounded,dashed,filled", fillcolor="#fff7ed", color="#c2410c"];
+  hospital [label="HOSPITAL\ncare_episodes\n(dueños: Admisión y Traslados)", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  api -> servicio [label="REST síncrono"];
+  servicio -> vista [style=dashed];
+  hospital -> eventos [label="futuro", style=dashed];
+  eventos -> vista [label="asíncrono, futuro", style=dashed];
+  servicio -> hospital [label="hoy: SELECT en proceso", color="#047857"];
+}
