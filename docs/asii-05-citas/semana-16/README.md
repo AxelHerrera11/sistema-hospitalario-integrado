@@ -59,10 +59,24 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 
 ## Evidencia
 
+Ejecutado el 2026-10-30 sobre la parte 1 actualizada con `origin/develop` (PHP 8.2.33, PHPUnit 11.5.55).
+
+```text
+$ php artisan route:list --path=api/v1/citas
+  GET|HEAD   api/v1/citas ......................................................... Api\V1\AppointmentController@index
+  POST       api/v1/citas ......................................................... Api\V1\AppointmentController@store
+  GET|HEAD   api/v1/citas/{appointment} ............................................ Api\V1\AppointmentController@show
+  DELETE     api/v1/citas/{appointment} ......................................... Api\V1\AppointmentController@destroy
+  POST       api/v1/citas/{appointment}/cancelar ............................. Api\V1\AppointmentController@transition
+  POST       api/v1/citas/{appointment}/completar ............................ Api\V1\AppointmentController@transition
+  POST       api/v1/citas/{appointment}/confirmar ............................ Api\V1\AppointmentController@transition
+                                                                                                    Showing [7] routes
+```
+
 ```text
 $ php vendor/bin/phpunit tests/Feature/Citas --testdox
 .......                                                             7 / 7 (100%)
-Time: 00:00.598, Memory: 32.00 MB
+Time: 00:02.012, Memory: 34.00 MB
 Appointment Api (Tests\Feature\Citas\AppointmentApi)
  ✔ Sin sesion responde 401 y rol sin permiso responde 403
  ✔ Recepcion agenda y consulta la cita
@@ -74,8 +88,10 @@ Appointment Api (Tests\Feature\Citas\AppointmentApi)
 OK (7 tests, 43 assertions)
 ```
 
-La suite Feature completa del repositorio se ejecuto tambien: los unicos errores son 4 pruebas de
-Salas y camas (ASII-06) que necesitan PostgreSQL en el puerto 55433, ajenas a este modulo.
+La suite Feature completa del repositorio (`php vendor/bin/phpunit --testsuite Feature`) termina con
+`Tests: 318, Assertions: 5702, Errors: 44, Failures: 2, Risky: 28`. Los 46 fallos son de Recepcion de
+muestras (61 menciones), Salas y camas (10) e Indicadores (3): todos necesitan PostgreSQL en los puertos
+55431/55433 (`Connection refused` o 503 por fuente no disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
 
