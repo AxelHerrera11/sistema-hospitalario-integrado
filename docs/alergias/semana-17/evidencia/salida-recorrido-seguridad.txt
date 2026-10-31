@@ -1,0 +1,15 @@
+PASS  A01 sin token → 401                                                  esperado 401, obtenido 401
+PASS  A01 token con la firma alterada → 401                                esperado 401, obtenido 401
+PASS  A02 token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  A03 admin_hospital sin alergias.ver → 403                            esperado 403, obtenido 403
+PASS  A03 recepción sin alergias.registrar → 403                          esperado 403, obtenido 403
+PASS  A06 nombre de 201 caracteres → 422                                   esperado 422, obtenido 422
+      código: TEXT_TOO_LONG · campo: allergen_name
+PASS  A04 el cuerpo pide otro paciente, estado resuelto y otro autor → 201 esperado 201, obtenido 201
+      paciente guardado = ruta: sí · estado: active · texto devuelto literal: <img src=x onerror=alert(1)>
+PASS  A08 X-Request-ID no confiable (HTML) → 200                           esperado 200, obtenido 200
+      request_id reemplazado: req-69e53a8a3507a5f8 · Cache-Control: no-store, private
+PASS  A10 identificador que no es UUID → 404 JSON, sin traza               esperado 404, obtenido 404
+      código: PATIENT_NOT_FOUND · contiene «Exception» o «SQLSTATE»: 0
+PASS  A09 HOSPITAL caído → 503, nunca «sin alergias»                    esperado 503, obtenido 503
+      código: ALLERGIES_UNAVAILABLE · contiene «SQLSTATE», host o puerto: 0

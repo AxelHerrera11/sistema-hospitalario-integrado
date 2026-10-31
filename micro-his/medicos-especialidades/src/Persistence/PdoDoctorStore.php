@@ -73,13 +73,18 @@ final class PdoDoctorStore implements AppointmentReader, DoctorRepository
             ORDER BY p.doctor_profile_id", [$specialtyId, $date, $date, $date, $date], PDO::FETCH_COLUMN);
     }
 
-    public function busySlots(string $doctorId, string $date): array
+    /** Citas que solapan el día de la zona del hospital, recortadas a [00:00, 24:00]: una cita que cruza la medianoche ocupa su parte del día. */
+    public function busyIntervals(string $doctorId, string $date): array
     {
-        $start = new DateTimeImmutable($date.' 00:00:00', $this->zone);
-        $starts = $this->rows("SELECT starts_at FROM appointments WHERE doctor_profile_id = ? AND starts_at >= ? AND starts_at < ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
-            [$doctorId, $this->instant($start), $this->instant($start->modify('+1 day'))], PDO::FETCH_COLUMN);
-
-        return array_map(fn (string $at): string => (new DateTimeImmutable($at, new DateTimeZone('UTC')))->setTimezone($this->zone)->format('H:i'), $starts);
+        $dayStart = new DateTimeImmutable($date . ' 00:00:00', $this->zone);
+        $dayEnd = $dayStart->modify('+1 day');
+        $rows = $this->rows("SELECT starts_at, ends_at FROM appointments WHERE doctor_profile_id = ? AND starts_at < ? AND ends_at > ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
+            [$doctorId, $this->instant($dayEnd), $this->instant($dayStart)]);
+        $local = fn (string $at): DateTimeImmutable => (new DateTimeImmutable($at, new DateTimeZone('UTC')))->setTimezone($this->zone);
+        return array_map(static function (array $row) use ($local, $dayStart, $dayEnd): array {
+            [$from, $to] = [$local($row['starts_at']), $local($row['ends_at'])];
+            return [$from <= $dayStart ? '00:00' : $from->format('H:i'), $to >= $dayEnd ? '24:00' : $to->format('H:i')];
+        }, $rows);
     }
 
     /** Instante comparable con `starts_at`: ISO con zona en PostgreSQL (timestamptz); UTC sin zona en SQLite, donde se guarda como texto. */

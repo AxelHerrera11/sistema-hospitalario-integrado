@@ -18,6 +18,9 @@ const MOTIVOS = {
 /** @returns {{tipo: string, texto: string, puedeReintentar: boolean, debeConsultar: boolean}} */
 export function interpretar(estado, cuerpo = {}) {
     const base = { puedeReintentar: false, debeConsultar: false };
+    if (cuerpo.error === 'HOSPITAL_DATABASE_TENANT_MISMATCH') {
+        return { ...base, tipo: 'rechazo', texto: 'Este hospital no está disponible en esta instalación. No se guardó ningún cambio.' };
+    }
     if (estado === 200 || estado === 201) {
         // H6 (Semana 9): el éxito informa la hora T y, en el traslado, la nueva estancia para poder seguir operando.
         const hora = cuerpo.t ? ` Hora: ${new Date(cuerpo.t).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: false })}.` : '';

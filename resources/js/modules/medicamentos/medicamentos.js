@@ -40,6 +40,7 @@ export function failureMessage(status, body = {}) {
     if (status === 409) return 'Ya existe un medicamento con ese código en este hospital.';
     if (status === 404) return 'El medicamento no existe en este hospital.';
     if (status === 401) return 'Su sesión no es válida. Inicie sesión de nuevo.';
+    if (status === 403 && body.error === 'HOSPITAL_DATABASE_TENANT_MISMATCH') return 'Este hospital no está disponible en esta instalación.';
     if (status === 403) return 'No tiene permiso para esta operación en el hospital activo.';
     if (status === 429) return 'Hay demasiadas solicitudes al catálogo. Espere un minuto e intente de nuevo.';
     return 'El catálogo no está disponible. No se confirmó la operación; intente de nuevo.';
@@ -56,4 +57,15 @@ export function validityLabel(validity) {
 
 export function nextValidity(validity) {
     return validity === 'active' ? 'inactive' : 'active';
+}
+
+/** Regla R8 (Semana 8): el diálogo repite el registro elegido y nombra la acción antes de enviar el cambio. */
+export function validityConfirmation(medication) {
+    const target = nextValidity(medication.validity);
+    const verb = target === 'inactive' ? 'Inactivar' : 'Activar';
+    return {
+        title: `${verb} ${medication.code}`,
+        action: `${verb} ${medication.code}`,
+        target: validityLabel(target),
+    };
 }
