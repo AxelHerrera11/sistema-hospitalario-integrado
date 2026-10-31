@@ -19,6 +19,33 @@ HOSPITAL. Mientras no exista selección dinámica desde el registro central, las
 rutas del catálogo de wards/camas fallan de forma cerrada si el valor está vacío
 o no coincide con el tenant autenticado.
 
+### 1.1 P1 sin GitHub Actions: gate reproducible en local
+
+Mientras el workflow no pueda correr en GitHub (facturación de la organización), P1 se cumple con el mismo pipeline
+en una máquina del grupo, con PostgreSQL en los puertos y credenciales de los servicios del job (bases desechables):
+
+```bash
+# Dos instancias PostgreSQL 16+ de prueba: 55431 (CENTRAL) y 55433 (HOSPITAL), usuario y contraseña postgres.
+# Con Docker:
+docker run -d --rm -p 55431:5432 -e POSTGRES_PASSWORD=postgres postgres:16
+docker run -d --rm -p 55433:5432 -e POSTGRES_PASSWORD=postgres postgres:16
+# Sin Docker ni permisos de administrador (por ejemplo en Windows), con los binarios de PostgreSQL:
+#   initdb -D <dir> -U postgres --pwfile=<archivo con "postgres"> -A scram-sha-256 -E UTF8
+#   pg_ctl -D <dir> -o "-p 55431 -c listen_addresses=127.0.0.1" -l <dir>.log start   (y otra en 55433)
+
+git checkout --detach <commit_sha a desplegar>
+QA_IMPORT_RELEASE=<versión> bash micro-his/qa-calidad-versiones/bin/pipeline-local.sh qa-evidence
+```
+
+- El script crea y migra `his_*_test`, recrea `his_*_e2e` en cada corrida y ejecuta todas las etapas del workflow,
+  incluidas la suite `Database` y el E2E de pila completa (`tests/E2E/auth-rbac.e2e.mjs`). Nunca usa otros puertos ni
+  otras bases (`bin/postgres-ci-local.php` lo impide).
+- Con `QA_IMPORT_RELEASE`, `php artisan qa:import-evidence` registra la ejecución, cada suite con su evidencia SHA-256
+  y la decisión del gate en `/calidad-versiones`, a nombre de la cuenta de servicio `ci-bot` y con auditoría en
+  Gobernanza. P1 se cumple si esa ejecución muestra **Aprobado** para el mismo commit de P2.
+- La importación también sirve para el paquete `qa-evidence` descargado de un workflow de GitHub:
+  `php artisan qa:import-evidence <carpeta> --sha=<commit> --release=<versión> --environment=ci`.
+
 ## 2. Despliegue (pasos reproducibles)
 
 ```bash
