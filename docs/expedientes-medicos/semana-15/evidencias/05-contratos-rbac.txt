@@ -1,0 +1,5 @@
+$ php vendor/bin/phpunit tests/Feature/Rbac/PublishedContractsTest.php   # los documentos y rutas del módulo solo citan permisos del catálogo
+Time: 00:01.076, Memory: 28.00 MB
+
+OK (8 tests, 2228 assertions)
+(código de salida: 0)

@@ -1,0 +1,5 @@
+PHP 8.2.12, 500 repeticiones, SQLite en memoria, auditoría en memoria
+consulta 200 (médica tratante)            p50 0.120 ms  p95 0.244 ms  máx 6.525 ms
+denegación 403 (enfermería sin vínculo) p50 0.051 ms  p95 0.071 ms  máx 0.563 ms
+Ida y vuelta HTTP local (curl → php -S 127.0.0.1:8096 → micro-HIS → SQLite en archivo + PdoAuditLog), 30 peticiones GET P-0001
+p50 78.4 ms  p95 83.2 ms  máx 93.9 ms

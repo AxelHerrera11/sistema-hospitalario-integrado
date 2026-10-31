@@ -1,0 +1,12 @@
+$ php -d zend.assertions=1 -d assert.exception=1 tests/pruebas_semana15.php
+  [OK] [UNIT-01] Documento::publicar normaliza roles (sin vacios ni duplicados)
+  [OK] [UNIT-02] Documento::publicar sin roles validos lanza excepcion 422
+  [OK] [UNIT-03] ConsultarDocumentos lista solo lo visible para el rol
+  [OK] [WB-01] Documento::publicar y visiblePara cubren ambas ramas
+  [OK] [WB-02] Router::despachar recorre sus 5 caminos (404, 405, 422, error, exito)
+  [OK] [BB-01] particion valida: POST /documentos responde 201
+  [OK] [BB-02] particion invalida: POST sin titulo responde 422 validation_failed
+  [OK] [BB-03] particion valida sin datos: rol sin documentos recibe lista vacia
+  [OK] [BB-04] valor limite: el rol se compara exacto (mayusculas no dan acceso)
+
+Resumen: 9 pruebas, 0 fallidas.

@@ -1,0 +1,49 @@
+# Pipeline local (bin/pipeline-local.sh) sobre develop 6e841849 + cambios de la Semana 16 — 2026-10-29 21:35–21:41 -0600
+# Windows 11 · PHP 8.2.12 · Node 22.13.1 · sin PostgreSQL · E2E en el puerto 8094. Se omiten las líneas OK de micro-his (25 módulos OK).
+
+
+==> Sintaxis PHP
+[sintaxis-php] exit 0 en 83.95 s; log: /tmp/…
+
+==> Pint en archivos cambiados respecto de origin/develop (informativo)
+[pint-archivos-cambiados] exit 1 en 2.42 s; log: /tmp/…
+
+==> Build del frontend
+[build-frontend] exit 0 en 7.35 s; log: /tmp/…
+
+==> PHPUnit Unit / Feature / Integration
+Time: 00:01.525, Memory: 14.00 MB
+
+OK (72 tests, 204 assertions)
+
+ERRORS!
+Tests: 263, Assertions: 4829, Errors: 44, Failures: 3, Risky: 28.
+Time: 00:00.381, Memory: 38.00 MB
+
+OK (4 tests, 23 assertions)
+
+==> micro-his
+
+==> Frontend (node --test)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 47
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 426.191
+
+==> Contrato de rutas
+
+==> E2E del módulo QA en servidor aislado (puerto 8094)
+ℹ tests 9
+ℹ suites 2
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 727.5594
+
+==> Quality gate

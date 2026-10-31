@@ -45,6 +45,11 @@ final class AdminFailure extends RuntimeException
         return new self('USER_INACTIVE', 409, 'El usuario no está activo.');
     }
 
+    public static function emailTaken(): self
+    {
+        return new self('EMAIL_TAKEN', 409, 'Ya existe una cuenta con ese correo.');
+    }
+
     public static function alreadyAssigned(): self
     {
         return new self('ROLE_ALREADY_ASSIGNED', 409, 'El usuario ya tiene ese rol activo en el hospital.');

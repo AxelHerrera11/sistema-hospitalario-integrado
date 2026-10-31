@@ -9,10 +9,15 @@
 | P1 | Quality gate del commit a desplegar | Artefacto `qa-gate-decision` del workflow `QA CI y E2E` | `verdict: approved` para **ese** `commit_sha` |
 | P2 | Rama y commit exactos | `git fetch origin && git rev-parse origin/develop` | Igual al `commit_sha` de P1 |
 | P3 | Versiones de plataforma | `php -v`, `node -v`, `psql --version` | PHP ≥ 8.2 con `pdo_pgsql`; Node 22; PostgreSQL 16 |
-| P4 | Variables de entorno completas | Comparar `.env` con `.env.example` | `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*`, `HOSPITAL_DB_*` definidos; `APP_ENV=production`, `APP_DEBUG=false`, `TENANTS_REFRESH_COOKIE_SECURE=true` |
+| P4 | Variables de entorno completas | Comparar `.env` con `.env.example` | `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*`, `HOSPITAL_DB_*` y `HOSPITAL_DB_TENANT_ID` definidos; `APP_ENV=production`, `APP_DEBUG=false`, `TENANTS_REFRESH_COOKIE_SECURE=true` |
 | P5 | Respaldo de bases | `pg_dump -Fc his_central > central-<fecha>.dump` (y hospital) | Archivo creado y `pg_restore --list` lo lee |
 | P6 | Migraciones pendientes revisadas por Javier | `php artisan migrate:status --database=central` (y hospital) | Lista aprobada; ninguna destructiva sin respaldo |
 | P7 | Ventana y responsables | Grupo | Quién ejecuta, quién valida, quién decide rollback |
+
+`HOSPITAL_DB_TENANT_ID` identifica el único hospital asignado a esta conexión
+HOSPITAL. Mientras no exista selección dinámica desde el registro central, las
+rutas del catálogo de wards/camas fallan de forma cerrada si el valor está vacío
+o no coincide con el tenant autenticado.
 
 ## 2. Despliegue (pasos reproducibles)
 

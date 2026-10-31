@@ -1,0 +1,15 @@
+%% PROPUESTA evaluada (no implementada): frontera de un microservicio «Expediente» y lo que cruzaría la red.
+flowchart TB
+    GW["API Gateway (ASII-30, pendiente)"] -- "JWT validado + X-Tenant-ID + X-Request-Id" --> MS
+    subgraph MS["Microservicio Expediente (propuesto)"]
+        API["API REST /patients/{code}/medical-record"]
+        CORE2["Mismo núcleo: casos de uso + dominio"]
+        OWN[("medical_records<br/>(dato propio)")]
+        API --> CORE2 --> OWN
+    end
+    CORE2 -- "HTTP síncrono: ¿permiso? (timeout 300 ms, sin reintento → 403)" --> RBACS["RBAC"]
+    CORE2 -- "HTTP síncrono: paciente por código" --> PACS["Pacientes"]
+    CORE2 -- "lectura: episodios y asignaciones<br/>(réplica o API de Admisión/Médicos)" --> ADMS["Admisión / Médicos"]
+    CORE2 -- "evento Security (outbox + reintento idempotente)" --> AUDS["Gobernanza"]
+    note1["Costo: 4 dependencias remotas por consulta,<br/>sin transacción con la auditoría,<br/>y los triggers de clinical_notes necesitan medical_records en la MISMA base"]
+    MS --- note1

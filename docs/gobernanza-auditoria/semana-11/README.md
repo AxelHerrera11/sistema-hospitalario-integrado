@@ -55,6 +55,16 @@ Implementa los wireframes W1–W6 (Semana 8) y la propuesta responsive (Semana 1
 
 La pantalla Vue definitiva (y el menú por permisos) requiere RBAC y una API `/api/v1` funcional.
 
+### Seguimiento tras la integración (2026-10-31)
+
+Las dos dependencias se cumplieron y la pantalla definitiva ya existe; el prototipo se conserva como entrega de la
+semana.
+
+| Dependencia | Estado actual | Evidencia |
+|---|---|---|
+| API `/api/v1` funcional | Resuelta: el middleware `tenant` usa el esquema federado (`hospitals`) y `GET /api/v1/audit-events` responde 200. | Probado con la aplicación y PostgreSQL locales: filtros por módulo y fechas, 422 `AUDIT_FILTER_INVALID` con `hasta` anterior a `desde` o un parámetro no permitido. |
+| RBAC y menú por permisos | Resuelto: `auditoria.ver` está activo en `config/rbac.php` y la entrada «Auditoría» del menú depende de él. | `GovernanceHttpTest` (403 `RBAC_DENIED` para médico, denegación persistida). |
+| Pantalla Vue | Integrada en `/auditoria` (Semana 16, partes 2 y 4) con los mismos estados del prototipo: carga, vacío, error de validación y acceso denegado. | `resources/js/modules/auditoria/pages/AuditPage.vue`; captura en `docs/gobernanza-auditoria/semana-16/evidencias/`. |
 ## Limitaciones conocidas
 
 - Los datos se regeneran en cada petición, así que las consultas auditadas no se acumulan entre peticiones.

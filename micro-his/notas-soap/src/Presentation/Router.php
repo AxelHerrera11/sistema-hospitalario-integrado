@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MicroHis\NotasSoap\Presentation;
+
+/** Rutas del módulo: cada una apunta a una acción del controlador; lo demás responde 404. */
+final class Router
+{
+    public function __construct(private readonly SoapNoteController $notes, private readonly JsonView $view)
+    {
+    }
+
+    public function dispatch(Request $request): array
+    {
+        return match (true) {
+            $request->method === 'POST' && preg_match('#^/care-episodes/([\w.-]+)/soap-notes$#', $request->path, $m) === 1 => $this->notes->registerNote($request, $m[1]),
+            $request->method === 'POST' && preg_match('#^/soap-notes/([\w.-]+)/diagnoses$#', $request->path, $m) === 1 => $this->notes->associateDiagnosis($request, $m[1]),
+            $request->method === 'POST' && preg_match('#^/soap-notes/([\w.-]+)/corrections$#', $request->path, $m) === 1 => $this->notes->correct($request, $m[1]),
+            $request->method === 'POST' && preg_match('#^/soap-notes/([\w.-]+)/sign$#', $request->path, $m) === 1 => $this->notes->sign($request, $m[1]),
+            $request->method === 'GET' && preg_match('#^/soap-notes/([\w.-]+)$#', $request->path, $m) === 1 => $this->notes->show($request, $m[1]),
+            default => $this->view->render(404, ['code' => 'ROUTE_NOT_FOUND']),
+        };
+    }
+}

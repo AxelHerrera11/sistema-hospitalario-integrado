@@ -1,0 +1,7 @@
+PASS  médico (sin admisiones.registrar) no ve «Admisión y camas» como enlace
+PASS  recepción ve las camas disponibles; la UCI ya está ocupada (M-201 general, M-202 general)
+PASS  admitir sin cama → error local, sin llamar a la API
+PASS  ingreso registrado → confirmación con la cama M-201
+PASS  el mismo paciente otra vez → 409 con el mensaje del servidor
+PASS  375 px: sin desplazamiento horizontal
+6/6 verificaciones

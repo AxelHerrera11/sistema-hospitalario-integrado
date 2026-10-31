@@ -21,6 +21,7 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 | 15 | Matriz RF/RNF → prueba (4 U, 3 W, 6 B), concurrencia real con conexiones independientes y 7 defectos reales | `semana-15/` | `run.php` 101/101; `postgres.php` 20/20; concurrencia 20/20 (8/10 antes de corregir D5); `ui-mensajes` 7/7 | #895 y esta entrega | #896 | Corte real durante el COMMIT sin probar |
 | 16 | Integración funcional: SPA Vue → API Laravel → JWT/tenant/RBAC → micro-HIS → PostgreSQL | `semana-16/` | API Feature 3/3; PostgreSQL 3/3; HTTP 11/11; SPA 6/6; `run.php` 101/101 | #908, #913, #915, #919 | #909, #914, #916, #920 | Activación RBAC, `local_user_refs` y conexión HOSPITAL por tenant |
 | 17 | Seguridad y preparación de despliegue: 17 amenazas, datos sensibles, reversión y bloqueos | `semana-17/` | API Feature 5 pruebas/44 aserciones; `run.php` 101/101; SPA 3/3; build 109 módulos | Esta entrega | Pendiente | Despliegue final bloqueado por RBAC, identidad, conexión por tenant y entorno autorizado |
+| 18 | Evaluación final: guion, matriz y preguntas | `semana-18/` | Sin ejecutar: preparada | Entrega de esta fecha | Promovida | Demostración, defensa y activación RBAC |
 
 ## Funcionalidad comprobada hasta hoy
 
@@ -31,4 +32,39 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 ## Revisión humana
 
 - 21/10/2026: la autora confirmó la revisión personal de las semanas 3 a 10 (PR #790–#869); ver el [registro](./revision-humana.md). No es una aprobación independiente: ningún PR la tiene.
+- 30/10/2026: la autora probó a mano el traslado, el alta y la consulta posterior en la versión integrada, con el alcance de su fila en el registro.
 - Semanas 1 y 2: siguen pendientes de confirmación.
+
+## Estado al 30/10/2026
+
+### Integrado
+
+- #1108 (menú) y #1113 (cierre de sesión), que aquí constaban como pendientes.
+- #1561: rechazo de miembros de otro hospital.
+- Diagramas de la Semana 5, PDF de las Semanas 6 y 12, capturas de la Semana 15 y guion de la Semana 18.
+
+### Pendiente de la estudiante
+
+Sigue vigente lo que falta confirmar en [`revision-humana.md`](./revision-humana.md):
+
+- Rechazo por cama ocupada, recepción sin acceso, motivo vacío, 375 px y volver por el menú.
+- Revisión de las Semanas 1, 2 y 11 a 18.
+- Defensas de las Semanas 6, 12 y 18.
+
+### Permisos (30/10/2026)
+
+#1577 activa la matriz final decidida por RBAC. El alta corresponde a cualquier médico con permiso vigente del hospital. **No se restringe al médico tratante:** no existe control de la relación médico-paciente.
+
+### Bloqueado por terceros
+
+| Bloqueo | Depende de | Qué falta |
+|---|---|---|
+| Crear `local_user_refs` | Tenants e identidad | Sincronización de membresías CENTRAL |
+| Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Uso de `clinical_endpoint` |
+| Límite de tasa de `/api/v1` | API Gateway | Política definida y probada |
+| Staging u on-premise | Coordinación | Entorno autorizado |
+| Aprobación independiente de PR | Equipo | Revisión según `BRANCH_PROTECTION.md` |
+| GitHub Actions | Administración del repositorio | Facturación resuelta; hoy NO EJECUTADO |
+
+**No se declara el módulo completo:** en `develop` sigue respondiendo 403 hasta la activación.
+

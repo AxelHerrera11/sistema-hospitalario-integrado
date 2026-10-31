@@ -31,6 +31,9 @@ final class TrasladosAltasApiTest extends TestCase
     {
         parent::setUp();
         $this->app->make(Kernel::class);
+        // Instancia on-premise de prueba: su base HOSPITAL pertenece a hospital-a.
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
+        TrasladosTestIdentity::$hospital = 'hospital-a';
         $this->app['router']->aliasMiddleware('tenant', TrasladosTestIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', TrasladosTestIdentity::class);
         $this->app->instance(RoleResolver::class, new TrasladosTestIdentity);
@@ -57,31 +60,35 @@ final class TrasladosAltasApiTest extends TestCase
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
 
-    /** Activación SIMULADA solo dentro de la prueba: la configuración compartida los mantiene en pending. */
-    private function activarPropuesta(): void
-    {
-        config()->set('rbac.roles.enfermeria', [...config('rbac.roles.enfermeria'), 'traslados.registrar', 'traslados.ver']);
-        config()->set('rbac.roles.medico', [...config('rbac.roles.medico'), 'altas.registrar', 'traslados.ver']);
-    }
 
-    public function test_identity_tenant_and_pending_permissions_are_enforced(): void
+    public function test_identity_tenant_and_active_permissions_are_enforced(): void
     {
         $traslado = ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento'];
         TrasladosTestIdentity::como(null);
         $this->postJson('/api/v1/traslados', $traslado)->assertStatus(401);
         TrasladosTestIdentity::como('enfermeria');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-b'])->postJson('/api/v1/traslados', $traslado)->assertStatus(403)->assertJsonPath('code', 'TENANT_MISMATCH');
-        // Con la configuración real, los permisos están en pending: nadie puede operar todavía.
-        foreach (['enfermeria', 'medico', 'superadmin'] as $rol) {
+        // Matriz activa: solo enfermería traslada; el resto de los roles, incluido superadmin, queda fuera.
+        foreach (['medico', 'superadmin', 'admin_hospital', 'recepcion'] as $rol) {
             TrasladosTestIdentity::como($rol);
             $this->withHeaders(['X-Tenant-ID' => 'hospital-a'])->postJson('/api/v1/traslados', $traslado)->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
         }
         $this->assertNull($this->hospital->estancias[self::ESTANCIA]['fin']);
     }
 
-    public function test_transfer_consult_and_discharge_with_the_proposed_roles(): void
+    public function test_consult_and_discharge_are_denied_to_roles_without_a_grant(): void
     {
-        $this->activarPropuesta();
+        $antes = serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]);
+        foreach (['superadmin', 'admin_hospital', 'recepcion', 'jefatura_medica'] as $rol) {
+            TrasladosTestIdentity::como($rol);
+            $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+            $this->postJson('/api/v1/altas', ['estancia_esperada_id' => self::ESTANCIA])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        }
+        $this->assertSame($antes, serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]));
+    }
+
+    public function test_transfer_consult_and_discharge_with_the_decided_roles(): void
+    {
         TrasladosTestIdentity::como('enfermeria');
         $id = $this->withHeaders(['X-Request-Id' => 'req-traslado-01'])->postJson('/api/v1/traslados', ['estancia_esperada_id' => self::ESTANCIA,
             'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento'])->assertStatus(201)->assertJsonPath('trace_id', 'req-traslado-01')
@@ -94,9 +101,43 @@ final class TrasladosAltasApiTest extends TestCase
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $id])->assertStatus(409)->assertJsonPath('motivo', 'EPISODIO_NO_ABIERTO');
     }
 
+    public function test_member_of_another_hospital_cannot_read_or_change_this_hospital_stays(): void
+    {
+        $traslado = ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento'];
+        $antes = serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]);
+        $mismatch = 'HOSPITAL_DATABASE_TENANT_MISMATCH';
+
+        // Membresía válida en hospital-b, instancia con la base de hospital-a.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b']);
+        TrasladosTestIdentity::$hospital = 'hospital-b';
+        TrasladosTestIdentity::como('enfermeria');
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->postJson('/api/v1/traslados', $traslado)->assertForbidden()->assertJsonPath('error', $mismatch);
+        TrasladosTestIdentity::como('medico');
+        $this->postJson('/api/v1/altas', ['estancia_esperada_id' => self::ESTANCIA])->assertForbidden()->assertJsonPath('error', $mismatch);
+        $this->assertSame($antes, serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]));
+
+        // El mismo rol en el hospital dueño de la base conserva el acceso.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
+        TrasladosTestIdentity::$hospital = 'hospital-a';
+        TrasladosTestIdentity::como('enfermeria');
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertOk();
+        $this->postJson('/api/v1/traslados', $traslado)->assertStatus(201);
+
+        // Sin hospital asignado a la base se cierra el paso.
+        config(['tenants.hospital_database_tenant_id' => null]);
+        $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
+    }
+
+    public function test_invalid_request_does_not_expose_console_syntax(): void
+    {
+        TrasladosTestIdentity::como('enfermeria');
+        $this->postJson('/api/v1/traslados', ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => ''])
+            ->assertStatus(422)->assertJsonPath('campo', 'motivo')->assertJsonMissingPath('uso');
+    }
+
     public function test_actor_without_local_reference_and_unavailable_hospital(): void
     {
-        $this->activarPropuesta();
         TrasladosTestIdentity::como('medico', '00000000-0000-4000-8000-00000000c0ff');
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => self::ESTANCIA])->assertStatus(403)->assertJsonPath('codigo', 'ACTOR_SIN_REFERENCIA_LOCAL');
         TrasladosTestIdentity::como('medico');
@@ -108,7 +149,6 @@ final class TrasladosAltasApiTest extends TestCase
 
     public function test_body_cannot_spoof_actor_or_tenant_and_wrong_role_cannot_write(): void
     {
-        $this->activarPropuesta();
         $campos = ['estancia_esperada_id' => self::ESTANCIA, 'cama_destino_id' => self::CAMA_B, 'motivo' => 'Aislamiento',
             'actor_ref_id' => '00000000-0000-4000-8000-000000000099', 'hospital_id' => 'hospital-b'];
         TrasladosTestIdentity::como('recepcion');
@@ -122,7 +162,6 @@ final class TrasladosAltasApiTest extends TestCase
 
     public function test_database_error_hides_details_and_replaces_untrusted_trace(): void
     {
-        $this->activarPropuesta();
         config()->set('app.debug', false);
         TrasladosTestIdentity::como('medico');
         $this->app->bind(RegistroInternacion::class, static fn () => throw new PDOException('SQLSTATE[28P01] password=secreto'));
