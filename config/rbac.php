@@ -108,6 +108,8 @@ return [
      * Formato: permiso => roles que lo recibirían si se aprobara.
      */
     'pending' => [
+        // Propuesta de ASII-16 sin activar: actualizar el estado de órdenes.
+        'laboratorio.ordenes.actualizar' => ['tecnico_laboratorio'],
         'notas_soap.transferir_autoria' => ['medico', 'superadmin'],
         'prescripciones.excepcion_alergia' => ['medico', 'superadmin'],
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
@@ -115,6 +117,8 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
+        // Propuesta de ASII-16 sin activar; no concede acceso a ningún rol.
+        'laboratorio.ordenes.actualizar',
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
         'citas.cancelar', 'reportes.ver', 'reportes.exportar',
