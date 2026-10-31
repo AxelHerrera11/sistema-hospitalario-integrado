@@ -10,10 +10,10 @@
 | Rol | Persona propuesta | Responsabilidad |
 |---|---|---|
 | Autora | María Yamilet Lindo Pablo (`Yamilet1235`) | Preparar el paquete, responder los hallazgos y corregir |
-| Moderador | Docente del curso (`rortizs`), por confirmar | Decidir la salida |
-| Revisor de permisos | Responsable de RBAC, ASII-02 (`Luis890D`), por confirmar | Autorización antes de la transacción y correspondencia con los permisos |
-| Revisor de integridad | Responsable de salas y camas, ASII-06 (`MadelinCeron`), por confirmar | `beds.status`, R-TA-01 y la exclusión por cama |
-| Revisor de consumidores | Responsable de Ocupación, ASII-09 (`Javifa2324`), por confirmar | Efecto de traslados y altas en la lectura de ocupación |
+| Moderador | Por confirmar | Decidir la salida |
+| Revisor de permisos | Por confirmar | Autorización antes de la transacción y correspondencia con los permisos |
+| Revisor de integridad | Por confirmar | `beds.status`, R-TA-01 y la exclusión por cama |
+| Revisor de consumidores | Por confirmar | Efecto de traslados y altas en la lectura de ocupación |
 
 ## Criterios de entrada
 

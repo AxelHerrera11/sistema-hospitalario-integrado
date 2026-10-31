@@ -2,22 +2,24 @@
 
 declare(strict_types=1);
 
-use MicroHis\SignosVitales\Application\RecordVitalSigns;
+use MicroHis\SignosVitales\Application\EpisodeContext;
 use MicroHis\SignosVitales\Domain\GlucoseRule;
 use MicroHis\SignosVitales\Domain\HeartRateRule;
 use MicroHis\SignosVitales\Domain\NoAlertRule;
 use MicroHis\SignosVitales\Domain\OxygenSaturationRule;
 use MicroHis\SignosVitales\Domain\RespiratoryRateRule;
 use MicroHis\SignosVitales\Domain\Severity;
-use MicroHis\SignosVitales\Domain\ThresholdEvaluator;
 use MicroHis\SignosVitales\Domain\VitalSignRule;
 use MicroHis\SignosVitales\Domain\VitalSigns;
+use MicroHis\SignosVitales\Persistence\InMemoryCareEpisodeReader;
+use MicroHis\SignosVitales\Persistence\InMemoryVitalSignRepository;
 use MicroHis\SignosVitales\Persistence\PdoCareEpisodeReader;
 use MicroHis\SignosVitales\Persistence\PdoVitalSignRepository;
 use MicroHis\SignosVitales\Persistence\QueuedAlertNotifier;
-use MicroHis\SignosVitales\Presentation\VitalSignHttpHandler;
+use MicroHis\SignosVitales\Presentation\Request;
+use MicroHis\SignosVitales\Presentation\Router;
 
-require __DIR__ . '/../bootstrap.php';
+require __DIR__ . '/../app.php';
 
 /** @return list<VitalSignRule> reglas del perfil ilustrativo adulto-2026.1 */
 function rules(): array
@@ -34,7 +36,14 @@ function app(): array
     $pdo->exec("INSERT INTO care_assignments VALUES ('ep1', 'dra.lopez', 'active'), ('ep2', 'dra.lopez', 'active'), ('ep3', 'dra.lopez', 'active'), ('ep1', 'dr.perez', 'ended')");
     $repository = new PdoVitalSignRepository($pdo);
     $notifier = new QueuedAlertNotifier();
-    return [$pdo, new VitalSignHttpHandler(new RecordVitalSigns(new PdoCareEpisodeReader($pdo), new ThresholdEvaluator(rules()), $repository, $notifier)), $notifier];
+    return [$pdo, signos_vitales_router(new PdoCareEpisodeReader($pdo), $repository, $notifier), $notifier];
+}
+
+/** Petición por la capa MVC (Router -> Controller -> View); devuelve el estado y el cuerpo JSON ya decodificado. */
+function post(Router $router, array $headers, string $episodeId, array $body, string $path = ''): array
+{
+    $response = $router->dispatch(new Request('POST', $path ?: "/care-episodes/$episodeId/vital-signs", $headers, $body));
+    return ['status' => $response['status'], 'body' => json_decode($response['body'], true)];
 }
 
 function check(string $name, bool $ok): void
@@ -61,27 +70,45 @@ $lopez = ['X-User-ID' => 'dra.lopez'];
 $hora = ['measured_at' => '2026-10-14 08:30:00'];
 
 [$pdo, $http, $notifier] = app();
-$r = $http->record($lopez, 'ep1', ['heart_rate' => 138, 'oxygen_saturation' => 94] + $hora);
+$r = post($http, $lopez, 'ep1', ['heart_rate' => 138, 'oxygen_saturation' => 94] + $hora);
 check('camino feliz: FC 138 + SpO2 94 -> 201 alerta critical con dos hallazgos', $r['status'] === 201 && $r['body']['severity'] === 'critical' && $r['body']['findings'] === ['heart_rate' => 'critical', 'oxygen_saturation' => 'warning']);
 check('camino feliz: alerta auditada en la transacción y notificada después', in_array('signo_vital.alerta_generada', $col($pdo, 'SELECT event FROM local_access_audits'), true) && count($notifier->queue) === 1);
-check('camino feliz: FC 80 y peso 70 -> 201 sin alerta ni notificación', $status($http->record($lopez, 'ep1', ['heart_rate' => 80, 'weight' => 70] + $hora)) === '201 OK' && count($notifier->queue) === 1);
-check('RF-SV-03: solo FC 95 -> warning; la glucosa ausente no bloquea', $http->record($lopez, 'ep1', ['heart_rate' => 95] + $hora)['body']['severity'] === 'warning');
+check('camino feliz: FC 80 y peso 70 -> 201 sin alerta ni notificación', $status(post($http, $lopez, 'ep1', ['heart_rate' => 80, 'weight' => 70] + $hora)) === '201 OK' && count($notifier->queue) === 1);
+check('RF-SV-03: solo FC 95 -> warning; la glucosa ausente no bloquea', post($http, $lopez, 'ep1', ['heart_rate' => 95] + $hora)['body']['severity'] === 'warning');
 
-check('regla de dominio: sin signos -> 422', $status($http->record($lopez, 'ep1', $hora)) === '422 VITAL_SIGNS_INVALID');
-check('regla de dominio: temperatura 50 °C -> 422 antes de evaluar', $status($http->record($lopez, 'ep1', ['temperature' => 50] + $hora)) === '422 VITAL_SIGN_IMPLAUSIBLE');
-check('regla de dominio: asignación terminada -> 403', $status($http->record(['X-User-ID' => 'dr.perez'], 'ep1', ['heart_rate' => 80] + $hora)) === '403 NOT_TREATING_PHYSICIAN');
-check('regla de dominio: episodio cerrado -> 409', $status($http->record($lopez, 'ep3', ['heart_rate' => 80] + $hora)) === '409 EPISODE_CLOSED');
+check('regla de dominio: sin signos -> 422', $status(post($http, $lopez, 'ep1', $hora)) === '422 VITAL_SIGNS_INVALID');
+check('regla de dominio: temperatura 50 °C -> 422 antes de evaluar', $status(post($http, $lopez, 'ep1', ['temperature' => 50] + $hora)) === '422 VITAL_SIGN_IMPLAUSIBLE');
+check('regla de dominio: asignación terminada -> 403', $status(post($http, ['X-User-ID' => 'dr.perez'], 'ep1', ['heart_rate' => 80] + $hora)) === '403 NOT_TREATING_PHYSICIAN');
+check('regla de dominio: episodio cerrado -> 409', $status(post($http, $lopez, 'ep3', ['heart_rate' => 80] + $hora)) === '409 EPISODE_CLOSED');
 $enCola = count($notifier->queue);
-check('RF-SV-06: paciente de 9 años -> 201 THRESHOLDS_NOT_APPLICABLE, auditado y sin alerta', $status($http->record($lopez, 'ep2', ['heart_rate' => 138] + $hora)) === '201 THRESHOLDS_NOT_APPLICABLE'
+check('RF-SV-06: paciente de 9 años -> 201 THRESHOLDS_NOT_APPLICABLE, auditado y sin alerta', $status(post($http, $lopez, 'ep2', ['heart_rate' => 138] + $hora)) === '201 THRESHOLDS_NOT_APPLICABLE'
     && in_array('signo_vital.sin_evaluacion', $col($pdo, 'SELECT event FROM local_access_audits'), true) && count($notifier->queue) === $enCola);
-check('validación: measured_at inválido -> 422', $status($http->record($lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => '14/10/2026'])) === '422 MEASURED_AT_INVALID');
+check('validación: measured_at inválido -> 422', $status(post($http, $lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => '14/10/2026'])) === '422 MEASURED_AT_INVALID');
 $filas = $col($pdo, 'SELECT COUNT(*) FROM vital_signs');
-check('validación de tipos: encabezado o measured_at no string -> 422 sin guardar', $status($http->record(['X-User-ID' => 7], 'ep1', ['heart_rate' => 80] + $hora)) === '422 PAYLOAD_INVALID'
-    && $status($http->record($lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => ['2026-10-14 08:30:00']])) === '422 PAYLOAD_INVALID' && $col($pdo, 'SELECT COUNT(*) FROM vital_signs') === $filas);
+check('validación de tipos: encabezado o measured_at no string -> 422 sin guardar', $status(post($http, ['X-User-ID' => 7], 'ep1', ['heart_rate' => 80] + $hora)) === '422 PAYLOAD_INVALID'
+    && $status(post($http, $lopez, 'ep1', ['heart_rate' => 80, 'measured_at' => ['2026-10-14 08:30:00']])) === '422 PAYLOAD_INVALID' && $col($pdo, 'SELECT COUNT(*) FROM vital_signs') === $filas);
 check('LSP: las 6 reglas cumplen la misma prueba de contrato', count(array_filter(rules(), 'honorsContract')) === 6);
 
 [$pdo, $http, $notifier] = app();
 $pdo->exec('DROP TABLE local_access_audits');
-check('error de persistencia: auditoría caída -> 500, rollback y sin notificación', $status($http->record($lopez, 'ep1', ['heart_rate' => 138] + $hora)) === '500 VITAL_SIGN_PERSISTENCE_ERROR'
+check('error de persistencia: auditoría caída -> 500, rollback y sin notificación', $status(post($http, $lopez, 'ep1', ['heart_rate' => 138] + $hora)) === '500 VITAL_SIGN_PERSISTENCE_ERROR'
     && $col($pdo, 'SELECT COUNT(*) FROM vital_signs') === [0] && $notifier->queue === []);
+
+// Capa MVC: rutas, vista y adaptador InMemory sin base de datos.
+check('MVC: ruta desconocida -> 404 ROUTE_NOT_FOUND', $status(post($http, $lopez, 'ep1', [], '/otra-ruta')) === '404 ROUTE_NOT_FOUND');
+$response = $http->dispatch(new Request('POST', '/care-episodes/ep1/vital-signs', $lopez, ['heart_rate' => 138] + $hora));
+check('MVC: la vista entrega JSON UTF-8 con Content-Type', $response['headers']['Content-Type'] === 'application/json; charset=utf-8' && is_array(json_decode($response['body'], true)));
+
+$memory = new InMemoryVitalSignRepository();
+$cola = new QueuedAlertNotifier();
+$mem = signos_vitales_router(new InMemoryCareEpisodeReader(['ep1' => ['dra.lopez' => new EpisodeContext(true, 45)]]), $memory, $cola);
+$r = post($mem, $lopez, 'ep1', ['heart_rate' => 138, 'oxygen_saturation' => 94] + $hora);
+check('InMemory: el mismo MVC da 201 critical, guarda, audita y notifica sin PDO', $r['status'] === 201 && $r['body']['severity'] === 'critical'
+    && $memory->find($r['body']['vital_sign_id']) !== null && array_column($memory->audits, 'event') === ['signo_vital.registrado', 'signo_vital.alerta_generada'] && count($cola->queue) === 1);
+check('InMemory: usuario sin asignación activa -> 403 igual que con PDO', $status(post($mem, ['X-User-ID' => 'dr.perez'], 'ep1', ['heart_rate' => 80] + $hora)) === '403 NOT_TREATING_PHYSICIAN');
+$caido = signos_vitales_router(new InMemoryCareEpisodeReader(['ep1' => ['dra.lopez' => new EpisodeContext(true, 45)]]), new InMemoryVitalSignRepository(false), $cola);
+check('InMemory: persistencia no disponible -> 500 y sin notificación nueva', $status(post($caido, $lopez, 'ep1', ['heart_rate' => 138] + $hora)) === '500 VITAL_SIGN_PERSISTENCE_ERROR' && count($cola->queue) === 1);
+
+$controller = file_get_contents(__DIR__ . '/../src/Presentation/VitalSignController.php') . file_get_contents(__DIR__ . '/../src/Presentation/Router.php');
+check('el controlador y el router no contienen SQL, PDO ni reglas de umbral', preg_match('/\b(SELECT|INSERT|UPDATE|DELETE|PDO|Severity|ThresholdEvaluator)\b/', $controller) === 0);
 echo 'Todas las pruebas pasaron.' . PHP_EOL;

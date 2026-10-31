@@ -1,0 +1,12 @@
+PASS responsive sin scroll horizontal 320x568
+PASS responsive sin scroll horizontal 390x844
+PASS responsive sin scroll horizontal 768x1024
+PASS responsive sin scroll horizontal 1440x900
+PASS axe: cero violaciones automáticas en formulario (no certifica WCAG)
+PASS búsqueda muestra requisitos y selección no autocompleta identidad observada
+PASS corte de red: recuperación conserva clave y payload
+PASS impresión no repite recepción
+PASS nueva muestra limpia identidad y restaura foco
+PASS consulta y reimpresión usan GET
+PASS fallo de consulta GET no bloquea una nueva recepción
+PASS rol lector presenta consulta y oculta recepción y búsqueda

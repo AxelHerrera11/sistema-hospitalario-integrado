@@ -1,0 +1,16 @@
+digraph compartido {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  a07 [label="ASII-07 Admisión\nabre el episodio"];
+  a08 [label="ASII-08 Traslados y altas\ncierra el episodio"];
+  otros [label="Quien cancele un episodio\nresponsable por confirmar", style="rounded,dashed,filled", fillcolor="#fff7ed", color="#c2410c"];
+  a09 [label="ASII-09 Ocupación\nlee camas y estancias"];
+  a23 [label="ASII-23 Reportes\nsolo lee agregados", fillcolor="#dbeafe"];
+  repo [label="Repositorio compartido\nbase HOSPITAL\ncare_episodes, bed_stays, beds", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  a07 -> repo [label="INSERT"];
+  a08 -> repo [label="UPDATE a closed"];
+  otros -> repo [label="UPDATE a cancelled", style=dashed];
+  repo -> a09 [label="SELECT"];
+  repo -> a23 [label="SELECT count + SUM"];
+}

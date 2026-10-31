@@ -1,3 +1,5 @@
+> **Actualización (30/10/2026):** RBAC (ASII-02) decidió la matriz final, ya activa. El alta corresponde a cualquier médico con permiso vigente del hospital, no solo al tratante. Ver [`docs/rbac/catalogo-modulos.md`](../../rbac/catalogo-modulos.md). Esta página conserva la propuesta original.
+
 # Permisos propuestos para traslados y altas (pendientes de RBAC)
 
 | Permiso | Ruta prevista en la API v1 | Rol propuesto | Estado en `config/rbac.php` |
@@ -14,6 +16,6 @@
 
 ## Acción pendiente
 
-**Responsable:** RBAC (ASII-02, `Luis890D`). La activación de medicamentos la hizo `Mar-03` en `b73e3e8`.
+**Depende de:** RBAC. La activación equivalente de medicamentos está en `b73e3e8`.
 
 Revisar la propuesta y, si se aprueba, mover cada permiso de `pending` a `roles` para el rol acordado, actualizando la fila de `docs/rbac/catalogo-modulos.md`. ASII-08 no activa los permisos por su cuenta.

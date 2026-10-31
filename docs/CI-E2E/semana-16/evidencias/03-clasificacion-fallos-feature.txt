@@ -1,0 +1,30 @@
+# Clasificación de los 47 fallos de PHPUnit Feature del pipeline local (feature.xml) — 2026-10-29
+
+$ php clasificar.php qa-evidence/phpunit/feature.xml
+Rbac           1  aserción
+Reception     33  requiere PostgreSQL
+Reportes       1  requiere PostgreSQL
+Reportes       2  aserción: 503 (sin base de datos)
+SalasCamas    10  requiere PostgreSQL
+
+# «requiere PostgreSQL»: el mensaje es de conexión o driver pgsql. «503 (sin base de datos)»: el endpoint responde 503
+# en la misma clase que necesita PostgreSQL. «aserción»: fallo de lógica o de contrato. El único de este tipo es
+# Rbac/PublishedContractsTest: 'laboratorio.ordenes.actualizar' en docs/ordenes-laboratorio (otro módulo).
+
+# Script usado (copia literal):
+    <?php
+    // Clasifica los fallos de un JUnit de PHPUnit por módulo y causa (entorno sin PostgreSQL vs. aserción).
+    $x = simplexml_load_file($argv[1]);
+    $c = [];
+    foreach ($x->xpath('//testcase[failure or error]') as $t) {
+        $m = (string) ($t->error ?: $t->failure);
+        $mod = explode(chr(92), (string) $t['class'])[2] ?? '?';
+        $k = preg_match('/could not find driver|SQLSTATE\[08006\]|connection to server|pgsql|Connection refused/i', $m) ? 'requiere PostgreSQL'
+            : (preg_match('/received 503/', $m) ? 'aserción: 503 (sin base de datos)' : 'aserción');
+        $c[$mod][$k] = ($c[$mod][$k] ?? 0) + 1;
+    }
+    foreach ($c as $mod => $ks) {
+        foreach ($ks as $k => $n) {
+            printf("%-12s %3d  %s\n", $mod, $n, $k);
+        }
+    }
