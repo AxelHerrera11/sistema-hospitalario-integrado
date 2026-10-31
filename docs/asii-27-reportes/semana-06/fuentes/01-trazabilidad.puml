@@ -1,0 +1,32 @@
+@startuml
+title ASII-27 - Trazabilidad requisito -> caso de uso -> componente -> prueba
+left to right direction
+rectangle "RF-01 filtrar por rango" as rf1 #LightYellow
+rectangle "CU Generar reporte" as cu1 #Paleturquoise
+rectangle "GenerarReporte" as co1 #LightBlue
+rectangle "prueba: aplicacion: camino feliz filtra y exporta csv" as pr1 #LightGreen
+rf1 --> cu1
+cu1 --> co1
+co1 --> pr1
+rectangle "RF-02 rango invertido" as rf2 #LightYellow
+rectangle "CU Generar reporte" as cu2 #Paleturquoise
+rectangle "Reporte" as co2 #LightBlue
+rectangle "prueba: dominio: rechaza rango de fechas invertido" as pr2 #LightGreen
+rf2 --> cu2
+cu2 --> co2
+co2 --> pr2
+rectangle "RF-03 CSV y JSON" as rf3 #LightYellow
+rectangle "CU Exportar" as cu3 #Paleturquoise
+rectangle "ExportadorCsv / ExportadorJson" as co3 #LightBlue
+rectangle "prueba: aplicacion: json agrega el total" as pr3 #LightGreen
+rf3 --> cu3
+cu3 --> co3
+co3 --> pr3
+rectangle "RF-05 formato nuevo (OCP)" as rf4 #LightYellow
+rectangle "CU Exportar" as cu4 #Paleturquoise
+rectangle "Exportador (interfaz)" as co4 #LightBlue
+rectangle "prueba: ocp: un exportador nuevo funciona sin tocar el caso de uso" as pr4 #LightGreen
+rf4 --> cu4
+cu4 --> co4
+co4 --> pr4
+@enduml

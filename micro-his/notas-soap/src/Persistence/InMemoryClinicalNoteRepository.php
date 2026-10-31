@@ -27,7 +27,7 @@ final class InMemoryClinicalNoteRepository implements ClinicalNoteRepository
     {
         $note = $this->notes[$noteId] ?? null;
         return $note === null ? null : new ClinicalNote($noteId, $note['episode'], $note['author'], $note['status'],
-            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $this->diagnoses[$noteId] ?? []));
+            array_map(static fn (array $d) => new Diagnosis($d['code'], $d['type']), $this->diagnoses[$noteId] ?? []), SoapSections::fromJson($note['content']));
     }
 
     public function add(string $episodeId, string $authorId, SoapSections $sections): string

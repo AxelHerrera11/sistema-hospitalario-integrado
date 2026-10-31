@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+const endpoint=process.argv[2]||'http://127.0.0.1:9341';
+const captures=process.argv[3]||fileURLToPath(new URL('./capturas/',import.meta.url));
+mkdirSync(captures,{recursive:true});
+let pages;
+for(let n=0;n<40;n++){try{pages=await(await fetch(endpoint+'/json/list')).json();if(pages.length)break;}catch{}await new Promise(r=>setTimeout(r,100));}
+assert.ok(pages?.some(p=>p.type==='page'),'Iniciar Edge con depuración local, ver evidencia-visual.md');
+const ws=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);
+await new Promise(r=>ws.addEventListener('open',r,{once:true}));
+let sequence=0;const pending=new Map(),errors=[];
+ws.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.text);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result);}});
+const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
+const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true});assert.ok(!r.exceptionDetails,JSON.stringify(r.exceptionDetails));return r.result.value;};
+const wait=()=>new Promise(r=>setTimeout(r,60));
+const go=async id=>{await evaluate(`location.hash=${JSON.stringify(id)}`);await wait();assert.equal(await evaluate(`document.querySelector('section:not([hidden])').id`),id);};
+const fill=async values=>{await evaluate(`Object.entries(${JSON.stringify(values)}).forEach(([id,value])=>{const e=document.getElementById(id);e.type==='checkbox'?e.checked=value:e.value=value;})`);};
+const submit=async id=>{await evaluate(`document.getElementById(${JSON.stringify(id)}).requestSubmit()`);await wait();};
+const press=async(key,code,keyCode)=>{await send('Input.dispatchKeyEvent',{type:'keyDown',key,code,windowsVirtualKeyCode:keyCode});await send('Input.dispatchKeyEvent',{type:'keyUp',key,code,windowsVirtualKeyCode:keyCode});await wait();};
+let passed=0;const check=(name,fn)=>{fn();console.log('PASS '+name);passed++;};
+try{
+await send('Page.enable');await send('Runtime.enable');
+await send('Page.navigate',{url:new URL('./prototipo-navegable.html',import.meta.url).href});
+for(let n=0;n<30;n++){if(await evaluate(`document.querySelectorAll('section').length===6`))break;await wait();}
+const structure=await evaluate(`(()=>{const ids=[...document.querySelectorAll('[id]')].map(e=>e.id);return {views:document.querySelectorAll('section').length,visible:document.querySelectorAll('section:not([hidden])').length,duplicates:ids.length-new Set(ids).size,badLabels:[...document.querySelectorAll('input,textarea,select')].filter(e=>!document.querySelector('label[for="'+e.id+'"]')).length,badLinks:[...document.querySelectorAll('a[href^="#"]')].filter(a=>!ids.includes(a.hash.slice(1))).length};})()`);
+check('seis vistas, etiquetas, IDs y enlaces',()=>assert.deepEqual(structure,{views:6,visible:1,duplicates:0,badLabels:0,badLinks:0}));
+await evaluate(`document.querySelector('nav a').focus()`);const outline=await evaluate(`getComputedStyle(document.activeElement).outlineWidth`);await press('Tab','Tab',9);await press('Enter','Enter',13);
+const keyboard=await evaluate(`({hash:location.hash,focus:document.activeElement.id})`);
+check('Tab/Enter y foco de destino',()=>{assert.equal(outline,'3px');assert.deepEqual(keyboard,{hash:'#campaigns',focus:'campaigns-title'});});
+await fill({search:'inexistente'});await evaluate(`document.getElementById('search').dispatchEvent(new Event('input',{bubbles:true}))`);
+const empty=await evaluate(`!document.getElementById('empty').hidden`);await evaluate(`document.getElementById('clear').click()`);
+check('búsqueda vacía y recuperación',()=>assert.equal(empty,true));
+await go('detail');await evaluate(`document.getElementById('open-case').click()`);await wait();
+const context=await evaluate(`document.getElementById('run-context').textContent`);
+check('abrir caso asociado',()=>assert.match(context,/C-demo-01/));
+await go('case');await submit('case-form');const invalid=await evaluate(`({visible:!document.getElementById('case-errors').hidden,focus:document.activeElement.id})`);
+check('error de caso y foco',()=>assert.deepEqual(invalid,{visible:true,focus:'case-errors'}));
+await fill({purpose:'Caso ficticio creado',steps:'1. Abrir\n2. Revisar',expected:'Campos visibles'});await submit('case-form');
+const caseSaved=await evaluate(`document.getElementById('notice').textContent`);
+check('alta y asociación simuladas',()=>assert.match(caseSaved,/C-demo-2.*simulados/));
+await evaluate(`document.getElementById('open-case').click()`);await wait();await submit('run-form');
+const runError=await evaluate(`document.activeElement.id`);check('ejecución incompleta rechazada',()=>assert.equal(runError,'run-errors'));
+await evaluate(`document.getElementById('view-evidence').click()`);const dialog=await evaluate(`document.getElementById('evidence-dialog').open`);await evaluate(`document.getElementById('close-evidence').click()`);
+check('evidencia ficticia abre y cierra',()=>assert.equal(dialog,true));
+await fill({observed:'No aparecen campos',result:'failed',evidence:true});await submit('run-form');const runConfirm=await evaluate(`document.getElementById('run-confirm').textContent`);
+check('resultado fallido simulado',()=>assert.match(runConfirm,/E-demo-1: fallido/));
+await go('defect');await submit('defect-form');const defectError=await evaluate(`document.activeElement.id`);check('defecto incompleto rechazado',()=>assert.equal(defectError,'defect-errors'));
+await fill({description:'Falta campo en ejemplo ficticio',severity:'pending'});await submit('defect-form');const defectConfirm=await evaluate(`document.getElementById('defect-confirm').textContent`);
+check('defecto ligado a ejecución fallida',()=>assert.match(defectConfirm,/D-demo-1.*E-demo-1/));
+await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+const desktop=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width:1280,height:await evaluate('document.documentElement.scrollHeight'),scale:1}});writeFileSync(captures+'/desktop-defecto.png',Buffer.from(desktop.data,'base64'));
+await evaluate(`document.querySelector('[data-cancel="defect-form"]').click()`);await wait();const kept=await evaluate(`document.getElementById('counts').textContent`);
+check('cancelar no elimina registros simulados',()=>assert.match(kept,/1 ejecuciones.*1 defectos/));
+await fill({observed:'Campos visibles',result:'passed',evidence:true});await submit('run-form');await go('defect');const blocked=await evaluate(`document.getElementById('defect-fields').disabled`);
+check('aprobado no habilita nuevo defecto',()=>assert.equal(blocked,true));
+await go('panel');const counts=await evaluate(`document.getElementById('counts').textContent`);check('panel refleja memoria de la sesión',()=>assert.match(counts,/2 casos.*2 ejecuciones.*1 defectos/));
+const layouts=[];
+for(const width of [1280,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});layouts.push(await evaluate(`({width:innerWidth,scroll:document.documentElement.scrollWidth})`));const image=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width,height:await evaluate('document.documentElement.scrollHeight'),scale:1}});writeFileSync(captures+'/panel-'+width+'.png',Buffer.from(image.data,'base64'));}
+check('reflow en tres viewports',()=>layouts.forEach(v=>assert.ok(v.scroll<=v.width)));
+await send('Page.reload');await wait();const reset=await evaluate(`document.getElementById('counts').textContent`);check('recargar elimina simulación',()=>assert.match(reset,/1 casos.*0 ejecuciones.*0 defectos/));
+check('sin excepciones JavaScript observadas',()=>assert.deepEqual(errors,[]));
+console.log(JSON.stringify({passed,failed:0,browser:await send('Browser.getVersion'),structure,keyboard,layouts}));
+}finally{ws.close();}

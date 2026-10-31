@@ -33,6 +33,9 @@ $pruebas['GET /documentos sin rol responde 422 validation_failed'] = static func
     assert($r['status'] === 422 && $r['body']['errors'] === ['rol']);
 };
 $pruebas['el contrato declara las rutas y status probados'] = static function () use ($contrato): void {
+    // Estructura: la ruta debe estar bajo paths y el esquema bajo components.schemas (no en la raiz).
+    assert(preg_match('/^paths:\R  \/documentos:/m', $contrato) === 1, 'ruta fuera de paths');
+    assert(preg_match('/^  schemas:\R(?:    .*\R)*    Documento:/m', $contrato) === 1, 'esquema fuera de components.schemas');
     foreach (['/documentos:', 'post:', 'get:', "'201'", "'200'", "'422'", "'404'"] as $fragmento) {
         assert(str_contains($contrato, $fragmento), $fragmento);
     }

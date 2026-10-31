@@ -15,7 +15,7 @@ final readonly class ConsultMedications implements MedicationLookup
     {
     }
 
-    public function search(string $term): array
+    public function search(string $term, int $limit = self::RESULT_LIMIT): array
     {
         $term = trim($term);
         $length = mb_strlen($term);
@@ -23,7 +23,11 @@ final readonly class ConsultMedications implements MedicationLookup
             throw new MedicationRuleViolation('term', 'La búsqueda admite de 2 a 60 caracteres.');
         }
 
-        return $this->reader->search($term, self::RESULT_LIMIT);
+        if ($limit < 1 || $limit > self::RESULT_LIMIT) {
+            throw new MedicationRuleViolation('limit', 'El límite admite de 1 a ' . self::RESULT_LIMIT . ' resultados.');
+        }
+
+        return $this->reader->search($term, $limit);
     }
 
     public function findById(string $id): ?Medication

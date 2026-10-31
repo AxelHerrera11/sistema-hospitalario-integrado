@@ -12,32 +12,32 @@ security:
   - bearerAuth: []
     tenantHeader: []
 paths:
-/documentos:
-  get:
-    summary: Catalogo de documentos visible para un rol
-    parameters:
-      - { name: rol, in: query, required: true, schema: { type: string, example: enfermeria } }
-    responses:
-      '200':
-        description: "`data.documentos[]` con id, titulo y roles"
-        content: { application/json: { schema: { properties: { data: { properties: { documentos: { type: array, items: { $ref: '#/components/schemas/Documento' } } } } } } } }
-      '422': { $ref: '#/components/responses/Error' }
-  post:
-    summary: Publicar documento o manual para uno o mas roles
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required: [titulo, roles]
-            properties:
-              titulo: { type: string }
-              roles: { type: array, items: { type: string }, minItems: 1 }
-    responses:
-      '201': { description: Documento publicado (`data.id`) }
-      '422': { $ref: '#/components/responses/Error' }
-      '404': { $ref: '#/components/responses/Error' }
+  /documentos:
+    get:
+      summary: Catalogo de documentos visible para un rol
+      parameters:
+        - { name: rol, in: query, required: true, schema: { type: string, example: enfermeria } }
+      responses:
+        '200':
+          description: "`data.documentos[]` con id, titulo y roles"
+          content: { application/json: { schema: { properties: { data: { properties: { documentos: { type: array, items: { $ref: '#/components/schemas/Documento' } } } } } } } }
+        '422': { $ref: '#/components/responses/Error' }
+    post:
+      summary: Publicar documento o manual para uno o mas roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [titulo, roles]
+              properties:
+                titulo: { type: string }
+                roles: { type: array, items: { type: string }, minItems: 1 }
+      responses:
+        '201': { description: Documento publicado (`data.id`) }
+        '422': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -50,15 +50,15 @@ components:
         code: { type: string, description: Codigo estable del error }
         message: { type: string }
         errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+    Documento:
+      type: object
+      properties:
+        id: { type: string }
+        titulo: { type: string }
+        roles: { type: array, items: { type: string } }
   responses:
     Error:
       description: Sobre comun de error (ASII-24)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
-Documento:
-  type: object
-  properties:
-    id: { type: string }
-    titulo: { type: string }
-    roles: { type: array, items: { type: string } }

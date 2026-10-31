@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\MedicationCatalogController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use App\MedicationCatalog\CatalogRateLimit;
 use App\MedicationCatalog\HospitalMedicationRepository;
 use Illuminate\Support\Facades\DB;
@@ -30,10 +31,10 @@ final class MedicationCatalogServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Mismo orden que RBAC: tenant y jwt.auth antes del permiso. Escritura con permisos PROPUESTOS que aún no
+        // Mismo orden que RBAC: tenant y jwt.auth antes del permiso; la base HOSPITAL debe ser del hospital del contexto. Escritura con permisos PROPUESTOS que aún no
         // existen en config/rbac.php: RequirePermission los deniega (403) hasta que RBAC los apruebe.
         // El límite va después de jwt.auth para contar por usuario y hospital autenticados, no por IP compartida.
-        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', CatalogRateLimit::class])->group(function (): void {
+        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, CatalogRateLimit::class])->group(function (): void {
             Route::get('medications', [MedicationCatalogController::class, 'index'])->middleware('rbac:medicamentos.ver');
             Route::get('medications/{medication}', [MedicationCatalogController::class, 'show'])->middleware('rbac:medicamentos.ver');
             Route::post('medications', [MedicationCatalogController::class, 'store'])->middleware('rbac:medicamentos.registrar');

@@ -12,10 +12,17 @@ final readonly class SoapSections
     public function __construct(public string $subjective, public string $objective, public string $assessment, public string $plan)
     {
         foreach ([$subjective, $objective, $assessment, $plan] as $text) {
-            if (trim($text) === '' || mb_strlen($text) > self::MAX_LENGTH) {
+            if (preg_match('/^[\s\p{Z}\p{Cf}]*$/u', $text) === 1 || mb_strlen($text) > self::MAX_LENGTH) {
                 throw new SoapRuleViolation('SOAP_SECTION_INVALID', 422);
             }
         }
+    }
+
+    /** Reconstruye las secciones desde el `content` guardado por toJson(). */
+    public static function fromJson(string $content): self
+    {
+        $s = json_decode($content, true, 2, JSON_THROW_ON_ERROR);
+        return new self($s['S'], $s['O'], $s['A'], $s['P']);
     }
 
     public function toJson(): string

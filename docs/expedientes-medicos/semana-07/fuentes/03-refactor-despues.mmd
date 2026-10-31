@@ -1,0 +1,10 @@
+%% DESPUÉS (implementado): cada preocupación en su componente; el caso de uso solo orquesta.
+flowchart TB
+    C["ConsultLongitudinalRecord::execute()<br/>orquesta el orden"]
+    C --> G["AccessGuard<br/>permiso RBAC + auditoría de denegación"]
+    C --> R["CareRelationship<br/>vínculo asistencial"]
+    C --> D["LongitudinalRecord (Domain)<br/>integridad: mismo paciente, orden"]
+    C --> A["ClinicalAccessAudit<br/>evento Security solo con ids y conteos"]
+    C --> S["HospitalStoresProvider<br/>base del tenant"]
+    M["MedicalRecordController"] --> C
+    M --> PR["LongitudinalPresenter<br/>minimización: sin contacto ni global_id"]
