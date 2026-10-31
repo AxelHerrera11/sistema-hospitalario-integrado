@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Medicos;
 
 use App\Medicos\HospitalActors;
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -57,6 +58,7 @@ final class DoctorSecurityTest extends TestCase
         SecurityIdentity::$user = new GenericUser(['id' => 'admin']);
         SecurityIdentity::$hospital = 'hospital-a';
 
+        config()->set('tenants.hospital_database_tenant_id', 'hospital-a');
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
 
@@ -162,12 +164,8 @@ class SecurityIdentity
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): ?string
-            {
-                return SecurityIdentity::$hospital;
-            }
-        });
+        // Modelo Hospital real: EnsureHospitalDatabaseTenant lo compara con la base HOSPITAL de la instancia.
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
 
         return $next($request);
     }
