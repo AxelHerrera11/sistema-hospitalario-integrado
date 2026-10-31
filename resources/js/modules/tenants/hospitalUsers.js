@@ -81,3 +81,31 @@ export function confirmacion(accion, usuario, rol) {
 
     return `¿Revocar el acceso de ${nombre} a este hospital? Perderá todos sus roles aquí.`;
 }
+
+/** Iniciales para el avatar: primera letra de las dos primeras palabras del nombre, o del correo. */
+export function iniciales(usuario) {
+    const palabras = (usuario?.display_name || usuario?.email || '?').trim().split(/[\s@._-]+/).filter(Boolean);
+
+    return palabras.slice(0, 2).map((p) => p[0].toUpperCase()).join('') || '?';
+}
+
+const ESTADOS = {
+    active: { etiqueta: 'Activo', tono: 'ok' },
+    inactive: { etiqueta: 'Inactivo', tono: 'off' },
+};
+
+/** Estado legible y su tono visual; un estado desconocido se muestra tal cual, en gris. */
+export function estadoDe(status) {
+    return ESTADOS[status] ?? { etiqueta: status || 'Sin estado', tono: 'off' };
+}
+
+/** Resumen de la página visible; el total viene del servidor porque la lista está paginada. */
+export function resumen(usuarios, total) {
+    const lista = usuarios ?? [];
+
+    return {
+        total: total ?? lista.length,
+        activos: lista.filter((u) => u.status === 'active').length,
+        sinRoles: lista.filter((u) => (u.roles ?? []).length === 0).length,
+    };
+}
