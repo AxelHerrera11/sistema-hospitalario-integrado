@@ -3,13 +3,17 @@ import { computed, nextTick, ref, watch } from 'vue';
 import api from '@/plugins/axios';
 import { can } from '@/router/permissions';
 import { useAuthStore } from '@/stores/auth';
+import CareAssignmentsPanel from '@/modules/expediente/components/CareAssignmentsPanel.vue';
 import {
     debeOcultar, estadoDesdeApi, etiquetaEstado, etiquetaPaciente, etiquetaSexo, etiquetaTipo, formatearFecha,
-    formatearNacimiento, siguienteReintento, validarCodigo,
+    formatearNacimiento, resumenEpisodios, siguienteReintento, validarCodigo,
 } from '@/modules/expediente/expediente';
 
 const auth = useAuthStore();
 const puedeAbrir = computed(() => can(auth.user, 'expediente.abrir'));
+const puedeAsignar = computed(() => can(auth.user, 'expediente.asignar'));
+const puedeConsultar = computed(() => can(auth.user, 'expediente.ver'));
+const codigoValido = computed(() => (validarCodigo(codigo.value).valido ? validarCodigo(codigo.value).codigo : ''));
 const codigo = ref('');
 const errorCampo = ref('');
 const cargando = ref(false);
@@ -89,10 +93,12 @@ const reintento = computed(() => (estado.value?.puedeReintentar ? siguienteReint
             <small id="exp-ayuda">Por ejemplo, P-0001.</small>
             <p v-if="errorCampo" class="exp__error" role="alert">{{ errorCampo }}</p>
             <div class="exp__acciones">
-                <button type="submit" :disabled="cargando">Consultar</button>
+                <button v-if="puedeConsultar" type="submit" :disabled="cargando">Consultar</button>
                 <button v-if="puedeAbrir" type="button" class="exp__secundario" :disabled="cargando" @click="accion('abrir')">Abrir expediente</button>
             </div>
         </form>
+
+        <CareAssignmentsPanel v-if="puedeAsignar && codigoValido" :codigo="codigoValido" />
 
         <p class="exp__ok" role="status" aria-live="polite">{{ aviso }}</p>
         <div v-if="estado && estado.tipo !== 'exito'" class="exp__estado" :class="`exp__estado--${estado.tipo}`" :role="estado.tipo === 'vacio' ? 'status' : 'alert'">
@@ -113,12 +119,12 @@ const reintento = computed(() => (estado.value?.puedeReintentar ? siguienteReint
                 <dt>Nacimiento</dt><dd>{{ formatearNacimiento(expediente.patient.birth_date) }}</dd>
                 <dt>Sexo</dt><dd>{{ etiquetaSexo(expediente.patient.sex) }}</dd>
                 <dt>Paciente</dt><dd>{{ etiquetaPaciente(expediente.patient.status) }}</dd>
-                <dt>Episodios</dt><dd>{{ expediente.summary.episodes }} ({{ expediente.summary.open_episodes }} abiertos)</dd>
+                <dt>Episodios</dt><dd>{{ resumenEpisodios(expediente.summary.episodes, expediente.summary.open_episodes) }}</dd>
             </dl>
             <h3>Línea de tiempo</h3>
             <ol class="exp__linea">
                 <li v-for="e in expediente.episodes" :key="e.care_episode_id">
-                    <strong>{{ etiquetaTipo(e.type) }}</strong> — {{ etiquetaEstado(e.status) }}
+                    <span><strong>{{ etiquetaTipo(e.type) }}</strong> — {{ etiquetaEstado(e.status) }}</span>
                     <span>{{ formatearFecha(e.started_at) }}<template v-if="e.ended_at"> a {{ formatearFecha(e.ended_at) }}</template></span>
                     <span v-if="e.reason">Motivo: {{ e.reason }}</span>
                 </li>

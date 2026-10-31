@@ -55,6 +55,7 @@ export const NAVIGATION = [
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
     { label: 'Admisión y camas', to: '/admision', permission: ROUTE_PERMISSIONS.admision },
     { label: 'Expediente', to: '/expediente', permission: ROUTE_PERMISSIONS.expediente },
+    { label: 'Médicos tratantes', to: '/expediente', permission: 'expediente.asignar' },
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
