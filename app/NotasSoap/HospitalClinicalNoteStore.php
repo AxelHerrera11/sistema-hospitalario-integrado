@@ -45,7 +45,8 @@ final class HospitalClinicalNoteStore implements ClinicalNoteRepository
                 JOIN medical_records r ON r.local_patient_id = e.local_patient_id WHERE e.care_episode_id = ? AND r.status = 'open'");
             $insert->execute([$id, $authorId, $sections->toJson(), $episodeId]);
             if ($insert->rowCount() !== 1) {
-                throw new \RuntimeException('expediente_no_disponible'); // sin expediente abierto no hay dónde anclar la nota
+                $this->pdo->rollBack(); // sin expediente abierto no hay dónde anclar la nota; crearlo es de Expediente
+                throw new SoapRuleViolation('MEDICAL_RECORD_NOT_FOUND', 409);
             }
             $this->audit->record($authorId, 'nota_soap.registrada', 'clinical_note', $id, $episodeId, ['version_no' => 1]);
             $this->pdo->commit();

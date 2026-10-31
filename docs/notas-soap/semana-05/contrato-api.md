@@ -80,6 +80,7 @@ Un campo con tipo incorrecto (número, arreglo, `null`, booleano) o un JSON malf
 | `404` | `ROUTE_NOT_FOUND` / `NOTE_NOT_FOUND` | Ruta inexistente / nota inexistente |
 | `409` | `DIAGNOSIS_DUPLICATED` / `PRIMARY_DIAGNOSIS_EXISTS` | Código ya asociado / segundo principal (RF-SOAP-05) |
 | `409` | `NOTE_SIGNED` | La nota firmada no acepta diagnósticos (RF-SOAP-07) |
+| `409` | `MEDICAL_RECORD_NOT_FOUND` | El paciente del episodio no tiene un expediente abierto; este módulo no lo crea |
 | `409` | `RECORD_ALREADY_HAS_NOTE` | El expediente ya tiene una nota: `clinical_notes_record_version_unique` solo admite una nota original (R-06, pendiente en ASII-09) |
 | `403` | `ACTOR_SIN_REFERENCIA_LOCAL` | El usuario del token no tiene referencia en `local_user_refs` de este hospital |
 | `503` | `HOSPITAL_NO_DISPONIBLE` | La base HOSPITAL no respondió al resolver el actor; no se escribe nada |
