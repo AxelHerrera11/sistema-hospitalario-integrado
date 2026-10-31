@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prototipo conceptual de Prescripciones</title>
+    <style>
+        :root { color-scheme: light; font-family: system-ui, sans-serif; color: #172033; background: #f4f6fa; }
+        body { margin: 0 auto; max-width: 54rem; padding: 1rem; }
+        header, main, section, nav { background: #fff; border: 1px solid #c8d0dc; border-radius: .5rem; padding: 1rem; margin-block: 1rem; }
+        nav ul { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; padding-inline-start: 1.25rem; }
+        a { color: #154db5; }
+        a:focus-visible { outline: 3px solid #154db5; outline-offset: 3px; }
+        .notice { border-left: .35rem solid #805500; padding: .75rem; background: #fff4d6; }
+        .reject { border-left: .35rem solid #a12727; padding: .75rem; background: #fff0f0; }
+        .sample { color: #4b5563; font-size: .95rem; }
+        .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+        .actions a { display: inline-block; padding: .6rem .8rem; border: 1px solid currentColor; border-radius: .3rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Prescripciones — prototipo conceptual</h1>
+        <p class="sample">Artefacto estático. No envía ni guarda información.</p>
+    </header>
+    <nav aria-label="Navegar por pantallas">
+        <h2>Vistas</h2>
+        <ul>
+            <li><a href="#inicio">Inicio</a></li>
+            <li><a href="#crear">Crear</a></li>
+            <li><a href="#advertencia">Advertencia</a></li>
+            <li><a href="#rechazo">Rechazo 422</a></li>
+            <li><a href="#detalle">Detalle</a></li>
+            <li><a href="#firma">Confirmación</a></li>
+        </ul>
+    </nav>
+    <main>
+        <section id="inicio" aria-labelledby="inicio-titulo">
+            <h2 id="inicio-titulo">Inicio</h2>
+            <p>Paciente de ejemplo: <strong>Paciente de prueba</strong>. Confirme el contexto antes de continuar.</p>
+            <p class="actions"><a href="#crear">Ir a crear</a></p>
+        </section>
+        <section id="crear" aria-labelledby="crear-titulo">
+            <h2 id="crear-titulo">Crear — campos conceptuales</h2>
+            <p>Medicamento: <strong>selección pendiente</strong></p>
+            <p>Datos de prescripción: <strong>definidos por el contrato aprobado</strong></p>
+            <p>Los valores y unidades no se especifican en este prototipo.</p>
+            <p class="actions"><a href="#advertencia">Ver estado de advertencia</a><a href="#rechazo">Ver rechazo</a></p>
+        </section>
+        <section id="advertencia" aria-labelledby="advertencia-titulo">
+            <h2 id="advertencia-titulo">Advertencia `mild`</h2>
+            <p class="notice">Hay una advertencia de alergia. Revise la información antes de continuar.</p>
+            <p>La pantalla no sustituye el juicio clínico ni representa una respuesta real de servicio.</p>
+            <p class="actions"><a href="#crear">Volver a revisar</a><a href="#detalle">Ver detalle conceptual</a></p>
+        </section>
+        <section id="rechazo" aria-labelledby="rechazo-titulo">
+            <h2 id="rechazo-titulo">Rechazo 422</h2>
+            <p class="reject"><strong>No se guardó la prescripción.</strong> El conflicto impide continuar por este flujo.</p>
+            <p>No existe acción ni endpoint de excepción en este artefacto.</p>
+            <p class="actions"><a href="#crear">Volver a revisar</a></p>
+        </section>
+        <section id="detalle" aria-labelledby="detalle-titulo">
+            <h2 id="detalle-titulo">Detalle</h2>
+            <p>Estado y campos definitivos: <strong>pendientes del contrato</strong>.</p>
+            <p class="actions"><a href="#firma">Ver confirmación conceptual</a><a href="#inicio">Volver al inicio</a></p>
+        </section>
+        <section id="firma" aria-labelledby="firma-titulo">
+            <h2 id="firma-titulo">Confirmación conceptual</h2>
+            <p>Revise paciente y contenido antes de cualquier acción real. Este prototipo no firma ni modifica datos.</p>
+            <p class="actions"><a href="#detalle">Cancelar y volver</a><a href="#inicio">Finalizar recorrido</a></p>
+        </section>
+    </main>
+</body>
+</html>

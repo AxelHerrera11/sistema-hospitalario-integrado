@@ -1,0 +1,54 @@
+# Smoke on-premise del micro-HIS de Tenants — 2026-10-29 21:44 -0600 · PHP 8.2.12 (php.ini de XAMPP con date.timezone=Europe/Berlin) · Windows 11
+# Base develop 6e841849. Pasos: MICRO_HIS_JWT_SECRET aleatorio de 32 bytes; php app/Modules/Tenants/micro-his.php seed "Hospital Demo" admin@demo.test '<clave>';
+# php -S 127.0.0.1:8081 app/Modules/Tenants/micro-his.php; cliente HTTP con curl (TOTP calculado con TotpVerifier). Tokens recortados a 8 caracteres.
+
+$ POST /auth/login admin (rol con MFA obligatorio)
+HTTP 202 {"mfa_required":true,"challenge_id":"9f640ac4…(36)"}
+
+$ POST /auth/mfa con código incorrecto
+HTTP 401 {"message":"Código MFA inválido"}
+
+$ POST /auth/mfa con TOTP válido
+HTTP 200 {"access_token":"eyJ0eXAi…(567)","expires_in":900,"refresh_token":"8231eb38…(101)","user":{"id":"b198af95-88bc-4c6f-9d6d-bf1e77a845e1","email":"admin@demo.test","name":"Administrador Hospital Demo","roles":["admin_hospital"],"tenant_id":"fcd285b0-31bd-40a9-8221-7ac0e2561701","status":"active","mfa_required":true,"created_at":"2026-10-30T04:44:24+01:00","last_login_at":"2026-10-30T04:44:26+01:00","password_changed_at":"2026-10-30T04:44:24+01:00"}}
+
+$ POST /auth/mfa repitiendo el mismo desafío
+HTTP 401 {"message":"Desafío MFA inválido o vencido"}
+
+$ POST /admin/users medico (contraseña débil)
+HTTP 422 {"message":"Contraseña debe tener al menos 12 caracteres"}
+
+$ POST /admin/users medico@demo.test
+HTTP 201 {"user_id":"132c68c3-585a-47fb-9143-cb1469ff24ac"}
+
+$ POST /auth/login medico
+HTTP 200 {"access_token":"eyJ0eXAi…(556)","refresh_token":"04727368…(101)","user":{"id":"132c68c3-585a-47fb-9143-cb1469ff24ac","email":"medico@demo.test","name":"Médico Demo","roles":["medico"],"tenant_id":"fcd285b0-31bd-40a9-8221-7ac0e2561701","status":"active","mfa_required":false,"created_at":"2026-10-30T04:44:26+01:00","last_login_at":"2026-10-30T04:44:26+01:00","password_changed_at":"2026-10-30T04:44:26+01:00"}}
+
+$ GET /auth/me medico
+HTTP 200 {"tenant_id":"fcd285b0-31bd-40a9-8221-7ac0e2561701","roles":["medico"]}
+
+$ POST /admin/users con token de medico
+HTTP 403 {"message":"Requiere el rol admin_hospital"}
+
+$ POST /auth/refresh (rotación)
+HTTP 200 {"access_token":"eyJ0eXAi…(556)","refresh_token":"1fc2fff5…(101)"}
+
+$ POST /auth/refresh reutilizando el refresh anterior
+HTTP 401 {"message":"Refresh token inválido o revocado"}
+
+$ POST /auth/refresh con el refresh nuevo tras la reutilización
+HTTP 401 {"message":"Refresh token inválido o revocado"}
+
+$ GET /auth/me sin token
+HTTP 401 {"message":"Token de autorización requerido"}
+
+$ POST /auth/login con X-Tenant-ID inexistente
+HTTP 401 {"message":"Credenciales inválidas"}
+
+$ 5 intentos fallidos de medico; el 5.º
+HTTP 401 {"message":"Credenciales inválidas"}
+
+$ POST /auth/login medico con la clave correcta después
+HTTP 423 {"message":"Cuenta bloqueada temporalmente"}
+
+$ Cabeceras de seguridad de GET /auth/me
+Content-Type: application/json

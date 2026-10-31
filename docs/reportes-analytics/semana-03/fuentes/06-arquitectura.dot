@@ -1,0 +1,24 @@
+digraph arquitectura {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  navegador [label="Navegador\nPantalla Reportes (Vue)"];
+  subgraph cluster_api { label="API Laravel"; color="#94a3b8";
+    middleware [label="tenant + jwt.auth\n+ guard de base + RBAC"];
+    controlador [label="ReportesIndicatorController"];
+  }
+  subgraph cluster_mh { label="micro-his/reportes-analytics"; color="#94a3b8";
+    presentacion [label="Presentation\nRouter, IndicatorController, JsonView\n(solo CLI y pruebas)"];
+    aplicacion [label="Application\nCalculateCancellationRate\npuerto EpisodeSummaryReader"];
+    dominio [label="Domain\nPeriod, IndicatorReading"];
+    persistencia [label="Persistence\nPdoEpisodeSummaryReader\nInMemory (doble)"];
+  }
+  hospital [label="PostgreSQL HOSPITAL\ncare_episodes", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  navegador -> middleware [label="HTTPS, JSON\nJWT + X-Tenant-ID"];
+  middleware -> controlador;
+  controlador -> aplicacion [label="en proceso"];
+  presentacion -> aplicacion;
+  aplicacion -> dominio;
+  aplicacion -> persistencia [label="puerto"];
+  persistencia -> hospital [label="PDO preparado\nsolo agregados"];
+}

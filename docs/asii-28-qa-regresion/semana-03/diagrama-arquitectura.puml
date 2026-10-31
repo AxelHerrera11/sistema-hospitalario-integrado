@@ -1,0 +1,60 @@
+@startuml
+title ASII-28 - Vista UML de componentes PROPUESTOS (no implementados)
+left to right direction
+skinparam componentStyle rectangle
+actor "Analista QA\n(actor conceptual)" as Analyst
+actor "Responsable QA\n(actor conceptual)" as Reviewer
+rectangle "HIS: sistema bajo prueba\nexistente, sin acceso clínico desde QA" as HIS
+rectangle "Micro-HIS ASII-28 / PHP 8.2+ vanilla\nTodos sus componentes son propuesta" {
+  package "Presentation" {
+    component "Entrada/salida QA\nSin SQL ni reglas de dominio" as UI
+  }
+  package "Application" {
+    component "Diseñar casos / crear campaña\nasociar casos" as Plan
+    component "Registrar ejecución\ncoordinar observación y evidencia" as Run
+    component "Registrar defecto / consultar\ntrazabilidad" as Trace
+  }
+  package "Domain" {
+    interface "RegistroEjecucionManual\ncontrato LSP Semana 2" as ExecutionPort
+    interface "RepositorioQA\npuerto conceptual" as RepositoryPort
+    component "CasoManual - CampaniaRegresion\nCasoEnCampania - EjecucionManual\nReferenciaEvidencia - Defecto\nInvariantes e historia" as Model
+  }
+  package "Persistence" {
+    component "Adaptador PDO propuesto\nprepare / execute / transacción" as PDOAdapter
+    component "InMemory / doble de fallo\npropuestos para contrato" as MemoryAdapter
+  }
+  component "Bootstrap futuro\ncomposición por constructor" as Bootstrap
+}
+database "Base QA de prueba PROPUESTA\nMotor y esquema por acordar" as TestDB
+rectangle "QA de CI / quality gate existente\nIntegración opcional por acordar" as CI
+Analyst --> UI : prepara campaña, ejecuta y registra
+Reviewer --> UI : consulta matriz y defectos
+Analyst --> HIS : realiza pasos manuales
+UI --> Plan
+UI --> ExecutionPort : solicita registrar ejecución
+UI --> Trace
+Run ..|> ExecutionPort : implementa
+Plan --> Model
+Run --> Model
+Trace --> Model
+Plan --> RepositoryPort
+Run --> RepositoryPort
+Trace --> RepositoryPort
+PDOAdapter ..|> RepositoryPort
+MemoryAdapter ..|> RepositoryPort
+PDOAdapter --> TestDB : acceso preparado
+Bootstrap --> UI
+Bootstrap --> Run
+Bootstrap --> PDOAdapter
+CI ..> UI : posible intercambio de resúmenes, no implementado
+note bottom of Model
+  Campaña -> caso asociado -> ejecución -> evidencia / defecto.
+  Defecto solo desde ejecución fallida; reejecutar no borra historia.
+  Requisito externo referenciado por caso; severidad por acordar.
+end note
+legend bottom
+  Flechas internas: dependencias de código propuestas.
+  Domain no depende de Application, Presentation ni Persistence.
+  Relaciones con HIS/CI: contexto funcional, sin integración desplegada.
+endlegend
+@enduml

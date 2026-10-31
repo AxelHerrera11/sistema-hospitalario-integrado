@@ -1,0 +1,14 @@
+
+== Dependencias entre capas ==
+OK    [AR01] Domain solo importa Domain
+OK    [AR02] Domain no usa PDO ni SQL
+OK    [AR03] Application solo importa Domain y Application
+OK    [AR04] Presentation sin SQL ni PDO
+OK    [AR05] Presentation no importa Persistence ni Ci
+OK    [AR06] El controlador no decide veredictos ni valida reglas (sin GateVerdict/QualityGate/InvalidQaInput)
+OK    [AR07] Solo Integration/ y Ci/ conocen a Gobernanza (contrato público)
+
+== Tamaño de archivos ==
+OK    [AR08] Ningún archivo del módulo supera 400 líneas
+
+[architecture] 8 pruebas, 0 fallos.

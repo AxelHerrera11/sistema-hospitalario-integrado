@@ -1,24 +1,27 @@
 // Recorrido real de la interfaz del catálogo: Chrome → Vue → API Laravel (tenant, JWT, RBAC) → PostgreSQL.
-// Uso: node catalogo-e2e.mjs <url-base> <hospital-uuid> (puppeteer-core 23.11.1 instalado aparte; ver instalacion-local.md).
+// Uso: E2E_PASSWORD=... [E2E_DOMINIO=prueba.local] node catalogo-e2e.mjs <url-base> <hospital-uuid> (puppeteer-core 23.11.1 instalado aparte; ver instalacion-local.md).
 import puppeteer from 'puppeteer-core';
 
 const [base, hospital] = process.argv.slice(2);
+const password = process.env.E2E_PASSWORD;
+const dominio = process.env.E2E_DOMINIO ?? 'prueba.local';
 const chrome = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ' — ' + detail : ''}`); };
 
-async function login(page, email) {
+async function login(page, email, abrirPantalla = true) {
     await page.goto(`${base}/login`, { waitUntil: 'networkidle0' });
     const inputs = await page.$$('input');
     await inputs[0].click({ clickCount: 3 }); await inputs[0].type(hospital);
-    await inputs[1].type(email);
-    await inputs[2].type('Smoke-Prueba-2026!');
+    await inputs[1].type(email.replace('prueba.local', dominio));
+    await inputs[2].type(password);
     const answer = page.waitForResponse((r) => r.url().endsWith('/api/v1/auth/login'));
     await page.click('button[type=submit]');
     const status = (await answer).status();
     if (status !== 200) throw new Error(`login de ${email} respondió ${status}`);
     console.log('  login '+email+': '+status);
     await page.waitForFunction(() => location.pathname !== '/login');
+    if (!abrirPantalla) return;
     // Navegación interna de la SPA: conserva el token en memoria (no se recarga la página).
     await page.evaluate(() => { document.querySelector('a[href="/medicamentos"]').click(); });
     await page.waitForSelector('.meds');
@@ -62,15 +65,69 @@ try {
         await r; await admin.waitForFunction(() => !document.querySelector('form[role=search] button').disabled);
         return admin.$$eval('.meds__item', (items) => items.map((i) => i.innerText));
     };
-    check('búsqueda "ÁCIDO" encuentra el registro', (await search('ÁCIDO')).some((t) => t.includes('ASA-100')));
+    for (const termino of ['ácido', 'ÁCIDO', 'acido', 'ACIDO']) {
+        check(`búsqueda "${termino}" encuentra el registro`, (await search(termino)).some((t) => t.includes('ASA-100') && t.includes('Ácido acetilsalicílico 100 mg')));
+    }
     check('búsqueda sin coincidencias muestra estado vacío', (await search('zzz')).length === 0 && (await text(admin)).includes('No hay medicamentos'));
     await search('asa');
     await admin.click('.meds__pick');
     await admin.waitForSelector('.meds__detail');
+    // Regla R8: el botón abre un diálogo; Cancelar no envía nada y solo confirmar llama a la API.
+    let patches = 0;
+    admin.on('request', (r) => { if (r.url().endsWith('/validity')) patches++; });
+    await admin.click('article .meds__secondary');
+    await admin.waitForSelector('dialog[open]');
+    const dialogo = await admin.$eval('dialog[open]', (d) => d.innerText);
+    check('el diálogo repite código, nombre, principio activo y estado destino', ['ASA-100', 'Ácido acetilsalicílico 100 mg', 'No vigente'].every((t) => dialogo.includes(t)));
+    check('el foco inicial queda en Cancelar', await admin.evaluate(() => document.activeElement?.innerText === 'Cancelar'));
+    await admin.click('dialog[open] .meds__secondary');
+    await admin.waitForFunction(() => !document.querySelector('dialog[open]'));
+    check('Cancelar no envía el cambio', patches === 0 && (await text(admin)).includes('Vigente'));
+    const focoEnOrigen = () => admin.evaluate(() => document.activeElement === document.querySelector('article > .meds__secondary'));
+    check('Cancelar devuelve el foco al botón de origen', await focoEnOrigen());
+    await admin.click('article .meds__secondary');
+    await admin.waitForSelector('dialog[open]');
+    await admin.keyboard.press('Escape');
+    await admin.waitForFunction(() => !document.querySelector('dialog[open]'));
+    check('Escape cierra sin enviar el cambio', patches === 0);
+    check('Escape devuelve el foco al botón de origen', await focoEnOrigen());
+    // Posición respecto a la ventana: se abre en cada tamaño y se mide con la página desplazada.
+    const abrirEn = async (width, height) => {
+        await admin.setViewport({ width, height });
+        await admin.evaluate(() => { document.querySelector('article > .meds__secondary').scrollIntoView({ block: 'end' }); window.scrollBy(0, 40); });
+        await admin.evaluate(() => document.querySelector('article > .meds__secondary').click());
+        await admin.waitForSelector('dialog[open]');
+        return admin.$eval('dialog[open]', (d) => { const r = d.getBoundingClientRect(), w = document.documentElement.clientWidth, h = window.innerHeight;
+            return { dx: Math.abs(r.left + r.width / 2 - w / 2), dy: Math.abs(r.top + r.height / 2 - h / 2), margenX: Math.min(r.left, w - r.right), margenY: Math.min(r.top, h - r.bottom), scrollY: window.scrollY,
+                interno: d.scrollHeight > d.clientHeight, overflow: getComputedStyle(d).overflowY, fondo: getComputedStyle(d, '::backdrop').backgroundColor, dentro: d.contains(document.activeElement) }; });
+    };
+    const cerrar = async () => { await admin.keyboard.press('Escape'); await admin.waitForFunction(() => !document.querySelector('dialog[open]')); };
+    let m = await abrirEn(1280, 420);
+    console.log('  1280x420', JSON.stringify(m));
+    check('escritorio con la página desplazada: centrado horizontal y vertical', m.scrollY > 0 && m.dx <= 1 && m.dy <= 1);
+    check('fondo oscuro y foco dentro del diálogo', m.fondo === 'rgba(15, 23, 42, 0.5)' && m.dentro);
+    await admin.keyboard.press('Tab');
+    check('Tab sigue dentro del diálogo', await admin.$eval('dialog[open]', (d) => d.contains(document.activeElement)));
+    await cerrar();
+    m = await abrirEn(375, 800);
+    console.log('  375x800', JSON.stringify(m));
+    check('375 px: centrado y con márgenes', m.dx <= 1 && m.dy <= 1 && m.margenX >= 15);
+    await cerrar();
+    m = await abrirEn(375, 280);
+    console.log('  375x280', JSON.stringify(m));
+    check('375 px sin altura suficiente: márgenes y desplazamiento interno', m.margenX >= 15 && m.margenY >= 15 && m.interno && m.overflow === 'auto');
+    const alcanza = await admin.$eval('dialog[open]', (d) => { d.scrollTop = d.scrollHeight; const b = d.querySelector('button:not(.meds__secondary)').getBoundingClientRect(), r = d.getBoundingClientRect(); return b.bottom <= r.bottom + 1 && b.top >= r.top; });
+    check('375 px sin altura suficiente: el botón de confirmar se alcanza desplazando', alcanza);
+    await cerrar();
+    await admin.setViewport({ width: 1280, height: 800 });
+    await admin.click('article .meds__secondary');
+    await admin.waitForSelector('dialog[open]');
     const patch = admin.waitForResponse((r) => r.url().endsWith('/validity'));
-    await admin.click('article button');
-    check('cambio de vigencia → 200', (await patch).status() === 200);
+    await admin.click('dialog[open] button:not(.meds__secondary)');
+    check('cambio de vigencia confirmado → 200', (await patch).status() === 200 && patches === 1);
     await admin.waitForFunction(() => document.querySelector('article').innerText.includes('No vigente'));
+    await admin.waitForFunction(() => !document.querySelector('article > .meds__secondary').disabled);
+    check('confirmar devuelve el foco al botón de origen', await admin.waitForFunction(() => document.activeElement === document.querySelector('article > .meds__secondary'), { timeout: 3000 }).then(() => true, () => false));
     // Salir de la pantalla y volver: el estado local se pierde y la vigencia se lee otra vez del servidor.
     await admin.evaluate(() => { document.querySelector('a[href="/"]').click(); });
     await admin.waitForFunction(() => !document.querySelector('.meds'));
@@ -88,8 +145,10 @@ try {
 
     // 3. Recepción: sin medicamentos.ver.
     const reception = await (await browser.createBrowserContext()).newPage();
-    await login(reception, 'recepcion@prueba.local');
-    check('recepción ve el aviso de permiso y no la búsqueda', (await text(reception)).includes('medicamentos.ver') && !(await reception.$('#meds-q')));
+    await login(reception, 'recepcion@prueba.local', false);
+    check('recepción no tiene el enlace del catálogo en el menú', !(await reception.$('a[href="/medicamentos"]')));
+    const denegada = await reception.evaluate(async () => (await fetch('/api/v1/medications?q=asa', { headers: { Accept: 'application/json' } })).status);
+    check('sin sesión del cliente la API responde 4xx', denegada >= 400 && denegada < 500);
 } catch (error) {
     const pages = await browser.pages();
     await pages[pages.length - 1].screenshot({ path: 'fallo.png' });

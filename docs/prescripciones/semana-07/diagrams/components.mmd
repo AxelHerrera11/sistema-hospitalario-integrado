@@ -1,0 +1,25 @@
+flowchart LR
+    User[Usuario autenticado]
+    Shell[AppLayout existente]
+    Permissions[Permisos y guardas existentes]
+    PrescriptionUI[UI de Prescripciones\nPROPUESTO]
+    PrescriptionAPI[API de Prescripciones\nPROPUESTO]
+    UseCase[PrescriptionService\nPROPUESTO]
+    Domain[Prescription y reglas\nPROPUESTO]
+    Repository[PrescriptionRepository\nPROPUESTO]
+    Catalog[Puerto de catálogo\nPROPUESTO]
+    Allergies[Puerto de alergias\nPROPUESTO]
+    Audit[Puerto de auditoría\nPROPUESTO]
+    Store[(Persistencia aprobada\nPROPUESTO)]
+
+    User --> Shell
+    Shell --> Permissions
+    Permissions -. futura ruta con permiso .-> PrescriptionUI
+    PrescriptionUI -. cliente HTTP .-> PrescriptionAPI
+    PrescriptionAPI -. invoca .-> UseCase
+    UseCase --> Domain
+    UseCase --> Repository
+    UseCase --> Catalog
+    UseCase --> Allergies
+    UseCase --> Audit
+    Repository -. adaptador futuro .-> Store

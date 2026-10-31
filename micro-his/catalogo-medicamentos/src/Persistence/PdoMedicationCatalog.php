@@ -8,6 +8,7 @@ use MicroHis\MedicationCatalog\Application\DuplicateMedicationCode;
 use MicroHis\MedicationCatalog\Application\MedicationRepository;
 use MicroHis\MedicationCatalog\Application\PersistenceFailure;
 use MicroHis\MedicationCatalog\Domain\Medication;
+use MicroHis\MedicationCatalog\Domain\SearchText;
 use MicroHis\MedicationCatalog\Domain\Validity;
 
 /** Adaptador PDO del Repository; todo valor externo viaja como parámetro de una sentencia preparada. */
@@ -23,10 +24,9 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
         $this->postgres = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'pgsql';
         // Los fallos deben llegar como excepción para no confundirlos con "sin resultados".
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        // SQLite solo pasa a minúsculas los caracteres ASCII; se sustituye LOWER por una versión Unicode (defecto AV3).
-        // PostgreSQL ya aplica Unicode, así que solo se registra para SQLite.
+        // SQLite solo pasa a minúsculas los caracteres ASCII (defecto AV3) y no conoce las tildes; PostgreSQL lo resuelve en folded().
         if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
-            $this->pdo->sqliteCreateFunction('LOWER', static fn (?string $value): ?string => $value === null ? null : mb_strtolower($value), 1);
+            $this->pdo->sqliteCreateFunction('SEARCH_FOLD', static fn (?string $value): ?string => $value === null ? null : SearchText::fold($value), 1);
         }
     }
 
@@ -74,15 +74,31 @@ final readonly class PdoMedicationCatalog implements MedicationRepository
             $medication->pharmacologicalGroup, $medication->validity);
     }
 
+    /**
+     * Equivalente SQL de SearchText::fold(); solo interpola constantes y nombres de columna propios.
+     * LOWER de PostgreSQL depende del locale del clúster: con "C" no cambia "Á". La colación ICU fija el resultado.
+     */
+    private function folded(string $column): string
+    {
+        return $this->postgres
+            ? "translate(LOWER(normalize({$column}, NFC) COLLATE \"und-x-icu\"), '" . SearchText::ACCENTED . "', '" . SearchText::PLAIN . "')"
+            : "SEARCH_FOLD({$column})";
+    }
+
     public function search(string $term, int $limit): array
     {
-        $sql = 'SELECT ' . self::COLUMNS . " FROM medications
-                WHERE LOWER(code) LIKE :by_code ESCAPE '!' OR LOWER(name) LIKE :by_name ESCAPE '!'
-                   OR LOWER(active_ingredient) LIKE :by_ingredient ESCAPE '!'
+        $folded = SearchText::fold($term);
+        // Un término solo de marcas combinantes queda vacío y, como patrón, coincidiría con todo.
+        if ($folded === '') {
+            return [];
+        }
+        $sql = 'SELECT ' . self::COLUMNS . ' FROM medications
+                WHERE ' . $this->folded('code') . " LIKE :by_code ESCAPE '!' OR " . $this->folded('name') . " LIKE :by_name ESCAPE '!'
+                   OR " . $this->folded('active_ingredient') . " LIKE :by_ingredient ESCAPE '!'
                 ORDER BY name, code LIMIT :limit";
         // Escape con "!": con ESCAPE '\', PDO para PostgreSQL toma la barra como escape de la comilla y no enlaza los
         // parámetros siguientes (SQLSTATE HY093). "!" es neutro en SQLite y PostgreSQL.
-        $pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($term)) . '%';
+        $pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $folded) . '%';
         try {
             $statement = $this->pdo->prepare($sql);
             foreach (['by_code', 'by_name', 'by_ingredient'] as $name) {
