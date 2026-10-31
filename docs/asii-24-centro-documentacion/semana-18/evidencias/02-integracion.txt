@@ -1,0 +1,54 @@
+# Integracion local (rama integracion-s18-lis671, sin push) - 2026-10-30 23:13 -0600 - base origin/develop 1736474f
+feature/asii-05-semana-15-pruebas-lis671 -> sin conflictos
+feature/asii-05-semana-16-evidencia-lis671 -> sin conflictos
+feature/asii-05-semana-18-evaluacion-final-lis671 -> sin conflictos
+feature/asii-24-semana-16-evidencia-lis671 -> conflicto solo en bootstrap/providers.php (registro de provider); se conservan ambos
+feature/asii-24-semana-18-evaluacion-final-lis671 -> sin conflictos
+feature/asii-26-semana-16-evidencia-lis671 -> conflicto solo en bootstrap/providers.php (registro de provider); se conservan ambos
+feature/asii-26-semana-18-evaluacion-final-lis671 -> sin conflictos
+feature/asii-27-semana-16-evidencia-lis671 -> conflicto solo en bootstrap/providers.php (registro de provider); se conservan ambos
+feature/asii-27-semana-18-evaluacion-final-lis671 -> sin conflictos
+Resultado: 25204419 (75 commits sobre develop)
+Las ramas de Semana 18 se tomaron antes de agregar estos documentos (solo docs; el codigo es el mismo).
+Despues se fusiono la correccion de la pantalla de inicio (#1618) -> d95e3355; sobre ese commit se repitieron
+las pruebas de los cuatro modulos, `resumen.test.mjs` y `npm run build`. Las suites completas son de 25204419
+(el cambio posterior es solo JavaScript de la pantalla de inicio).
+
+## Rutas de mis cuatro modulos
+$ php artisan route:list --path=api/v1/citas | grep Showing
+Showing [7] routes
+$ php artisan route:list --path=api/v1/documentacion | grep Showing
+Showing [2] routes
+$ php artisan route:list --path=api/v1/dashboard | grep Showing
+Showing [1] routes
+$ php artisan route:list --path=api/v1/reportes | grep Showing
+Showing [3] routes
+
+## Suites de mis cuatro modulos sobre la integracion
+$ php vendor/bin/phpunit tests/Feature/Citas tests/Feature/CentroDocumentacion tests/Feature/Dashboard tests/Feature/ReportesOperativos | tail -1
+OK (37 tests, 273 assertions)
+$ php micro-his/centro-documentacion/tests/run.php | tail -1
+OK: 7 verificaciones aprobadas
+$ php micro-his/dashboard-base/tests/run.php | tail -1
+OK: 6 verificaciones aprobadas
+$ php micro-his/reportes-operativos/tests/run.php | tail -1
+OK: 17 verificaciones aprobadas
+$ cd docs/asii-05-citas/semana-15 && php -d zend.assertions=1 -d assert.exception=1 tests/pruebas_semana15.php | tail -1; cd - >/dev/null
+Resumen: 9 pruebas, 0 fallidas.
+$ node resources/js/modules/dashboard/resumen.test.mjs
+resumen.test.mjs: 10 verificaciones OK
+$ node resources/js/router/navigation.test.mjs | tail -3
+OK: navegacion revalida permisos, revocacion y fallo seguro
+$ npm run build | tail -1
+✓ built in 7.03s
+
+## Suites completas del repositorio sobre la integracion
+$ php vendor/bin/phpunit --testsuite Unit
+OK (72 tests, 204 assertions)
+$ php vendor/bin/phpunit --testsuite Feature
+Tests: 359, Assertions: 6190, Errors: 44, Failures: 2, Risky: 28.
+Errores y fallos por carpeta: Reception 33, SalasCamas 10, Reportes (indicadores de ASII-23) 3.
+Todos fallan por PostgreSQL ausente (puertos 55431/55433: Connection refused, o 503 de la fuente).
+Los mismos 46 ya fallaban antes de integrar mis otras ramas (2026-10-30, develop con solo la parte 1 de
+la Semana 16 de citas: Tests: 318, Errors: 44, Failures: 2). Ninguno es de citas, documentacion,
+dashboard ni reportes operativos.
