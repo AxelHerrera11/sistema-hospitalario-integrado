@@ -1,0 +1,198 @@
+openapi: 3.1.0
+info:
+  title: Prescripciones API
+  version: 0.1.0
+  description: Contrato propuesto; revisar esquemas con el caso de uso antes de implementar.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    TenantHeader:
+      type: apiKey
+      in: header
+      name: X-Tenant-ID
+  schemas:
+    PrescriptionInput:
+      type: object
+      description: PROPUESTO. Dosificación numérica y unidad son campos separados.
+      required:
+        - medication_id
+        - dosage_value
+        - dosage_unit
+        - route
+        - frequency_times
+        - duration_value
+        - duration_unit
+      properties:
+        medication_id:
+          type: string
+        dosage_value:
+          type: number
+        dosage_unit:
+          type: string
+        route:
+          type: string
+        frequency_times:
+          type: integer
+        frequency_interval:
+          type: [string, 'null']
+        duration_value:
+          type: integer
+        duration_unit:
+          type: string
+    Prescription:
+      type: object
+      description: PROPUESTO. Representación de salida; campos finales pendientes.
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [draft, signed]
+        warnings:
+          type: array
+          items:
+            type: string
+    AllergyConflict:
+      type: object
+      required: [code, severity, exception_allowed]
+      properties:
+        code:
+          const: ALLERGY_CONFLICT
+        severity:
+          type: string
+          enum: [moderate, unknown, severe, life_threatening]
+        exception_allowed:
+          type: boolean
+          const: false
+          description: La excepción queda fuera de esta versión. Siempre false mientras el permiso siga pendiente.
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+paths:
+  /api/v1/patients/{patient}/prescriptions:
+    post:
+      operationId: createPrescription
+      summary: Crear prescripción y evaluar alergias
+      x-required-permission: prescripciones.crear
+      security: [{BearerAuth: [], TenantHeader: []}]
+      parameters:
+        - name: patient
+          in: path
+          required: true
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PrescriptionInput'}
+      responses:
+        '201':
+          description: Creada; puede incluir advertencia para conflicto mild.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Prescription'}
+        '401':
+          description: No autenticado.
+        '403':
+          description: Sin permiso o acceso al tenant.
+        '404':
+          description: Paciente no encontrado.
+        '422':
+          description: Validación, medicamento inactivo o conflicto; no se guarda.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - {$ref: '#/components/schemas/AllergyConflict'}
+                  - {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Dependencia requerida no disponible.
+    get:
+      operationId: listPatientPrescriptions
+      summary: Listar prescripciones del paciente
+      x-required-permission: prescripciones.ver
+      security: [{BearerAuth: [], TenantHeader: []}]
+      parameters:
+        - name: patient
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Lista obtenida.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/Prescription'}
+        '401':
+          description: No autenticado.
+        '403':
+          description: Sin permiso o acceso al tenant.
+        '404':
+          description: Paciente no encontrado.
+  /api/v1/prescriptions/{id}:
+    get:
+      operationId: getPrescription
+      summary: Consultar detalle de prescripción
+      x-required-permission: prescripciones.ver
+      security: [{BearerAuth: [], TenantHeader: []}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Detalle obtenido.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Prescription'}
+        '401':
+          description: No autenticado.
+        '403':
+          description: Sin permiso o acceso al tenant.
+        '404':
+          description: Prescripción no encontrada.
+  /api/v1/prescriptions/{id}/sign:
+    post:
+      operationId: signPrescription
+      summary: Firmar prescripción
+      description: El profesional se obtiene de la identidad autenticada, no del cuerpo de la solicitud.
+      x-required-permission: prescripciones.firmar
+      security: [{BearerAuth: [], TenantHeader: []}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Firmada.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Prescription'}
+        '401':
+          description: No autenticado.
+        '403':
+          description: Sin permiso o perfil profesional asociado.
+        '404':
+          description: Prescripción no encontrada.
+        '409':
+          description: Estado incompatible con la firma.
+        '422':
+          description: Validación o conflicto clínico; no se guarda.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - {$ref: '#/components/schemas/AllergyConflict'}
+                  - {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Dependencia requerida no disponible.

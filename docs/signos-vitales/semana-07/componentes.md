@@ -4,8 +4,8 @@
 
 | Componente | Responsabilidad | Dónde está hoy |
 |---|---|---|
-| Middlewares `tenant` y `jwt.auth` | Resolver el hospital (`X-Tenant-ID`) y el usuario del JWT | En `develop`: `TenantMiddleware` y `JwtAuth`, con alias en `bootstrap/app.php` |
-| Middleware `permission:signos_vitales.*` | Proteger cada ruta con su permiso de RBAC | **Falta el alias `permission`** y el catálogo con `signos_vitales.registrar`, `.ver` y `.corregir` (María, ASII-02). En el micro-HIS lo reemplaza `ApiKernel` con `PermissionChecker` |
+| Middlewares `tenant`, `jwt.auth` y `EnsureHospitalDatabaseTenant` | Resolver el hospital (`X-Tenant-ID`) y el usuario del JWT, y exigir que el hospital sea el de la base HOSPITAL de esta instancia | En `develop`: `TenantMiddleware` y `JwtAuth`, con alias en `bootstrap/app.php`, y `App\Http\Middleware\EnsureHospitalDatabaseTenant` |
+| Middleware `permission:signos_vitales.*` | Proteger cada ruta con su permiso de RBAC | En `develop`: alias `permission` (y `rbac`) hacia `RequirePermission` en `RbacServiceProvider`; `signos_vitales.registrar`, `.ver` y `.corregir` en `config/rbac.php` (médico los tres, enfermería `.ver`). En el micro-HIS lo reemplaza `ApiKernel` con `PermissionChecker` |
 | `Api/V1/VitalSignController` + `StoreVitalSignsRequest` | Controller delgado: el FormRequest valida tipos (número u objeto `{value, unit}`), el controller llama al caso de uso y traduce `VitalSignViolation` | No (propuesto); hoy `VitalSignController` + `Request` en el micro-HIS |
 | Application: `RecordVitalSigns` · `GetVitalSign` | Orquestan el flujo; tras el refactor `RecordVitalSigns` ya no elige el perfil por edad | Micro-HIS, `src/Application` (#131, #549) |
 | Domain: `VitalSigns` · `VitalSignRule` y reglas · `ThresholdEvaluator` · `Assessment` · `Severity` | Plausibilidad, umbrales y severidad máxima | Micro-HIS, `src/Domain` (#131); sin cambios |
@@ -42,7 +42,7 @@ Reglas de UI que hereda del contrato, no inventa:
 `bootstrap/app.php` ya monta `routes/api.php` con el prefijo `api/v1`, así que las rutas del [contrato de la Semana 5](../semana-05/contrato-api.md) no cambian:
 
 ```php
-Route::middleware(['tenant', 'jwt.auth'])->group(function (): void {
+Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
     Route::post('/care-episodes/{careEpisode}/vital-signs', [VitalSignController::class, 'store'])->middleware('permission:signos_vitales.registrar');
     Route::get('/vital-signs/{vitalSign}', [VitalSignController::class, 'show'])->middleware('permission:signos_vitales.ver');
 });

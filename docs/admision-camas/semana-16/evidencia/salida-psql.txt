@@ -1,0 +1,10 @@
+   type    | status | reason |  cama  | estado_cama |      asignada_por      
+-----------+--------+--------+--------+-------------+------------------------
+ inpatient | open   | Sepsis | UCI-01 | occupied    | Recepcion Ficticia E2E
+(1 row)
+
+  module  |         action         | resource_type | con_episodio 
+----------+------------------------+---------------+--------------
+ admision | admision.cama_asignada | bed_stay      | t
+(1 row)
+

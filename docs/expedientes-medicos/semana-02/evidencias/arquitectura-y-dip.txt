@@ -1,0 +1,12 @@
+$ php micro-his/expediente-medico/tests/run.php | grep -E "R-0|N-01|Resumen"
+# 2026-10-23 09:47 · PHP 8.2.12
+OK: [pdo] N-01 médica tratante → 200, 3 episodios (reciente primero) y Cache-Control no-store
+OK: [memoria] N-01 médica tratante → 200, 3 episodios (reciente primero) y Cache-Control no-store
+OK: R-01 Domain no depende de Application, Persistence, Presentation, Integration ni PDO
+OK: R-02 Application no conoce PDO, SQL, adaptadores ni otros módulos (solo puertos propios)
+OK: R-03 Presentation (controlador, router, vista) no tiene SQL ni usa PDO ni adaptadores
+OK: R-04 el controlador no aplica reglas de dominio (no construye MedicalRecord ni valida estados)
+OK: R-05 Persistence solo usa sentencias preparadas (sin query/exec con variables)
+OK: R-06 los contratos de RBAC, Gobernanza y Pacientes solo se usan en Integration
+OK: R-07 ningún archivo del módulo supera 400 líneas
+Resumen: 89 OK, 0 FALLO

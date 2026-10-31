@@ -1,0 +1,7 @@
+semana15.php              24 PASS  0 FAIL
+run.php                   84 PASS  0 FAIL
+mvc.php                   12 PASS  0 FAIL
+api.php                   18 PASS  0 FAIL
+client.php                 6 PASS  0 FAIL
+verificar_contrato.py      6 PASS  0 FAIL
+Total baterías principales: 144 PASS

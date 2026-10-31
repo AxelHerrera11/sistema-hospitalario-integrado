@@ -1,0 +1,42 @@
+# Pruebas de permisos y datos sensibles del expediente (Semana 17) — 2026-10-29 21:56 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php micro-his/expediente-medico/tests/run.php | sed -n '/== Seguridad/,/== Arquitectura/p' | grep -v '== Arquitectura'
+== Seguridad (permisos, datos sensibles, entradas hostiles)
+OK: S-01 matriz activa: GET 200 solo para la médica tratante; POST 403 para todos
+OK: S-02 apertura propuesta: médicos y recepción 201/200; enfermería, admin y ajeno 403
+OK: S-03 P-9999 (no existe) y P-0003 (existe, sin vínculo) → mismo 403 SIN_VINCULO_ASISTENCIAL
+OK: S-04 inyección, rutas, 300 caracteres, byte nulo y HTML → 422 CODIGO_PACIENTE_INVALIDO sin SQL ni eco
+OK: S-05 hospital-norte 503, inexistente 403, ausente 400 y no miembro 403
+OK: S-06 12 respuestas (6 actores × consulta/apertura): sin contacto, global_id ni SQL; no-store + nosniff
+OK: S-07 12 eventos de auditoría sin motivos de episodio, nombres ni fecha de nacimiento
+OK: S-08 apertura repetida sin bitácora → 503 AUDITORIA_NO_DISPONIBLE y sin EXP- en la respuesta
+(código de salida: 0)
+
+$ php micro-his/expediente-medico/tests/run.php | grep -E 'A3|A6|N-12|N-13|Resumen'
+OK: A3 expediente ya existente → created=false, mismo expediente y evento «apertura_repetida» (S-07, Semana 17)
+OK: A6 carrera: otro proceso abrió primero → se devuelve ese expediente con created=false
+OK: [pdo] N-12 bitácora caída → 503 AUDITORIA_NO_DISPONIBLE sin datos del expediente
+OK: [pdo] N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404
+OK: [memoria] N-12 bitácora caída → 503 AUDITORIA_NO_DISPONIBLE sin datos del expediente
+OK: [memoria] N-13 DELETE → 405 (no se borra un expediente); ruta vacía → 404
+Resumen: 97 OK, 0 FALLO
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/ExpedienteMedico --testdox | grep -E '✔|✘|^OK|Tests:'
+ ✔ Treating physician reads the longitudinal record and the access is audited
+ ✔ Identity tenant and permission are enforced before the micro his
+ ✔ Another hospital or an unassigned database never reaches the record
+ ✔ Clinical relationship and local reference are required
+ ✔ Opening is not published until rbac catalogues its permission
+OK (5 tests, 29 assertions)
+(código de salida: 0)
+
+$ php artisan route:list --path=medical-record -v | grep -E 'medical-record|⇂'
+  GET|HEAD       api/v1/patients/{patientCode}/medical-record App\ExpedienteMedico\ExpedienteMedicoController@consult
+                 ⇂ api
+                 ⇂ tenant
+                 ⇂ App\Http\Middleware\JwtAuth
+                 ⇂ App\Http\Middleware\EnsureHospitalDatabaseTenant
+                 ⇂ App\Rbac\RequirePermission:expediente.ver
+(código de salida: 0)

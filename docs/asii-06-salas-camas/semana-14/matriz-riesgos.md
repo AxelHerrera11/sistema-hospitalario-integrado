@@ -1,0 +1,24 @@
+# Matriz de riesgos ASII-06
+
+Valoración cualitativa propuesta, no frecuencia histórica: probabilidad P e
+impacto I entre 1 y 3 (bajo/medio/alto). Nivel = P × I: 1–2 bajo, 3–4 medio,
+6–9 alto. Madelin Cerón mantiene el seguimiento documental de todos los riesgos.
+Los responsables técnicos indicados como pendientes no tienen asignación aceptada.
+Controles C y métricas M se definen en el plan y las métricas.
+
+| ID | Riesgo y consecuencia | P | I | Nivel | Preventivo | Detectivo | Responsable técnico | Acción correctiva | Estado |
+|---|---|---|---|---|---|---|---|---|---|
+| R-01 | Cruce hospitalario expone catálogo ajeno por conexión fija. | 2 | 3 | 6 alto | C-01: guard temporal + tenant/JWT/RBAC. | C-04/C-08, M-04/M-07: casos A/B y revisión de cierre. | Pendiente de asignación: integración tenant. | Resolver base por identidad hospitalaria autenticada y repetir pruebas en ambos sentidos. | Defecto REV-01 contenido temporalmente por #1154; abierto, prueba actual bloqueada. |
+| R-02 | Sin mapeo dinámico, hospitales legítimos quedan sin catálogo o usan asignación incorrecta. | 3 | 3 | 9 alto | C-01/C-03: asignación explícita por instancia; acordar contrato/provisión antes de habilitar. | C-06, M-04/M-05: 403/503 sanitizados y prueba sin asignación. | Pendiente de asignación: tenant/persistencia. | Definir resolución y credenciales seguras; no inventar `clinical_endpoint`. | Resolución definitiva pendiente. |
+| R-03 | FK o códigos inválidos generan camas huérfanas/duplicadas y conteos incorrectos. | 2 | 3 | 6 alto | C-02: FK y UNIQUE existentes. | C-05, M-02: negativos de FK y duplicados. | Pendiente de asignación: persistencia. | Corregir en capa responsable y repetir en test con rollback. | Restricciones inspeccionadas; negativos pendientes. |
+| R-04 | Estados fuera del dominio confunden el catálogo operativo. | 2 | 3 | 6 alto | C-02: Domain y CHECKs existentes. | C-05, M-03: matriz de ocho casos. | Pendiente de asignación: dominio/persistencia. | Completar casos y corregir rechazo sin alterar estados existentes; no inventar transiciones. | Rechazo `broken` probado; cobertura incompleta. |
+| R-05 | Confundir conteo con capacidad/aforo produce decisiones operativas incorrectas. | 2 | 3 | 6 alto | C-03: no presentar conteo como aforo ni disponibilidad clínica. | C-05/C-08, M-02/M-06: reconciliar total y estados en snapshot de test. | Pendiente de asignación: responsable funcional. | Acordar definición de capacidad y contrato con admisión/ocupación antes de implementarlo. | No existe capacidad máxima en wards; control de reconciliación propuesto. |
+| R-06 | Alta HTTP/UI sin validación o atomicidad persiste datos incompletos. | 2 | 3 | 6 alto | C-02/C-03: revisión de entrada, permisos y transacción antes de publicar altas. | C-05, M-01/M-02/M-03: límites, inválidos y fallo de escritura. | Pendiente de asignación: backend. | Definir contrato de escritura y probar RNF-02 con persistencia real. | Alta en aplicación; HTTP/UI de creación ausentes. |
+| R-07 | Acceso sin permiso o sin JWT válido expone catálogo indebidamente. | 2 | 3 | 6 alto | C-01: autorización backend existente; menú no sustituye RBAC. | C-04, M-04: acceso sin token/permiso y tenant inválido. | Pendiente de asignación: seguridad/backend. | Restituir controles y verificar rechazo sin datos. | Endpoint probado; aislamiento real bloqueado. |
+| R-08 | Falla PDO causa indisponibilidad o error con detalles internos. | 2 | 2 | 4 medio | C-03: revisar traducción segura de PersistenceFailure existente. | C-04/C-05/C-06, M-01/M-05: fallo simulado y conexión real. | Pendiente de asignación: persistencia. | Recuperar entorno autorizado, diagnosticar y repetir sin exponer secretos. | API/fake probados; PostgreSQL 55433 no disponible. |
+| R-09 | Desajuste Vue/API, respuestas obsoletas o datos vacíos muestran información incorrecta. | 2 | 2 | 4 medio | C-03: contrato compartido y revisión de estados/reintento. | C-04/C-07, M-01/M-05/M-06: build, Node y recorrido. | Pendiente de asignación: frontend/backend. | Reproducir selección rápida, vacío y error; corregir en PR técnico. | Build/Node pasan; interacción pendiente. |
+| R-10 | Ausencia de evidencia visual autenticada oculta barreras de teclado y flujo. | 3 | 2 | 6 alto | C-03: definir recorrido y solicitar identidad autorizada sin publicar credenciales. | C-07/C-08, M-06/M-07: revisión manual de foco, zoom y anuncios. | Pendiente de asignación: verificación independiente. | Probar con sesión autorizada y registrar observaciones; no declarar WCAG. | Bloqueado por identidad y revisión aún no asignadas. |
+
+Cerrar un riesgo exige evidencia y verificación independiente; mitigación reduce
+exposición, no demuestra solución definitiva. R-01/R-02 deben mantenerse abiertos
+hasta validar el contrato y el aislamiento definitivo; este PR solo documenta el plan.

@@ -1,0 +1,17 @@
+flowchart LR
+  inicio([Inicio]) --> bandeja["Bandeja de órdenes<br/>/?vista=lista"]
+  bandeja -->|"Nueva orden"| emision["Emitir orden<br/>/?vista=emision"]
+  bandeja -->|"Seleccionar orden"| detalle["Detalle y seguimiento<br/>/?vista=detalle&orden=ORD-1042"]
+  emision -->|"Agregar pruebas y revisar"| confirmar["Confirmar emisión<br/>/?vista=confirmar"]
+  emision -->|"Cancelar"| bandeja
+  confirmar -->|"Volver"| emision
+  confirmar -->|"Emitir orden"| detalle
+  detalle -->|"Avanzar estado"| detalle
+  detalle -->|"Cancelar con motivo"| dialogo["Diálogo de cancelación"]
+  dialogo -->|"Motivo válido"| detalle
+  dialogo -->|"Volver"| detalle
+  detalle -->|"Orden validada o cancelada"| error["Error recuperable<br/>/?vista=error"]
+  emision -->|"Prueba inactiva"| error
+  error -->|"Volver al detalle"| detalle
+  error -->|"Corregir pruebas"| emision
+  error -->|"Ir a la bandeja"| bandeja
