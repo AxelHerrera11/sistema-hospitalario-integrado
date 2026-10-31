@@ -1,0 +1,26 @@
+@startuml
+title Micro-HIS Dashboard (ASII-26) - MVC y patron Repository
+
+skinparam componentStyle rectangle
+package "Presentation (MVC)" #Paleturquoise {
+  [public/index.php (router)] as router
+  [TableroController] as ctrl
+}
+package "Application" #LightBlue {
+  [ObtenerTablero (read model)] as uc
+}
+package "Domain" #LightYellow {
+  [Indicador (entidad)] as ent
+  [IndicadorRepository (interfaz)] as repo
+}
+package "Infrastructure" #LightGray {
+  [IndicadorRepositoryPDO] as pdo
+  [IndicadorRepositoryInMemory] as mem
+}
+router --> ctrl
+ctrl --> uc
+uc --> ent
+uc --> repo
+pdo ..|> repo
+mem ..|> repo
+@enduml

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="qa-calidad.unit" tests="31" failures="0">
+    <testcase name="[U01] Versión SemVer válida y con prerelease" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U02] Versión no SemVer → version_invalida" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U03] Commit abreviado (7) → commit_invalido" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U04] Nombres de suite repetidos → suite_duplicada" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U05] Plan sin E2E obligatoria → plan_incompleto" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U06] Ambiente &quot;production&quot; no existe → ambiente_no_permitido (RNF-02)" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U07] Nombre de suite con mayúsculas/espacios → nombre_suite_invalido" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U08] La evidencia reconoce su contenido original" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U09] Un byte alterado invalida la evidencia" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U10] Ruta de evidencia rechazada: escapa con .." classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U10] Ruta de evidencia rechazada: ruta absoluta" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U10] Ruta de evidencia rechazada: unidad Windows" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U10] Ruta de evidencia rechazada: URL" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U11] SHA-256 en mayúsculas o corto → evidencia_sin_huella" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U12] Evidencia de 0 bytes → evidencia_vacia" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U13] Fallidas + omitidas &gt; total → conteo_inconsistente" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U14] Duración negativa → conteo_negativo" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U15] Tasa sobre ejecutadas: 7 de 8 = 0.875" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U16] Todo omitido → tasa null (no hay qué medir)" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U17] Registrar antes de iniciar → estado_invalido (409)" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U18] Suite que no está en el plan → suite_no_planificada" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U19] Segundo resultado de la misma suite → resultado_duplicado (no se sobrescribe)" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U20] Iniciar dos veces → estado_invalido" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U21] Completar fija estado y hora de cierre" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U22] Abortar una ejecución completada → ejecucion_finalizada" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U23] Abortar sin motivo → motivo_invalido" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U24] Abortar desde planned guarda el motivo" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U25] Umbral 1.5 → umbral_invalido" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U26] Umbral para tipo inexistente → tipo_suite_invalido" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U27] Política sin versión → politica_version_invalida" classname="qa-calidad.unit" time="0.000"/>
+    <testcase name="[U28] Tipo sin umbral explícito usa 1.0 (lo más estricto)" classname="qa-calidad.unit" time="0.000"/>
+  </testsuite>
+</testsuites>

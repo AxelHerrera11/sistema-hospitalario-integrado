@@ -1,0 +1,67 @@
+# Smoke on-premise del micro-HIS Expediente médico — 2026-10-29 21:32:15 -0600
+# Servidor: php -S 127.0.0.1:8096 (PHP 8.2.12), SQLite del prototipo con datos ficticios; Windows 11
+# Commit base: 2986919c (origin/develop) + cambios de la Semana 16
+
+$ curl -sI http://127.0.0.1:8096/ui/app.js   # DEF-EXP-10: debe traer Cache-Control: no-cache
+HTTP/1.1 200 OK
+Content-Type: text/javascript; charset=utf-8
+Cache-Control: no-cache
+
+
+$ curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8096/ui/../../app.php   # fuera de public/ui
+404
+
+$ GET P-0001 como dra. López (médica tratante)
+HTTP/1.1 200 OK
+Cache-Control: no-store
+{"record":{"medical_record_id":"e0000000-0000-4000-8000-000000000001","record_number":"EXP-P-0001","status":"open","opened_at":"2026-03-02T09:00:00+00:00","closed_at":null},"patient":{"code":"P-0001","display_name":"Ana Gómez","birth_date":"1980-05-14","sex":
+
+
+$ GET P-0001 como dr. Pérez (asignación terminada)
+HTTP/1.1 403 Forbidden
+{"code":"SIN_VINCULO_ASISTENCIAL"}
+
+
+$ GET P-0001 como enfermería (permiso sin vínculo)
+HTTP/1.1 403 Forbidden
+{"code":"SIN_VINCULO_ASISTENCIAL"}
+
+
+$ GET P-0001 sin X-User-ID
+HTTP/1.1 401 Unauthorized
+{"code":"IDENTIDAD_REQUERIDA"}
+
+
+$ GET P-0001 en hospital-norte (sin base configurada)
+HTTP/1.1 503 Service Unavailable
+{"code":"HOSPITAL_NO_DISPONIBLE"}
+
+
+$ POST P-0002 como recepción (apertura, concesión PROPUESTA activa en el prototipo)
+HTTP/1.1 201 Created
+{"created":true,"medical_record_id":"45b071d2-44e9-4be8-9356-09b096779fe0","record_number":"EXP-P-0002","status":"open","opened_at":"2026-10-30T03:32:15+00:00","closed_at":null}
+
+
+$ POST P-0002 otra vez (idempotente)
+HTTP/1.1 200 OK
+{"created":false,"medical_record_id":"45b071d2-44e9-4be8-9356-09b096779fe0","record_number":"EXP-P-0002","status":"open","opened_at":"2026-10-30T03:32:15+00:00","closed_at":null}
+
+
+$ POST P-0003 (paciente fallecido)
+HTTP/1.1 409 Conflict
+{"code":"PACIENTE_NO_ACTIVO"}
+
+
+$ DELETE P-0001 (fuera del contrato)
+HTTP/1.1 405 Method Not Allowed
+{"code":"METODO_NO_PERMITIDO"}
+
+
+$ SELECT event, actor_id, result, trace_id, substr(event_hash,1,12) FROM audit_log   (bitácora real de Gobernanza escrita por el servidor)
+expediente_medico.consultado | 11111111 | success | smoke-s16-01 | fe89e0728112
+expediente_medico.acceso_denegado | 22222222 | denied | - | cba0c78689d4
+expediente_medico.acceso_denegado | 33333333 | denied | - | 33795b76a773
+expediente_medico.abierto | 44444444 | success | - | b34d9c4dacf6
+
+$ UPDATE audit_log SET result='x'   (append-only)
+rechazado: SQLSTATE[23000]: Integrity constraint violation: 19 audit_log is append-only

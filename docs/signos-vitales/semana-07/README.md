@@ -21,7 +21,7 @@ flowchart LR
     store --> api[api/signosVitalesApi.js<br>JWT + X-Tenant-ID]
   end
   subgraph BE[Backend Laravel 12]
-    mw[Middlewares<br>tenant · jwt.auth · permission:signos_vitales.*] --> ctrl[Api/V1/VitalSignController<br>+ StoreVitalSignsRequest]
+    mw[Middlewares<br>tenant · jwt.auth · EnsureHospitalDatabaseTenant<br>permission:signos_vitales.*] --> ctrl[Api/V1/VitalSignController<br>+ StoreVitalSignsRequest]
     ctrl --> uc[Application<br>RecordVitalSigns · GetVitalSign]
     uc --> dom[Domain<br>VitalSigns · Measurement · Unit<br>ThresholdProfile · ProfileCatalog<br>VitalSignRule · ThresholdEvaluator · Assessment]
     uc --> ports{{Puertos<br>VitalSignRepository · CareEpisodeReader<br>AlertNotifier · PermissionChecker}}

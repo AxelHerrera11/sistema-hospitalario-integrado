@@ -1,0 +1,11 @@
+PASS  sin token → 401                                                  esperado 401, obtenido 401
+PASS  token del hospital A con X-Tenant-ID del B → 403                 esperado 403, obtenido 403
+PASS  recepción sin laboratorio.catalogo.ver → 403 RBAC               esperado 403, obtenido 403
+PASS  técnico intenta registrar (sin administrar) → 403               esperado 403, obtenido 403
+PASS  superadmin registra glucosa (código «glu») → 201              esperado 201, obtenido 201
+      código guardado: GLU, versión 1
+PASS  otra versión vigente del mismo código → 409                    esperado 409, obtenido 409
+PASS  rangos incoherentes (crítico bajo 80) → 422                     esperado 422, obtenido 422
+PASS  técnico busca «gluc» vigente hoy → 200                        esperado 200, obtenido 200
+      pruebas encontradas: 1
+PASS  técnico consulta con fecha inválida → 422                      esperado 422, obtenido 422

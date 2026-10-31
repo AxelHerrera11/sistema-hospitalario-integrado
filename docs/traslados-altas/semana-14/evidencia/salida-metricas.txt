@@ -1,0 +1,5 @@
+# php docs/traslados-altas/semana-14/evidencia/metricas.php origin/develop — 21/10/2026, develop b252e1e
+M1 verificaciones en verde: 95/95
+M2 tamaño de PR: 25 PR; máximo 393 líneas; 0 superan 400
+M3 RF con prueba: 10/10
+M4 dependencias prohibidas: 0

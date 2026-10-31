@@ -40,6 +40,6 @@ Códigos de salida: 0 éxito, 1 rechazo, 2 fallo sin cambios, 3 resultado incier
 ## Límites actuales
 
 - La autorización solo exige un actor activo en `local_user_refs`; los permisos por rol dependen de RBAC (ASII-02).
-- No hay API HTTP, tenant ni interfaz: se integran con Laravel en las semanas 16–17.
+- La API v1, el tenant y la interfaz están en Laravel desde la Semana 16; los permisos por rol siguen pendientes de RBAC.
 - Exigir `beds.status = available` en el destino es la decisión **propuesta** R-TA-01, pendiente con ASII-06. El flujo no cambia `beds.status`.
-- La concurrencia con conexiones independientes todavía no está probada.
+- La concurrencia con conexiones independientes se prueba en `tests/concurrencia.php` (Semana 15).

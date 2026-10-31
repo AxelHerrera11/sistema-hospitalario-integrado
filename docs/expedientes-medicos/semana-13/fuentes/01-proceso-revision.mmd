@@ -1,0 +1,10 @@
+%% Proceso de la revisión técnica formal (inspección) del expediente.
+flowchart LR
+    A["Planificación<br/>moderador verifica criterios de entrada"] --> B["Reunión de apertura (15 min)<br/>autor presenta alcance"]
+    B --> C["Preparación individual (≤ 90 min)<br/>cada revisor aplica su parte del checklist"]
+    C --> D["Reunión de revisión (≤ 60 min)<br/>lector recorre el código; registrador anota hallazgos"]
+    D --> E{"¿Hallazgos críticos o mayores?"}
+    E -- Sí --> F["Retrabajo del autor<br/>un commit por hallazgo"]
+    F --> G["Verificación por el moderador"]
+    G --> E
+    E -- No --> H["Cierre: criterios de salida cumplidos<br/>informe en el PR"]

@@ -1,0 +1,18 @@
+@startsalt
+title ASII-26 - Escritorio (>= 1024 px)
+{
+<b>Hospital HIS</b> | . | . | Hospital Central - Lis
+{+
+[Inicio]
+[Citas]
+[Camas]
+[Reportes]
+} | {
+<b>Buenos dias, Lis</b> | Periodo: ^2026-11^
+{+
+<b>Ocupacion</b> | <b>Citas atendidas</b> | <b>Tiempo de espera</b>
+82 % - Cumple | 84 - En riesgo | 30 min - No cumple
+}
+}
+}
+@endsalt

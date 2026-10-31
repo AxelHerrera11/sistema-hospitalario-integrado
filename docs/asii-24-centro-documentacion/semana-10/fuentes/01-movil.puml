@@ -1,0 +1,19 @@
+@startsalt
+title ASII-24 - Movil (375 px)
+{
+<b>Hospital HIS</b> | [=]
+--
+<b>Documentacion</b>
+"Buscar documento   "
+{+
+<b>Manual de enfermeria</b>
+<i>Manual - v2.1</i>
+}
+{+
+<b>Protocolo de alergias</b>
+<i>Protocolo - v1.0</i>
+}
+--
+[Catalogo] | [Recientes] | [Perfil]
+}
+@endsalt

@@ -1,0 +1,45 @@
+$ php tests/run.php | tail -1
+Todas las pruebas pasaron.
+$ php tests/api.php | tail -1
+Todas las pruebas del API pasaron.
+
+$ php evidencia/pruebas.php <modulo>
+U01  unitaria RF-MED-04     PASA           Period: hasta = desde se rechaza (limite) | INVALID_PERIOD/422
+U02  unitaria RF-MED-04     PASA           Period: hasta = desde + 1 dia se acepta (limite) | OK
+U03  unitaria RF-MED-04     PASA           Period: 30-feb y 1-1-1 con un digito se rechazan | INVALID_PERIOD/422|INVALID_PERIOD/422
+U04  unitaria RF-MED-04     PASA           overlaps: [01-01,02-01) y [02-01,...) no se solapan; con 01-31 si | [false,true]
+U05  unitaria RF-MED-05     PASA           Politica: misma especialidad solapada -> 409 | SPECIALTY_ALREADY_ASSOCIATED/409
+U06  unitaria RF-MED-05     PASA           Politica: segunda principal solapada -> 409; no solapada -> OK | PRIMARY_SPECIALTY_CONFLICT/409|OK
+U07  unitaria RF-MED-04     PASA           Politica: vigencia fuera del perfil -> 422 | PERIOD_OUTSIDE_PROFILE/422
+U08  unitaria RF-MED-06     PASA           SlotPlanner: 08:00-09:30 en bloques de 30 menos 08:30 | ["08:00","09:00"]
+U09  unitaria RF-MED-06     PASA           SlotPlanner: ventana menor a un bloque -> []; bloque 0 -> excepcion | []|InvalidArgumentException
+U10  unitaria RF-MED-06     DEFECTO D-02   SlotPlanner: cita a las 08:15 (fuera de rejilla) bloquea 08:00 | ["08:00","08:30"]
+U11  unitaria RF-MED-02     DEFECTO D-01   RegisterDoctor: la licencia " COL-9" no duplica a "COL-9" | OK
+B01  blanca   RF-MED-01..03 PASA           RegisterDoctor rama 1/4 | PAYLOAD_INVALID/422
+B02  blanca   RF-MED-01..03 PASA           RegisterDoctor rama 2/4 | SPECIALTY_INACTIVE/422
+B03  blanca   RF-MED-01..03 PASA           RegisterDoctor rama 3/4 | LICENSE_ALREADY_REGISTERED/409
+B04  blanca   RF-MED-01..03 PASA           RegisterDoctor rama 4/4 | OK
+B05  blanca   RF-MED-03..05 PASA           AssociateSpecialty rama 1/4 | SPECIALTY_INACTIVE/422
+B06  blanca   RF-MED-03..05 PASA           AssociateSpecialty rama 2/4 | DOCTOR_NOT_FOUND/404
+B07  blanca   RF-MED-03..05 PASA           AssociateSpecialty rama 3/4 | PERIOD_OUTSIDE_PROFILE/422
+B08  blanca   RF-MED-03..05 PASA           AssociateSpecialty rama 4/4 | OK
+B09  blanca   RF-MED-05     PASA           Condicion link.principal && nueva.principal = [true,true] | PRIMARY_SPECIALTY_CONFLICT/409
+B10  blanca   RF-MED-05     PASA           Condicion link.principal && nueva.principal = [true,false] | OK
+B11  blanca   RF-MED-05     PASA           Condicion link.principal && nueva.principal = [false,true] | OK
+B12  blanca   RF-MED-06,07  PASA           QueryAvailability: fecha invalida, especialidad inactiva, sin medicos, sin horario, OK | INVALID_DATE_RANGE/422|SPECIALTY_INACTIVE/422|NO_DOCTORS_FOR_SPECIALTY|vacio|OK
+N01  negra    RF-MED-01     PASA           Equivalencia valida: alta correcta | alta de COL-1 -> 201
+N02  negra    RF-MED-01..03 PASA           Equivalencia invalida: licencia duplicada / especialidad inactiva / inexistente / vacios | 409 LICENSE_ALREADY_REGISTERED|422 SPECIALTY_INACTIVE|422 SPECIALTY_INACTIVE|422 PAYLOAD_INVALID
+N03  negra    RF-MED-04     PASA           Limites de vigencia en la asociacion: hasta = desde, hasta = desde + 1, fecha imposible | 422 INVALID_PERIOD|201 |422 INVALID_PERIOD
+N04  negra    RF-MED-05     PASA           Asociacion: repetida -> 409 y segunda principal -> 409 | 409 SPECIALTY_ALREADY_ASSOCIATED|409 PRIMARY_SPECIALTY_CONFLICT
+N05  negra    RNF-MED-01    PASA           Permisos: sin actor 401; sin permiso 403; con permiso 201 | 401 UNAUTHENTICATED|403 FORBIDDEN|201 
+N06  negra    RNF-MED-01    PASA           RBAC caido: las tres rutas fallan cerradas con 503 | 503 AUTHORIZATION_UNAVAILABLE|503 AUTHORIZATION_UNAVAILABLE|503 AUTHORIZATION_UNAVAILABLE
+N07  negra    RNF-MED-01    DEFECTO D-03   Tenant ajeno: X-Tenant-ID de otro hospital -> 401/403 | 201 
+N08  negra    RF-MED-06     PASA           Tipos incorrectos y JSON malformado -> 422 PAYLOAD_INVALID | 422 PAYLOAD_INVALID|422 PAYLOAD_INVALID|422 PAYLOAD_INVALID
+N09  negra    RF-MED-06     PASA           Disponibilidad: lunes con cita 08:30 -> 08:00 y 09:00 | 200 OK [{"doctor_id":"doc-ana","status":"OK","slots":["08:00","09:00"]}]
+N10  negra    RF-MED-07     PASA           Dia sin franjas y especialidad sin medicos: respuesta explicita | 200 OK [{"doctor_id":"doc-ana","status":"OK","slots":[]}] | 200 NO_DOCTORS_FOR_SPECIALTY []
+N11  negra    RF-MED-06     DEFECTO D-04   Disponibilidad: fecha imposible -> 422 INVALID_DATE_RANGE; sin specialty -> 422 PAYLOAD_INVALID | 422 INVALID_DATE_RANGE|422 SPECIALTY_INACTIVE
+N12  negra    RNF-MED-01    DEFECTO D-05   Ruta sin permiso declarado no queda abierta (GET /specialties) | NULL
+N13  negra    RF-MED-06     PASA           Trazabilidad: toda respuesta, tambien 4xx, lleva X-Trace-Id | 422
+
+Casos: 36 | pasan: 31 | defectos conocidos: 5 | fallas inesperadas: 0
+(codigo de salida: 0)
