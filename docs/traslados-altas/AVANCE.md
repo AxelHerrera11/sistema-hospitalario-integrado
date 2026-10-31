@@ -50,11 +50,14 @@ Sigue vigente lo que falta confirmar en [`revision-humana.md`](./revision-humana
 - Revisión de las Semanas 1, 2 y 11 a 18.
 - Defensas de las Semanas 6, 12 y 18.
 
+### Permisos (30/10/2026)
+
+#1577 activa la matriz final decidida por RBAC. El alta corresponde a cualquier médico con permiso vigente del hospital. **No se restringe al médico tratante:** no existe control de la relación médico-paciente.
+
 ### Bloqueado por terceros
 
 | Bloqueo | Depende de | Qué falta |
 |---|---|---|
-| Activar permisos | RBAC (ASII-02) | Decisión sobre #1577 |
 | Crear `local_user_refs` | Tenants e identidad | Sincronización de membresías CENTRAL |
 | Elegir la base HOSPITAL por hospital | Plataforma y Tenants | Uso de `clinical_endpoint` |
 | Límite de tasa de `/api/v1` | API Gateway | Política definida y probada |
