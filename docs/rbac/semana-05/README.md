@@ -70,3 +70,11 @@ Si `DenialRecorder` no responde, `authorize` igual devuelve `allowed: false`; el
 - **SD-RBAC-14:** la autenticación se delega a Usuarios/Auth; RBAC solo autoriza, no emite ni valida credenciales.
 - **SD-RBAC-15:** la identidad del usuario llega como un claim ya validado (vía `RoleResolver`; la conexión real se resuelve en S16).
 - **SD-RBAC-16:** todas las respuestas incluyen `trace_id` para observabilidad y correlación con la auditoría.
+
+## Evidencia integrada para revisión de la Semana 5
+
+- [Parte A: código y pruebas — PR #179](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/179).
+- [Parte B: documentación y pruebas complementarias — PR #180](https://github.com/compilations-teams/sistema-hospitalario-integrado-SistenasII-2026-G3/pull/180).
+
+Ambas partes se fusionaron el 19 de octubre de 2026. Esta actualización reúne sus
+referencias para volver a presentar la evidencia en Odoo; la aprobación se registra allí.
