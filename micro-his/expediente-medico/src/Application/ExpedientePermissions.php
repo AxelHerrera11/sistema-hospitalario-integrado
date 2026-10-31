@@ -6,8 +6,8 @@ namespace MicroHis\ExpedienteMedico\Application;
 
 /**
  * Permisos `modulo.accion` que exige el flujo. CONSULTA existe en el catálogo real (config/rbac.php) y está activo
- * para superadmin, medico y enfermeria. APERTURA_PROPUESTA NO existe en el catálogo: es la propuesta enviada a RBAC
- * (María). Mientras no se active, el motor RBAC real la deniega a todos los roles y la apertura responde 403.
+ * para superadmin, medico y enfermeria. APERTURA_PROPUESTA (expediente.abrir) se activó el 30/10/2026 para medico y
+ * superadmin; conserva el nombre de la constante para no romper a los consumidores.
  */
 final class ExpedientePermissions
 {

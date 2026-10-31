@@ -119,9 +119,30 @@ final class ExpedienteMedicoApiTest extends TestCase
         $this->getJson('/api/v1/patients/' . str_repeat('P', 41) . '/medical-record')->assertStatus(422)->assertJsonPath('code', 'CODIGO_PACIENTE_INVALIDO');
     }
 
-    public function test_opening_is_not_published_until_rbac_catalogues_its_permission(): void
+    public function test_physician_opens_the_record_once_and_repeating_returns_the_same_number(): void
     {
         ExpedienteTestIdentity::as('medico', self::MEDICA);
-        $this->postJson('/api/v1/patients/P-0002/medical-record')->assertStatus(405);
+        $first = $this->postJson('/api/v1/patients/P-0002/medical-record')
+            ->assertStatus(201)
+            ->assertHeader('Cache-Control', 'no-store, private');
+        $this->assertTrue($first->json('created'));
+        $number = $first->json('record_number');
+        $this->assertNotEmpty($number);
+        $this->postJson('/api/v1/patients/P-0002/medical-record')
+            ->assertOk()->assertJsonPath('created', false)->assertJsonPath('record_number', $number);
+        $this->postJson('/api/v1/patients/P-9999/medical-record')->assertStatus(404)->assertJsonPath('code', 'PACIENTE_NO_ENCONTRADO');
+        $events = array_map(static fn (AuditEvent $e): string => $e->eventName(), $this->audit->search('hospital-demo', new AuditFilter)->events);
+        $this->assertEqualsCanonicalizing(['expediente_medico.abierto', 'expediente_medico.apertura_repetida'], $events);
+    }
+
+    public function test_only_roles_with_expediente_abrir_can_open(): void
+    {
+        foreach (['enfermeria', 'recepcion', 'admin_hospital'] as $role) {
+            ExpedienteTestIdentity::as($role, self::ENFERMERA);
+            $this->postJson('/api/v1/patients/P-0002/medical-record')->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        }
+        ExpedienteTestIdentity::as('medico', self::SIN_REFERENCIA);
+        $this->postJson('/api/v1/patients/P-0002/medical-record')->assertStatus(403)->assertJsonPath('code', 'ACTOR_SIN_REFERENCIA_LOCAL');
+        $this->assertSame(0, $this->audit->count());
     }
 }
