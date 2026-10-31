@@ -21,6 +21,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
 | `expediente.abrir` | Sí | — | Sí | — | — | — | — | — |
+| `expediente.asignar` | Sí | Sí | — | — | — | — | — | Sí |
 | `qa.ejecuciones.ver` | Sí | Sí | — | — | — | — | — | — |
 | `qa.ejecuciones.registrar` | Sí | Sí | — | — | — | — | — | — |
 | `qa.gates.evaluar` | Sí | Sí | — | — | — | — | — | — |
