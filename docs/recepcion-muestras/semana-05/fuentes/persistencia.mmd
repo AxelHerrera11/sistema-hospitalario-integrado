@@ -1,0 +1,10 @@
+flowchart LR
+  Laravel --> HospitalReceptionRepository
+  HospitalReceptionRepository -->|PDO de hospital| PDO[App.Modules.Reception.Persistence.PdoReceptionRepository]
+  PDO -->|transaccion| specimens
+  PDO -->|misma transaccion| outbox_events
+  specimens -->|FK RESTRICT| local_patients
+  specimens -->|FK RESTRICT| care_episodes
+  specimens -->|FK RESTRICT| local_user_refs
+  specimens -. referencia logica sin FK .-> ASII16[Orden ASII-16]
+  MicroPHP[Micro PHP academico independiente] --> MicroPDO[Repositorio propio del micro]

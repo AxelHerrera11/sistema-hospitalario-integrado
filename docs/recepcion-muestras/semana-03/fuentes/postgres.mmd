@@ -1,0 +1,8 @@
+flowchart LR
+    Test --> OrderGatewayDoble
+    Test --> ReceiveSpecimen
+    ReceiveSpecimen --> PDO
+    PDO --> Transaccion
+    Transaccion --> specimens
+    Transaccion --> outbox_events
+    FalloOutbox --> Rollback

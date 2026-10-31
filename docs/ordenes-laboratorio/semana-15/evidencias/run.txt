@@ -1,0 +1,88 @@
+== InMemory ==
+PASS  emisión válida nace ISSUED
+PASS  dos ítems con instantánea del catálogo
+PASS  evento inicial de trazabilidad
+PASS  correlation_id presente
+PASS  la idempotencia devuelve la misma orden
+PASS  no se duplica la orden
+PASS  ítems vacíos → ORDER_ITEMS_INVALID
+PASS  prueba repetida → ORDER_ITEMS_INVALID
+PASS  episodio cerrado → CARE_EPISODE_NOT_OPEN
+PASS  nota de otro paciente → CLINICAL_NOTE_MISMATCH
+PASS  prueba inactiva → LAB_TEST_NOT_ACTIVE
+PASS  prioridad inválida → PRIORITY_UNSUPPORTED
+PASS  transición completa hasta VALIDATED
+PASS  historial conserva el actor de cada evento
+PASS  transición no permitida → INVALID_STATUS_TRANSITION
+PASS  cancelar sin motivo → CANCELLATION_REASON_REQUIRED
+PASS  cancelación guarda estado, actor y motivo
+PASS  cancelar una orden validada → ORDER_ALREADY_VALIDATED
+PASS  motivo de 4 caracteres → CANCELLATION_REASON_INVALID
+PASS  motivo de 251 caracteres → CANCELLATION_REASON_INVALID
+PASS  motivo de 5 caracteres se acepta
+PASS  otro hospital no ve la orden → ORDER_NOT_FOUND
+PASS  listado por estado
+PASS  per_page fuera de rango → PAGINATION_INVALID
+PASS  fallo de persistencia no deja orden a medias
+PASS  el presentador mapea una orden creada a 201
+PASS  el presentador mapea un error de dominio a 422
+PASS  el presentador mapea una caída a 503
+== PDO/SQLite ==
+PASS  emisión válida nace ISSUED
+PASS  dos ítems con instantánea del catálogo
+PASS  evento inicial de trazabilidad
+PASS  correlation_id presente
+PASS  la idempotencia devuelve la misma orden
+PASS  no se duplica la orden
+PASS  ítems vacíos → ORDER_ITEMS_INVALID
+PASS  prueba repetida → ORDER_ITEMS_INVALID
+PASS  episodio cerrado → CARE_EPISODE_NOT_OPEN
+PASS  nota de otro paciente → CLINICAL_NOTE_MISMATCH
+PASS  prueba inactiva → LAB_TEST_NOT_ACTIVE
+PASS  prioridad inválida → PRIORITY_UNSUPPORTED
+PASS  transición completa hasta VALIDATED
+PASS  historial conserva el actor de cada evento
+PASS  transición no permitida → INVALID_STATUS_TRANSITION
+PASS  cancelar sin motivo → CANCELLATION_REASON_REQUIRED
+PASS  cancelación guarda estado, actor y motivo
+PASS  cancelar una orden validada → ORDER_ALREADY_VALIDATED
+PASS  motivo de 4 caracteres → CANCELLATION_REASON_INVALID
+PASS  motivo de 251 caracteres → CANCELLATION_REASON_INVALID
+PASS  motivo de 5 caracteres se acepta
+PASS  otro hospital no ve la orden → ORDER_NOT_FOUND
+PASS  listado por estado
+PASS  per_page fuera de rango → PAGINATION_INVALID
+PASS  fallo de persistencia no deja orden a medias
+PASS  el presentador mapea una orden creada a 201
+PASS  el presentador mapea un error de dominio a 422
+PASS  el presentador mapea una caída a 503
+== PDO/PostgreSQL ==
+PASS  emisión válida nace ISSUED
+PASS  dos ítems con instantánea del catálogo
+PASS  evento inicial de trazabilidad
+PASS  correlation_id presente
+PASS  la idempotencia devuelve la misma orden
+PASS  no se duplica la orden
+PASS  ítems vacíos → ORDER_ITEMS_INVALID
+PASS  prueba repetida → ORDER_ITEMS_INVALID
+PASS  episodio cerrado → CARE_EPISODE_NOT_OPEN
+PASS  nota de otro paciente → CLINICAL_NOTE_MISMATCH
+PASS  prueba inactiva → LAB_TEST_NOT_ACTIVE
+PASS  prioridad inválida → PRIORITY_UNSUPPORTED
+PASS  transición completa hasta VALIDATED
+PASS  historial conserva el actor de cada evento
+PASS  transición no permitida → INVALID_STATUS_TRANSITION
+PASS  cancelar sin motivo → CANCELLATION_REASON_REQUIRED
+PASS  cancelación guarda estado, actor y motivo
+PASS  cancelar una orden validada → ORDER_ALREADY_VALIDATED
+PASS  motivo de 4 caracteres → CANCELLATION_REASON_INVALID
+PASS  motivo de 251 caracteres → CANCELLATION_REASON_INVALID
+PASS  motivo de 5 caracteres se acepta
+PASS  otro hospital no ve la orden → ORDER_NOT_FOUND
+PASS  listado por estado
+PASS  per_page fuera de rango → PAGINATION_INVALID
+PASS  fallo de persistencia no deja orden a medias
+PASS  el presentador mapea una orden creada a 201
+PASS  el presentador mapea un error de dominio a 422
+PASS  el presentador mapea una caída a 503
+OK: todas las verificaciones aprobadas

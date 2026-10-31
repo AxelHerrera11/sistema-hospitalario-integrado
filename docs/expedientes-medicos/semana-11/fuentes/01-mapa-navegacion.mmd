@@ -1,0 +1,19 @@
+%% Mapa de navegación del prototipo (una pantalla con zonas y estados; el diálogo es modal).
+flowchart LR
+    ENTRADA(["/ → redirige a /ui/"]) --> BUS["Búsqueda<br/>usuario · hospital · código"]
+    BUS -- "Consultar (Enter)" --> CAR["Cargando"]
+    BUS -- "Abrir expediente…" --> DLG["Diálogo de confirmación"]
+    DLG -- "Cancelar / Esc" --> BUS
+    DLG -- "Sí, abrir" --> CAR
+    CAR --> EXI["Éxito: expediente longitudinal"]
+    CAR --> VAC["Vacío: sin expediente / sin episodios"]
+    CAR --> DEN["Acceso denegado<br/>(error crítico de seguridad)"]
+    CAR --> ERR["Error recuperable (503 / red)"]
+    CAR --> APE["Éxito de apertura (201 / 200)"]
+    EXI -- "Motivo de atención" --> EXI
+    EXI -- "Ocultar datos / cambiar usuario, hospital o código" --> BUS
+    VAC -- "Solicitar apertura…" --> DLG
+    ERR -- "Reintentar (≤ 3)" --> CAR
+    ERR -- "agotado → avisar a soporte" --> BUS
+    APE -- "Consultar expediente" --> CAR
+    DEN --> BUS

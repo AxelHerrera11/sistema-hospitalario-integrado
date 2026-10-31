@@ -25,7 +25,8 @@ function app(string $adapter): array
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
         $pdo->exec("INSERT INTO lab_tests VALUES ('GLU-v1', 40, 400), ('HB-v1', NULL, NULL);
-            INSERT INTO care_assignments VALUES ('EP-1', 'P-1', 'dra.lopez', 'active'), ('EP-1', 'P-1', 'dr.ruiz', 'ended')");
+            INSERT INTO doctor_profiles VALUES ('DP-1', 'dra.lopez'), ('DP-2', 'dr.ruiz'); INSERT INTO care_episodes VALUES ('EP-1', 'P-1');
+            INSERT INTO care_assignments VALUES ('EP-1', 'DP-1', 'active', '2026-10-01', NULL), ('EP-1', 'DP-2', 'closed', '2026-09-01', '2026-10-01')");
         $repo = new PdoAlertRepository($pdo);
         $probe = ['count' => fn () => (int) $pdo->query('SELECT COUNT(*) FROM critical_alerts')->fetchColumn(),
             'audit' => fn () => $pdo->query('SELECT action FROM local_access_audits')->fetchColumn(), 'fail' => fn () => $pdo->exec('DROP TABLE local_access_audits')];

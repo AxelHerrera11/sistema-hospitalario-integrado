@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Http\Controllers\Api\V1\TrasladosAltasController;
+use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use App\TrasladosAltas\PdoResolutorActorLocal;
 use App\TrasladosAltas\ResolutorActorLocal;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,8 @@ final class TrasladosAltasServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso. Los permisos están PROPUESTOS (pending):
-        // RequirePermission los deniega con 403 hasta que RBAC (ASII-02) los active.
-        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
+        // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso; la base HOSPITAL debe ser del hospital del contexto.
+        Route::prefix('api/v1')->middleware(['api', 'tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->group(function (): void {
             Route::post('traslados', [TrasladosAltasController::class, 'trasladar'])->middleware('rbac:traslados.registrar');
             Route::post('altas', [TrasladosAltasController::class, 'darAlta'])->middleware('rbac:altas.registrar');
             Route::get('estancias/{estancia}/internacion', [TrasladosAltasController::class, 'consultar'])->middleware('rbac:traslados.ver');

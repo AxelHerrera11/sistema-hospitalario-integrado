@@ -35,6 +35,12 @@ final class ConsolaTraslados
             default => ['', []],
         };
 
-        return $this->ejecutor->ejecutar($tipo, $campos, $this->actorRefId);
+        $respuesta = $this->ejecutor->ejecutar($tipo, $campos, $this->actorRefId);
+        // La ayuda de los argumentos solo tiene sentido aquí: el API no debe exponer sintaxis de consola.
+        if ($respuesta['codigo'] === VistaResultado::SOLICITUD_INVALIDA) {
+            $respuesta['cuerpo']['uso'] = 'trasladar <estancia_id> <cama_destino_id> <motivo> | alta <estancia_id>';
+        }
+
+        return $respuesta;
     }
 }

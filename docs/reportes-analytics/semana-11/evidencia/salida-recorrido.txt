@@ -1,0 +1,16 @@
+PASS  al cargar no hay mensajes de error
+PASS  la ayuda explica que «Hasta» no se incluye
+PASS  los campos se ven como campos (borde y 44 px) — {"borde":1,"alto":44}
+PASS  el botón se distingue del texto
+PASS  formulario vacío: mensaje y sin llamada
+PASS  al corregir el filtro desaparece el error
+PASS  enero: 25.00 %
+PASS  cambiar un filtro retira el resultado anterior
+PASS  sala HOSP-UCI: 33.33 %
+PASS  periodo invertido: mensaje, sin llamada y sin cifra anterior
+PASS  periodo sin datos: N/A con leyenda
+PASS  503 simulado: aviso y ninguna cifra
+PASS  375 px: resultado sin desplazamiento horizontal
+PASS  miembro de otro hospital: aviso y ninguna cifra
+PASS  recepción no tiene el enlace de Reportes
+15/15 comprobaciones

@@ -1,0 +1,21 @@
+code,description,active
+A09,"Diarrea y gastroenteritis de presunto origen infeccioso",true
+B34.9,"Infección viral, no especificada",true
+D64.9,"Anemia, no especificada",true
+E11.9,"Diabetes mellitus tipo 2, sin mención de complicación",true
+E66.9,"Obesidad, no especificada",true
+F41.9,"Trastorno de ansiedad, no especificado",true
+I10,"Hipertensión esencial (primaria)",true
+J06.9,"Infección aguda de las vías respiratorias superiores, no especificada",true
+J18.9,"Neumonía, no especificada",true
+J20.9,"Bronquitis aguda, no especificada",true
+J45.9,"Asma, no especificada",true
+K29.7,"Gastritis, no especificada",true
+K30,"Dispepsia",true
+L30.9,"Dermatitis, no especificada",true
+M54.5,"Lumbago",true
+N39.0,"Infección de vías urinarias, sitio no especificado",true
+R10.4,"Otros dolores abdominales y los no especificados",true
+R50.9,"Fiebre, no especificada",true
+R51,"Cefalea",true
+Z00.0,"Examen médico general",true
