@@ -33,6 +33,7 @@
                         {{ item.label }}
                     </router-link>
                     <span
+                        v-else
                         class="layout__link layout__link--soon"
                         aria-disabled="true"
                     >
