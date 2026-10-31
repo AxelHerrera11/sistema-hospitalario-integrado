@@ -5,7 +5,10 @@ import assert from 'node:assert/strict';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, 'auditoria.js'), 'utf8');
-const { etiquetaResultado, fechaLegible, filtroInvalido, filtrosVacios, mensajeDeError, parametros, recurso, resumenPagina } =
+const {
+    estadoIntegridad, etiquetaResultado, fechaLegible, filtroInvalido, filtrosVacios, mensajeDeError, nombreDeActor, opcionesDeActor, parametros,
+    recurso, resumenPagina,
+} =
     await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 // Los parámetros usan los nombres públicos del contrato, omiten vacíos y nunca envían el tenant.
@@ -39,5 +42,17 @@ assert.equal(mensajeDeError('RBAC_DENIED', 403), 'No tiene permiso para consulta
 assert.equal(mensajeDeError('AUDIT_UNAVAILABLE', 503), 'La bitácora no está disponible en este momento.');
 assert.equal(mensajeDeError('SQLSTATE[42P01]', 500), 'No se pudo consultar la bitácora.');
 assert.equal(mensajeDeError(null, 401), 'Inicie sesión para continuar.');
+
+// Usuario por nombre (el valor sigue siendo el user_id) e integridad de la cadena.
+const actores = [{ user_id: 'u1', display_name: 'Ana López', email: 'ana@demo.test' }, { user_id: 'u2', display_name: 'Sin correo', email: null }];
+assert.equal(nombreDeActor('u1', actores), 'Ana López');
+assert.equal(nombreDeActor('bootstrap:demo', actores), 'bootstrap:demo');
+assert.deepEqual(opcionesDeActor(actores), [{ valor: 'u1', etiqueta: 'Ana López — ana@demo.test' }, { valor: 'u2', etiqueta: 'Sin correo' }]);
+assert.deepEqual(opcionesDeActor(undefined), []);
+assert.equal(estadoIntegridad({ valid: true, checked: 7, total: 7 }).titulo, 'Cadena íntegra');
+const roto = estadoIntegridad({ valid: false, broken: { position: 3, event_id: null, cause: 'hash_no_coincide' } });
+assert.equal(roto.tono, 'error');
+assert.match(roto.mensaje, /eslabón 3: un evento fue modificado/);
+assert.match(estadoIntegridad({ valid: false, broken: { position: 2, event_id: 'e9', cause: 'bifurcacion' } }).mensaje, /evento e9 de este hospital/);
 
 console.log('auditoria.test.mjs: OK');
