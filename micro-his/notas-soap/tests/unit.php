@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
+use MicroHis\NotasSoap\Domain\CorrectionPolicy;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
 use MicroHis\NotasSoap\Domain\SignaturePolicy;
@@ -65,4 +66,12 @@ check('U-16', 'SignaturePolicy deja firmar una nota con cuatro secciones y exact
 check('U-17', 'SignaturePolicy rechaza firmar sin diagnóstico principal o sin secciones (SOAP_INCOMPLETE 422)', violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('I10', 'secondary')], new SoapSections('s', 'o', 'a', 'p')))) === 'SOAP_INCOMPLETE 422'
     && violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('J18.9', 'primary')]))) === 'SOAP_INCOMPLETE 422');
 check('U-18', 'SignaturePolicy rechaza firmar dos veces (NOTE_SIGNED 409) y antes que la completitud', violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'signed'))) === 'NOTE_SIGNED 409');
+// UC-SOAP-06 · CorrectionPolicy: solo se corrige lo firmado y con motivo.
+$corrector = new CorrectionPolicy();
+$firmada = new ClinicalNote('n1', 'ep1', 'dra.lopez', 'signed');
+check('U-19', 'CorrectionPolicy deja corregir una nota firmada con motivo', violation(fn () => $corrector->assertCanCorrect($firmada, 'Dosis mal registrada')) === '');
+check('U-20', 'CorrectionPolicy rechaza corregir un borrador (NOTE_NOT_SIGNED 409), antes de mirar el motivo', violation(fn () => $corrector->assertCanCorrect($note(), 'Motivo')) === 'NOTE_NOT_SIGNED 409' && violation(fn () => $corrector->assertCanCorrect($note(), '')) === 'NOTE_NOT_SIGNED 409');
+check('U-21', 'CorrectionPolicy exige motivo: vacío, solo espacios o U+00A0 -> CORRECTION_REASON_INVALID 422; 500 caracteres pasan y 501 no', violation(fn () => $corrector->assertCanCorrect($firmada, '  ')) === 'CORRECTION_REASON_INVALID 422' && violation(fn () => $corrector->assertCanCorrect($firmada, "\u{00A0}")) === 'CORRECTION_REASON_INVALID 422'
+    && violation(fn () => $corrector->assertCanCorrect($firmada, str_repeat('a', 500))) === '' && violation(fn () => $corrector->assertCanCorrect($firmada, str_repeat('a', 501))) === 'CORRECTION_REASON_INVALID 422');
+
 summary();

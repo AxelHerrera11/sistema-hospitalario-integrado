@@ -88,6 +88,11 @@ final class FirmaEnMedio implements ClinicalNoteRepository
         $this->inner->addDiagnosis($note, $diagnosis, $description);
     }
 
+    public function correct(ClinicalNote $note, SoapSections $sections, string $reason): string
+    {
+        return $this->inner->correct($note, $sections, $reason);
+    }
+
     public function sign(ClinicalNote $note): void
     {
         $this->inner->sign($note);

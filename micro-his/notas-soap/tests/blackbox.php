@@ -72,6 +72,14 @@ check('B-19', 'Firma · sin diagnóstico principal 422 SOAP_INCOMPLETE y la nota
     return $state($sign($borrador, 'dra.lopez')) === '422 SOAP_INCOMPLETE' && $repo->notes[$borrador]['status'] === 'draft' && $state($sign('no-existe', 'dra.lopez')) === '404 NOTE_NOT_FOUND';
 })());
 
+// UC-SOAP-06 · corrección por el API: permiso propio, motivo obligatorio y versión 2 en borrador.
+$corregir = static fn (?string $actor, array $body): array => send($api, 'POST', "/api/v1/soap-notes/$firmable/corrections", $actor, $body);
+$cuerpo = ['correction_reason' => 'Plan corregido', 'plan' => 'Amoxicilina 500 mg'] + SOAP;
+$corregida = $corregir('dra.lopez', $cuerpo);
+check('B-20', 'Corrección · sin identidad 401; sin notas_soap.corregir 403; sin motivo 422; la autora 201 en borrador con trace_id; la segunda 409 NOTE_ALREADY_CORRECTED', $state($corregir(null, $cuerpo)) === '401 UNAUTHENTICATED' && $state($corregir('enf.ruiz', $cuerpo)) === '403 FORBIDDEN'
+    && $state($corregir('dra.lopez', ['correction_reason' => ''] + $cuerpo)) === '422 CORRECTION_REASON_INVALID' && $corregida['status'] === 201 && $corregida['body']['status'] === 'draft' && $corregida['body']['supersedes_id'] === $firmable
+    && preg_match(Uuid::PATTERN, $corregida['body']['trace_id'] ?? '') === 1 && $state($corregir('dra.lopez', $cuerpo)) === '409 NOTE_ALREADY_CORRECTED');
+
 // Defectos conocidos.
 check('B-16', 'Una sección con solo espacio duro (U+00A0) se rechaza como vacía', $state($post(['subjective' => "\u{00A0}"] + SOAP)) === '422 SOAP_SECTION_INVALID');
 check('B-17', 'Quien no atiende el episodio recibe la misma respuesta ante una nota existente y una inexistente', $state($get($noteId, 'enf.ruiz')) === $state($get('no-existe', 'enf.ruiz')));

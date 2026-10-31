@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use MicroHis\NotasSoap\Application\AssociateDiagnosis;
 use MicroHis\NotasSoap\Application\CareAssignmentReader;
+use MicroHis\NotasSoap\Application\CorrectSoapNote;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Application\GetSoapNote;
 use MicroHis\NotasSoap\Application\Icd10Catalog;
@@ -11,6 +12,7 @@ use MicroHis\NotasSoap\Application\PermissionChecker;
 use MicroHis\NotasSoap\Application\RegisterSoapNote;
 use MicroHis\NotasSoap\Application\SignSoapNote;
 use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
+use MicroHis\NotasSoap\Domain\CorrectionPolicy;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
 use MicroHis\NotasSoap\Domain\SignaturePolicy;
 use MicroHis\NotasSoap\Presentation\ApiKernel;
@@ -29,6 +31,7 @@ function notas_soap_router(ClinicalNoteRepository $notes, CareAssignmentReader $
         new AssociateDiagnosis($guard, $catalog, new DiagnosisPolicy(), $notes),
         new GetSoapNote($guard, $notes),
         new SignSoapNote($guard, new SignaturePolicy(), $notes),
+        new CorrectSoapNote($guard, new CorrectionPolicy(), $notes),
         $view,
     );
     return new Router($controller, $view);
