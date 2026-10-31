@@ -58,7 +58,8 @@ async function ejecutar(operacion) {
             // La apertura devuelve solo el expediente; la línea de tiempo (si hay vínculo) se carga con la consulta.
             const abierto = estadoDesdeApi(operacion, status, data);
             aviso.value = `${abierto.titulo}: ${abierto.mensaje}`;
-            return ejecutar('consultar');
+            await ejecutar('consultar'); // se espera: así el finally no apaga «cargando» con la consulta en curso
+            return;
         }
         estado.value = estadoDesdeApi(operacion, status, data);
         expediente.value = data;
