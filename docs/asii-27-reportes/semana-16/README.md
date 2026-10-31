@@ -57,8 +57,22 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 
 ## Evidencia
 
+Ejecutado el 2026-10-30 sobre la parte 1 actualizada con `origin/develop` (PHP 8.2.33, PHPUnit 11.5.55).
+
+```text
+$ php artisan route:list --path=api/v1/reportes
+  GET|HEAD       api/v1/reportes ........................................ Api\V1\ReportesOperativosController@catalogo
+  GET|HEAD       api/v1/reportes/{reporte} ........................... Api\V1\ReportesOperativosController@vistaPrevia
+  GET|HEAD       api/v1/reportes/{reporte}/export ....................... Api\V1\ReportesOperativosController@exportar
+                                                                                                    Showing [3] routes
+```
+
 ```text
 $ php micro-his/reportes-operativos/tests/run.php
+PASS  sin fechas devuelve report_filter_invalid
+PASS  fecha invalida devuelve report_filter_invalid
+PASS  rango mayor a 366 dias devuelve report_range_too_long
+PASS  rango invertido devuelve report_filter_invalid
 PASS  per_page fuera de rango devuelve report_filter_invalid
 PASS  order invalido devuelve report_filter_invalid
 PASS  filtros conservan rango y orden
@@ -77,18 +91,23 @@ OK: 17 verificaciones aprobadas
 
 ```text
 $ php vendor/bin/phpunit tests/Feature/ReportesOperativos --testdox
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+Runtime:       PHP 8.2.33
+Configuration: C:\Users\Lisi\Documents\Analisis_de_sistemas_II\Proyecto\shi-s16-27\phpunit.xml
 ....                                                                4 / 4 (100%)
-Time: 00:00.498, Memory: 30.00 MB
+Time: 00:04.657, Memory: 30.00 MB
 Reportes Operativos Api (Tests\Feature\ReportesOperativos\ReportesOperativosApi)
  ✔ Catalogo y permisos
  ✔ Vista previa paginada con los filtros aplicados
  ✔ Exporta csv reproducible y sin formulas
  ✔ Errores del contrato
-OK (4 tests, 32 assertions)
+OK (4 tests, 34 assertions)
 ```
 
-La suite Feature completa del repositorio se ejecuto tambien: los unicos errores son 4 pruebas de
-Salas y camas (ASII-06) que necesitan PostgreSQL en el puerto 55433, ajenas a este modulo.
+La suite Feature completa del repositorio (`php vendor/bin/phpunit --testsuite Feature`) termina con
+`Tests: 315, Assertions: 5689, Errors: 44, Failures: 2, Risky: 28`. Los 46 errores y fallos son de Recepcion de muestras (33), Salas y camas (10), Indicadores (3);
+todos necesitan PostgreSQL en los puertos 55431/55433 (`Connection refused` o 503 por fuente no
+disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
 
