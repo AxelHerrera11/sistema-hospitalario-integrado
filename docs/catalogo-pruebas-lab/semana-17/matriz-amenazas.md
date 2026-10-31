@@ -11,7 +11,7 @@ Evidencia: **S** es `tests/Feature/CatalogoLab/LabTestSecurityTest.php`, **F** e
 | L03 | Un clínico cambia rangos críticos | Lectura `laboratorio.catalogo.ver`; alta `laboratorio.catalogo.administrar`, que hoy solo tiene superadmin (admin_hospital sigue en `pending`) | S: los 8 roles de `config/rbac.php`. R: recepción 403 al consultar; médico 403 al administrar | Mitigada |
 | L04 | Elegir desde el cuerpo el autor, la versión, el estado o el identificador | Autor del JWT en `local_user_refs`; versión, estado e id los decide el servidor | S y R: versión 99, `inactive` y otro autor se ignoran ([psql](./evidencia/salida-psql.txt): versión 1, activa, autor superadmin) | Mitigada |
 | L05 | Una unidad que no es texto o un número infinito tumba la API (500) | El dominio trata una unidad que no es texto y un número no finito como ausentes: `RANGES_INCOHERENT` | S y R: unidad como arreglo o número y `1e400` dan 422 | **Corregida en esta entrega** |
-| L06 | Textos enormes en nombre, muestra o unidad | Límites del dominio: nombre 160 (igual al `maxlength` de la pantalla), muestra 40 y unidad 32 → `TEXT_TOO_LONG` | S: 100 000 caracteres 422 y 160 con acentos 201. R: 161 da 422 | **Corregida en esta entrega** |
+| L06 | Textos enormes en nombre, muestra o unidad | Límites del dominio: nombre 160, muestra 40 y unidad 32 → `TEXT_TOO_LONG`, iguales al `maxlength` de la pantalla | S: 100 000 caracteres 422 y 160 con acentos 201. R: 161 da 422 | **Corregida en esta entrega** |
 | L07 | Dos versiones vigentes de la misma prueba | Dominio + exclusión GiST de vigencias en `lab_tests` (#1244) → 409 | F y R: solapada 409 | Mitigada |
 | L08 | Inyección en la traza (`X-Request-ID`) | Patrón `^[A-Za-z0-9._-]{1,64}$`; si no cumple, se genera `req-…` | S: HTML, 65 caracteres y CRLF reemplazados. R: `<script>` reemplazado | Mitigada |
 | L09 | Filtrar SQL, credenciales o host con la base caída | `PersistenceFailure` → 503 `LAB_CATALOG_UNAVAILABLE` con `APP_DEBUG=false` | F: sin `secreto`. R: HOSPITAL en un puerto cerrado da 503 sin `SQLSTATE` ni host | Mitigada |
@@ -22,5 +22,4 @@ Evidencia: **S** es `tests/Feature/CatalogoLab/LabTestSecurityTest.php`, **F** e
 ## Riesgo residual
 
 - **L03:** activar `laboratorio.catalogo.administrar` para admin_hospital depende de ASII-02. Mientras siga en `pending`, solo superadmin administra.
-- **L06:** la pantalla de #1247 no tiene `maxlength` en la unidad. El servidor la rechaza igual con 422, y el ajuste visual queda para después de integrar #1247.
 - **L12:** este módulo no declara un límite de tasa propio.
