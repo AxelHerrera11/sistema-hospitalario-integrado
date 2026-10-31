@@ -84,6 +84,12 @@ const router = createRouter({
             meta: { guest: true },
         },
         {
+            path: '/documentacion',
+            name: 'documentacion',
+            component: () => import('@/modules/documentacion/pages/DocumentationPage.vue'),
+            meta: { requiresAuth: true, permission: 'documentacion.ver' },
+        },
+        {
             path: '/admin/users',
             name: 'admin-users',
             component: () => import('@/modules/tenants/pages/HospitalUsersPage.vue'),

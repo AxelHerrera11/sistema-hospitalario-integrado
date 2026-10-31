@@ -80,10 +80,20 @@ const conTraslados = visibleNavigation({ permissions: ['traslados.ver'] }, NAVIG
 assert.deepEqual(conTraslados.filter((entry) => entry.to === '/traslados').map((entry) => entry.label), ['Traslados y altas']);
 assert.equal(visibleNavigation(sessionUser).some((entry) => entry.to === '/traslados'), false);
 
+const laboratoryUser = { permissions: ['laboratorio.ordenes.ver', 'lab-results.read'] };
+const laboratoryMenu = visibleNavigation(laboratoryUser).find((entry) => entry.label === 'Laboratorio');
+assert.deepEqual(laboratoryMenu.children.map((entry) => entry.label), ['Órdenes de laboratorio', 'Ingreso de resultados', 'Extensión NativePHP']);
+assert.equal(visibleNavigation({ permissions: ['documentacion.ver'] }).find((entry) => entry.to === '/documentacion').label, 'Documentación de APIs');
+
 // Cada entrada de navegacion declara un permiso del catalogo del backend
 // o es una ruta publica sin permiso (con `to` definido).
 const catalog = readFileSync(join(here, '..', '..', '..', 'config', 'rbac.php'), 'utf8');
 NAVIGATION.forEach((entry) => {
+    if (Array.isArray(entry.children)) {
+        assert.equal(entry.permission, null, `grupo con submenú no debe depender de un permiso inexistente: ${entry.label}`);
+        entry.children.forEach((child) => assert.ok(catalog.includes(`'${child.permission}'`), `permiso fuera del catalogo: ${child.permission}`));
+        return;
+    }
     if (entry.permission === null) {
         assert.ok(entry.to, `entrada sin permiso debe declarar ruta: ${entry.label}`);
         assert.equal(entry.to, '/', 'la unica entrada sin permiso es la ruta publica inicial');
