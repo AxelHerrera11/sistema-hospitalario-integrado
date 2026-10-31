@@ -18,7 +18,9 @@ export const ROUTE_PERMISSIONS = {
     rbac: 'rbac.permisos.ver',
     'catalogo-lab': 'laboratorio.catalogo.ver',
     'admin-users': 'usuarios.ver',
+    'qa-calidad': 'qa.ejecuciones.ver',
     patients: 'pacientes.ver',
+    expediente: 'expediente.ver',
     'patients-new': 'pacientes.registrar',
     'patients-edit': 'pacientes.editar',
     alertas: 'alertas.ver',
@@ -30,6 +32,7 @@ export const ROUTE_PERMISSIONS = {
     'lab-results': 'lab-results.read',
     reportes: 'reportes.ver',
     alergias: 'alergias.ver',
+    auditoria: 'auditoria.ver',
 };
 
 /** Entradas de navegación sujetas a permiso. Las entradas sin `to` se
@@ -39,6 +42,7 @@ export const NAVIGATION = [
     { label: 'Inicio', to: '/', permission: null },
     { label: 'Ocupación', to: '/ocupacion', permission: ROUTE_PERMISSIONS.ocupacion },
     { label: 'Usuarios', to: '/admin/users', permission: ROUTE_PERMISSIONS['admin-users'] },
+    { label: 'Calidad de versiones', to: '/calidad-versiones', permission: ROUTE_PERMISSIONS['qa-calidad'] },
     { label: 'Pacientes', to: '/patients', permission: ROUTE_PERMISSIONS.patients },
     { label: 'Alertas críticas', to: '/alertas', permission: ROUTE_PERMISSIONS.alertas },
     { label: 'Salas y camas', to: '/wards', permission: ROUTE_PERMISSIONS.wards },
@@ -49,7 +53,7 @@ export const NAVIGATION = [
     { label: 'Catálogo RBAC', to: '/rbac', permission: ROUTE_PERMISSIONS.rbac },
     { label: 'Citas', to: null, permission: 'citas.ver', soon: true },
     { label: 'Admisión y camas', to: '/admision', permission: ROUTE_PERMISSIONS.admision },
-    { label: 'Expediente', to: null, permission: 'expediente.ver', soon: true },
+    { label: 'Expediente', to: '/expediente', permission: ROUTE_PERMISSIONS.expediente },
     { label: 'Signos vitales', to: null, permission: 'signos_vitales.ver', soon: true },
     { label: 'Notas SOAP', to: null, permission: 'notas_soap.ver', soon: true },
     { label: 'Alergias', to: '/alergias', permission: ROUTE_PERMISSIONS.alergias },
@@ -59,7 +63,7 @@ export const NAVIGATION = [
     { label: 'Extensión NativePHP', to: '/nativephp', permission: ROUTE_PERMISSIONS.nativephp },
     { label: 'Laboratorio', to: null, permission: 'laboratorio.ver', soon: true },
     { label: 'Reportes', to: '/reportes', permission: ROUTE_PERMISSIONS.reportes },
-    { label: 'Auditoría', to: null, permission: 'auditoria.ver', soon: true },
+    { label: 'Auditoría', to: '/auditoria', permission: ROUTE_PERMISSIONS.auditoria },
     { label: 'Documentación', to: null, permission: 'documentacion.ver', soon: true },
 ];
 
