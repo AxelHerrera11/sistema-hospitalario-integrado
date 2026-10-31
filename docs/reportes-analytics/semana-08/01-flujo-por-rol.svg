@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="520" viewBox="0 0 760 520" font-family="Segoe UI, sans-serif" font-size="12">
+
+  <defs>
+    <marker id="flecha" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#444"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="26" font-size="17" font-weight="bold">ASII-23 - Semana 8 - Flujo por rol: pantalla Reportes / IND-RA-01</text>
+  <text x="20" y="46" fill="#666">Reproduccion del flujo implementado (ReportsPage.vue + guard del router + RBAC del servidor).</text>
+
+  <!-- Rol con permiso reportes.ver -->
+  <rect x="30" y="70" width="300" height="34" rx="6" fill="#E3F2FD" stroke="#1565C0"/>
+  <text x="46" y="92" font-weight="bold">Rol con reportes.ver (superadmin / admin_hospital / medico)</text>
+
+  <rect x="360" y="70" width="360" height="38" rx="6" fill="#FFF3E0" stroke="#E65100"/>
+  <text x="376" y="85" font-weight="bold">Rol sin reportes.ver (recepcion / enfermeria)</text>
+  <text x="376" y="100">El menu oculta la entrada y el guard falla de forma segura.</text>
+
+  <rect x="30" y="124" width="690" height="90" rx="8" fill="#FAFAFA" stroke="#bdbdbd"/>
+  <text x="46" y="146" font-weight="bold">1) Login (usuario ficticio + X-Tenant-ID del hospital)</text>
+  <text x="66" y="165">POST /api/v1/auth/login  &#8594;  access_token JWT (TTL 15 min)</text>
+  <text x="66" y="182">El SPA guarda token y hospital; el interceptor axios reenvia ambas cabeceras.</text>
+  <text x="66" y="198" fill="#666">401 AUTH_REQUIRED si el token falta; 403 TENANT_MISMATCH si el hospital no coincide.</text>
+
+  <line x1="375" y1="216" x2="375" y2="246" stroke="#444" marker-end="url(#flecha)"/>
+
+  <rect x="30" y="248" width="690" height="86" rx="8" fill="#FAFAFA" stroke="#bdbdbd"/>
+  <text x="46" y="270" font-weight="bold">2) Navegacion /reportes (guard exige requiresAuth + permission reportes.ver)</text>
+  <text x="66" y="289">Con permiso: el formulario muestra Desde / Hasta (type="date") y sala opcional.</text>
+  <text x="66" y="306">Sin permiso: la entrada no se muestra y el guard redirige sin exponer la pagina.</text>
+  <text x="66" y="322" fill="#666">La autorizacion definitiva la resuelve el servidor (rbac:reportes.ver en la ruta).</text>
+
+  <line x1="375" y1="336" x2="375" y2="366" stroke="#444" marker-end="url(#flecha)"/>
+
+  <rect x="30" y="368" width="330" height="112" rx="8" fill="#F1F8E9" stroke="#33691E"/>
+  <text x="46" y="390" font-weight="bold">3a) Calcular - camino feliz</text>
+  <text x="66" y="409">POST /reports/indicators/IND-RA-01/calculate</text>
+  <text x="66" y="426">200: porcentaje con 2 decimales + leyenda TCI-1.0</text>
+  <text x="66" y="443">0.00 % con datos: se muestra tal cual (cero valido).</text>
+  <text x="66" y="460">SIN_DATOS_EN_PERIODO: leyenda N/A, nunca 0 % inventado.</text>
+
+  <rect x="390" y="368" width="330" height="112" rx="8" fill="#FFF8F0" stroke="#bf360c"/>
+  <text x="406" y="390" font-weight="bold">3b) Caminos de error (rol u entrada)</text>
+  <text x="426" y="409">422 periodo_invalido: "Revisa el periodo indicado."</text>
+  <text x="426" y="426">422 entrada_invalida: falta desde/hasta.</text>
+  <text x="426" y="443">403 RBAC_DENIED: "No tienes permiso para consultar reportes."</text>
+  <text x="426" y="460">503 REPORTES_UNAVAILABLE: sin numeros ni detalles internos.</text>
+
+  <text x="20" y="504" fill="#8a8a8a">Fuente de verdad del flujo: resources/js/modules/reportes/pages/ReportsPage.vue, resources/js/router/{index.js,permissions.js}, routes/api.php.</text>
+</svg>

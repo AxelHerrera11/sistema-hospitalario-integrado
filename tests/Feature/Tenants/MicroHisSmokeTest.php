@@ -121,6 +121,24 @@ class MicroHisSmokeTest extends TestCase
         $this->assertTrue($this->module->auditLog->verifyHashChain());
     }
 
+    public function test_token_session_and_error_responses_are_never_cacheable(): void
+    {
+        [$tenant, $adminToken] = $this->hospitalWithAdmin('Hospital A', 'admin@a.test');
+        $this->createUser($adminToken, 'medico@a.test', ['medico']);
+        $login = $this->call('POST', '/auth/login', ['email' => 'medico@a.test', 'password' => self::PASSWORD], $tenant);
+        $responses = [
+            'login' => $login,
+            'refresh' => $this->call('POST', '/auth/refresh', ['refresh_token' => $login['body']['refresh_token']]),
+            'me' => $this->call('GET', '/auth/me', [], null, $adminToken),
+            '401' => $this->call('GET', '/auth/me'),
+            '404' => $this->call('GET', '/no-existe', [], null, $adminToken),
+        ];
+        foreach ($responses as $name => $response) {
+            $this->assertSame('no-store', $response['headers']['Cache-Control'][0] ?? null, $name);
+            $this->assertSame('nosniff', $response['headers']['X-Content-Type-Options'][0] ?? null, $name);
+        }
+    }
+
     public function test_state_survives_between_requests_through_the_state_file(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'micro-his');
@@ -186,6 +204,6 @@ class MicroHisSmokeTest extends TestCase
         $request = (new ServerRequest($method, $path, $headers, $body === [] ? null : json_encode($body), '1.1', ['REMOTE_ADDR' => '10.0.0.1']))->withParsedBody([]);
         $response = $this->router->dispatch($request);
 
-        return ['status' => $response->getStatusCode(), 'body' => json_decode((string) $response->getBody(), true) ?? []];
+        return ['status' => $response->getStatusCode(), 'body' => json_decode((string) $response->getBody(), true) ?? [], 'headers' => $response->getHeaders()];
     }
 }

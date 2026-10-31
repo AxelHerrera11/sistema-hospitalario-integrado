@@ -12,32 +12,32 @@ security:
   - bearerAuth: []
     tenantHeader: []
 paths:
-/reportes:
-  get:
-    summary: Listar reportes generados en un periodo
-    parameters:
-      - { name: periodo, in: query, required: true, schema: { type: string, example: '2026-11' } }
-    responses:
-      '200':
-        description: "`data.reportes[]`"
-        content: { application/json: { schema: { properties: { data: { properties: { reportes: { type: array, items: { $ref: '#/components/schemas/Reporte' } } } } } } } }
-      '422': { $ref: '#/components/responses/Error' }
-  post:
-    summary: Generar reporte operativo inmutable para un periodo
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            required: [periodo]
-            properties:
-              periodo: { type: string }
-              datos: { type: object, additionalProperties: true }
-    responses:
-      '201': { description: Reporte generado (`data.id`) }
-      '422': { $ref: '#/components/responses/Error' }
-      '404': { $ref: '#/components/responses/Error' }
+  /reportes:
+    get:
+      summary: Listar reportes generados en un periodo
+      parameters:
+        - { name: periodo, in: query, required: true, schema: { type: string, example: '2026-11' } }
+      responses:
+        '200':
+          description: "`data.reportes[]`"
+          content: { application/json: { schema: { properties: { data: { properties: { reportes: { type: array, items: { $ref: '#/components/schemas/Reporte' } } } } } } } }
+        '422': { $ref: '#/components/responses/Error' }
+    post:
+      summary: Generar reporte operativo inmutable para un periodo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [periodo]
+              properties:
+                periodo: { type: string }
+                datos: { type: object, additionalProperties: true }
+      responses:
+        '201': { description: Reporte generado (`data.id`) }
+        '422': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -50,15 +50,15 @@ components:
         code: { type: string, description: Codigo estable del error }
         message: { type: string }
         errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+    Reporte:
+      type: object
+      properties:
+        id: { type: string }
+        periodo: { type: string }
+        contenido: { type: object, additionalProperties: true }
   responses:
     Error:
       description: Sobre comun de error (ASII-24)
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
-Reporte:
-  type: object
-  properties:
-    id: { type: string }
-    periodo: { type: string }
-    contenido: { type: object, additionalProperties: true }

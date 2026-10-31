@@ -24,6 +24,7 @@ require __DIR__ . '/../app.php';
 /** Datos ficticios comunes a los dos adaptadores: la Dra. López atiende ep1; la asignación del Dr. Pérez terminó. */
 const CODES = ['J18.9' => ['Neumonía, no especificada', true], 'I10' => ['Hipertensión esencial', true], 'A00' => ['Cólera', false]];
 const SOAP = ['subjective' => 'Tos de 3 días', 'objective' => 'T 38.4 °C', 'assessment' => 'Neumonía', 'plan' => 'Amoxicilina'];
+
 /**
  * Adaptador PDO sobre SQLite en memoria. $fail: 'catalog' (catálogo caído) o 'audit' (bitácora caída).
  * Devuelve el router y consultas sobre el estado: notas, descripciones de diagnósticos, eventos auditados y firma.
@@ -73,18 +74,24 @@ function call(Router $router, string $path, array $body, array $headers = ['X-Us
     $response = $router->dispatch(new Request($method, $path, $headers, $body));
     return ['status' => $response['status'], 'type' => $response['headers']['Content-Type'], 'body' => json_decode($response['body'], true)];
 }
+
 $status = static fn (array $r): string => $r['status'] . ' ' . ($r['body']['code'] ?? '');
 
 foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     $t = static fn (string $label): string => "[$adapter] $label";
     [$router, $state] = $make();
     $diagnose = static fn (string $note, array $body, array $headers = ['X-User-ID' => 'dra.lopez']): array => call($router, "/soap-notes/$note/diagnoses", $body, $headers);
+
     $r = call($router, '/care-episodes/ep1/soap-notes', SOAP);
     $nota = $r['body']['clinical_note_id'] ?? '';
     check($t('camino feliz: POST /care-episodes/ep1/soap-notes -> 201 JSON en borrador, id UUID y auditoría'), $r['status'] === 201 && str_starts_with($r['type'], 'application/json')
         && $r['body']['status'] === 'draft' && preg_match(Uuid::PATTERN, $nota) === 1 && $state['audits']() === ['nota_soap.registrada']);
     $r = $diagnose($nota, ['code' => 'J18.9', 'type' => 'primary']);
     check($t('camino feliz: diagnóstico principal J18.9 -> 201 con descripción del catálogo'), $r['status'] === 201 && $state['descriptions']() === ['Neumonía, no especificada']);
+    $r = call($router, "/soap-notes/$nota", [], method: 'GET');
+    check($t('lectura: GET /soap-notes/{id} -> 200 con las cuatro secciones y el diagnóstico'), $r['status'] === 200 && $r['body']['sections'] === SOAP
+        && $r['body']['diagnoses'] === [['code' => 'J18.9', 'type' => 'primary']]);
+
     check($t('regla de dominio: sección vacía -> 422'), $status(call($router, '/care-episodes/ep1/soap-notes', ['plan' => ' '] + SOAP)) === '422 SOAP_SECTION_INVALID');
     check($t('regla de dominio: asignación terminada -> 403'), $status(call($router, '/care-episodes/ep1/soap-notes', SOAP, ['X-User-ID' => 'dr.perez'])) === '403 NOT_TREATING_PHYSICIAN');
     check($t('regla de dominio: código repetido -> 409'), $status($diagnose($nota, ['code' => 'J18.9', 'type' => 'secondary'])) === '409 DIAGNOSIS_DUPLICATED');
@@ -99,6 +106,7 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
     $state['sign']($nota);
     check($t('regla de dominio: nota firmada no acepta diagnósticos -> 409'), $status($diagnose($nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
     check($t('ruta desconocida -> 404 ROUTE_NOT_FOUND'), $status(call($router, '/soap-notes', [], method: 'DELETE')) === '404 ROUTE_NOT_FOUND');
+
     [$router, $state] = $make('catalog');
     $nota = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];
     check($t('catálogo caído -> 503 y la nota queda sin diagnósticos'), $status(call($router, "/soap-notes/$nota/diagnoses", ['code' => 'J18.9', 'type' => 'primary'])) === '503 ICD10_UNAVAILABLE' && $state['descriptions']() === []);

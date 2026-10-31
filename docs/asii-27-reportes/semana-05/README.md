@@ -49,6 +49,17 @@ Reportes es un **consumidor de lectura** de varios contextos. Se integra por con
 Regla de integracion: ningun modulo lee las tablas de otro; toda dependencia pasa por un
 contrato API versionado (`/api/v1`) a traves del gateway, con JWT y `X-Tenant-ID`.
 
+## Resiliencia, observabilidad, consistencia y migracion (propuesta)
+
+> **Propuesta de diseno** redactada durante la integracion del PR a partir del contrato y la arquitectura de esta semana. No esta implementada ni probada y la autora no la ha confirmado como decision del modulo.
+
+| Aspecto | Propuesta para reportes operativos |
+|---|---|
+| Resiliencia | Un reporte es una instantanea inmutable: si un proveedor (Citas, Ocupacion) falla durante la generacion, no se guarda un reporte parcial como valido; se responde un error reintentable y el usuario lo genera de nuevo. `POST /reportes` con `Idempotency-Key` evita duplicar la instantanea en reintentos. Para reportes grandes, generacion asincrona con estado (`pendiente`, `listo`, `fallido`). |
+| Observabilidad | `X-Correlation-ID`; registro de quien genera o exporta, con los filtros aplicados del contrato de filtros, sin el contenido del reporte; metricas de duracion de generacion, tamano y fallos por proveedor. |
+| Consistencia | Consistencia en el punto de corte: el reporte refleja los datos de los proveedores al momento de generarse y debe declararlo (periodo y hora de corte). Los cambios posteriores en los modulos fuente no lo alteran, lo que garantiza la reproducibilidad. |
+| Migracion razonada | Se mantiene en el monolito modular. Disparador medible para un worker separado: tiempo de generacion por encima del objetivo o cola de solicitudes creciente. Pasos: (1) mover `GenerarReporte` a un worker que consume una cola; (2) `POST /reportes` pasaria a `202` con el id (cambio de contrato a versionar); (3) `GET /reportes` no cambia; (4) para revertir, volver a la generacion sincrona. |
+
 ## Requisitos y criterios de aceptacion
 
 - **RF-01**: exponer `POST /reportes` y `GET /reportes` sobre el Micro-HIS de la Semana 4.

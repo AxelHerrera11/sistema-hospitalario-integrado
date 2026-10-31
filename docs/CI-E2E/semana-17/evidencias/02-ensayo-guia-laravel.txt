@@ -1,0 +1,27 @@
+# Ensayo on-premise de la guía de despliegue (Laravel) — 2026-10-29 · Windows 11 · sin PostgreSQL
+# Release: git archive de origin/develop 6e841849f99a sin docs/ en una carpeta aparte (srv-his/releases/<sha>); .env de producción propio.
+# Las horas son de -0600. El servidor se detiene al final y el release de ensayo se elimina.
+
+[22:11:39] P2 commit a desplegar: origin/develop = 6e841849f99a
+[22:11:39] P3 PHP 8.2.12 · pdo_pgsql=sí · Node v22.13.1 · psql: no instalado
+[22:11:40] release exportado con git archive (sin docs/): 1207 archivos
+[22:11:40] servidor: php -S con el router de Laravel (sin servidor web ni gestor de procesos en este equipo)
+[22:11:40] dependencias: vendor/ enlazado al del equipo (mismo composer.lock que develop; composer install --no-dev no se ejecutó sin red)
+[22:11:41] vendor/ del release: 42 paquetes enlazados
+[22:11:42] APP_KEY generada para este release (no se copia de otro ambiente)
+[22:11:43] P4 variables de .env.example ausentes en .env: 0 · APP_ENV=production · APP_DEBUG=false · cookie segura=true
+[22:11:43] P5/P6 respaldo y migraciones: requieren PostgreSQL →
+    SQLSTATE[08006] [7] fe_sendauth: no password supplied (Connection: central, Host: 127
+[22:11:44] php artisan down:  Maintenance Mode  … ENABLED
+[22:11:46] config:cache y route:cache: OK (51 rutas api)
+[22:11:46] php artisan up
+[22:11:47] V1 GET /up → 200
+[22:11:48] V2 POST /api/v1/auth/login sin tenant → {"error":"TENANT_REQUIRED","message":"La cabecera X-Tenant-ID es obligatoria."} HTTP 400
+[22:11:48] V3 GET /api/v1/auth/me con tenant y sin token → {
+    "message": "Server Error"
+} HTTP 500
+[22:11:49] V4 guardián de rutas: exit 0 · 51 OK, 0 FALLO
+[22:11:49] V6 errores en storage/logs: 2 production.ERROR → [2026-10-29 22:11:43] production.ERROR: SQLSTATE[08006] [7] fe_sendauth: no password supplied (Connection: cen [2026-10-29 22:11:48] production.ERROR: SQLSTATE[08006] [7] fe_sendauth: no password supplied (Connection: cen
+[22:11:50] §4 rollback de configuración: php artisan config:clear && route:clear → OK
+[22:11:52] fin del ensayo; puerto 8299 cerrado
+[22:11:53] limpieza: junctions de vendor/ eliminados antes de borrar el release de ensayo

@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: Expediente médico electrónico base — micro-HIS
+  version: 0.1.0
+  description: |
+    Contrato del flujo «apertura y consulta autorizada del expediente longitudinal» tal como lo implementa
+    micro-his/expediente-medico (Router + MedicalRecordController). Formato de error: {code, trace_id?}.
+    PROVISIONAL: la identidad llega en X-User-ID porque el micro-HIS no tiene JWT; en Laravel la aporta Auth.
+    El formato común de errores del grupo (Lis) sigue pendiente; este contrato se ajustará a él.
+servers:
+  - url: http://127.0.0.1:8096
+    description: Prototipo local (datos ficticios)
+paths:
+  /patients/{patientCode}/medical-record:
+    parameters:
+      - $ref: '#/components/parameters/PatientCode'
+      - $ref: '#/components/parameters/UserId'
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/CorrelationId'
+    get:
+      summary: Consulta autorizada del expediente longitudinal
+      description: Exige el permiso RBAC y un vínculo asistencial activo (care_assignments) con el paciente.
+      x-required-permission: expediente.ver
+      responses:
+        '200': { description: Expediente con episodios (más reciente primero), content: { application/json: { schema: { $ref: '#/components/schemas/Longitudinal' } } } }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { description: ACCESO_DENEGADO (con trace_id) o SIN_VINCULO_ASISTENCIAL (también si el paciente no existe), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '404': { description: EXPEDIENTE_NO_ABIERTO, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { $ref: '#/components/responses/Error' }
+        '503': { description: HOSPITAL_NO_DISPONIBLE, EXPEDIENTE_NO_DISPONIBLE o AUDITORIA_NO_DISPONIBLE (sin datos), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    post:
+      summary: Apertura idempotente del expediente
+      description: |
+        Abre el único expediente del paciente en el hospital. Si ya existe devuelve 200 con created=false.
+        El permiso de apertura NO existe todavía en config/rbac.php: es una propuesta para RBAC. Mientras no se active,
+        la respuesta real para todos los roles es 403 ACCESO_DENEGADO.
+      x-permiso-propuesto: expediente.abrir
+      responses:
+        '201': { description: Expediente creado, content: { application/json: { schema: { $ref: '#/components/schemas/Opened' } } } }
+        '200': { description: El expediente ya existía (created=false), content: { application/json: { schema: { $ref: '#/components/schemas/Opened' } } } }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { description: PACIENTE_NO_ENCONTRADO, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '409': { description: PACIENTE_NO_ACTIVO, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '503': { description: HOSPITAL_NO_DISPONIBLE, EXPEDIENTE_NO_DISPONIBLE o AUDITORIA_NO_DISPONIBLE (la apertura se revierte), content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+components:
+  parameters:
+    PatientCode: { name: patientCode, in: path, required: true, schema: { type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$' } }
+    UserId: { name: X-User-ID, in: header, required: true, description: local_user_ref_id (PROVISIONAL en el micro-HIS), schema: { type: string } }
+    TenantId: { name: X-Tenant-ID, in: header, required: true, description: Hospital (tenant) en el que actúa el usuario, schema: { type: string } }
+    CorrelationId: { name: X-Correlation-ID, in: header, required: false, schema: { type: string, maxLength: 64 } }
+  responses:
+    Error: { description: Error con código estable, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  schemas:
+    Error:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, example: ACCESO_DENEGADO }
+        trace_id: { type: string, description: Solo en denegaciones RBAC; también queda en la auditoría como rbac_trace }
+    Record:
+      type: object
+      required: [medical_record_id, record_number, status, opened_at, closed_at]
+      properties:
+        medical_record_id: { type: string, format: uuid }
+        record_number: { type: string, example: EXP-P-0001, description: 'SUPUESTO S-03: EXP- + código del paciente' }
+        status: { type: string, enum: [open, closed] }
+        opened_at: { type: string, format: date-time }
+        closed_at: { type: string, format: date-time, nullable: true }
+    Opened:
+      allOf:
+        - $ref: '#/components/schemas/Record'
+        - type: object
+          required: [created]
+          properties: { created: { type: boolean } }
+    Longitudinal:
+      type: object
+      required: [record, patient, summary, episodes]
+      properties:
+        record: { $ref: '#/components/schemas/Record' }
+        patient:
+          type: object
+          properties:
+            code: { type: string }
+            display_name: { type: string }
+            birth_date: { type: string, format: date }
+            sex: { type: string, enum: [female, male, other, unknown] }
+            status: { type: string, enum: [active, inactive, deceased] }
+        summary:
+          type: object
+          properties: { episodes: { type: integer }, open_episodes: { type: integer } }
+        episodes:
+          type: array
+          items:
+            type: object
+            properties:
+              care_episode_id: { type: string, format: uuid }
+              type: { type: string, enum: [outpatient, emergency, inpatient] }
+              status: { type: string, enum: [open, closed, cancelled] }
+              started_at: { type: string, format: date-time }
+              ended_at: { type: string, format: date-time, nullable: true }
+              reason: { type: string, description: Dato clínico sensible; la interfaz lo muestra plegado }
+              service_code: { type: string, nullable: true }

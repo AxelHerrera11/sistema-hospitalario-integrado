@@ -1,0 +1,19 @@
+@startsalt
+title ASII-26 - Movil (375 px)
+{
+<b>Hospital HIS</b> | [=]
+--
+<b>Buenos dias, Lis</b>
+Periodo: ^2026-11^
+{+
+<b>X No cumple</b> - Tiempo de espera
+30 min (meta 20)
+}
+{+
+<b>! En riesgo</b> - Citas atendidas
+84 (meta 90)
+}
+--
+[Inicio] | [Citas] | [Camas] | [Mas]
+}
+@endsalt
