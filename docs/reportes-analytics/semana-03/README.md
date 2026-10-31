@@ -31,24 +31,17 @@ micro-his/reportes-analytics
 
 ## Diagrama C4 (Contenedor) y dependencias
 
-```plantuml
-@startuml
-skinparam componentStyle rectangle
-[Browser] --> [api/v1 (Laravel, Semana 16 mentalidad)] : JWT + X-Tenant-ID
-[api/v1] --> [Contenido Laravel Route + middleware tenant/rbac] 
-[Ruta reportes] --> [micro-his/reportes-analytics app.php]
-[micro-his/{PresentationA股}|Application|Domain|Persistence] --> [(city PostgreSQL HOSPITAL.care_episodes)] : PDO preparado
-@enduml
-```
+![Vista de contenedores y componentes del módulo](./06-arquitectura.png)
 
-(Salida visual pendiente al integrar la Semana 16; este texto se conserva
-como fuente editable en `docs/reportes-analytics/semana-03/fuentes/06-arquitectura.puml`.)
+Fuente editable: [`fuentes/06-arquitectura.dot`](./fuentes/06-arquitectura.dot). Se regenera con `dot -Tpng fuentes/06-arquitectura.dot -o 06-arquitectura.png`.
+
+La versión anterior de este diagrama estaba incompleta, con texto dañado y sin imagen; citaba además un archivo que no existía. Se reemplazó el 30/10/2026.
 
 ## Pruebas ejecutadas (evidencia local)
 
 ```bash
 php micro-his/reportes-analytics/tests/run.php
-# => "run.php OK: 11 escenarios del indicador IND-RA-01."
+# Hoy: "run.php OK: 15 escenarios del indicador IND-RA-01." (11 en la entrega de la Semana 3)
 ```
 
 | Escenario | Resultado |
@@ -67,8 +60,8 @@ php micro-his/reportes-analytics/tests/run.php
 
 `php -l` sobre todos los archivos del módulo: sin errores.
 
-## Preguntar contra la Semana 4
+## Relación con la Semana 4
 
-El controlador ya no contiene contadores ni estados ocultos; la Semana 4
-responde cómo se sustituye el Adaptador InMemory por el adaptador Laravel
-`catalog` del cuerpo del sistema y cómo el `request` se integra al router.
+El controlador no contiene contadores ni estados ocultos. La Semana 4 explica
+cómo el puerto `EpisodeSummaryReader` permite cambiar el adaptador PDO por el
+doble InMemory y cómo se comparte la base HOSPITAL con otros módulos.

@@ -1,48 +1,60 @@
-# ASII-23 Semana 15 — Matriz de trazabilidad de pruebas
+# ASII-23 Semana 15 — Matriz de pruebas
 
-**Issue:** `Refs #152`. Cada requisito del módulo con su prueba, PR y
-resultado real de ejecución (todos ejecutados localmente el 2026-10-23/24).
+**Issue:** `Refs #152`. Resultados de la ejecución local del 30/10/2026 sobre PostgreSQL 17 aislado, con datos ficticios. GitHub Actions: **no ejecutado** por el bloqueo de facturación.
 
-## Matriz
+Tipos: **U** unitaria, **W** caja blanca (recorre una rama concreta del código), **B** caja negra (solo contrato observable).
 
-| Requisito | Prueba (ubicación) | PR | Resultado |
-|---|---|---|---|
-| R1 Fórmula TCI-1.0 (25.00 % con 4/1) | `micro-his/reportes-analytics/tests/run.php` esc. 1 | #1237/#1239 | OK (11 escenarios) |
-| R2 Filtro por sala | `run.php` esc. 2 (33.33 % con HOSP-UCI) | #1237/#1239 | OK |
-| R3 Trazabilidad sin datos personales | `run.php` esc. 3 + `IndicatorHospitalIntegrationTest` (no-leak) | #1237/#1239, #1269 | OK |
-| R4 Periodo invertido → 422 | `run.php` esc. 4 + `IndicatorEndpointTest` | #1237, #1245 | OK |
-| R5 Entrada faltante → 422 | `IndicatorEndpointTest` (sin `from`) | #1245 | OK |
-| R6 Offset de zona explícito → 422 | `run.php` esc. 6 | #1237/#1239 | OK |
-| R7 Falla de persistencia → 503 sin cifras | `run.php` esc. 7 + `IndicatorEndpointTest` (PDOException) | #1237, #1245 | OK |
-| R8 Sin datos en periodo → estado | `run.php` esc. 8 + base real 2020 | #1237, #1269 | OK |
-| R9 Lectura incoherente → 503 | `run.php` esc. 9 + `IndicatorEndpointTest` | #1237/#1239, #1245 | OK |
-| R10 Método no permitido → 405 (o 404 GET) | `run.php` esc. 10 + `IndicatorEndpointTest` | #1237, #1245 | OK |
-| R11 Cero válido 0.00 | `run.php` esc. 11 | #1237/#1239 | OK |
-| R12 401 sin sesión | `IndicatorEndpointTest` | #1245 | OK |
-| R13 403 sin permiso, tenant distinto | `IndicatorEndpointTest` | #1245 | OK |
-| R14 Base real HOSPITAL (55433) | `IndicatorHospitalIntegrationTest` (33.33 % con rollback) | #1269 | OK |
+## Matriz requisito → prueba
 
-Nota de trazabilidad (2026-10-26): R14 se re-ejecutó en un entorno aislado
-reproducible (PostgreSQL efímero 55431/55433, bases `*_test` migradas desde
-cero) y reveló dependencia ambiental de filas preexistentes de
-`local_patients`; corregida con semilla sintética propia dentro de la
-transacción (14 pruebas, 64 aserciones OK).
-| R15 Base inexistente → 503 no 500 | `IndicatorHospitalIntegrationTest` | #1269 | OK |
-| R16 Accesibilidad ARIA/teclado persistente | `reportes.a11y.test.mjs` (11 comprobaciones) | #1283 | OK |
-| R17 Mensajes seguros de UI | `reportes.test.mjs` (15 aserciones) | #1248 | OK |
-| R18 Navegación y permisos del router | `navigation.test.mjs` + `permissions.test.mjs` | #1248 | OK |
-| R19 LSP (contrato del lector) | `tests/example-lsp.php` (7 comprobaciones) | #1233 | OK |
-| R20 Regresión global del sistema | `vendor/bin/phpunit` completa | #1245+ | OK (361 pruebas, 6357 aserciones) |
+| ID | Tipo | Requisito | Prueba | Resultado |
+|---|---|---|---|---|
+| U1 | U | N/A nunca se muestra como 0 % | `reportes.test.mjs`: `porcentajeLegible` | OK |
+| U2 | U | Filtros inválidos, incluidas fechas imposibles | `reportes.test.mjs`: `errorDeFiltros` | OK |
+| U3 | U | Mensajes sin detalle interno | `reportes.test.mjs`: `mensajeDeError` | OK |
+| U4 | U | Contraste de los colores | `semana-09/evidencia/contraste.mjs` | OK, 7 de 7 |
+| W1 | W | Rama de denominador cero | `run.php`: sin datos | OK |
+| W2 | W | Rama de lectura incoherente | `run.php`, con doble | OK |
+| W3 | W | Rama de ida y vuelta en `Period::instant` | `run.php`: día inexistente, mes 13, hora 25 | OK |
+| W4 | W | Conexión perezosa: base caída responde 503 y no 500 | `test_una_base_hospital_inexistente_responde_503_y_nunca_ceros` | OK |
+| B1 | B | Fórmula: 25.00 con 4 y 1 | `run.php`; API real; recorrido en Chrome | OK |
+| B2 | B | Filtro de sala: 33.33 | `run.php`; recorrido en Chrome | OK |
+| B3 | B | Cero real: 0.00 | `run.php`; API real | OK |
+| B4 | B | Límites `[desde, hasta)` | API real, sembrado en los bordes | OK |
+| B5 | B | Periodo inválido: 422 sin cifra | `IndicatorEndpointTest` | OK |
+| B6 | B | Sin sesión 401; sin permiso 403; método incorrecto 405 | `IndicatorEndpointTest` | OK |
+| B7 | B | Otro hospital: 403 sin leer | `test_miembro_de_otro_hospital_…`; recorrido real | OK |
+| B8 | B | Sin datos personales en la respuesta | `IndicatorHospitalIntegrationTest` | OK |
+| B9 | B | Pantalla: filtros, errores, 375 px, recepción | `semana-11/evidencia/recorrido-e2e.mjs` | OK, 15/15 |
+| B10 | B | Móvil a 320, 375, 430 y 768 px | `semana-10/evidencia/movilidad.mjs` | OK, 15/15 |
+| R1 | Regresión | Suite completa de Laravel | `php artisan test` | 1 falla ajena (PublishedContractsTest, por diagnosticos.png de ASII-11); 546 correctas de 547 |
 
-## Cómo reproducir la matriz
+## Capturas
+
+Están en [`../semana-11/capturas/`](../semana-11/capturas/) y [`../semana-10/capturas/`](../semana-10/capturas/). Son de Chrome headless, no de una revisión humana.
+
+## Defectos
+
+| ID | Defecto | Severidad | Hallado en | Estado |
+|---|---|---|---|---|
+| D1 | Un miembro válido del hospital B obtenía el 25.00 % del hospital A | Crítica | Auditoría, recorrido real | Corregido, #1561 |
+| D2 | `2026-02-31` y el mes 13 respondían 200 | Media | Auditoría, API | Corregido, #1565 |
+| D3 | La cifra anterior quedaba junto a un error | Alta | Auditoría, Chrome | Corregido, #1565 |
+| D4 | Formulario sin bordes y botón parecido a texto | Alta | Auditoría, Chrome | Corregido, #1565 |
+| D5 | Sin aviso de que «Hasta» no se incluye | Alta | Auditoría, Chrome | Corregido, #1565 |
+| D6 | Mensaje de error al cargar la página | Media | Auditoría, Chrome | Corregido, #1565 |
+| D7 | El manual citaba un mensaje que no aparecía | Baja | Auditoría | Corregido, #1565 |
+| D8 | Texto dañado en documentos y código | Baja | Auditoría | Corregido, #1565 y entregas posteriores |
+| D9 | Dependencia de filas previas en `local_patients` | Media | Entorno efímero, 26/10 | Corregido, semilla propia en la prueba |
+| D10 | Ningún módulo escribe `cancelled` | Media | Auditoría | **Abierto**, requisito por confirmar |
+
+## Reproducir
 
 ```bash
 php micro-his/reportes-analytics/tests/run.php
 php micro-his/reportes-analytics/tests/example-lsp.php
-vendor/bin/phpunit tests/Feature/Reportes
+php artisan test tests/Feature/Reportes
 node resources/js/modules/reportes/reportes.test.mjs
 node resources/js/modules/reportes/reportes.a11y.test.mjs
-node resources/js/router/navigation.test.mjs
-node resources/js/router/permissions.test.mjs
-vendor/bin/phpunit   # suite completa
 ```
+
+Las pruebas de `tests/Database` y `IndicatorHospitalIntegrationTest` requieren PostgreSQL de pruebas; ver `phpunit.xml`.

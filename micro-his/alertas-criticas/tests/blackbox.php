@@ -40,6 +40,7 @@ check('lab_test_id sin umbrales en el catálogo → 200 not_critical', $publish(
 // Partición: campos obligatorios del evento (ausente o de otro tipo).
 check('value ausente → 422 EVENT_INVALID', $publish(server(), ['value' => null]) === [422, 'EVENT_INVALID']);
 check('patient_id numérico → 422 EVENT_INVALID', $publish(server(), ['patient_id' => 7]) === [422, 'EVENT_INVALID']);
+check('value 1e400 (infinito) → 422 EVENT_INVALID', $publish(server(), ['value' => '1e400']) === [422, 'EVENT_INVALID']);
 // Secuencia: el mismo resultado dos veces (idempotencia del contrato).
 $k = server();
 $same = ['result_version_id' => 'RV-X'];

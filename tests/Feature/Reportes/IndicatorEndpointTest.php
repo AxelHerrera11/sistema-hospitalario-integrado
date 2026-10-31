@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Reportes;
 
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -38,6 +39,8 @@ final class IndicatorEndpointTest extends TestCase
         $this->app->instance(EpisodeSummaryReader::class, $this->reader(2, 1));
 
         $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        // Instancia on-premise de prueba: su base HOSPITAL pertenece a hospital-a.
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
         $this->app['router']->aliasMiddleware('tenant', TestIdentity::class);
         $this->app['router']->aliasMiddleware('jwt.auth', TestIdentity::class);
 
@@ -62,6 +65,55 @@ final class IndicatorEndpointTest extends TestCase
             '/api/v1/reports/indicators/IND-RA-01/calculate',
             ['from' => '2026-01-01T00:00:00-06:00', 'until' => '2026-02-01T00:00:00-06:00'],
         )->json('data.computed_at'));
+    }
+
+    public function test_miembro_de_otro_hospital_no_consulta_la_base_de_esta_instancia(): void
+    {
+        $lecturas = new class implements EpisodeSummaryReader {
+            public int $veces = 0;
+
+            public function read(string $fromInclusive, string $untilExclusive, string $serviceOrEmpty): ?array
+            {
+                $this->veces++;
+
+                return null;
+            }
+        };
+        $this->app->instance(EpisodeSummaryReader::class, $lecturas);
+        $periodo = ['from' => '2026-01-01T00:00:00-06:00', 'until' => '2026-02-01T00:00:00-06:00'];
+
+        // Membresía válida en hospital-b, instancia con la base de hospital-a.
+        $this->store->grant('user-1', 'hospital-b', 'CoordinadorCamas');
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-b']);
+        TestIdentity::$hospital = 'hospital-b';
+        $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', $periodo)
+            ->assertForbidden()
+            ->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_MISMATCH')
+            ->assertJsonMissingPath('data');
+        $this->assertSame(0, $lecturas->veces);
+
+        // El mismo rol en el hospital dueño de la base conserva el acceso.
+        $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
+        TestIdentity::$hospital = 'hospital-a';
+        $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', $periodo)->assertOk();
+        $this->assertSame(1, $lecturas->veces);
+
+        // Sin hospital asignado a la base se cierra el paso.
+        config(['tenants.hospital_database_tenant_id' => null]);
+        $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', $periodo)
+            ->assertStatus(503)
+            ->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
+        $this->assertSame(1, $lecturas->veces);
+    }
+
+    public function test_rechaza_fechas_imposibles_con_422_sin_porcentaje(): void
+    {
+        foreach (['2026-02-31T00:00:00-06:00', '2026-13-01T00:00:00-06:00', '2026-01-01T24:30:00-06:00'] as $desde) {
+            $this->postJson('/api/v1/reports/indicators/IND-RA-01/calculate', ['from' => $desde, 'until' => '2027-03-05T00:00:00-06:00'])
+                ->assertStatus(422)
+                ->assertJsonPath('error.code', 'periodo_invalido')
+                ->assertJsonMissingPath('data');
+        }
     }
 
     public function test_rechaza_periodo_invalido_con_422_sin_porcentaje(): void
@@ -195,12 +247,7 @@ class TestIdentity
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): ?string
-            {
-                return TestIdentity::$hospital;
-            }
-        });
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
 
         return $next($request);
     }

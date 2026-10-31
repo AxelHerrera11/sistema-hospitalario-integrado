@@ -75,6 +75,7 @@ const MENSAJES = {
     ACTOR_WITHOUT_LOCAL_REFERENCE: 'Su usuario no está habilitado en este hospital para administrar el catálogo.',
     HOSPITAL_DATABASE_TENANT_MISMATCH: 'Este hospital no está disponible en esta instancia.',
     DATE_INVALID: 'La fecha de consulta no es válida.',
+    TEXT_TOO_LONG: 'El texto supera la longitud permitida (nombre 160, muestra 40, unidad 32).',
 };
 
 const REGLA_POR_CAMPO = { code: 'CODE_INVALID', min_volume_ml: 'SPECIMEN_REQUIREMENT_INVALID', unit: 'RANGES_INCOHERENT',

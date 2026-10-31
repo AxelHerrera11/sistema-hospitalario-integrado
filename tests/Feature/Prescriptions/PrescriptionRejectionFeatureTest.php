@@ -27,7 +27,7 @@ final class PrescriptionRejectionFeatureTest extends TestCase
             ->assertJsonPath('code', 'VALIDATION_FAILED');
     }
 
-    public function test_blocked_allergy_returns_422_without_saving(): void
+    public function test_u03_moderate_allergy_returns_422_without_saving(): void
     {
         $repository = Mockery::mock(PrescriptionRepository::class);
         $repository->shouldNotReceive('save');
@@ -37,7 +37,20 @@ final class PrescriptionRejectionFeatureTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('code', 'ALLERGY_CONFLICT')
             ->assertJsonPath('severity', 'moderate')
-            ->assertJsonPath('exception_allowed', true);
+            ->assertJsonPath('exception_allowed', false);
+    }
+
+    public function test_u04_unknown_allergy_returns_422_without_saving(): void
+    {
+        $repository = Mockery::mock(PrescriptionRepository::class);
+        $repository->shouldNotReceive('save');
+        $this->bindService([new Allergy(null, 'Amoxicilina', AllergyType::Allergy, Severity::Unknown)], $repository);
+
+        $this->postJson($this->collectionUrl(), $this->draft())
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'ALLERGY_CONFLICT')
+            ->assertJsonPath('severity', 'unknown')
+            ->assertJsonPath('exception_allowed', false);
     }
 
     public function test_inactive_medication_returns_422_without_saving(): void

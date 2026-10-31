@@ -52,7 +52,7 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->
     Route::post('/lab-results/{resultId}/correct', [LabModulesController::class, 'correct'])->middleware('rbac:lab-results.correct');
 });
 
-Route::middleware(['tenant', 'jwt.auth', 'rbac:reportes.ver'])->group(function (): void {
+Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, 'rbac:reportes.ver'])->group(function (): void {
     Route::post('/reports/indicators/IND-RA-01/calculate', [ReportesIndicatorController::class, 'calcular']);
 });
 

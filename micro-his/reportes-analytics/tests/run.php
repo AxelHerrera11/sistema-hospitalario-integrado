@@ -65,6 +65,13 @@ $err = $failing->dispatch('POST', '/indicators/IND-RA-01/calculate', $period('20
 $check('MicroHIS: fallo de persistencia => 503 LECTURA_NO_DISPONIBLE sin cifras', $err['status'] === 503
     && $err['body']['code'] === 'LECTURA_NO_DISPONIBLE' && !array_key_exists('percentage', $err['body']));
 
+foreach ([['2026-02-31T00:00:00-06:00', '2026-03-05T00:00:00-06:00', 'día inexistente'], ['2026-13-01T00:00:00-06:00', '2027-02-01T00:00:00-06:00', 'mes 13'],
+    ['2026-01-01T25:00:00-06:00', '2026-02-01T00:00:00-06:00', 'hora 25'], ['2026-01-01T00:00:00-06:00', '2026-02-01T00:00:00', 'hasta sin offset']] as [$desde, $hasta, $caso]) {
+    $imposible = $router->dispatch('POST', '/indicators/IND-RA-01/calculate', $period($desde, $hasta));
+    $check("MicroHIS: {$caso} => 422 periodo_invalido sin porcentaje", $imposible['status'] === 422
+        && $imposible['body']['code'] === 'periodo_invalido' && !array_key_exists('percentage', $imposible['body']));
+}
+
 /** Escenario 4: sin datos (denominador 0) => estado, no porcentaje. */
 $sinDatos = reportes_router(new InMemoryEpisodeSummaryReader())->dispatch('POST', '/indicators/IND-RA-01/calculate', $period('2026-05-01T00:00:00-06:00', '2026-06-01T00:00:00-06:00'));
 $check('MicroHIS: sin datos del periodo => SIN_DATOS_EN_PERIODO sin porcentaje', $sinDatos['status'] === 200

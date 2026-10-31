@@ -60,5 +60,12 @@ $test('PDO fallo de consulta traducido', static function () use ($missingTable):
     try { $missingTable->find('x'); throw new LogicException('Fallo omitido'); }
     catch (StorageFailure $error) { check($error->getPrevious() instanceof PDOException); }
 });
+$test('vista conserva campos y sobre JSON público', static function (): void {
+    $case = new ManualCase('case-view', 'Propósito', "Paso 1\nPaso 2", 'Esperado');
+    $response = MicroHis\QaRegresion\Presentation\CaseView::created($case);
+    check($response === ['status' => 201, 'body' => ['data' => [
+        'purpose' => 'Propósito', 'steps' => "Paso 1\nPaso 2", 'expected' => 'Esperado', 'id' => 'case-view',
+    ]]]);
+});
 echo "$passed aprobadas, $failed fallidas\n";
 exit($failed === 0 ? 0 : 1);
