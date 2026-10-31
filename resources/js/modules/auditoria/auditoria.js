@@ -118,3 +118,36 @@ export function resumenPagina(meta) {
 
     return `Página ${meta.page} de ${Math.max(1, meta.total_pages)} · ${meta.total} eventos`;
 }
+
+/** Nombre legible del actor según el catálogo del hospital; si no está (sistema, otro origen), el identificador. */
+export function nombreDeActor(actorId, actores) {
+    const actor = (actores ?? []).find((a) => a.user_id === actorId);
+
+    return actor ? actor.display_name : (actorId ?? '—');
+}
+
+/** Opción «Nombre — correo» para el filtro de usuario; el valor sigue siendo el user_id que espera la API. */
+export function opcionesDeActor(actores) {
+    return (actores ?? []).map((a) => ({ valor: a.user_id, etiqueta: a.email ? `${a.display_name} — ${a.email}` : a.display_name }));
+}
+
+const CAUSAS = {
+    hash_no_coincide: 'un evento fue modificado después de registrarse',
+    eslabon_faltante: 'falta un evento o la cadena está fuera de orden',
+    bifurcacion: 'dos eventos dicen seguir al mismo',
+};
+
+/** Resultado de GET /audit-events/integrity para la pantalla: { tono: 'ok'|'error', titulo, mensaje }. */
+export function estadoIntegridad(r) {
+    if (r?.valid) {
+        return { tono: 'ok', titulo: 'Cadena íntegra', mensaje: `Se verificaron ${r.checked} de ${r.total} eventos: ninguno fue alterado ni borrado.` };
+    }
+    const b = r?.broken ?? {};
+    const donde = b.event_id ? ` (evento ${b.event_id} de este hospital)` : '';
+
+    return {
+        tono: 'error',
+        titulo: 'Cadena alterada',
+        mensaje: `La verificación se detuvo en el eslabón ${b.position ?? '?'}${donde}: ${CAUSAS[b.cause] ?? 'causa desconocida'}. Informe a seguridad.`,
+    };
+}
