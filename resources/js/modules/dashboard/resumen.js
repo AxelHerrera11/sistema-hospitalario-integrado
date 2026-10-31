@@ -29,3 +29,14 @@ export function mensajeDeError(status) {
     if (status === 503) return 'No se pudo cargar el tablero. Sus datos no se perdieron; intente de nuevo.';
     return 'Ocurrió un error inesperado al cargar el tablero.';
 }
+
+/** Fecha AAAA-MM-DD en la zona del navegador; `toISOString()` daría el día siguiente por la noche (UTC-6). */
+export function fechaLocal(fecha = new Date()) {
+    const dos = (n) => String(n).padStart(2, '0');
+    return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`;
+}
+
+/** Solo se enlaza el detalle si la ruta existe en el router; evita un enlace roto mientras el módulo no publique su pantalla. */
+export function enlaceDisponible(resolver, ruta) {
+    return Boolean(ruta) && resolver(ruta).matched.length > 0;
+}

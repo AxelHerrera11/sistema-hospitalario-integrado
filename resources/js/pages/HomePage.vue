@@ -20,7 +20,7 @@
                     <li v-for="fila in filasPorEstado(tarjeta.por_estado)" :key="fila.clave">{{ fila.etiqueta }}: {{ fila.valor }}</li>
                 </ul>
                 <p role="status">{{ textoIndicador(tarjeta.indicador) }}</p>
-                <RouterLink :to="tarjeta.ruta">Ver detalle</RouterLink>
+                <RouterLink v-if="enlaceDisponible((r) => router.resolve(r), tarjeta.ruta)" :to="tarjeta.ruta">Ver detalle</RouterLink>
             </article>
         </div>
     </section>
@@ -28,13 +28,15 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import api from '@/plugins/axios';
-import { estadoDePagina, filasPorEstado, mensajeDeError, textoIndicador } from '@/modules/dashboard/resumen';
+import { enlaceDisponible, estadoDePagina, fechaLocal, filasPorEstado, mensajeDeError, textoIndicador } from '@/modules/dashboard/resumen';
 
+const router = useRouter();
 const resumen = ref(null);
 const cargando = ref(false);
 const error = ref('');
-const fecha = new Date().toISOString().slice(0, 10);
+const fecha = fechaLocal();
 const estado = computed(() => estadoDePagina(resumen.value, cargando.value));
 
 async function cargar() {
