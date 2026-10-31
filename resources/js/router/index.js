@@ -110,7 +110,8 @@ const router = createRouter({
             path: '/expediente',
             name: 'expediente',
             component: () => import('@/modules/expediente/pages/MedicalRecordPage.vue'),
-            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.expediente },
+            // Consulta clínica (expediente.ver) o gestión de médicos tratantes (expediente.asignar): basta uno.
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.expediente, permissions: ['expediente.asignar'] },
         },
         {
             path: '/wards',
