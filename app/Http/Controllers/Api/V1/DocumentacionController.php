@@ -37,7 +37,7 @@ final class DocumentacionController extends Controller
             return response()->json([
                 'message' => 'El documento no existe o no esta disponible para su rol.',
                 'code' => 'document_not_found',
-                'trace_id' => 'trace-'.bin2hex(random_bytes(6)),
+                'trace_id' => preg_match('/^[A-Za-z0-9._-]{8,64}$/', $traza = (string) $request->header('X-Request-Id', '')) === 1 ? $traza : 'trace-'.bin2hex(random_bytes(6)),
             ], 404)->header('Cache-Control', 'no-store, private');
         }
         $tipo = str_ends_with($archivo, '.yaml') ? 'application/yaml' : 'text/markdown';
