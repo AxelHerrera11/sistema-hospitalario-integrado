@@ -4,12 +4,12 @@
 
 | Requisito | Estado | Evidencia |
 |---|---|---|
-| Matriz de amenazas | **Hecho** | [amenazas.md](./amenazas.md): 18 amenazas, 15 probadas, 1 verificada por lectura, 1 parcial, 1 abierta |
+| Matriz de amenazas | **Hecho** | [amenazas.md](./amenazas.md): 18 amenazas, 15 probadas, 1 verificada por lectura, 2 parciales, 0 abiertas |
 | Pruebas de permisos y datos sensibles | **Hecho** | `tests/Feature/Medicos/DoctorSecurityTest.php` (10 pruebas) y `DoctorEndpointTest.php` (11): OK, 21 tests y 242 assertions; más 2 de inyección y longitudes en PostgreSQL |
 | Bitácora de despliegue | **Parcial** | [bitacora-despliegue.md](./bitacora-despliegue.md): despliegue **local** de verificación con PostgreSQL 16 efímero |
 | Despliegue final | **Bloqueado** | Sin staging u on-premise ni semillas aprobadas de `specialties` y `local_user_refs` |
 
-**La Semana 17 no se declara completa:** el despliegue final depende del entorno, y una amenaza (MED-13, de la plataforma) sigue abierta.
+**La Semana 17 no se declara completa:** el despliegue final depende del entorno, y dos amenazas siguen parciales (MED-08 y MED-13, esta última de la plataforma); ninguna queda abierta.
 
 ## 1. Qué se probó
 
@@ -36,7 +36,7 @@ Los permisos por operación (MED-17) y el actor sin referencia local (MED-18) lo
 
 | ID | Riesgo | Qué haría falta |
 |---|---|---|
-| MED-13 | `TenantMiddleware` valida el hospital pero no cambia la conexión `hospital`: el aislamiento depende de desplegar una base por hospital | Decisión de plataforma (enrutar la conexión por tenant o una base por despliegue); no es de este módulo |
+| MED-13 (parcial) | `EnsureHospitalDatabaseTenant` rechaza otro hospital (falla cerrada), pero la conexión `hospital` no cambia por tenant: el aislamiento depende de desplegar una base por hospital | Decisión de plataforma (enrutar la conexión por tenant o una base por despliegue); no es de este módulo |
 
 No se declara mitigado. MED-14 y MED-15 se cerraron con un límite de tasa por usuario y longitudes máximas de los textos (sección 1).
 

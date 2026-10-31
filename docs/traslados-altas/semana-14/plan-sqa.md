@@ -31,7 +31,7 @@ Medición del 21/10/2026 sobre develop `b252e1e`. Las métricas M1–M4 salen de
 | P1 | Preventivo | El ciclo de integración rechaza un PR de más de 400 líneas o con menos de 3 commits | Autora | En cada PR |
 | P2 | Preventivo | Validación de la solicitud antes de conectar con HOSPITAL | Autora | Vigente desde la Semana 4 |
 | P3 | Preventivo | `FOR UPDATE` sobre el episodio, la estancia y la cama; índice de estancia abierta única | Autora | Vigente; verificación en la Semana 15 |
-| P4 | Preventivo | Acordar los permisos de traslado, alta y consulta con RBAC antes de integrar | Autora con ASII-02 (`Luis890D`) | Antes de la Semana 16 |
+| P4 | Preventivo | Acordar los permisos de traslado, alta y consulta con RBAC antes de integrar | Autora; depende de RBAC | Antes de la Semana 16 |
 | D1 | Detectivo | `run.php` y `node --test` dentro del ciclo de integración | Autora | En cada PR |
 | D2 | Detectivo | Búsqueda de nombres con forma de permiso y de enlaces rotos en `docs/` | Autora | En cada PR de documentación |
 | D3 | Detectivo | Recorridos de la interfaz y escenarios móviles en Chrome | Autora | Semanas 10–12 y antes de la 17 |

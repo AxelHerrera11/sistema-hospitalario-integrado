@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prototipo — Órdenes de laboratorio desde EMR</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#app">Saltar al contenido principal</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">OL</span>
+      <span>Órdenes de laboratorio</span>
+    </div>
+    <p class="context">Hospital A · Dra. Méndez · Médico</p>
+  </header>
+  <main id="app" tabindex="-1"></main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="cancel-dialog" aria-labelledby="cancel-title">
+    <form id="cancel-form" method="dialog">
+      <h2 id="cancel-title">Cancelar orden</h2>
+      <p>La cancelación conserva el historial y no se puede deshacer. Indica el motivo.</p>
+      <label for="cancel-reason">Motivo de cancelación</label>
+      <textarea id="cancel-reason" name="reason" rows="3" required minlength="5" maxlength="250"></textarea>
+      <p class="field-error" id="cancel-error" role="alert" hidden>El motivo debe tener al menos 5 caracteres.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn secondary" data-action="close-dialog">Volver</button>
+        <button type="submit" class="btn danger">Confirmar cancelación</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>

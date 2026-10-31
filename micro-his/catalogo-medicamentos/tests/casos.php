@@ -87,7 +87,7 @@ check('B4 errores: 409 duplicado, 404 inexistente, 405 método, 404 ruta y 503 s
     $call('POST', '/medications', [], json_encode($draft()))['status'] === 409 && $call('GET', '/medications/999/validity')['status'] === 404
     && $call('DELETE', '/medications/1/validity')['status'] === 405 && $call('GET', '/x')['status'] === 404
     && $broken->dispatch(new Request('GET', '/medications', ['q' => 'amox']))['body'] === ['error' => 'CATALOG_UNAVAILABLE', 'message' => 'El catálogo no está disponible; no se confirmó la operación.']);
-check('B5 regresión AV3: "ácido" y "ÁCIDO" encuentran el mismo registro por la interfaz (RF-04)', $call('GET', '/medications', ['q' => 'ácido'])['body']['count'] === 1
-    && $call('GET', '/medications', ['q' => 'ÁCIDO'])['body']['count'] === 1);
+check('B5 regresión AV3: "ácido", "ÁCIDO", "acido" y "ACIDO" encuentran el mismo registro por la interfaz (RF-04)', array_filter(['ácido', 'ÁCIDO', 'acido', 'ACIDO'],
+    static fn (string $q): bool => $call('GET', '/medications', ['q' => $q])['body']['count'] !== 1) === []);
 
 finish();

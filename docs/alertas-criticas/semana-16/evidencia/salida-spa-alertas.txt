@@ -1,0 +1,10 @@
+PASS  el bioquímico publica glucosa 450 por la API → 201
+PASS  bioquímico (sin alertas.ver) no ve «Alertas críticas»
+PASS  la médica ve solo su alerta pendiente (450, sobre el umbral) con role="alert"
+PASS  acusar sin confirmar ni escribir el valor → error local, sin llamar a la API
+PASS  lectura 45 en lugar de 450 → 422 READ_BACK_MISMATCH con mensaje seguro
+PASS  lectura correcta → acusada y la bandeja queda vacía
+PASS  la jefatura médica ve en la bandeja del servicio la alerta sin médico tratante (500, nivel 1)
+PASS  la jefatura acusa la alerta del servicio (ruta con alertas.supervisar) y su bandeja queda vacía
+PASS  375 px: sin desplazamiento horizontal
+9/9 verificaciones

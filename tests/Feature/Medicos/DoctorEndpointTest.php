@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Medicos;
 
 use App\Medicos\HospitalActors;
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -68,6 +69,7 @@ final class DoctorEndpointTest extends TestCase
         TestIdentity::$user = new GenericUser(['id' => 'admin']);
         TestIdentity::$hospital = 'hospital-a';
         TestIdentity::$timezone = null;
+        config()->set('tenants.hospital_database_tenant_id', 'hospital-a');
 
         $this->withHeaders(['X-Tenant-ID' => 'hospital-a']);
     }
@@ -136,6 +138,19 @@ final class DoctorEndpointTest extends TestCase
         $this->assertFalse($this->doctors->licenseExists('COL-1'));
     }
 
+    public function test_la_base_hospital_de_otro_hospital_o_sin_asignar_no_se_toca(): void
+    {
+        TestIdentity::$hospital = 'hospital-b';
+        $this->postJson('/api/v1/doctors', self::ALTA, ['X-Tenant-ID' => 'hospital-b'])
+            ->assertStatus(403)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_MISMATCH');
+
+        TestIdentity::$hospital = 'hospital-a';
+        config()->set('tenants.hospital_database_tenant_id', null);
+        $this->getJson('/api/v1/availability?specialty=NEURO&date=2026-10-19')
+            ->assertStatus(503)->assertJsonPath('error', 'HOSPITAL_DATABASE_TENANT_UNCONFIGURED');
+        $this->assertFalse($this->doctors->licenseExists('COL-1'));
+    }
+
     public function test_un_usuario_sin_referencia_local_responde_403_y_no_guarda(): void
     {
         $store = new InMemoryRbacStore(['Admin' => ['medicos.registrar']]);
@@ -199,19 +214,8 @@ class TestIdentity
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public ?string $timezone;
-
-            public function __construct()
-            {
-                $this->timezone = TestIdentity::$timezone;
-            }
-
-            public function getKey(): ?string
-            {
-                return TestIdentity::$hospital;
-            }
-        });
+        // Modelo Hospital real: EnsureHospitalDatabaseTenant lo compara con la base HOSPITAL de la instancia.
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital, 'timezone' => self::$timezone]));
 
         return $next($request);
     }

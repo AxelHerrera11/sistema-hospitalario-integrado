@@ -38,15 +38,41 @@ class MedicationCatalogPostgresTest extends TestCase
         $this->getJson("/api/v1/medications/{$id}")->assertOk()->assertJsonPath('medication.name', 'Amoxicilina 500 mg');
     }
 
-    public function test_search_is_case_insensitive_for_non_ascii_letters(): void
+    public function test_search_ignores_case_and_accents_and_keeps_the_stored_text(): void
     {
         $this->postJson('/api/v1/medications', ['code' => 'asa-100', 'name' => 'Ácido acetilsalicílico 100 mg', 'active_ingredient' => 'Ácido acetilsalicílico', 'pharmacological_group' => 'Analgésico'])->assertStatus(201);
         CatalogTestIdentity::as('medico');
 
-        foreach (['ácido', 'ÁCIDO', 'ACETILSALICÍLICO', 'asa-1'] as $term) {
+        foreach (['ácido', 'ÁCIDO', 'acido', 'ACIDO', 'ACETILSALICÍLICO', 'acetilsalicilico', "a\u{0301}cido", 'asa-1'] as $term) {
             $this->getJson('/api/v1/medications?q='.rawurlencode($term))->assertOk()->assertJsonPath('count', 1)->assertJsonPath('results.0.code', 'ASA-100');
         }
-        $this->getJson('/api/v1/medications?q=acido')->assertOk()->assertJsonPath('count', 0);
+        $this->getJson('/api/v1/medications?q=acido')->assertJsonPath('results.0.name', 'Ácido acetilsalicílico 100 mg')->assertJsonPath('results.0.active_ingredient', 'Ácido acetilsalicílico');
+    }
+
+    public function test_search_keeps_enye_distinct_and_matches_decomposed_stored_text(): void
+    {
+        $alta = fn (string $code, string $name, string $principio) => $this->postJson('/api/v1/medications', ['code' => $code, 'name' => $name, 'active_ingredient' => $principio, 'pharmacological_group' => 'Prueba'])->assertCreated();
+        $alta('NDU-1', 'Ñandú forte', 'Ñandú');
+        $alta('NDU-2', 'Nandu base', 'Nandu');
+        $alta('NFD-1', "Cafe\u{0301} descompuesto", "Cafei\u{0301}na");
+        $codigos = fn (string $q) => collect($this->getJson('/api/v1/medications?q='.rawurlencode($q))->assertOk()->json('results'))->pluck('code')->all();
+
+        foreach (['ñandu', 'ÑANDÚ', "n\u{0303}andu"] as $q) {
+            $this->assertSame(['NDU-1'], $codigos($q), $q);
+        }
+        $this->assertSame(['NDU-2'], $codigos('nandu'));
+        $this->assertSame(['NFD-1'], $codigos('CAFE DESC'));
+        $this->assertSame(['NFD-1'], $codigos('cafeína'));
+    }
+
+    public function test_search_terms_stay_parameters(): void
+    {
+        $this->postJson('/api/v1/medications', self::AMOX)->assertCreated();
+
+        foreach (["á' OR '1'='1", "á'; DROP TABLE medications; --", 'á%', 'á_'] as $q) {
+            $this->getJson('/api/v1/medications?q='.rawurlencode($q))->assertOk()->assertJsonPath('count', 0);
+        }
+        $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM medications'));
     }
 
     public function test_validity_change_is_persisted_and_repeating_it_is_rejected(): void

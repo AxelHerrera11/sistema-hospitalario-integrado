@@ -1,0 +1,15 @@
+digraph mapa {
+  rankdir=LR; fontname="Helvetica"; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  login [label="/login"]; inicio [label="/ (Inicio)\nmenú según permisos"]; rep [label="/reportes\nformulario"];
+  res [label="Resultado\n% o N/A"]; err [label="Error\nperiodo, acceso o servicio", fillcolor="#fef2f2", color="#b91c1c"];
+  login -> inicio [label="credenciales válidas"];
+  inicio -> rep [label="con reportes.ver"];
+  inicio -> inicio [label="sin permiso: sin entrada;\nURL forzada redirige"];
+  rep -> res [label="Calcular"];
+  rep -> err [label="Calcular"];
+  res -> rep [label="cambiar filtros"];
+  err -> rep [label="corregir o reintentar"];
+  rep -> login [label="Cerrar sesión"];
+}

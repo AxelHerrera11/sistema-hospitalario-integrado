@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASII-28 · Prototipo navegable QA</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eee;color:#171717;font:16px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}header,main{max-width:1080px;margin:auto;padding:16px}nav,.actions{display:flex;flex-wrap:wrap;gap:10px}a{color:#202020}nav a,.actions a,button{display:inline-flex;align-items:center;min-height:44px;padding:10px 14px;border:1px solid #666;background:#fff;border-radius:4px;font:inherit;max-width:100%}a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #333;outline-offset:3px}section,.card{background:#fff;border:1px solid #777;padding:16px;margin:12px 0}h1{font-size:26px}h2{font-size:23px}h3{font-size:19px}label{display:block;font-weight:600;margin:12px 0 4px}input,select,textarea{font:inherit;min-height:44px;width:100%;padding:10px;border:1px solid #666;min-width:0}textarea{min-height:90px}input[type=checkbox]{width:24px;vertical-align:middle}pre{font:inherit;white-space:pre-wrap}button{cursor:pointer}.error{border-left:4px solid #333;padding:12px;background:#f6f6f6}.notice{padding:12px;border:1px dashed #555}dialog{max-width:min(90vw,600px);border:2px solid #555}fieldset{border:0;padding:0;min-width:0}[hidden]{display:none!important}[aria-invalid=true]{border:2px solid #333}nav a[aria-current=page]{font-weight:700;border:2px solid #333}.columns{display:grid;gap:16px}@media(min-width:768px){header,main{padding:24px}.columns{grid-template-columns:1fr 1fr}.form-fields{max-width:720px}}
+</style>
+</head>
+<body>
+<header><h1>QA funcional · Prototipo navegable</h1>
+<p class="notice"><strong>Datos ficticios / prototipo.</strong> Navegación real; registros simulados solo en memoria de esta página. Recargar o cerrar elimina cambios. Sin API, login, PHP o almacenamiento.</p>
+<nav aria-label="Módulo QA"><a href="#panel">Panel</a><a href="#campaigns">Campañas</a><a href="#detail">Detalle</a><a href="#case">Nuevo caso</a><a href="#execution">Ejecución</a><a href="#defect">Defecto</a></nav>
+<p id="notice" role="status" aria-live="polite"></p></header>
+<main>
+<section id="panel" aria-labelledby="panel-title"><h2 id="panel-title" tabindex="-1">Panel QA</h2>
+<div class="columns"><div class="card"><h3>Campaña de demostración</h3><p>Campaña A · [estado de campaña por acordar]</p><a href="#detail">Abrir campaña A</a></div>
+<div class="card"><h3>Actividad simulada</h3><p id="counts"></p><p id="recent"></p></div></div>
+<div class="actions"><a href="#campaigns">Consultar campañas</a><a href="#case">Diseñar nuevo caso</a></div></section>
+<section id="campaigns" aria-labelledby="campaigns-title" hidden><h2 id="campaigns-title" tabindex="-1">Campañas de regresión</h2>
+<label for="search">Buscar campaña</label><input id="search" type="search" placeholder="Campaña A">
+<label for="filter">Filtro de demostración, no estado oficial</label><select id="filter"><option value="all">Todas</option><option value="empty">Solo campañas sin casos</option></select>
+<div id="campaign-card" class="card"><h3>Campaña A · datos ficticios</h3><p id="campaign-count"></p><a href="#detail">Abrir detalle de campaña A</a></div>
+<p id="empty" class="notice" hidden>No hay campañas que coincidan. Cambia la búsqueda o limpia los filtros.</p><button id="clear" type="button">Limpiar búsqueda y filtros</button></section>
+<section id="detail" aria-labelledby="detail-title" hidden><h2 id="detail-title" tabindex="-1">Detalle · Campaña A</h2>
+<p>Campaña ficticia, sin responsable real asignado. Estado: por definir.</p><label for="case-select">Casos asociados (demostración)</label><select id="case-select"></select>
+<p id="trace"></p><div class="actions"><button id="open-case" type="button">Abrir caso seleccionado y ejecutar</button><a href="#case">Diseñar nuevo caso</a><a href="#campaigns">Volver al listado</a></div></section>
+<section id="case" aria-labelledby="case-title" hidden><h2 id="case-title" tabindex="-1">Diseñar caso manual</h2>
+<p>ID local generado al simular. Todos los campos “Obligatorio” deben completarse.</p>
+<form id="case-form" class="form-fields" novalidate><div id="case-errors" class="error" role="alert" tabindex="-1" hidden></div>
+<label for="purpose">Título / propósito · Obligatorio</label><input id="purpose" required aria-describedby="case-errors">
+<label for="requirement">Requisito relacionado · campo propuesto</label><input id="requirement" placeholder="Referencia ficticia opcional">
+<label for="preconditions">Precondiciones · campo propuesto</label><textarea id="preconditions"></textarea>
+<label for="steps">Pasos · Obligatorio</label><textarea id="steps" required aria-describedby="case-errors"></textarea>
+<label for="expected">Resultado esperado · Obligatorio</label><textarea id="expected" required aria-describedby="case-errors"></textarea>
+<div class="actions"><button>Simular guardar caso</button><button type="button" data-cancel="case-form" data-destination="detail">Cancelar nuevo caso</button></div></form></section>
+<section id="execution" aria-labelledby="execution-title" hidden><h2 id="execution-title" tabindex="-1">Ejecución manual</h2>
+<p id="run-context"></p><div class="columns"><div><h3>Pasos del caso</h3><pre id="run-steps"></pre></div><div><h3>Resultado esperado</h3><p id="run-expected"></p></div></div>
+<form id="run-form" class="form-fields" novalidate><div id="run-errors" class="error" role="alert" tabindex="-1" hidden></div>
+<label for="observed">Resultado obtenido · Obligatorio</label><textarea id="observed" required aria-describedby="run-errors"></textarea>
+<label for="result">Comparación declarada por el analista · Obligatorio</label><select id="result" required aria-describedby="run-errors"><option value="">Seleccionar</option><option value="passed">Aprobado: coincide con esperado</option><option value="failed">Fallido: no coincide</option></select>
+<label for="evidence"><input id="evidence" type="checkbox" aria-describedby="evidence-help run-errors"> Usar referencia ficticia evidencia-demo-01 · Obligatorio en esta demo</label>
+<p id="evidence-help">Referencia privada simulada, sin archivos o datos clínicos; el formato productivo sigue pendiente.</p><button id="view-evidence" type="button">Ver evidencia de ejemplo</button>
+<div class="actions"><button>Simular registrar resultado</button><button type="button" data-cancel="run-form" data-destination="detail">Cancelar ejecución</button></div></form>
+<p id="run-confirm" role="status" tabindex="-1"></p><div class="actions"><a id="report-defect" href="#defect" hidden>Registrar defecto desde esta ejecución fallida</a><a href="#detail">Ver trazabilidad</a></div></section>
+<section id="defect" aria-labelledby="defect-title" hidden><h2 id="defect-title" tabindex="-1">Registro de defecto</h2>
+<p id="defect-context"></p><p id="defect-guard" class="notice"></p>
+<form id="defect-form" class="form-fields" novalidate><div id="defect-errors" class="error" role="alert" tabindex="-1" hidden></div><fieldset id="defect-fields" disabled>
+<label for="description">Descripción · Obligatorio</label><textarea id="description" required aria-describedby="defect-errors"></textarea>
+<label for="severity">Severidad · catálogo no aprobado</label><select id="severity" required aria-describedby="defect-errors"><option value="">Seleccionar</option><option value="pending">Por clasificar · opción de demostración</option></select>
+<p>Estado: registro simulado; no es estado productivo. Evidencia: evidencia-demo-01 del origen fallido.</p><button>Simular guardar defecto</button></fieldset>
+<div class="actions"><button type="button" data-cancel="defect-form" data-destination="execution">Cancelar defecto</button><a href="#detail">Consultar trazabilidad sin descartar texto</a></div></form>
+<p id="defect-confirm" role="status" tabindex="-1"></p></section>
+</main>
+<dialog id="evidence-dialog" aria-labelledby="evidence-title"><h2 id="evidence-title">Evidencia ficticia · evidencia-demo-01</h2><p>Ejemplo textual: durante una prueba de formulario faltó el campo esperado. No es captura de un sistema real ni archivo adjunto.</p><button id="close-evidence" type="button">Cerrar evidencia</button></dialog>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const cases=[{id:'C-demo-01',purpose:'Revisar formulario QA',steps:'1. Abrir formulario\n2. Revisar campos',expected:'Campos visibles'}],runs=[],defects=[];
+let selected=cases[0].id;
+const current=()=>cases.find(c=>c.id===selected);
+const latest=()=>runs.filter(r=>r.caseId===selected).at(-1);
+const notify=message=>{$('notice').textContent=message;};
+function refresh(){
+  $('counts').textContent=`1 campaña · ${cases.length} casos · ${runs.length} ejecuciones · ${defects.length} defectos (simulados)`;
+  $('recent').textContent=runs.length?`Última ejecución ${runs.at(-1).id}: ${runs.at(-1).result==='failed'?'fallida':'aprobada'}`:'Sin ejecuciones registradas en esta sesión.';
+  $('campaign-count').textContent=`${cases.length} casos asociados en memoria. Estado de campaña por acordar.`;
+  $('case-select').replaceChildren(...cases.map(c=>{const option=document.createElement('option');option.value=c.id;option.textContent=`${c.id} · ${c.purpose}`;return option;}));$('case-select').value=selected;
+  const c=current(),r=latest();$('run-context').textContent=`Campaña A → ${c.id} · ${c.purpose}`;$('run-steps').textContent=c.steps;$('run-expected').textContent=c.expected;
+  $('trace').textContent=`Campaña A → ${c.id} → ${r?r.id+' ('+r.result+') → evidencia-demo-01':'sin ejecución'} → ${defects.filter(d=>d.caseId===selected).map(d=>d.id).join(', ')||'sin defecto'}`;
+  const allowed=r?.result==='failed';$('report-defect').hidden=!allowed;$('defect-fields').disabled=!allowed;
+  $('defect-context').textContent=`Origen: Campaña A → ${c.id} → ${r?.id||'sin ejecución'}`;
+  $('defect-guard').textContent=allowed?'Ejecución fallida de demostración; puede simular defecto.':'Primero registra una ejecución fallida. Una aprobada no permite defecto en esta simulación.';
+  filterCampaigns();
+}
+function route(){const id=location.hash.slice(1)||'panel';const valid=['panel','campaigns','detail','case','execution','defect'].includes(id)?id:'panel';refresh();document.querySelectorAll('main>section').forEach(s=>s.hidden=s.id!==valid);document.querySelectorAll('nav a').forEach(a=>{if(a.hash==='#'+valid)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$(valid+'-title').focus();}
+function filterCampaigns(){const visible='campaña a'.includes($('search').value.trim().toLocaleLowerCase())&&$('filter').value==='all';$('campaign-card').hidden=!visible;$('empty').hidden=visible;}
+function validate(form,fields,box){const missing=fields.filter(([id])=>{const e=$(id),invalid=e.type==='checkbox'?!e.checked:!e.value.trim();e.setAttribute('aria-invalid',String(invalid));return invalid;});const area=$(box);area.hidden=!missing.length;area.replaceChildren();if(missing.length){const p=document.createElement('p');p.textContent='Revisa los campos obligatorios antes de simular:';area.append(p);missing.forEach(([id,label])=>{const a=document.createElement('a');a.href='#'+id;a.textContent=label;a.addEventListener('click',e=>{e.preventDefault();$(id).focus();});const item=document.createElement('p');item.append(a);area.append(item);});area.focus();}return !missing.length;}
+$('case-form').addEventListener('submit',e=>{e.preventDefault();if(!validate(e.target,[['purpose','Propósito'],['steps','Pasos'],['expected','Esperado']],'case-errors'))return;const c={id:'C-demo-'+(cases.length+1),purpose:$('purpose').value.trim(),steps:$('steps').value.trim(),expected:$('expected').value.trim()};cases.push(c);selected=c.id;e.target.reset();notify(`${c.id}: caso y asociación simulados en memoria. No se envió al servidor.`);location.hash='detail';});
+$('run-form').addEventListener('submit',e=>{e.preventDefault();if(!validate(e.target,[['observed','Observaciones'],['result','Resultado'],['evidence','Evidencia ficticia']],'run-errors'))return;const r={id:'E-demo-'+(runs.length+1),caseId:selected,result:$('result').value,evidence:'evidencia-demo-01',observed:$('observed').value.trim()};runs.push(r);refresh();$('run-confirm').textContent=`${r.id}: ${r.result==='failed'?'fallido':'aprobado'}, registro simulado solo en memoria.`;$('run-confirm').focus();e.target.reset();notify('Resultado simulado; recargar elimina el historial.');});
+$('defect-form').addEventListener('submit',e=>{e.preventDefault();if(latest()?.result!=='failed'){notify('Defecto no permitido sin origen fallido.');return;}if(!validate(e.target,[['description','Descripción'],['severity','Clasificación de demostración']],'defect-errors'))return;const d={id:'D-demo-'+(defects.length+1),caseId:selected,runId:latest().id,severity:severity.value,description:$('description').value.trim()};defects.push(d);refresh();$('defect-confirm').textContent=`${d.id}: defecto simulado vinculado a ${d.runId}; sin persistencia real.`;$('defect-confirm').focus();e.target.reset();notify('Defecto simulado; no se creó incidencia externa.');});
+$('open-case').addEventListener('click',()=>{selected=$('case-select').value;$('run-confirm').textContent='';location.hash='execution';});
+$('case-select').addEventListener('change',()=>{selected=$('case-select').value;refresh();});
+for(const id of ['search','filter'])$(id).addEventListener('input',filterCampaigns);
+$('clear').addEventListener('click',()=>{$('search').value='';$('filter').value='all';filterCampaigns();$('search').focus();});
+document.querySelectorAll('[data-cancel]').forEach(button=>button.addEventListener('click',()=>{const form=$(button.dataset.cancel);if([...form.elements].some(e=>e.value&&e.tagName!=='BUTTON'||e.checked)&&!confirm('¿Descartar la entrada de este formulario? Los registros simulados ya confirmados se conservan hasta recargar.'))return;form.reset();form.querySelectorAll('[aria-invalid]').forEach(e=>e.removeAttribute('aria-invalid'));form.querySelector('.error').hidden=true;location.hash=button.dataset.destination;notify('Entrada cancelada; no se borraron registros confirmados de esta sesión.');}));
+$('view-evidence').addEventListener('click',()=>$('evidence-dialog').showModal());$('close-evidence').addEventListener('click',()=>$('evidence-dialog').close());
+window.addEventListener('hashchange',route);route();
+</script>
+</body>
+</html>

@@ -21,7 +21,10 @@ final class ContextSanitizer
     private const KEY = '/^[a-z][a-z0-9_]{0,39}$/D';
     private const SECRET_KEY = '/pass|token|secret|authorization|cookie|credential|otp|mfa|private_key|api_key|session|signature/i';
     private const CLINICAL_KEY = '/diagnos|nota|note|soap|allerg|alergi|vital|prescri|medica|resultado_|lab_value|clinic|sintoma|symptom|tratamiento|treatment|patient_name|paciente_nombre/i';
+    /** Semana 17 (H-GOB-17-01): datos personales identificables; la bitácora usa identificadores, no estos datos. */
+    private const PERSONAL_KEY = '/email|correo|telefono|phone|celular|direccion|address|nacimiento|birth|(^|_)(dpi|cui|nit|pasaporte|passport)(_|$)/i';
     private const TOKEN_VALUE = '/^(bearer\s+\S+|ey[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*|[A-Fa-f0-9]{40,}|[A-Za-z0-9+\/_-]{60,}={0,2})$/';
+    private const EMAIL_VALUE = '/^[^@\s]+@[^@\s]+\.[^@\s]+$/';
 
     /**
      * @param array<mixed> $context
@@ -40,7 +43,8 @@ final class ContextSanitizer
             }
             if (count($clean) >= self::MAX_KEYS
                 || preg_match(self::SECRET_KEY, $name) === 1
-                || preg_match(self::CLINICAL_KEY, $name) === 1) {
+                || preg_match(self::CLINICAL_KEY, $name) === 1
+                || preg_match(self::PERSONAL_KEY, $name) === 1) {
                 $removed[] = $name;
                 continue;
             }
@@ -77,7 +81,8 @@ final class ContextSanitizer
         if (!is_string($value)
             || mb_strlen($value) > self::MAX_STRING
             || preg_match('/[\x00-\x1F\x7F]/', $value) === 1
-            || preg_match(self::TOKEN_VALUE, trim($value)) === 1) {
+            || preg_match(self::TOKEN_VALUE, trim($value)) === 1
+            || preg_match(self::EMAIL_VALUE, trim($value)) === 1) {
             return false;
         }
 
