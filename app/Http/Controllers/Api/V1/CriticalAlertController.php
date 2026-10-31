@@ -33,7 +33,8 @@ final class CriticalAlertController extends Controller
     {
         $event = $request->only(['result_version_id', 'lab_test_id', 'patient_id', 'episode_id', 'value']);
         foreach (['result_version_id', 'lab_test_id', 'patient_id', 'episode_id'] as $field) {
-            if (! Str::isUuid((string) ($event[$field] ?? ''))) {
+            // Un arreglo u objeto en el JSON no es un identificador: 422 como cualquier otro, nunca 500.
+            if (! is_string($event[$field] ?? null) || ! Str::isUuid($event[$field])) {
                 return $this->error('EVENT_INVALID', 'El evento de resultado validado no es válido.', 422, $request, $field);
             }
         }

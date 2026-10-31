@@ -5,6 +5,7 @@ use App\ExpedienteMedico\ExpedienteMedicoServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
 use App\Providers\MedicationCatalogServiceProvider;
+use App\Providers\NotasSoapServiceProvider;
 use App\Providers\MedicosServiceProvider;
 use App\Providers\OcupacionServiceProvider;
 use App\Providers\PatientsServiceProvider;
@@ -27,6 +28,7 @@ return [
     // Alertas críticas (ASII-21): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
     \App\Providers\AlertasCriticasServiceProvider::class,
     MedicationCatalogServiceProvider::class,
+    NotasSoapServiceProvider::class,
     // Catálogo de pruebas de laboratorio (ASII-17): reutiliza el ResolutorActorLocal de Traslados, que se resuelve al usarse.
     \App\Providers\CatalogoLabServiceProvider::class,
     PatientsServiceProvider::class,
