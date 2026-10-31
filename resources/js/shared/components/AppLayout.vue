@@ -32,24 +32,12 @@
                     >
                         {{ item.label }}
                     </router-link>
-                    <span v-else-if="!item.children"
+                    <span
                         class="layout__link layout__link--soon"
                         aria-disabled="true"
                     >
                         {{ item.label }} <small>(próximamente)</small>
                     </span>
-                    <details v-else class="layout__group" open>
-                        <summary class="layout__link layout__group-summary">{{ item.label }}</summary>
-                        <router-link
-                            v-for="child in item.children"
-                            :key="child.label"
-                            class="layout__link layout__link--child"
-                            :to="child.to"
-                            @click="closeSidebar"
-                        >
-                            {{ child.label }}
-                        </router-link>
-                    </details>
                 </template>
             </nav>
         </aside>
@@ -282,10 +270,6 @@ async function logout() {
     font-size: 0.7rem;
 }
 
-.layout__group { margin: 0; }
-.layout__group-summary { list-style: none; cursor: pointer; font-weight: 700; }
-.layout__group-summary::-webkit-details-marker { display: none; }
-.layout__link--child { padding-left: 1.5rem; font-size: 0.92rem; }
 
 .layout__logout {
     border: 1px solid #cbd5e7;
