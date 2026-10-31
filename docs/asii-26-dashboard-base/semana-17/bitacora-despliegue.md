@@ -8,7 +8,7 @@ agrega pruebas y documentacion; la implementacion es la de S16 y no cambio.
 | Comprobacion | Resultado |
 |---|---|
 | `php -l tests/Feature/Dashboard/DashboardSeguridadTest.php` | Sin errores de sintaxis |
-| `php vendor/bin/phpunit tests/Feature/Dashboard --testdox` | OK: 7 pruebas, 55 aserciones |
+| `php vendor/bin/phpunit tests/Feature/Dashboard --testdox` | OK: 7 pruebas, 57 aserciones |
 | Pruebas nuevas de seguridad | 4: sesion, tenant real, tenant sin configurar, datos internos |
 | S16: rutas, middlewares y matriz RBAC | Reales; `CitasDelDia` en memoria |
 

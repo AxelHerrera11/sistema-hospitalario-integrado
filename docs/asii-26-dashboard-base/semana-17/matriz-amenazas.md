@@ -10,7 +10,7 @@ de tarjetas de `micro-his/dashboard-base`. El dashboard falla cerrado: sin permi
 | T03 | Arrancar sin base hospitalaria asignada | El middleware responde si falta la configuracion | 503 `HOSPITAL_DATABASE_TENANT_UNCONFIGURED` | Mitigada |
 | T04 | Elegir el rol o los permisos desde el cliente | No se acepta rol en la peticion; los permisos salen de `RoleResolver` y `config/rbac.php` | Prueba de S16 `sin permiso de citas no hay tarjeta` | Mitigada |
 | T05 | Ver datos que el rol no puede consultar | Falla cerrada: sin `citas.ver` no se consulta la fuente | `data.tarjetas` vacio para laboratorio | Mitigada |
-| T06 | Inyectar una fecha invalida | Formato `AAAA-MM-DD` y `checkdate` | 422 `validation_failed` | Mitigada |
+| T06 | Inyectar una fecha invalida | Texto con formato `AAAA-MM-DD` y `checkdate` (`fecha[]` no llega a 500) | 422 `validation_failed` | Mitigada |
 | T07 | Filtrar el error de la fuente | Se traduce a un codigo propio sin detalle interno | 503 `dashboard_source_unavailable` | Mitigada |
 | T08 | Filtrar datos internos o secretos | La respuesta compone solo campos del read model | La prueba no encuentra `password`, `token`, `SQLSTATE`, `updated_at` | Mitigada |
 | T09 | Cachear el resumen entre usuarios | `Cache-Control: no-store, private` en exito y error | Cabeceras verificadas | Mitigada |
