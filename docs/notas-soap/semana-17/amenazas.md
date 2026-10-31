@@ -16,11 +16,11 @@ Modelo STRIDE aplicado a las tres rutas del módulo (`POST /care-episodes/{id}/s
 | A10 | Divulgación | Texto clínico en la auditoría o en el log del servidor | La auditoría guarda ids y códigos, no secciones | T7; el log del servidor del recorrido real tiene 0 coincidencias con el texto de la nota | Cubierta |
 | A11 | Divulgación | Que quien no es médico tratante lea o escriba | RBAC (`notas_soap.*`) y asignación activa vía `doctor_profiles` | `test_permissions_follow_the_real_rbac_matrix`, `NotasSoapPostgresTest` | Cubierta |
 | A12 | Denegación | Secciones enormes o solo en blanco | Límite de 4000 caracteres y rechazo de espacios Unicode (D-01) | T8, U-13, U-14 | Cubierta |
-| A13 | Denegación | Base HOSPITAL caída | `503 HOSPITAL_UNAVAILABLE` sin traza; la falla es segura | `test_hospital_database_down…` | Cubierta |
+| A13 | Denegación | Base HOSPITAL caída | `503 HOSPITAL_NO_DISPONIBLE` sin traza; la falla es segura | `test_hospital_database_down…` | Cubierta |
 | A14 | Denegación | Ráfagas de peticiones | — | — | **Abierta:** las rutas del módulo no tienen un límite de tasa propio (el catálogo de medicamentos sí lo tiene) |
 | A15 | Elevación | Enfermería escribiendo o un médico asociando a la nota de otro | Matriz RBAC real y guardia de autor (`NOT_TREATING_PHYSICIAN`) | `test_permissions_follow_the_real_rbac_matrix`, W-02, W-08 | Cubierta |
 | A16 | Disponibilidad | Una sola nota por expediente (restricción única de la base, R-06) | Se informa como `409 RECORD_ALREADY_HAS_NOTE`, sin nota ni auditoría a medias | `test_known_limit_r06…` | **Abierta** (ASII-09) |
-| A17 | Disponibilidad | Sin catálogo CIE-10, no se pueden asociar diagnósticos | Falla segura `503 ICD10_UNAVAILABLE` | Recorrido real | **Abierta** (ASII-09: falta `icd10_codes`) |
+| A17 | Disponibilidad | Sin catálogo CIE-10, no se pueden asociar diagnósticos | Falla segura `503 ICD10_UNAVAILABLE` | Recorrido real | **Abierta** (ASII-09): desde #1620 la tabla existe, pero vacía; #1633 responde 503 mientras no tenga códigos activos. Falta cargar el catálogo oficial |
 
 **Resumen:** 17 amenazas, 12 cubiertas, 1 parcial (A5) y 4 abiertas (A7, A14, A16, A17). A7 y A14 dependen de este módulo; A5, A16 y A17 dependen de la base (Javier).
 

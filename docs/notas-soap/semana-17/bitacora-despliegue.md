@@ -34,6 +34,6 @@ Solo un **entorno local de verificación**: Windows 11, PHP 8.3.33 (con `pdo_pgs
 ## Pendiente para un despliegue real
 
 1. Entorno staging u on-premise con PostgreSQL CENTRAL y HOSPITAL (credenciales fuera del repositorio).
-2. Tabla `icd10_codes` y decisión sobre R-06 y D-02 (Javier, ASII-09).
+2. Carga del catálogo oficial en `icd10_codes` (la tabla existe desde #1620) y decisión sobre R-06 y D-02 (Javier, ASII-09).
 3. Un expediente abierto por paciente: ¿quién lo crea? (Admisión o Pacientes).
 4. Repetir los pasos 3 a 10 contra ese entorno y registrar las salidas.
