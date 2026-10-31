@@ -1,4 +1,4 @@
-> **Actualización:** este PR solicita la activación. Hasta su integración por RBAC (ASII-02), esta página sigue vigente.
+> **Actualización (30/10/2026):** RBAC (ASII-02) decidió la matriz final, ya activa. El alta corresponde a cualquier médico con permiso vigente del hospital, no solo al tratante. Ver [`docs/rbac/catalogo-modulos.md`](../../rbac/catalogo-modulos.md). Esta página conserva la propuesta original.
 
 # Permisos propuestos para traslados y altas (pendientes de RBAC)
 

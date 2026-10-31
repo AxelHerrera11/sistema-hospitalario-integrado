@@ -214,13 +214,14 @@ La política entra en vigor al integrar este cambio; #622 por sí solo no la act
 
 ## Activación de traslados y altas
 
-Solicitada por ASII-08 (#908, #913) y pendiente de la decisión de RBAC (ASII-02) en este PR:
-`traslados.registrar` para `enfermeria`, `altas.registrar` para `medico` y `traslados.ver` para ambos.
+Solicitada por ASII-08 (#908, #913). Decisión final de RBAC (ASII-02), 30/10/2026:
+`traslados.ver` para `enfermeria` y `medico`, `traslados.registrar` para `enfermeria` y `altas.registrar` para `medico`.
 Se retiran de `pending`. Los demás roles, incluido `superadmin`, siguen sin estas concesiones;
 no hay herencia administrativa implícita.
+
+El alta corresponde a cualquier médico con permiso vigente en el hospital del contexto.
+**Esta versión no la restringe al médico tratante** ni verifica la relación médico-paciente.
 
 La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
 `local_user_refs`, estancia esperada, cama de destino disponible y transacción. La política entra en
 vigor al integrar este cambio; publicar los nombres no la activó.
-
-Esta variante no verifica la relación médico-paciente: cualquier `medico` con referencia local en el hospital puede dar el alta.
