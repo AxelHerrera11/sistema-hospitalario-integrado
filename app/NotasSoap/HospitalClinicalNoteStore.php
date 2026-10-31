@@ -8,6 +8,7 @@ use MicroHis\NotasSoap\Application\AuditTrail;
 use MicroHis\NotasSoap\Application\ClinicalNoteRepository;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
+use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
 use MicroHis\NotasSoap\Domain\Uuid;
 use MicroHis\NotasSoap\Persistence\PdoClinicalNoteStore;
@@ -50,6 +51,9 @@ final class HospitalClinicalNoteStore implements ClinicalNoteRepository
             $this->pdo->commit();
         } catch (\RuntimeException $e) { // PDOException o la bitácora caída: todo o nada, como PdoClinicalNoteStore
             $this->pdo->inTransaction() && $this->pdo->rollBack();
+            // R-06 (contrato de #1080): la base solo admite una nota original por expediente; es un conflicto, no una caída.
+            $e instanceof \PDOException && (string) $e->getCode() === '23505' && str_contains($e->getMessage(), 'clinical_notes_record_version_unique')
+                && throw new SoapRuleViolation('RECORD_ALREADY_HAS_NOTE', 409);
             throw new \RuntimeException('persistencia_no_disponible', 0, $e);
         }
 
