@@ -2,7 +2,7 @@
 
 Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 76 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 77 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -47,6 +47,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `laboratorio.ordenes.crear` | Sí | — | Sí | — | — | — | — | — |
 | `laboratorio.ordenes.ver` | Sí | — | Sí | — | — | Sí | Sí | — |
 | `laboratorio.ordenes.cancelar` | Sí | — | Sí | — | — | — | — | — |
+| `laboratorio.ordenes.actualizar` | — | — | — | — | — | — | — | — |
 | `lab-results.read` | Sí | — | — | — | — | Sí | Sí | — |
 | `lab-results.create` | Sí | — | — | — | — | Sí | — | — |
 | `lab-results.correct` | Sí | — | — | — | — | Sí | — | — |
@@ -248,3 +249,9 @@ y `qa.gates.evaluar` para `superadmin` y `admin_hospital`. Ningún rol clínico 
 Las ejecuciones son metadatos de pruebas (versión, commit, suites, resultados y evidencias), sin datos clínicos.
 La autorización no sustituye las reglas del módulo: tenant de la petición, transición de estados válida y
 evaluación del quality gate con la política versionada.
+
+## Propuesta ASII-16 (30-oct-2026)
+
+`laboratorio.ordenes.actualizar` se registra en `catalog` y en `pending` para
+`tecnico_laboratorio`, según el contrato propuesto de ASII-16. No se activa ni
+se concede a ningún rol; el proveedor de permisos continúa leyendo solo `roles`.

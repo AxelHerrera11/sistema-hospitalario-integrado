@@ -105,12 +105,21 @@ final class DoctorsPostgresTest extends TestCase
         $this->assertSame(['status' => 'OK', 'slots' => []], array_intersect_key($byDoctor($tuesday)[$withSchedule], ['status' => 1, 'slots' => 1]));
     }
 
+    public function test_la_disponibilidad_usa_el_slot_minutes_del_horario(): void
+    {
+        $this->doctorWithSchedule(slotMinutes: 20);
+
+        $slots = $this->send('GET', '/availability', query: ['specialty' => 'NEURO', 'date' => '2026-10-19'])['body']['doctors'][0]['slots'];
+
+        $this->assertSame(['08:00', '08:20', '08:40', '09:00', '09:20', '09:40'], $slots, 'horario 08:00-10:00 con bloques de 20 minutos');
+    }
+
     /** Médico con CARD principal y NEURO secundaria desde enero, y horario de lunes 08:00-10:00 en NEURO (el trigger exige el vínculo). */
-    private function doctorWithSchedule(): string
+    private function doctorWithSchedule(int $slotMinutes = 30): string
     {
         $id = $this->send('POST', '/doctors', self::ALTA)['body']['doctor_profile_id'];
         $this->send('POST', "/doctors/$id/specialties", ['specialty_code' => 'NEURO', 'is_primary' => false, 'valid_from' => '2026-01-01']);
-        $this->hospital()->insert("INSERT INTO doctor_schedules (doctor_profile_id, specialty_id, weekday, start_minute, end_minute, slot_minutes, valid_from) VALUES (?, (SELECT specialty_id FROM specialties WHERE code = 'NEURO'), 1, 480, 600, 30, '2026-01-01')", [$id]);
+        $this->hospital()->insert("INSERT INTO doctor_schedules (doctor_profile_id, specialty_id, weekday, start_minute, end_minute, slot_minutes, valid_from) VALUES (?, (SELECT specialty_id FROM specialties WHERE code = 'NEURO'), 1, 480, 600, ?, '2026-01-01')", [$id, $slotMinutes]);
 
         return $id;
     }

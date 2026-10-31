@@ -3,7 +3,7 @@
 | Regla | Casos |
 |---|---|
 | SD-PRE-01: `mild` → advertencia | U-02 |
-| SD-PRE-01: `moderate`/`unknown` → 422 con `exception_allowed: true` | U-03, U-04 |
+| SD-PRE-01: `moderate`/`unknown` → 422 con `exception_allowed: false` | U-03, U-04 |
 | SD-PRE-01: `severe`/`life_threatening` → 422 sin excepción | U-05, U-06 |
 | Ningún 422 persiste | U-03 a U-06 |
 | La falla de alergias no equivale a ausencia de alergias | U-07 |
