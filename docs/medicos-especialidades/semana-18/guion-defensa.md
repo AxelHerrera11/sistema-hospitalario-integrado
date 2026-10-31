@@ -71,9 +71,9 @@ Resultado verificado: 27 de 27 comprobaciones y 16 de 16 pares de color cumplen.
 
 - Que el módulo está desplegado: **no hay despliegue** fuera del equipo local.
 - Que la inyección SQL o los límites se probaron en CI: se probaron localmente con PostgreSQL 16 efímero.
-- Que las 18 semanas están integradas: las semanas 13, 15, 16, 17 y 18 están en PR abiertos.
+- Que las 18 semanas están integradas sin revisión: las semanas 1 a 17 están en `develop` y la 18 es este PR.
 - Que la pantalla se probó contra el backend real: las 9 capturas (PR #1040, `semana-16/capturas`) son de Chrome sin interfaz con un **API simulado**. Sirven para mostrar los estados y la adaptación a 390 px, no como prueba de integración. El contraste y el teclado se midieron sobre el prototipo de la Semana 12, no sobre esta pantalla.
-- Que se resolvió la amenaza MED-13 (aislamiento entre hospitales): sigue abierta y es de la plataforma.
+- Que se resolvió la amenaza MED-13 (aislamiento entre hospitales): es parcial; el guard rechaza otro hospital, pero varios hospitales dependen de la plataforma.
 
 ## Antes de entrar a la defensa
 
