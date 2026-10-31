@@ -76,15 +76,27 @@ final class PdoDoctorStore implements AppointmentReader, DoctorRepository
     /** Citas que solapan el día de la zona del hospital, recortadas a [00:00, 24:00]: una cita que cruza la medianoche ocupa su parte del día. */
     public function busyIntervals(string $doctorId, string $date): array
     {
+        return $this->busyIntervalsFor([$doctorId], $date)[$doctorId];
+    }
+
+    /** Una sola consulta para todos los médicos (sin una consulta por médico). */
+    public function busyIntervalsFor(array $doctorIds, string $date): array
+    {
+        $result = array_fill_keys($doctorIds, []);
+        if ($doctorIds === []) {
+            return $result;
+        }
         $dayStart = new DateTimeImmutable($date . ' 00:00:00', $this->zone);
         $dayEnd = $dayStart->modify('+1 day');
-        $rows = $this->rows("SELECT starts_at, ends_at FROM appointments WHERE doctor_profile_id = ? AND starts_at < ? AND ends_at > ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
-            [$doctorId, $this->instant($dayEnd), $this->instant($dayStart)]);
+        $marks = implode(', ', array_fill(0, count($doctorIds), '?'));
+        $rows = $this->rows("SELECT doctor_profile_id, starts_at, ends_at FROM appointments WHERE doctor_profile_id IN ($marks) AND starts_at < ? AND ends_at > ? AND status IN ('scheduled', 'confirmed') ORDER BY starts_at",
+            [...array_values($doctorIds), $this->instant($dayEnd), $this->instant($dayStart)]);
         $local = fn (string $at): DateTimeImmutable => (new DateTimeImmutable($at, new DateTimeZone('UTC')))->setTimezone($this->zone);
-        return array_map(static function (array $row) use ($local, $dayStart, $dayEnd): array {
+        foreach ($rows as $row) {
             [$from, $to] = [$local($row['starts_at']), $local($row['ends_at'])];
-            return [$from <= $dayStart ? '00:00' : $from->format('H:i'), $to >= $dayEnd ? '24:00' : $to->format('H:i')];
-        }, $rows);
+            $result[$row['doctor_profile_id']][] = [$from <= $dayStart ? '00:00' : $from->format('H:i'), $to >= $dayEnd ? '24:00' : $to->format('H:i')];
+        }
+        return $result;
     }
 
     /** Instante comparable con `starts_at`: ISO con zona en PostgreSQL (timestamptz); UTC sin zona en SQLite, donde se guarda como texto. */

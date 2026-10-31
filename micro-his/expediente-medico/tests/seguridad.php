@@ -12,15 +12,15 @@ echo PHP_EOL . '== Seguridad (permisos, datos sensibles, entradas hostiles)' . P
 const AJENO = '99999999-9999-4999-8999-999999999999';
 const ROLES = ['DRA_LOPEZ' => DRA_LOPEZ, 'DR_PEREZ' => DR_PEREZ, 'ENF_RUIZ' => ENF_RUIZ, 'RECEP_MORA' => RECEP_MORA, 'ADMIN_SOL' => ADMIN_SOL, 'AJENO' => AJENO];
 
-// S-01 Matriz ACTIVA (config/rbac.php): solo la médica con vínculo consulta; nadie puede abrir.
+// S-01 Matriz ACTIVA (config/rbac.php): solo la médica con vínculo consulta; solo medicina abre (expediente.abrir).
 ['router' => $router] = make_app();
 $matrix = [];
 foreach (ROLES as $name => $user) {
     $matrix[$name] = [code(call($router, 'GET', 'P-0001', $user)), code(call($router, 'POST', 'P-0002', $user))];
 }
-check('S-01 matriz activa: GET 200 solo para la médica tratante; POST 403 para todos', $matrix === [
-    'DRA_LOPEZ' => ['200 ', '403 ACCESO_DENEGADO'],
-    'DR_PEREZ' => ['403 SIN_VINCULO_ASISTENCIAL', '403 ACCESO_DENEGADO'],
+check('S-01 matriz activa: GET 200 solo para la médica tratante; POST 201/200 solo para medicina', $matrix === [
+    'DRA_LOPEZ' => ['200 ', '201 '],
+    'DR_PEREZ' => ['403 SIN_VINCULO_ASISTENCIAL', '200 '],
     'ENF_RUIZ' => ['403 SIN_VINCULO_ASISTENCIAL', '403 ACCESO_DENEGADO'],
     'RECEP_MORA' => ['403 ACCESO_DENEGADO', '403 ACCESO_DENEGADO'],
     'ADMIN_SOL' => ['403 ACCESO_DENEGADO', '403 ACCESO_DENEGADO'],

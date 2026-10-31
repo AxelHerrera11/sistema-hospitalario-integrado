@@ -18,4 +18,9 @@ final class InMemoryAppointmentReader implements AppointmentReader
     {
         return $this->busy[$doctorId][$date] ?? [];
     }
+
+    public function busyIntervalsFor(array $doctorIds, string $date): array
+    {
+        return array_combine($doctorIds, array_map(fn (string $id): array => $this->busyIntervals($id, $date), $doctorIds));
+    }
 }
