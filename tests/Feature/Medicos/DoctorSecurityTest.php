@@ -144,6 +144,39 @@ final class DoctorSecurityTest extends TestCase
         $this->assertSame(0, (int) $this->pdo->query('SELECT count(*) FROM doctor_profiles')->fetchColumn());
     }
 
+    public function test_t8_las_escrituras_tienen_limite_de_tasa_y_no_ahogan_las_lecturas(): void
+    {
+        for ($i = 1; $i <= 30; $i++) {
+            $this->postJson('/api/v1/doctors', [])->assertStatus(422);
+        }
+
+        $limited = $this->postJson('/api/v1/doctors', self::ALTA)->assertStatus(429);
+        $this->assertNotNull($limited->headers->get('Retry-After'));
+        $this->postJson('/api/v1/doctors/doc-x/specialties', [])->assertStatus(429);
+        $this->getJson('/api/v1/availability?specialty=CARD&date=2026-10-19')->assertOk();
+        $this->assertSame(0, (int) $this->pdo->query('SELECT count(*) FROM doctor_profiles')->fetchColumn(), 'la petición limitada no escribe');
+    }
+
+    public function test_t9_la_consulta_de_disponibilidad_tambien_tiene_limite(): void
+    {
+        for ($i = 1; $i <= 120; $i++) {
+            $this->getJson('/api/v1/availability?specialty=CARD&date=2026-10-19')->assertOk();
+        }
+
+        $this->getJson('/api/v1/availability?specialty=CARD&date=2026-10-19')->assertStatus(429);
+        $this->postJson('/api/v1/doctors', self::ALTA)->assertCreated(); // agotar las lecturas no bloquea las escrituras
+    }
+
+    public function test_t10_los_campos_desmesurados_se_rechazan_antes_de_llegar_a_la_base(): void
+    {
+        $this->postJson('/api/v1/doctors', ['license_number' => str_repeat('L', 10_000)] + self::ALTA)->assertStatus(422)->assertJsonPath('code', 'PAYLOAD_INVALID');
+        $this->postJson('/api/v1/doctors', ['specialty_code' => str_repeat('E', 33)] + self::ALTA)->assertStatus(422);
+        $this->getJson('/api/v1/availability?' . http_build_query(['specialty' => str_repeat('E', 33), 'date' => '2026-10-19']))->assertStatus(422);
+
+        $this->assertSame(0, (int) $this->pdo->query('SELECT count(*) FROM doctor_profiles')->fetchColumn());
+        $this->postJson('/api/v1/doctors', ['license_number' => str_repeat('L', 64)] + self::ALTA)->assertCreated();
+    }
+
     /** @return list<string> */
     private function sorted(array $row): array
     {

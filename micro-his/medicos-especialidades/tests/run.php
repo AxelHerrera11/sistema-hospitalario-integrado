@@ -144,6 +144,20 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
         && $status(call($router, 'GET', '/availability', [], ['date' => '2026-02-30'])) === '422 INVALID_DATE_RANGE');
 }
 
+foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
+    [$router, $repository] = $make();
+    check("[$adapter] MED-15: licencia, referencia o especialidad desmesuradas -> 422 sin guardar; 64 caracteres sí se aceptan",
+        $status(call($router, 'POST', '/doctors', ['license_number' => str_repeat('L', 65)] + ALTA)) === '422 PAYLOAD_INVALID'
+        && $status(call($router, 'POST', '/doctors', ['local_user_ref_id' => str_repeat('u', 65)] + ALTA)) === '422 PAYLOAD_INVALID'
+        && $status(call($router, 'POST', '/doctors', ['specialty_code' => str_repeat('E', 33)] + ALTA)) === '422 PAYLOAD_INVALID'
+        && !$repository->licenseExists(str_repeat('L', 65))
+        && call($router, 'POST', '/doctors', ['license_number' => str_repeat('L', 64)] + ALTA)['status'] === 201);
+    check("[$adapter] MED-15: especialidad desmesurada al asociar o consultar -> 422; id de médico de 65 caracteres -> 404",
+        $status(call($router, 'POST', '/doctors/doc-beto/specialties', ['specialty_code' => str_repeat('E', 33), 'valid_from' => '2026-11-01'])) === '422 PAYLOAD_INVALID'
+        && $status(call($router, 'GET', '/availability', [], ['specialty' => str_repeat('E', 33), 'date' => '2026-10-19'])) === '422 PAYLOAD_INVALID'
+        && $status(call($router, 'POST', '/doctors/' . str_repeat('d', 65) . '/specialties', ['specialty_code' => 'CARD', 'valid_from' => '2026-11-01'])) === '404 ROUTE_NOT_FOUND');
+}
+
 $horarios = new PDO('sqlite::memory:');
 $horarios->exec(file_get_contents(__DIR__ . '/../database/schema.sql'));
 $horarios->exec("INSERT INTO doctor_schedules VALUES ('doc-ana', 'sp-neuro', 1, 480, 570, 30, '2026-01-01', '2026-12-01', 'active'), ('doc-ana', 'sp-neuro', 1, 840, 900, 30, '2026-01-01', NULL, 'inactive')");
