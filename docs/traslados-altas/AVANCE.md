@@ -32,6 +32,7 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 ## Revisión humana
 
 - 21/10/2026: la autora confirmó la revisión personal de las semanas 3 a 10 (PR #790–#869); ver el [registro](./revision-humana.md). No es una aprobación independiente: ningún PR la tiene.
+- 30/10/2026: la autora probó a mano el traslado, el alta y la consulta posterior en la versión integrada, con el alcance de su fila en el registro.
 - Semanas 1 y 2: siguen pendientes de confirmación.
 
 ## Estado al 30/10/2026
@@ -46,7 +47,7 @@ Estudiante: María Yamilet Lindo Pablo (`Yamilet1235`) · Issue `Refs #9` · Mic
 
 Sigue vigente lo que falta confirmar en [`revision-humana.md`](./revision-humana.md):
 
-- Consulta tras el alta, rechazo por cama ocupada, recepción sin acceso, motivo vacío, 375 px y volver por el menú.
+- Rechazo por cama ocupada, recepción sin acceso, motivo vacío, 375 px y volver por el menú.
 - Revisión de las Semanas 1, 2 y 11 a 18.
 - Defensas de las Semanas 6, 12 y 18.
 
