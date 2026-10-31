@@ -7,6 +7,9 @@ namespace MicroHis\CatalogoLab\Domain;
 /** Versión de una prueba del catálogo. Nace válida o no nace (UC-LAB-01 a 03). */
 final readonly class LabTest
 {
+    /** Nombre igual al maxlength de la pantalla; la API no confía en el cliente. */
+    public const MAX_LENGTH = ['name' => 160, 'specimen_type' => 40, 'unit' => 32];
+
     private function __construct(
         public string $id, public string $code, public string $name, public string $specimenType,
         public float $minVolumeMl, public string $resultType, public ?string $unit, public ?float $referenceLow,
@@ -22,9 +25,16 @@ final readonly class LabTest
                 throw new DomainRuleViolation('FIELD_REQUIRED', $field);
             }
         }
-        $num = static fn (string $k): ?float => is_numeric($d[$k] ?? null) ? (float) $d[$k] : null;
+        // Una unidad que no es texto (número o arreglo) cuenta como ausente: regla de dominio, nunca TypeError ni 500.
+        $unit = is_string($d['unit'] ?? null) && trim($d['unit']) !== '' ? trim($d['unit']) : null;
+        foreach (self::MAX_LENGTH as $field => $max) {
+            if (mb_strlen(trim((string) ($field === 'unit' ? $unit : $d[$field]))) > $max) {
+                throw new DomainRuleViolation('TEXT_TOO_LONG', $field);
+            }
+        }
+        $num = static fn (string $k): ?float => is_numeric($d[$k] ?? null) && is_finite((float) $d[$k]) ? (float) $d[$k] : null;
         $test = new self($id, strtoupper(trim($d['code'])), trim($d['name']), $d['specimen_type'], $num('min_volume_ml') ?? 0.0,
-            $d['result_type'], $d['unit'] ?? null, $num('reference_low'), $num('reference_high'), $num('critical_low'),
+            $d['result_type'], $unit, $num('reference_low'), $num('reference_high'), $num('critical_low'),
             $num('critical_high'), $versionNo, $d['valid_from']);
         $test->assertRules($today);
 
