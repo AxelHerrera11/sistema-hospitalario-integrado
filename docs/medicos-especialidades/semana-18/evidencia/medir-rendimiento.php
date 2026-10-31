@@ -11,7 +11,8 @@ declare(strict_types=1);
  *   php artisan migrate:fresh --database=hospital --path=database/migrations/hospital --realpath --force
  *   php -d extension=pdo_pgsql docs/medicos-especialidades/semana-18/evidencia/medir-rendimiento.php
  *
- * Conexión: HOSPITAL_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD (por defecto, las bases de prueba de la CI: 127.0.0.1:55433).
+ * Conexión: HOSPITAL_DB_HOST/PORT/DATABASE/USERNAME/PASSWORD, todas obligatorias: sin valores por defecto, para no sembrar
+ * por error en una base compartida (por ejemplo, la de otra persona en 127.0.0.1:55433).
  * Para no tocar una base por error, exige un nombre que termine en `_test` o `_e2e`.
  * Salida: tabla Markdown por stdout; código de salida 1 si el p95 supera 500 ms.
  */
@@ -28,16 +29,23 @@ const REPETITIONS = 30;
 const LIMIT_MS = 500.0;
 const FIRST_DAY = '2026-10-19';
 
-$env = static fn (string $name, string $default): string => getenv($name) ?: $default;
-$database = $env('HOSPITAL_DB_DATABASE', 'his_hospital_test');
+$env = static function (string $name): string {
+    $value = getenv($name);
+    if (! is_string($value) || $value === '') {
+        fwrite(STDERR, "Falta $name: la conexión debe indicarse explícitamente.\n");
+        exit(2);
+    }
+    return $value;
+};
+$database = $env('HOSPITAL_DB_DATABASE');
 if (preg_match('/_(test|e2e)$/', $database) !== 1) {
     fwrite(STDERR, "Se niega a sembrar en «$database»: el nombre debe terminar en _test o _e2e.\n");
     exit(2);
 }
 $pdo = new PDO(
-    sprintf('pgsql:host=%s;port=%s;dbname=%s', $env('HOSPITAL_DB_HOST', '127.0.0.1'), $env('HOSPITAL_DB_PORT', '55433'), $database),
-    $env('HOSPITAL_DB_USERNAME', 'postgres'),
-    $env('HOSPITAL_DB_PASSWORD', 'postgres'),
+    sprintf('pgsql:host=%s;port=%s;dbname=%s', $env('HOSPITAL_DB_HOST'), $env('HOSPITAL_DB_PORT'), $database),
+    $env('HOSPITAL_DB_USERNAME'),
+    $env('HOSPITAL_DB_PASSWORD'),
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
 );
 if ((int) $pdo->query('SELECT count(*) FROM doctor_profiles')->fetchColumn() !== 0) {
