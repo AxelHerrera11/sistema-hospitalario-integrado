@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DoctorApiController;
 use App\Http\Controllers\Api\V1\OccupancyController;
 use App\Http\Controllers\Api\V1\LabModulesController;
+use App\Http\Controllers\Api\V1\LabOrderController;
 use App\Http\Controllers\Api\V1\ReportesIndicatorController;
 use App\Http\Middleware\EnsureHospitalDatabaseTenant;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,12 @@ Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class])->
     Route::get('/lab-results', [LabModulesController::class, 'results'])->middleware('rbac:lab-results.read');
     Route::post('/lab-results/{resultId}/capture', [LabModulesController::class, 'capture'])->middleware('rbac:lab-results.create');
     Route::post('/lab-results/{resultId}/correct', [LabModulesController::class, 'correct'])->middleware('rbac:lab-results.correct');
+
+    Route::get('/lab-orders', [LabOrderController::class, 'index'])->middleware('rbac:laboratorio.ordenes.ver');
+    Route::post('/lab-orders', [LabOrderController::class, 'store'])->middleware('rbac:laboratorio.ordenes.crear');
+    Route::get('/lab-orders/{id}', [LabOrderController::class, 'show'])->middleware('rbac:laboratorio.ordenes.ver');
+    Route::patch('/lab-orders/{id}/status', [LabOrderController::class, 'advance'])->middleware('rbac:laboratorio.ordenes.actualizar');
+    Route::post('/lab-orders/{id}/cancel', [LabOrderController::class, 'cancel'])->middleware('rbac:laboratorio.ordenes.cancelar');
 });
 
 Route::middleware(['tenant', 'jwt.auth', EnsureHospitalDatabaseTenant::class, 'rbac:reportes.ver'])->group(function (): void {
