@@ -35,4 +35,19 @@ final class LabOrderApiEvidenceTest extends TestCase
         $this->assertStringContainsString("'REQUESTED', 'COLLECTED', 'IN_PROCESS', 'RESULTED', 'VALIDATED', 'CANCELLED'", $migration);
         $this->assertStringContainsString('idempotency_request_hash text NOT NULL', $migration);
     }
+
+    public function test_list_contract_covers_pagination_date_filters_and_concurrent_idempotency(): void
+    {
+        $controller = file_get_contents($this->repositoryRoot() . '/app/Http/Controllers/Api/V1/LabOrderController.php');
+        $contract = file_get_contents($this->repositoryRoot() . '/docs/ordenes-laboratorio/contrato-api.md');
+
+        $this->assertNotFalse($controller);
+        $this->assertNotFalse($contract);
+        $this->assertStringContainsString("->reorder()->count()", $controller);
+        $this->assertStringContainsString("'from' => ['nullable', 'date']", $controller);
+        $this->assertStringContainsString("'last_page'", $controller);
+        $this->assertStringContainsString('misma Idempotency-Key', file_get_contents($this->repositoryRoot() . '/micro-his/ordenes-laboratorio/tests/api.php'));
+        $this->assertStringContainsString('"pagination"', $contract);
+        $this->assertStringContainsString('ISO-8601', $contract);
+    }
 }

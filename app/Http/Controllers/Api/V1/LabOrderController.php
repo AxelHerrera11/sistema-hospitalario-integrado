@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\TrasladosAltas\ResolutorActorLocal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -23,11 +24,25 @@ final class LabOrderController extends Controller
     public function index(Request $request): JsonResponse
     {
         [$tenant] = $this->context($request);
+        $data = $request->validate([
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+        ]);
         $query = DB::connection('hospital')->table('lab_orders')->where('tenant_id', $tenant)->orderByDesc('created_at');
         if (is_string($request->query('patient_id'))) $query->where('local_patient_id', $request->query('patient_id'));
         if (is_string($request->query('status'))) $query->where('status', $request->query('status'));
-        $orders = $query->limit(50)->get()->map(fn ($row): array => $this->order($row))->values();
-        return $this->json(['lab_orders' => $orders], 200, $this->requestId($request));
+        if (isset($data['from'])) $query->where('created_at', '>=', $this->dateBoundary($data['from'], false));
+        if (isset($data['to'])) $query->where('created_at', '<', $this->dateBoundary($data['to'], true));
+        $page = (int) ($data['page'] ?? 1);
+        $perPage = (int) ($data['per_page'] ?? 50);
+        $total = (clone $query)->reorder()->count();
+        $orders = $query->forPage($page, $perPage)->get()->map(fn ($row): array => $this->order($row))->values();
+        return $this->json(['lab_orders' => $orders, 'pagination' => [
+            'page' => $page, 'per_page' => $perPage, 'total' => $total,
+            'last_page' => max(1, (int) ceil($total / $perPage)),
+        ]], 200, $this->requestId($request));
     }
 
     public function store(Request $request): JsonResponse
@@ -48,7 +63,8 @@ final class LabOrderController extends Controller
         $data['idempotency_key'] = $idempotencyKey;
         $data['request_hash'] = hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
         $db = DB::connection('hospital');
-        return $db->transaction(function () use ($db, $data, $tenant, $actor, $request): JsonResponse {
+        try {
+            return $db->transaction(function () use ($db, $data, $tenant, $actor, $request): JsonResponse {
             $existing = $db->table('lab_orders')->where('tenant_id', $tenant)->where('idempotency_key', $data['idempotency_key'])->first();
             if ($existing) {
                 if (!hash_equals((string) $existing->idempotency_request_hash, $data['request_hash'])) return $this->error('IDEMPOTENCY_CONFLICT', 409, $this->requestId($request));
@@ -81,7 +97,19 @@ final class LabOrderController extends Controller
                 'actor_user_ref_id' => $actor, 'occurred_at' => now(), 'correlation_id' => $correlation,
             ]);
             return $this->json(['lab_order' => $this->showOrder($db, $tenant, $id)], 201, $this->requestId($request));
-        });
+            });
+        } catch (QueryException $exception) {
+            // Dos peticiones simultáneas pueden competir por la clave única.
+            // La segunda debe devolver el mismo resultado idempotente, no 500.
+            if ($exception->getCode() !== '23505') throw $exception;
+            $existing = $db->table('lab_orders')->where('tenant_id', $tenant)
+                ->where('idempotency_key', $data['idempotency_key'])->first();
+            if ($existing === null) throw $exception;
+            if (! hash_equals((string) $existing->idempotency_request_hash, $data['request_hash'])) {
+                return $this->error('IDEMPOTENCY_CONFLICT', 409, $this->requestId($request));
+            }
+            return $this->json(['lab_order' => $this->order($existing)], 200, $this->requestId($request));
+        }
     }
 
     public function show(Request $request, string $id): JsonResponse
@@ -141,6 +169,14 @@ final class LabOrderController extends Controller
     }
 
     private function order(object $row): array { return (array) $row; }
+    private function dateBoundary(string $value, bool $exclusiveEnd): string
+    {
+        $date = new \DateTimeImmutable($value);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value) === 1) {
+            $date = $exclusiveEnd ? $date->modify('+1 day') : $date;
+        }
+        return $date->format('Y-m-d H:i:sP');
+    }
     private function requestId(Request $request): string { return (string) ($request->header('X-Request-ID') ?: 'req-'.bin2hex(random_bytes(8))); }
     private function json(array $data, int $status, string $requestId): JsonResponse { return response()->json(['data' => $data, 'meta' => ['request_id' => $requestId, 'correlation_id' => $data['lab_order']['correlation_id'] ?? null]], $status)->header('Cache-Control', 'no-store, private'); }
     private function error(string $code, int $status, string $requestId): JsonResponse { return response()->json(['error' => ['code' => $code], 'meta' => ['request_id' => $requestId]], $status)->header('Cache-Control', 'no-store, private'); }

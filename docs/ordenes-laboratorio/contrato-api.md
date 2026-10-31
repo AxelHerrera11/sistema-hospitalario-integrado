@@ -75,6 +75,22 @@ Respuesta `201`:
 Permiso: `laboratorio.ordenes.ver`. Los filtros son opcionales; `per_page`
 admite de 1 a 100. Solo devuelve órdenes de la base HOSPITAL seleccionada.
 
+La respuesta incluye la página solicitada y el total calculado antes de aplicar
+el ordenamiento:
+
+```json
+{
+  "data": {
+    "lab_orders": [],
+    "pagination": {"page": 1, "per_page": 25, "total": 0, "last_page": 1}
+  },
+  "meta": {"request_id": "req-...", "correlation_id": "uuid"}
+}
+```
+
+`from` y `to` aceptan una fecha `YYYY-MM-DD` (el límite `to` es exclusivo al
+inicio del día siguiente) o una fecha ISO-8601 con hora y zona horaria.
+
 `GET /api/v1/lab-orders/{lab_order_id}`
 
 Permiso: `laboratorio.ordenes.ver`. Incluye los ítems y la versión de catálogo
