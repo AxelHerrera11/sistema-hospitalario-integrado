@@ -1,0 +1,31 @@
+@startuml
+title ASII-05 - Componentes backend y frontend
+skinparam componentStyle uml2
+package "Frontend (Vue 3 + Pinia)" #Paleturquoise {
+  [CitasView.vue] as fe0
+  [CitaForm.vue] as fe1
+  [AgendaDia.vue] as fe2
+  [useCitasStore (Pinia)] as fe3
+  [citasApi.js (Axios)] as fe4
+}
+package "Backend (Laravel / Micro-HIS)" #LightYellow {
+  [CitaController] as be0
+  [AgendarCitaRequest] as be1
+  [AgendarCita / ListarCitas] as be2
+  [Cita (entidad)] as be3
+  [CitaRepository (interfaz)] as be4
+  [CitaRepositoryPDO] as be5
+}
+interface "API REST /api/v1/citas\n(contrato Semana 5)" as api
+fe0 --> fe1
+fe1 --> fe2
+fe2 --> fe3
+fe3 --> fe4
+be0 --> be1
+be1 --> be2
+be2 --> be3
+be3 --> be4
+be4 --> be5
+fe4 ..> api : JSON + JWT + X-Tenant-ID
+api - be0
+@enduml

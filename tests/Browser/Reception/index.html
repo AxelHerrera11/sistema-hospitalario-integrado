@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Recepción — prueba de interfaz</title></head>
+<body><div id="app"></div>
+<script type="module">
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import { useAuthStore } from '/resources/js/stores/auth.js';
+import ReceptionPage from '/resources/js/modules/recepcion-muestras/ReceptionPage.vue';
+const app = createApp(ReceptionPage);
+app.use(createPinia());
+const permissions = new URLSearchParams(location.search).get('role') === 'reader'
+    ? ['muestras.ver'] : ['muestras.recibir', 'muestras.ver', 'muestras.etiquetar'];
+useAuthStore().user = { permissions };
+app.mount('#app');
+</script></body>
+</html>

@@ -1,0 +1,20 @@
+digraph frontera {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  subgraph cluster_mod { label="Hoy: módulo dentro de la aplicación Laravel"; color="#1e3a8a";
+    api [label="API v1 Traslados"];
+    uso [label="Casos de uso\nTrasladar, DarAlta, Consultar"];
+  }
+  subgraph cluster_h { label="Misma base HOSPITAL: atomicidad necesaria"; color="#047857";
+    estancias [label="bed_stays\n(escribe ASII-08)", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+    episodios [label="care_episodes\n(ASII-07 abre, ASII-08 cierra)", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+    camas [label="beds\n(dueño ASII-06; solo lectura)", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  }
+  ocupacion [label="ASII-09 Ocupación\nlee bed_stays"];
+  futuro [label="Si se separara:\nsagas o compensaciones\ny API de lectura", style="rounded,dashed,filled", fillcolor="#fff7ed", color="#c2410c"];
+  api -> uso;
+  uso -> estancias; uso -> episodios; uso -> camas [style=dashed, label="lee"];
+  ocupacion -> estancias [style=dashed, label="lee"];
+  uso -> futuro [style=dashed, label="no recomendado"];
+}

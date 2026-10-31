@@ -16,7 +16,7 @@ class RoleMatrixTest extends TestCase
         'superadmin' => [
             'citas.ver', 'citas.crear', 'citas.confirmar',
             'citas.cancelar', 'reportes.ver', 'reportes.exportar',
-            'documentacion.ver', 'admision.ver', 'expediente.ver',
+            'documentacion.ver', 'admision.ver', 'expediente.ver', 'expediente.abrir', 'expediente.asignar',
             'medicamentos.ver', 'laboratorio.ver', 'auditoria.ver',
             'signos_vitales.corregir', 'alertas.supervisar',
             'admisiones.registrar', 'admisiones.ver', 'camas.asignar',
@@ -30,7 +30,8 @@ class RoleMatrixTest extends TestCase
             'pacientes.ver', 'pacientes.registrar', 'pacientes.editar',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.autorizar',
             'rbac.permisos.ver', 'rbac.denegaciones.ver',
-            'usuarios.ver', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+            'usuarios.ver', 'usuarios.crear', 'usuarios.desactivar', 'tenants.crear', 'sesiones.revocar_ajenas',
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
             'prescripciones.ver', 'prescripciones.crear', 'prescripciones.firmar',
             'muestras.recibir', 'muestras.ver', 'muestras.etiquetar',
             'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
@@ -45,12 +46,15 @@ class RoleMatrixTest extends TestCase
             'ocupacion.ver',
             'medicos.registrar', 'medicos.asociar_especialidad', 'medicos.ver_disponibilidad',
             'rbac.roles.ver', 'rbac.asignar', 'rbac.roles.asignar', 'rbac.permisos.ver', 'rbac.denegaciones.ver',
-            'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            'usuarios.ver', 'usuarios.crear', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
+            'expediente.asignar',
+            'qa.ejecuciones.ver', 'qa.ejecuciones.registrar', 'qa.gates.evaluar',
         ],
         'medico' => [
+            'altas.registrar', 'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
-            'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
+            'expediente.ver', 'expediente.abrir', 'medicamentos.ver', 'laboratorio.ver',
             'signos_vitales.corregir',
             'admisiones.ver', 'alergias.resolver', 'notas_soap.ver',
             'notas_soap.crear', 'notas_soap.asociar_diagnostico', 'notas_soap.firmar',
@@ -63,6 +67,7 @@ class RoleMatrixTest extends TestCase
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'enfermeria' => [
+            'traslados.registrar', 'traslados.ver',
             'citas.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver',
             'admisiones.ver', 'notas_soap.ver', 'signos_vitales.ver',
@@ -93,6 +98,7 @@ class RoleMatrixTest extends TestCase
         ],
         'jefatura_medica' => [
             'documentacion.ver', 'alertas.ver', 'alertas.acusar', 'alertas.supervisar',
+            'expediente.asignar',
         ],
     ];
 

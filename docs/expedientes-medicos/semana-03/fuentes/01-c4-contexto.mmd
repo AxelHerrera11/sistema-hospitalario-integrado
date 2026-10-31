@@ -1,0 +1,14 @@
+%% C4 nivel 1 (contexto). Elementos con borde punteado = provisional o pendiente.
+flowchart LR
+    MED(["Médico tratante"]) --> EXP
+    ENF(["Enfermería"]) --> EXP
+    REC(["Recepción"]) --> EXP
+    EXP["<b>Expediente médico electrónico base</b><br/>micro-his/expediente-medico<br/>abre y muestra el expediente longitudinal"]
+    EXP -- "¿permiso modulo.accion en el hospital?" --> RBAC["RBAC (María)<br/>micro-his/rbac + config/rbac.php"]
+    EXP -- "evento Security" --> GOB["Gobernanza y Auditoría (Cindy)<br/>micro-his/gobernanza-auditoria"]
+    EXP -- "paciente por código" --> PAC["Pacientes (Madelin)<br/>micro-his/pacientes"]
+    EXP -- "lee episodios y asignaciones / escribe medical_records" --> HOSP[("Base HOSPITAL por tenant<br/>PostgreSQL (migraciones 000100–000400)")]
+    AUTH["Auth y tenants (Cindy)<br/>JWT + X-Tenant-ID"] -. "identidad vía app/ExpedienteMedico<br/>(provider registrado)" .-> EXP
+    SOAP["Notas SOAP / Alergias / Órdenes<br/>(consumidores)"] -. "usan el expediente (contrato publicado)" .-> EXP
+    classDef pend stroke-dasharray: 5 5
+    class SOAP pend

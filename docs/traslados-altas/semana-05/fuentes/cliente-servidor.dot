@@ -1,0 +1,18 @@
+digraph cs {
+  rankdir=LR; fontname="Helvetica"; fontsize=12; nodesep=0.35; ranksep=0.6;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, color="#475569"];
+  cliente [label="Cliente\nSPA Vue o prototipo\nvalida formato y presenta"];
+  subgraph cluster_srv { label="Servidor"; color="#94a3b8";
+    api [label="API v1\nPOST traslados, POST altas\nGET internación"];
+    ejecutor [label="EjecutorOperaciones\ncasos de uso y dominio"];
+    registro [label="PdoRegistroInternacion\ntransacción con FOR UPDATE"];
+  }
+  central [label="CENTRAL\nidentidad y permisos", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  hospital [label="HOSPITAL\nbeds, bed_stays,\ncare_episodes, local_user_refs", shape=cylinder, fillcolor="#ecfdf5", color="#047857"];
+  cliente -> api [label="HTTP y JSON\n200, 201, 401, 403, 409, 422, 500, 503"];
+  api -> central [label="validar JWT y permiso"];
+  api -> ejecutor;
+  ejecutor -> registro [label="puerto"];
+  registro -> hospital [label="una transacción"];
+}

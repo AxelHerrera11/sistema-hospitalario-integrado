@@ -1,0 +1,28 @@
+@startuml
+title ASII-05 - Secuencia de la solicitud REST
+actor Recepcion as u
+participant "SPA Vue" as spa
+participant "Router REST" as r
+participant "CitaController" as c
+participant "AgendarCita" as uc
+participant "CitaRepository" as repo
+u -> spa : completa formulario
+spa -> r : POST /api/v1/citas {paciente, doctor, desde, hasta}
+r -> r : valida campos obligatorios
+alt faltan campos
+  r --> spa : 422 {code: validation_failed, errors[]}
+else campos completos
+  r -> c : agendar(entrada)
+  c -> uc : ejecutar(...)
+  uc -> repo : todas()
+  alt solape con paciente o doctor
+    uc --> c : SolapeCitaException
+    c --> r : 409 appointments_overlap
+    r --> spa : 409 {code, message}
+  else disponible
+    uc -> repo : guardar(cita)
+    c --> r : 201 {id, estado}
+    r --> spa : 201 {data}
+  end
+end
+@enduml

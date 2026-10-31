@@ -2,7 +2,7 @@
 
 **Fila 25 del README (ASII-25)** · **Adaptación:** gestión de ejecuciones automatizadas y calidad de versiones · **Proceso:** planificación de pruebas → ejecución E2E → conservación de evidencia → aplicación de quality gates.
 
-Base de trabajo: `origin/develop` en `5e6f0044` (21-oct-2026), en el worktree `feature/asii-25-ci-e2e-calidad-versiones-cindyruano`. Sin commits, push ni PR: los hace Cindy cuando lo autorice.
+Integrado en `develop` con los PR #812–#838 (ramas `feature/asii-25-semana-NN-ci-e2e-cindyruano`). Estado al 29-oct-2026 en [semana-16](semana-16/README.md).
 
 ## Qué hay y dónde
 
@@ -34,13 +34,14 @@ Base de trabajo: `origin/develop` en `5e6f0044` (21-oct-2026), en el worktree `f
 | 13 | Revisión técnica formal | [semana-13](semana-13/README.md) |
 | 14 | Plan SQA | [semana-14](semana-14/README.md) |
 | 15 | Unitarias, caja blanca, caja negra, evidencias y defectos | [semana-15](semana-15/README.md) |
+| 16 | Integración en `develop`, pipeline on-premise, gate sobre la versión real y D-01 cerrado | [semana-16](semana-16/README.md) |
 
 Diagramas: fuentes `.mmd` en cada `semana-XX/fuentes/`, SVG al lado; cómo regenerarlos en [diagramas/README.md](diagramas/README.md).
 
 ## Qué se verificó y qué no
 
 - **Verificado en local:** las 7 suites PHP del módulo, 7 pruebas del prototipo, 9 E2E del módulo, Unit/Feature/Integration de `develop` (5/102/4), micro-HIS de todos los compañeros, `npm run build`, contrato de rutas (17/17) y Pint de los archivos nuevos.
-- **No verificado:** el workflow en GitHub Actions, la suite `Database` y el E2E de pila completa (requieren PostgreSQL efímero; aquí no hay base de prueba). El gate local quedó **RECHAZADO** por un defecto real ajeno: 4 módulos micro-HIS sin `tests/run.php` (D-01).
+- **No verificado:** el workflow en GitHub Actions, la suite `Database` y el E2E de pila completa (requieren PostgreSQL efímero; aquí no hay base de prueba). El 21-oct el gate local quedó **RECHAZADO** por D-01 (4 micro-HIS sin `tests/run.php`); D-01 se cerró y el 29-oct el rechazo se debe a `phpunit-feature`: 46 fallos por falta de PostgreSQL y 1 de contrato de otro módulo (ver semana 16).
 - **No se tocó:** base de datos, migraciones, `config/rbac.php`, rutas, controladores ni módulos de otros compañeros; `composer.json` y `package.json` sin cambios.
 
 ## Cómo dividir en PR
