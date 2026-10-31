@@ -28,6 +28,6 @@ Las suites de `micro-his/notas-soap` (SQLite) siguen en verde con el esquema ali
 |---|---|---|---|
 | R-06 | `clinical_notes_record_version_unique (medical_record_id, version_no)` junto con el trigger que exige `version_no = 1` sin `supersedes_id` permite **una sola nota SOAP por expediente**; la segunda falla con `23505` | `test_known_limit_r06_…` | Javier (ASII-09) |
 | D-02 | `enforce_diagnosis_integrity` no comprueba que la nota esté sin firmar. **Mitigado en el módulo:** `addDiagnosis` relee el estado dentro de la transacción con `FOR SHARE` y responde `409 NOTE_SIGNED` sin guardar ni auditar (`test_a_note_signed_between_read_and_write_…`). **Sigue abierto en la base:** un INSERT directo en `diagnoses` se salta la mitigación (`test_known_defect_d02_…`); falta el trigger | Javier (ASII-09) |
-| CIE-10 | No existe `icd10_codes`; hace falta una entidad nueva | — | Por decidir con Javier |
+| CIE-10 | `icd10_codes` existe desde #1620 y `PdoIcd10Catalog` la lee con `active IS TRUE` (#1633), pero ninguna migración carga códigos: hasta el importador, diagnóstico → 503 | `NotasSoapIcd10CatalogPostgresTest` | Javier (ASII-09) |
 
 Las dos pruebas «known» documentan el comportamiento actual de la base: cuando Javier lo corrija, deben invertirse. La mitigación de D-02 vive en mi adaptador y no sustituye el trigger.
