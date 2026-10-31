@@ -56,6 +56,15 @@ las respuestas llevan `Cache-Control: no-store, private`. Los permisos usados ya
 
 ## Evidencia
 
+Ejecutado el 2026-10-30 sobre la parte 1 actualizada con `origin/develop` (PHP 8.2.33, PHPUnit 11.5.55).
+
+```text
+$ php artisan route:list --path=api/v1/documentacion
+  GET|HEAD       api/v1/documentacion ........................................... Api\V1\DocumentacionController@index
+  GET|HEAD       api/v1/documentacion/{documento} ........................... Api\V1\DocumentacionController@contenido
+                                                                                                    Showing [2] routes
+```
+
 ```text
 $ php micro-his/centro-documentacion/tests/run.php
 PASS  rechaza documento sin roles
@@ -70,8 +79,11 @@ OK: 7 verificaciones aprobadas
 
 ```text
 $ php vendor/bin/phpunit tests/Feature/CentroDocumentacion --testdox
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+Runtime:       PHP 8.2.33
+Configuration: C:\Users\Lisi\Documents\Analisis_de_sistemas_II\Proyecto\shi-s16-24\phpunit.xml
 ......                                                              6 / 6 (100%)
-Time: 00:00.557, Memory: 30.00 MB
+Time: 00:05.565, Memory: 30.00 MB
 Documentacion Api (Tests\Feature\CentroDocumentacion\DocumentacionApi)
  ✔ Cada rol ve solo su catalogo
  ✔ El rol enviado por el cliente se ignora
@@ -79,11 +91,13 @@ Documentacion Api (Tests\Feature\CentroDocumentacion\DocumentacionApi)
  ✔ Documento ajeno o inexistente responde 404 igual
  ✔ Sin sesion 401 y rol sin permiso 403
  ✔ Cada entrada del catalogo apunta a un archivo real
-OK (6 tests, 28 assertions)
+OK (6 tests, 29 assertions)
 ```
 
-La suite Feature completa del repositorio se ejecuto tambien: los unicos errores son 4 pruebas de
-Salas y camas (ASII-06) que necesitan PostgreSQL en el puerto 55433, ajenas a este modulo.
+La suite Feature completa del repositorio (`php vendor/bin/phpunit --testsuite Feature`) termina con
+`Tests: 317, Assertions: 5682, Errors: 44, Failures: 2, Risky: 28`. Los 46 errores y fallos son de Recepcion de muestras (33), Salas y camas (10), Indicadores (3);
+todos necesitan PostgreSQL en los puertos 55431/55433 (`Connection refused` o 503 por fuente no
+disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
 
