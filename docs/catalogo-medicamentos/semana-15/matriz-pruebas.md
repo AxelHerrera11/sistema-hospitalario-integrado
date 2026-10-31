@@ -13,7 +13,7 @@ Suite: `micro-his/catalogo-medicamentos/tests/casos.php`. Se prueba solo el comp
 | B2 | Caja negra · límites | RF-02, RF-04 | Término 1/2/60/61, código 1/2/20/21 y nombre 120/121 | Fronteras |
 | B3 | Caja negra · permisos | RF-07 | Matriz real de `config/rbac.php`: quién lee, que nadie escribe y que `recepcion` no lee | Ver brecha |
 | B4 | Caja negra · errores | RF-03, RF-05, RF-08, RNF-03 | 409, 404, 405, 404 de ruta y 503 sin éxito | — |
-| B5 | Caja negra · regresión | RF-04 | AV3: "ácido" y "ÁCIDO" encuentran el mismo registro | — |
+| B5 | Caja negra · regresión | RF-04 | AV3: "ácido", "ÁCIDO", "acido" y "ACIDO" encuentran el mismo registro | — |
 
 Las suites anteriores siguen vigentes: `run.php` (47), `pdo.php` (18), `repository.php` (21, ahora con el caso no ASCII) y `http.php` (17).
 

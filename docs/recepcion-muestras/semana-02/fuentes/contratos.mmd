@@ -1,0 +1,7 @@
+classDiagram
+    RequirementsValidator <|.. SampleValidator
+    RequirementsValidator <|.. CompositeRequirementsValidator
+    CompositeRequirementsValidator o-- RequirementsValidator
+    ReceiveSpecimen --> ReceptionRepository
+    ReceiveSpecimen --> OrderGateway
+    ReceiveSpecimen --> ReceptionError

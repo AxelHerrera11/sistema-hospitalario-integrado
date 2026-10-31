@@ -1,0 +1,19 @@
+%% Matriz de riesgos del plan SQA (valores de plan-sqa.md): eje x = probabilidad, eje y = impacto.
+%% Escala: 1 → 0.17, 2 → 0.50 (impacto medio se dibuja justo encima de la línea central), 3 → 0.83. Los puntos con el mismo valor se separan hasta
+%% ±0.06 solo para que no se encimen; la descripción de cada riesgo está en la tabla de plan-sqa.md.
+quadrantChart
+    title Riesgos del expediente (probabilidad × impacto)
+    x-axis Probabilidad baja --> Probabilidad alta
+    y-axis Impacto bajo --> Impacto alto
+    quadrant-1 Atender primero
+    quadrant-2 Vigilar con controles
+    quadrant-3 Aceptar
+    quadrant-4 Reducir probabilidad
+    R-01: [0.12, 0.88]
+    R-02: [0.22, 0.78]
+    R-05: [0.17, 0.55]
+    R-04: [0.44, 0.90]
+    R-06: [0.56, 0.86]
+    R-08: [0.50, 0.76]
+    R-03: [0.78, 0.55]
+    R-07: [0.89, 0.60]

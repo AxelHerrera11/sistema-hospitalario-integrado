@@ -1,0 +1,26 @@
+@startuml
+title Micro-HIS Citas (ASII-05) - MVC y patron Repository
+
+skinparam componentStyle rectangle
+package "Presentation (MVC)" #Paleturquoise {
+  [public/index.php (router)] as router
+  [CitaController (sin SQL ni reglas)] as ctrl
+}
+package "Application" #LightBlue {
+  [AgendarCita (caso de uso)] as uc
+}
+package "Domain" #LightYellow {
+  [Cita (entidad)] as ent
+  [CitaRepository (interfaz)] as repo
+}
+package "Infrastructure" #LightGray {
+  [CitaRepositoryPDO] as pdo
+  [CitaRepositoryInMemory] as mem
+}
+router --> ctrl
+ctrl --> uc
+uc --> ent
+uc --> repo
+pdo ..|> repo
+mem ..|> repo
+@enduml

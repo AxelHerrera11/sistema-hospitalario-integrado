@@ -50,6 +50,13 @@ foreach ($adapters as $name => $make) {
     $repo->insert(Medication::register($draft('ace-1', 'ÁCIDO ACETILSALICÍLICO', 'Ácido acetilsalicílico')));
     check("{$name}: no distingue mayúsculas tampoco en caracteres no ASCII (defecto AV3)", $codes($repo->search('ácido', 50)) === ['ACE-1']
         && $codes($repo->search('ÁCIDO', 50)) === ['ACE-1']);
+    $repo->insert(Medication::register($draft('ndu-1', 'Ñandú forte', 'Ñandú')));
+    $repo->insert(Medication::register($draft('ndu-2', 'Nandu base', 'Nandu')));
+    $buscan = static fn (array $terms, array $esperado): bool => array_filter($terms, static fn (string $t): bool => $codes($repo->search($t, 50)) !== $esperado) === [];
+    check("{$name}: ignora tildes y mayúsculas en el nombre y el principio activo", $buscan(['acido', 'ACIDO', 'ácido', 'ÁCIDO', 'acetilsalicilico', 'ACETILSALICÍLICO', "a\u{0301}cido"], ['ACE-1']));
+    check("{$name}: conserva el texto original almacenado", ($repo->search('acido', 50)[0] ?? null)?->activeIngredient === 'Ácido acetilsalicílico');
+    check("{$name}: ñ y n son letras distintas", $buscan(['ñandu', 'ÑANDÚ', 'ñandú', "n\u{0303}andu"], ['NDU-1']) && $buscan(['nandu', 'NANDU', 'nandú'], ['NDU-2']));
+    check("{$name}: un término solo de marcas combinantes no devuelve nada", $repo->search("\u{0301}\u{0301}", 50) === []);
     check("{$name}: '%' es literal, no comodín", $codes($repo->search('0%', 50)) === ['PCT-100'] && $repo->search('%%', 50) === []);
 
     $repo->updateValidity($saved->id, Validity::Inactive);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Rbac;
 
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ abstract class RbacTestCase extends TestCase
         parent::setUp();
         $this->store = new InMemoryRbacStore(['Reader' => ['rbac.permisos.ver']]);
         $this->store->grant('reader', 'hospital-a', 'Reader');
+        config(['tenants.hospital_database_tenant_id' => 'hospital-a']);
         foreach ([RoleResolver::class, PermissionProvider::class, DenialRecorder::class] as $contract) {
             $this->app->instance($contract, $this->store);
         }
@@ -39,9 +41,9 @@ class TestIdentity
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): ?string { return TestIdentity::$hospital; }
-        });
+        $request->attributes->set('tenant', new Hospital([
+            'hospital_id' => TestIdentity::$hospital,
+        ]));
         return $next($request);
     }
 }

@@ -1,0 +1,24 @@
+%% Diagrama de componentes backend y frontend del expediente con sus interfaces provistas (○) y requeridas (◐).
+flowchart LR
+    subgraph FE["Frontend (public/ui)"]
+        APPJS["app.js<br/>eventos, fetch, reintentos"]
+        ESTJS["estados.js<br/>validarCodigo · interpretar · siguienteReintento · etiquetas"]
+        VISJS["vista.js<br/>pintarEstado · pintarExpediente · limpiarExpediente"]
+        APPJS --> ESTJS
+        APPJS --> VISJS
+        VISJS --> ESTJS
+    end
+    subgraph BE["Backend (micro-his/expediente-medico)"]
+        HTTP["Presentation<br/>Router · MedicalRecordController · LongitudinalPresenter · JsonView"]
+        UCS["Application<br/>ConsultLongitudinalRecord · OpenMedicalRecord"]
+        ACC["Application<br/>AccessGuard"]
+        DOM["Domain<br/>MedicalRecord · CareEpisode · LongitudinalRecord · PatientSummary"]
+        STO["Persistence<br/>PdoMedicalRecordRepository · PdoCareRelationship · HospitalRegistry"]
+        INT["Integration<br/>RbacAccessAuthorizer · GobernanzaClinicalAudit · PacientesDirectory"]
+        HTTP --> UCS --> ACC
+        UCS --> DOM
+        STO -. "○ MedicalRecordRepository · CareRelationship · HospitalStoresProvider" .-> UCS
+        INT -. "○ AccessAuthorizer · ClinicalAccessAudit · PatientDirectory" .-> ACC
+    end
+    LAR["app/ExpedienteMedico<br/>ServiceProvider + Controller"] --> HTTP
+    APPJS -- "◐ HTTP JSON (openapi.yaml)" --> HTTP

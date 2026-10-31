@@ -2,7 +2,7 @@
 
 Base revisada: develop f89bd05 y los 200 PR abiertos, 20 de octubre de 2026. Este documento y
 `config/rbac.php` sustituyen las matrices históricas como referencia de integración.
-Catálogo: 69 permisos; 8 roles canónicos. No hay comodines ni herencia.
+Catálogo: 77 permisos; 8 roles canónicos. No hay comodines ni herencia.
 
 ## Matriz activa
 
@@ -20,6 +20,10 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `documentacion.ver` | Sí | Sí | Sí | Sí | Sí | Sí | Sí | Sí |
 | `admision.ver` | Sí | — | Sí | Sí | Sí | — | — | — |
 | `expediente.ver` | Sí | — | Sí | Sí | — | — | — | — |
+| `expediente.abrir` | Sí | — | Sí | — | — | — | — | — |
+| `qa.ejecuciones.ver` | Sí | Sí | — | — | — | — | — | — |
+| `qa.ejecuciones.registrar` | Sí | Sí | — | — | — | — | — | — |
+| `qa.gates.evaluar` | Sí | Sí | — | — | — | — | — | — |
 | `medicamentos.ver` | Sí | Sí | Sí | Sí | — | — | — | — |
 | `medicamentos.registrar` | — | Sí | — | — | — | — | — | — |
 | `medicamentos.cambiar_vigencia` | — | Sí | — | — | — | — | — | — |
@@ -43,6 +47,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `laboratorio.ordenes.crear` | Sí | — | Sí | — | — | — | — | — |
 | `laboratorio.ordenes.ver` | Sí | — | Sí | — | — | Sí | Sí | — |
 | `laboratorio.ordenes.cancelar` | Sí | — | Sí | — | — | — | — | — |
+| `laboratorio.ordenes.actualizar` | — | — | — | — | — | — | — | — |
 | `lab-results.read` | Sí | — | — | — | — | Sí | Sí | — |
 | `lab-results.create` | Sí | — | — | — | — | Sí | — | — |
 | `lab-results.correct` | Sí | — | — | — | — | Sí | — | — |
@@ -80,9 +85,9 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `alertas.ver` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.acusar` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.cerrar` | Sí | — | Sí | — | — | — | — | — |
-| `traslados.registrar` | — | — | — | — | — | — | — | — |
-| `altas.registrar` | — | — | — | — | — | — | — | — |
-| `traslados.ver` | — | — | — | — | — | — | — | — |
+| `traslados.registrar` | — | — | — | Sí | — | — | — | — |
+| `altas.registrar` | — | — | Sí | — | — | — | — | — |
+| `traslados.ver` | — | — | Sí | Sí | — | — | — | — |
 
 ## Contratos conciliados y decisiones
 
@@ -102,7 +107,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
 | NativePHP, `docs/nativephp/semana-05/contrato-api.md` | consume lab-results.read/correct; no recibe permisos por ser cliente |
-| Traslados y altas, `docs/traslados-altas` | traslados.registrar, altas.registrar y traslados.ver catalogados solo como **pending** (propuesta: enfermería traslada, médico da el alta, ambos consultan); ningún rol activo los recibe hasta que RBAC los apruebe |
+| Traslados y altas, `docs/traslados-altas` | traslados.registrar y traslados.ver activos para enfermería; altas.registrar y traslados.ver activos para médico. Ver la sección de activación |
 | Prescripciones y alertas | conserva permisos activos y la política pendiente de excepción de alergia |
 | Usuarios/tenants/RBAC | conserva usuarios.*, tenants.crear, sesiones.revocar_ajenas y operaciones RBAC existentes |
 
@@ -211,3 +216,42 @@ La autorización no sustituye validación de duplicados, reglas de vigencia,
 auditoría ni selección de la conexión hospitalaria. Las pruebas de este cambio
 verifican matriz y middleware RBAC; no acreditan endpoints de medicamentos.
 La política entra en vigor al integrar este cambio; #622 por sí solo no la activa.
+
+## Activación de traslados y altas
+
+Solicitada por ASII-08 (#908, #913). Decisión final de RBAC (ASII-02), 30/10/2026:
+`traslados.ver` para `enfermeria` y `medico`, `traslados.registrar` para `enfermeria` y `altas.registrar` para `medico`.
+Se retiran de `pending`. Los demás roles, incluido `superadmin`, siguen sin estas concesiones;
+no hay herencia administrativa implícita.
+
+El alta corresponde a cualquier médico con permiso vigente en el hospital del contexto.
+**Esta versión no la restringe al médico tratante** ni verifica la relación médico-paciente.
+
+La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
+`local_user_refs`, estancia esperada, cama de destino disponible y transacción. La política entra en
+vigor al integrar este cambio; publicar los nombres no la activó.
+
+## Activación de la apertura del expediente
+
+Solicitada por ASII-25 (expediente médico electrónico base). Decisión de la responsable del módulo, 30/10/2026:
+`expediente.abrir` para `medico` y `superadmin`. Enfermería conserva solo la consulta con `expediente.ver`
+(sin vínculo asistencial vigente, la consulta sigue respondiendo 403). Los demás roles no reciben la concesión.
+
+La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
+`local_user_refs`, paciente existente y apertura idempotente con su evento de auditoría en la misma transacción.
+
+## Activación de calidad de versiones
+
+Solicitada por ASII-25 (QA, pruebas E2E y CI; adaptación «gestión de ejecuciones automatizadas y calidad de
+versiones»). Decisión de la responsable del módulo, 30/10/2026: `qa.ejecuciones.ver`, `qa.ejecuciones.registrar`
+y `qa.gates.evaluar` para `superadmin` y `admin_hospital`. Ningún rol clínico ni de laboratorio los recibe.
+
+Las ejecuciones son metadatos de pruebas (versión, commit, suites, resultados y evidencias), sin datos clínicos.
+La autorización no sustituye las reglas del módulo: tenant de la petición, transición de estados válida y
+evaluación del quality gate con la política versionada.
+
+## Propuesta ASII-16 (30-oct-2026)
+
+`laboratorio.ordenes.actualizar` se registra en `catalog` y en `pending` para
+`tecnico_laboratorio`, según el contrato propuesto de ASII-16. No se activa ni
+se concede a ningún rol; el proveedor de permisos continúa leyendo solo `roles`.

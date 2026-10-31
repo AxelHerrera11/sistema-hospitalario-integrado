@@ -1,0 +1,63 @@
+# Integración local — 2026-10-29 22:45 -0600 · base origin/develop 16654473
+
+## PR abiertos de las Semanas 16–17 fusionados localmente (sin push)
+#1503 feature/asii-25-semana-16-tenants-cindyruano-parte2 → fusionado sin conflictos
+#1504 feature/asii-25-semana-16-tenants-cindyruano-parte3 → fusionado sin conflictos
+#1505 feature/asii-25-semana-16-tenants-cindyruano-parte4 → fusionado sin conflictos
+#1506 feature/asii-25-semana-16-tenants-cindyruano-parte5 → fusionado sin conflictos
+#1507 feature/asii-25-semana-17-gobernanza-auditoria-cindyruano → fusionado sin conflictos
+#1509 feature/asii-25-semana-17-ci-e2e-cindyruano → fusionado sin conflictos
+#1510 feature/asii-25-semana-17-tenants-cindyruano → fusionado sin conflictos
+Resultado: 7d34060e (14 commits sobre develop)
+
+## Suites de los cuatro módulos sobre la integración
+$ php micro-his/expediente-medico/tests/run.php
+Resumen: 98 OK, 0 FALLO
+$ php micro-his/gobernanza-auditoria/tests/run.php
+[unit] 22 pruebas, 0 fallos. [contract] 22 pruebas, 0 fallos. [whitebox] 15 pruebas, 0 fallos. [blackbox] 34 pruebas, 0 fallos. [rbac_integration] 7 pruebas, 0 fallos. [hash_compat] 3 pruebas, 0 fallos. [laravel_glue] 5 pruebas, 0 fallos. [seguridad] 10 pruebas, 0 fallos. [architecture] 4 pruebas, 0 fallos. TODAS LAS SUITES APROBADAS
+$ php micro-his/qa-calidad-versiones/tests/run.php
+[unit] 31 pruebas, 0 fallos. [whitebox] 18 pruebas, 0 fallos. [blackbox] 23 pruebas, 0 fallos. [application] 16 pruebas, 0 fallos. [pdo] 15 pruebas, 0 fallos. [ci] 23 pruebas, 0 fallos. [architecture] 8 pruebas, 0 fallos. TODAS LAS SUITES APROBADAS
+$ phpunit tests/Feature/Tenants tests/Unit/Tenants
+OK (107 tests, 540 assertions)
+$ phpunit tests/Feature/ExpedienteMedico tests/Feature/Rbac/GovernanceHttpTest.php
+OK (10 tests, 62 assertions)
+
+## Pipeline local completo (bin/pipeline-local.sh) sobre la integración
+[sintaxis-php] exit 0 en 89.42 s
+[pint-archivos-cambiados] exit 1 en 2.57 s
+[build-frontend] exit 0 en 8.72 s
+OK (72 tests, 204 assertions)
+Tests: 284, Assertions: 5088, Errors: 44, Failures: 3, Risky: 28.
+OK (4 tests, 23 assertions)
+ℹ tests 49
+ℹ pass 49
+ℹ fail 0
+ℹ tests 9
+ℹ pass 9
+ℹ fail 0
+## Quality gate: ❌ RECHAZADO
+| sintaxis-php | syntax | sí | 1 | 1 | 0 | 0 | 89417 | 2 |
+| pint-archivos-cambiados | lint | no | 1 | 0 | 1 | 0 | 2574 | 2 |
+| phpunit-unit | unit | sí | 72 | 72 | 0 | 0 | 703 | 1 |
+| micro-his | unit | sí | 25 | 25 | 0 | 0 | 4714 | 1 |
+| frontend-node | unit | sí | 49 | 49 | 0 | 0 | 3418 | 1 |
+| phpunit-feature | integration | sí | 284 | 237 | 47 | 0 | 41111 | 1 |
+| phpunit-integration | integration | sí | 4 | 4 | 0 | 0 | 499 | 1 |
+| contrato-rutas-rbac | contract | sí | 58 | 58 | 0 | 0 | 0 | 2 |
+| build-frontend | build | sí | 1 | 1 | 0 | 0 | 8720 | 2 |
+| e2e-qa-calidad | e2e | sí | 9 | 9 | 0 | 0 | 849 | 1 |
+| phpunit-database-pg | integration | no | — | — | — | — | — | — |
+| e2e-auth-rbac | e2e | no | — | — | — | — | — | — |
+- **warning** `SUITE_BELOW_THRESHOLD` (pint-archivos-cambiados): Aprobó 0.0 % (0 de 1 ejecutadas); mínimo 100.0 %.
+- **rejection** `SUITE_BELOW_THRESHOLD` (phpunit-feature): Aprobó 83.5 % (237 de 284 ejecutadas); mínimo 100.0 %.
+- **warning** `SUITE_MISSING` (phpunit-database-pg): No se registró resultado para la suite.
+- **warning** `SUITE_MISSING` (e2e-auth-rbac): No se registró resultado para la suite.
+quality-gate exit=1 (0 aprobado, 1 rechazado, 2 bloqueado, 3 configuración)
+$ php micro-his/qa-calidad-versiones/bin/escanear-secretos.php qa-evidence
+42 archivos revisados, 0 hallazgos
+$ php clasificar.php qa-evidence/phpunit/feature.xml
+Rbac           1  aserción
+Reception     33  requiere PostgreSQL
+Reportes       1  requiere PostgreSQL
+Reportes       2  aserción: 503 (sin base de datos)
+SalasCamas    10  requiere PostgreSQL

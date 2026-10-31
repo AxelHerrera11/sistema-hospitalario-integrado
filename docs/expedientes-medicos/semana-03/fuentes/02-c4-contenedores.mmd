@@ -1,0 +1,12 @@
+%% C4 nivel 2 (contenedores) del micro-HIS tal como se ejecuta hoy.
+flowchart TB
+    U(["Navegador"]) -- "HTTP · /ui/ (HTML, CSS, JS)" --> UI
+    subgraph PHP["php -S · micro-his/expediente-medico/public"]
+        UI["Interfaz estática<br/>public/ui: index.html, app.js, vista.js, estados.js"]
+        FC["Front controller<br/>public/index.php"]
+        APP["Micro-HIS PHP 8.2 vanilla<br/>app.php → Router → MedicalRecordController → casos de uso"]
+    end
+    UI -- "fetch GET/POST /patients/{code}/medical-record<br/>X-User-ID, X-Tenant-ID" --> FC --> APP
+    APP -- "PDO sentencias preparadas" --> HDB[("Base del hospital<br/>SQLite en prototipo · PostgreSQL en el sistema")]
+    APP -- "PdoAuditLog (Gobernanza)" --> ADB[("audit_log<br/>SQLite en prototipo · CENTRAL en el sistema")]
+    APP -- "require (mismo proceso)" --> LIBS["micro-his/rbac · micro-his/gobernanza-auditoria · micro-his/pacientes"]
