@@ -1,0 +1,31 @@
+== Unitarias (dominio) ==
+PASS  U1  emisión válida nace ISSUED con dos ítems y evento inicial
+PASS  U2  prueba repetida se rechaza con ORDER_ITEMS_INVALID
+PASS  U3  salto ISSUED → VALIDATED se rechaza con INVALID_STATUS_TRANSITION
+PASS  U4  cancelación válida guarda estado, actor y motivo
+PASS  U5  cancelar una orden validada se rechaza con ORDER_ALREADY_VALIDATED
+PASS  U6  cancelar sin motivo se rechaza con CANCELLATION_REASON_REQUIRED
+PASS  U7  episodio cerrado se rechaza con CARE_EPISODE_NOT_OPEN
+PASS  U8  prueba inactiva o inexistente se rechaza con LAB_TEST_NOT_ACTIVE
+PASS  U9  consulta devuelve ítems y eventos de la orden
+PASS  U10  listado por estado solo devuelve órdenes ISSUED
+
+== Caja blanca (ramas y condiciones) ==
+PASS  W1  rama de idempotencia: misma clave retorna la orden existente sin duplicar
+PASS  W2  rama de fallo: PersistenceFailure revierte y no deja orden parcial
+PASS  W3  condiciones de longitud: 4 y 251 fallan; 5 y 250 se aceptan
+
+== Caja negra (API) ==
+PASS  B1  emisión válida por API devuelve 201
+PASS  B2  replay con la misma clave devuelve 200 y la misma orden
+PASS  B3  sin permiso de creación devuelve 403
+PASS  B4  sin permiso de lectura devuelve 403
+PASS  B5  otro tenant recibe 404 sin revelar la orden
+PASS  B6  límites del motivo: 4 y 251 → 422; 5 → 200 CANCELLED
+PASS  B7  paginación: 1 y 50 válidos; 0 y 51 → 422
+PASS  B8  sin Idempotency-Key devuelve 422
+PASS  B9  ruta y método desconocidos devuelven 404
+PASS  B10  error sin tenant usa problem+json y request_id
+PASS  B11  fallo de persistencia responde 503 PERSISTENCE_FAILURE sin traza
+
+OK: 24 verificaciones de la semana 15 aprobadas

@@ -39,7 +39,7 @@ foreach ($archivos as $archivo) {
 printf("M2 errores de lint: %d de %d archivos PHP\n", $errores, $total);
 
 // M3: divergencias observables entre adaptadores con datos no ASCII.
-$casos = [['ÁCIDO ACETILSALICÍLICO', 'ácido'], ['Ñandú forte', 'ñandú'], ['Amoxicilina', 'AMOXI']];
+$casos = [['ÁCIDO ACETILSALICÍLICO', 'ácido'], ['ÁCIDO ACETILSALICÍLICO', 'ACIDO'], ['Ñandú forte', 'ñandú'], ['Ñandú forte', 'nandu'], ['Amoxicilina', 'AMOXI']];
 $divergencias = 0;
 foreach ($casos as $i => [$nombre, $termino]) {
     $pdo = new PDO('sqlite::memory:');

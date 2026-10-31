@@ -1,0 +1,12 @@
+digraph trazabilidad {
+  rankdir=LR; fontname="Helvetica"; nodesep=0.25; ranksep=0.7;
+  node [shape=box, style="rounded,filled", fillcolor="#eef2ff", color="#1e3a8a", fontname="Helvetica", fontsize=11];
+  edge [color="#475569"];
+  UC1 [label="UC-TA-01 Traslado (S1)"]; UC2 [label="UC-TA-02 Alta (S1)"];
+  RF5 [label="RF-TA-05/06"]; RF7 [label="RF-TA-07"]; RF4 [label="RF-TA-04 estancia esperada"];
+  RNF1 [label="RNF-TA-01 LSP"]; RNF3 [label="RNF-TA-03/04 atomicidad y bloqueo"]; RNF6 [label="RNF-TA-06 incierto"];
+  TI [label="TrasladoInterno"]; AH [label="AltaHospitalaria"]; RL [label="ReglasLiberacion"]; OP [label="OperacionConLiberacionDeCama"];
+  PDO [label="PdoRegistroInternacion"]; API [label="HTTP 500 + GET consulta"];
+  UC1 -> RF5 -> TI; UC2 -> RF7 -> AH; RF4 -> RL; RNF1 -> OP; RNF3 -> PDO; RNF6 -> API;
+  TI -> OP; AH -> OP; OP -> RL; TI -> PDO; AH -> PDO;
+}

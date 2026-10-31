@@ -1,6 +1,6 @@
 # Gobernanza y Auditoría de movimientos del sistema
 
-> **Asignación:** en el `README.md` de `develop` el módulo es el #22 (`bquiroao`). Esta entrega la preparó `cindyruano` en la rama `feature/asii-25-semana-01-tenants-cindyruano`, sin commits. **El equipo debe confirmar quién asume la entrega y en qué rama se integra.**
+> **Asignación:** en el `README.md` de `develop` el módulo es el #22 (`bquiroao`). La entrega la hizo `cindyruano` en ramas `feature/asii-25-semana-NN-gobernanza-auditoria-cindyruano`, integradas en `develop` con los PR #564–#654.
 
 El módulo registra eventos de auditoría (quién, qué, sobre qué, cuándo y con qué resultado) mediante el contrato `AuditLogger` y permite consultarlos con autorización en el tenant actual, filtrando por usuario, módulo, acción, rango de fechas, resultado y correlación.
 
@@ -36,6 +36,7 @@ El módulo registra eventos de auditoría (quién, qué, sobre qué, cuándo y c
 | 13 | Revisión técnica | [semana-13](semana-13/README.md) |
 | 14 | Plan SQA | [semana-14](semana-14/README.md) |
 | 15 | Matriz y pruebas finales | [semana-15](semana-15/README.md) |
+| 16 | Integración, validación y primera entrega funcional | [semana-16](semana-16/README.md) |
 
 ## Inicio rápido
 
@@ -53,11 +54,11 @@ Después, abrir `http://127.0.0.1:8091/prototipo/`.
 
 | Dependencia | Responsable | Estado |
 |---|---|---|
-| `auditoria.ver` en `config/rbac.php`, y enlazar `DenialRecorder` → `RbacDenialRecorder` | RBAC (María) | Propuesto |
+| `auditoria.ver` en `config/rbac.php` y `DenialRecorder` → `AuditDenials` | RBAC (María) y Tenants | Integrado en `develop` (hoy solo `superadmin` tiene el permiso) |
 | `audit_log` / `audit_chain_state` (o decisión por `local_access_audits`) e índices | Javier y Tenants | Propuesta SQL 001 |
-| `App\Models\Tenant`/`User` (middleware `tenant` y `jwt.auth`) | Usuarios/Tenants | Bloqueante externo (H-GOB-07) |
-| Registro del proveedor en `bootstrap/providers.php` | Equipo | Pendiente |
+| `App\Models\Tenant`/`User` (middleware `tenant` y `jwt.auth`) | Usuarios/Tenants | Resuelto (H-GOB-07): el middleware `tenant` ya no usa `App\Models\Tenant`, sino `App\Modules\Tenants\Infrastructure\Persistence\Hospital` (PR #501–#515) |
+| Registro del proveedor en `bootstrap/providers.php` | Equipo | Integrado (commit `8da19f17`, Mar-03, 21-oct-2026) |
 
 ## Cambios fuera de las carpetas del módulo
 
-Ninguno. Solo se crearon `micro-his/gobernanza-auditoria/`, `app/GobernanzaAuditoria/` y `docs/gobernanza-auditoria/`. No se modificaron archivos de RBAC, Tenants, migraciones, rutas, `config/` ni `bootstrap/`.
+Ninguno desde este módulo. Solo se crearon `micro-his/gobernanza-auditoria/`, `app/GobernanzaAuditoria/` y `docs/gobernanza-auditoria/`. El registro del proveedor en `bootstrap/providers.php` lo integró el equipo de RBAC (ver tabla anterior).

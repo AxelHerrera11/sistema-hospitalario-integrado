@@ -1,0 +1,12 @@
+@startuml
+title ASII-27 - Cambio solicitado (Semana 12)
+skinparam componentStyle rectangle
+[Prototipo S11] as s11
+[Pantallas nuevas\nguardar → mis-filtros] as ui #Paleturquoise
+[Contrato API\n(cambio compatible)] as api #LightYellow
+[Dominio\n(regla existente)] as dom #LightBlue
+s11 --> ui : se extiende
+ui --> api
+api --> dom
+note right of ui : Permitir guardar combinaciones de filtros con nombre (p. ej. "Mensual pediatria") y reutilizarlas.
+@enduml

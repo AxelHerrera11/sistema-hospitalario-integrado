@@ -1,0 +1,42 @@
+# Integración de Gobernanza en develop — 2026-10-29 21:39 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php micro-his/gobernanza-auditoria/tests/run.php | grep -E '^\[|OMITIDA|TODAS|Tenants @'
+[unit] 22 pruebas, 0 fallos.
+[contract] 22 pruebas, 0 fallos.
+[whitebox] 15 pruebas, 0 fallos.
+[blackbox] 34 pruebas, 0 fallos.
+[rbac_integration] 7 pruebas, 0 fallos.
+== AuditChainHasher vs AuditLogRepository (Tenants @ app/Modules/Tenants del repositorio) ==
+[hash_compat] 3 pruebas, 0 fallos.
+[laravel_glue] 5 pruebas, 0 fallos.
+[architecture] 4 pruebas, 0 fallos.
+TODAS LAS SUITES APROBADAS
+(código de salida: 0)
+
+$ php artisan route:list --path=audit-events -v | grep -E 'audit-events|⇂'
+  GET|HEAD       api/v1/audit-events .............................. App\GobernanzaAuditoria\AuditEventController@index
+                 ⇂ api
+                 ⇂ tenant
+                 ⇂ App\Http\Middleware\JwtAuth
+                 ⇂ App\Rbac\RequirePermission:auditoria.ver
+(código de salida: 0)
+
+$ grep -n 'GobernanzaAuditoria\|DenialRecorder::class' bootstrap/providers.php app/Providers/TenantsServiceProvider.php
+bootstrap/providers.php:6:use App\GobernanzaAuditoria\GobernanzaAuditoriaServiceProvider;
+bootstrap/providers.php:26:    GobernanzaAuditoriaServiceProvider::class,
+app/Providers/TenantsServiceProvider.php:32:        $this->app->bind(DenialRecorder::class, AuditDenials::class);
+(código de salida: 0)
+
+$ php -r '$c=require "config/rbac.php"; foreach($c["roles"] as $r=>$p) if(in_array("auditoria.ver",$p,true)) echo "rol con auditoria.ver: $r\n";'
+rol con auditoria.ver: superadmin
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Rbac/GovernanceHttpTest.php --testdox | grep -E '✔|✘|OK|FAIL|Tests:'
+ ✔ Registered endpoint reads denied events and records its own query
+ ✔ Medico is denied before filters and denial is persisted once
+ ✔ Real token cannot select foreign hospital in header or query
+ ✔ Logout and role revocation prevent further audit access
+ ✔ Invalid filters and storage failure do not expose internal details
+OK (5 tests, 33 assertions)
+(código de salida: 0)
