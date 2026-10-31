@@ -1,0 +1,46 @@
+%% Secuencia de la apertura (UC-01) con transacción, idempotencia y reversión por auditoría (clases reales).
+sequenceDiagram
+    autonumber
+    actor R as Recepción
+    participant UI as Interfaz (app.js)
+    participant MC as MedicalRecordController
+    participant OM as OpenMedicalRecord
+    participant G as AccessGuard → Authorize
+    participant PD as PacientesDirectory
+    participant REP as PdoMedicalRecordRepository
+    participant AU as GobernanzaClinicalAudit
+
+    R->>UI: «Abrir expediente…» con P-0002
+    UI->>UI: validarCodigo() y diálogo de confirmación
+    R->>UI: «Sí, abrir expediente»
+    UI->>MC: POST /patients/P-0002/medical-record
+    MC->>OM: execute(context, "P-0002")
+    OM->>G: requirePermission(permiso de apertura PROPUESTO)
+    alt RBAC no lo concede (configuración real hoy)
+        G-->>MC: 403 ACCESO_DENEGADO + trace_id
+    else concedido (solo prototipo con la propuesta activa)
+        OM->>PD: findByCode (404 si no existe)
+        OM->>REP: findByPatient
+        alt ya tenía expediente
+            REP-->>OM: expediente existente
+            OM-->>MC: created=false → 200
+        else no tenía
+            OM->>OM: MedicalRecord::open() (409 si no está activo)
+            OM->>REP: open(record, confirm)
+            REP->>REP: BEGIN · INSERT medical_records
+            REP->>AU: confirm → record(abierto, success)
+            alt bitácora caída
+                AU-->>REP: AuditUnavailable
+                REP->>REP: ROLLBACK
+                REP-->>MC: 503 AUDITORIA_NO_DISPONIBLE
+            else UNIQUE violado (otro proceso ganó)
+                REP->>REP: ROLLBACK y relee el ganador
+                REP-->>OM: expediente ganador → 200 created=false
+            else ok
+                REP->>REP: COMMIT
+                REP-->>OM: expediente nuevo → 201
+            end
+        end
+    end
+    MC-->>UI: JSON
+    UI-->>R: «Se abrió el expediente EXP-P-0002» + «Consultar expediente»

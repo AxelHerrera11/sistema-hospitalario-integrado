@@ -1,0 +1,22 @@
+PASS  admin_hospital: 403 RBAC_DENIED al consultar, trasladar y dar de alta
+PASS  superadmin: 403 RBAC_DENIED al consultar, trasladar y dar de alta
+PASS  recepcion: 403 RBAC_DENIED al consultar, trasladar y dar de alta
+PASS  enfermería: consulta
+PASS  enfermería: no da de alta
+PASS  médico: consulta
+PASS  médico: no traslada
+PASS  miembro de otro hospital: no consulta — 403 HOSPITAL_DATABASE_TENANT_MISMATCH
+PASS  miembro de otro hospital: no traslada — 403 HOSPITAL_DATABASE_TENANT_MISMATCH
+PASS  miembro de otro hospital: no da de alta — 403 HOSPITAL_DATABASE_TENANT_MISMATCH
+PASS  token del hospital A con cabecera del hospital B: rechazado — 403 TENANT_MISMATCH
+PASS  el acceso cruzado no escribió nada
+PASS  enfermería traslada
+PASS  la estancia de origen queda cerrada
+PASS  médico sin asignación con el paciente da el alta — 200
+PASS  episodio cerrado y cama liberada
+PASS  repetir el alta: 409
+PASS  membresía vencida: el token vigente ya no da de alta — 403 NO_ACTIVE_ROLES
+PASS  membresía inactiva: no da de alta — 403 NO_ACTIVE_ROLES
+PASS  sin referencia local activa: no da de alta — 403 ACTOR_SIN_REFERENCIA_LOCAL
+PASS  con permiso vigente otra vez: da el alta — 200
+21/21 comprobaciones

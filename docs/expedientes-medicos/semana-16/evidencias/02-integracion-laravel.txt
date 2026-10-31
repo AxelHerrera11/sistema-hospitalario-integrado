@@ -1,0 +1,29 @@
+# Integración Laravel del expediente — 2026-10-29 21:37 -0600 · PHP 8.2.12 · Node v22.13.1 · Windows 11
+# Base: develop 6e841849 + cambios de la entrega
+
+$ php artisan route:list --path=medical-record
+  GET|HEAD       api/v1/patients/{patientCode}/medical-record App\ExpedienteMedico\ExpedienteMedicoController@consult
+                                                                                                    Showing [1] routes
+(código de salida: 0)
+
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/ExpedienteMedico --testdox
+PHPUnit 11.5.55 by Sebastian Bergmann and contributors.
+Runtime:       PHP 8.2.12
+Configuration: /repo/phpunit.xml
+.....                                                               5 / 5 (100%)
+Time: 00:01.194, Memory: 30.00 MB
+Expediente Medico Api (Tests\Feature\ExpedienteMedico\ExpedienteMedicoApi)
+ ✔ Treating physician reads the longitudinal record and the access is audited
+ ✔ Identity tenant and permission are enforced before the micro his
+ ✔ Another hospital or an unassigned database never reaches the record
+ ✔ Clinical relationship and local reference are required
+ ✔ Opening is not published until rbac catalogues its permission
+OK (5 tests, 29 assertions)
+(código de salida: 0)
+
+# Prueba compartida de contratos: el único fallo es de otro módulo (docs/ordenes-laboratorio), igual que en develop sin esta entrega.
+$ APP_ENV=testing php vendor/bin/phpunit --colors=never tests/Feature/Rbac/PublishedContractsTest.php | grep -E 'ordenes-laboratorio|Failed|Tests:'
+/repo/docs/ordenes-laboratorio/semana-01/README.md
+Failed asserting that an array contains 'laboratorio.ordenes.actualizar'.
+Tests: 8, Assertions: 2122, Failures: 1.
+(código de salida: 1)

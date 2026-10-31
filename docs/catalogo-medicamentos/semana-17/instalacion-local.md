@@ -4,7 +4,7 @@ Entorno aislado de verificación. **No es el despliegue final:** no hay staging 
 
 1. **Dependencias:** `composer install`, `npm ci` y `cp .env.example .env && php artisan key:generate`. En OneDrive, ejecute `attrib -R bootstrap\cache /S /D` y `attrib -R storage /S /D`.
 2. **PostgreSQL desechable** (15 o superior, con `btree_gist`): cree dos clústeres o dos bases propias, CENTRAL y HOSPITAL. En la base HOSPITAL ejecute `CREATE EXTENSION btree_gist;`.
-3. **Variables del proceso**, sin guardarlas en el repositorio: `CENTRAL_DB_*` y `HOSPITAL_DB_*` apuntando a esas bases, `JWT_SECRET` aleatorio (por ejemplo `php -r "echo bin2hex(random_bytes(32));"`) y `APP_DEBUG=false`.
+3. **Variables del proceso**, sin guardarlas en el repositorio: `HOSPITAL_DB_TENANT_ID` con el UUID del hospital dueño de la base (sin él, el catálogo responde 503), y `CENTRAL_DB_*` y `HOSPITAL_DB_*` apuntando a esas bases, `JWT_SECRET` aleatorio (por ejemplo `php -r "echo bin2hex(random_bytes(32));"`) y `APP_DEBUG=false`.
 4. **Migraciones:**
 
    ```bash
