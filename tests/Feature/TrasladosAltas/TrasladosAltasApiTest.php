@@ -76,7 +76,18 @@ final class TrasladosAltasApiTest extends TestCase
         $this->assertNull($this->hospital->estancias[self::ESTANCIA]['fin']);
     }
 
-    public function test_transfer_consult_and_discharge_with_the_proposed_roles(): void
+    public function test_consult_and_discharge_are_denied_to_roles_without_a_grant(): void
+    {
+        $antes = serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]);
+        foreach (['superadmin', 'admin_hospital', 'recepcion', 'jefatura_medica'] as $rol) {
+            TrasladosTestIdentity::como($rol);
+            $this->getJson('/api/v1/estancias/'.self::ESTANCIA.'/internacion')->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+            $this->postJson('/api/v1/altas', ['estancia_esperada_id' => self::ESTANCIA])->assertStatus(403)->assertJsonPath('code', 'RBAC_DENIED');
+        }
+        $this->assertSame($antes, serialize([$this->hospital->estancias, $this->hospital->episodios, $this->hospital->camas]));
+    }
+
+    public function test_transfer_consult_and_discharge_with_the_decided_roles(): void
     {
         TrasladosTestIdentity::como('enfermeria');
         $id = $this->withHeaders(['X-Request-Id' => 'req-traslado-01'])->postJson('/api/v1/traslados', ['estancia_esperada_id' => self::ESTANCIA,

@@ -65,6 +65,7 @@ class TrasladosAltasPostgresTest extends TestCase
         $h = DB::connection('hospital');
         $this->assertTrue((bool) $h->scalar('SELECT o.ended_at = d.started_at AND o.care_episode_id = d.care_episode_id FROM bed_stays o, bed_stays d
             WHERE o.bed_stay_id = ? AND d.bed_stay_id = ?', [$this->estancia, $destino]));
+        // Decisión de RBAC: basta el permiso vigente; no se exige una asignación del médico con el paciente.
         TrasladosTestIdentity::como('medico', self::USUARIO);
         $this->postJson('/api/v1/altas', ['estancia_esperada_id' => $destino])->assertOk();
         $this->assertTrue((bool) $h->scalar("SELECT s.ended_at = e.ended_at AND e.status = 'closed' FROM bed_stays s JOIN care_episodes e USING (care_episode_id)
