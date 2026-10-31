@@ -22,12 +22,13 @@ de los PR consultados en GitHub el 2026-10-30.
 | 13 | Revision tecnica | [`semana-13`](../semana-13/) | #1220 | - |
 | 14 | Plan SQA | [`semana-14`](../semana-14/) | #1226 | - |
 | 15 | Pruebas unitarias, caja blanca y negra | [`semana-15`](../semana-15/) | #1405 | - |
-| 16 | Integracion y primera entrega | [`semana-16`](../semana-16/) | #677 (formato comun de errores) | #1613, #1617 |
-| 17 | Seguridad y despliegue final | [`semana-17`](../semana-17/) | - | `feature/asii-24-semana-17-documentacion-lis671` |
-| 18 | Evaluacion final y defensa | [`semana-18`](./) | - | esta rama |
+| 16 | Integracion y primera entrega | [`semana-16`](../semana-16/) | #677 (formato comun de errores), #1613, #1617 | - |
+| 17 | Seguridad y despliegue final | [`semana-17`](../semana-17/) | #1685 | - |
+| 18 | Evaluacion final y defensa | [`semana-18`](./) | - | este PR |
 
-La Semana 16 se dividio en dos PR por el limite de 400 lineas; las Semanas 17 y 18 se abren cuando se fusione
-la parte 1 (#1613). La tarea Odoo #3330 (Semana 3) quedo emparejada con #1226 por error; ver el issue #1292.
+La Semana 16 se dividio en dos PR por el limite de 400 lineas; las Semanas 17 y 18 se abrieron despues de
+fusionar ambas partes, para que cada PR midiera solo su semana. La tarea Odoo #3330 (Semana 3) quedo
+emparejada con #1226 por error; ver el issue #1292.
 
 ## Requisitos: estado final
 

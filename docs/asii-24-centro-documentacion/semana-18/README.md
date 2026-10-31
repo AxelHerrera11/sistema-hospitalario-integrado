@@ -16,10 +16,10 @@
 
 ## PR integrado
 
-Las Semanas 1-15 estan fusionadas en `develop`. Siguen abiertas la Semana 16 (#1613 API y #1617 evidencia)
-y las ramas de las Semanas 17 y 18, que esperan a la Semana 16 para no pasar de 400 lineas por PR. Todas se
-fusionaron **localmente** sobre `develop` junto con mis otros tres modulos; el unico conflicto fue el registro
-de providers en `bootstrap/providers.php`, que se resuelve conservando ambas lineas.
+Las Semanas 1-17 estan fusionadas en `develop` (Semana 16: #1613 y #1617; Semana 17: #1685);
+este PR agrega solo la Semana 18. Antes de abrirlo, todas mis ramas se fusionaron **localmente** sobre
+`develop` junto con mis otros tres modulos; el unico conflicto fue el registro de providers en
+`bootstrap/providers.php`, que se resuelve conservando ambas lineas.
 
 ## Resultado sobre la version integrada (2026-10-30)
 
