@@ -5,7 +5,7 @@ La entrega integra traslados y altas en el Micro-HIS compartido: SPA Vue -> API 
 | Parte | Evidencia | Estado |
 |---|---|---|
 | API y dependencias | [integracion-api.md](./integracion-api.md) | Integrada |
-| Permisos | [permisos-propuestos.md](./permisos-propuestos.md) | Pendientes de aprobacion de ASII-02 |
+| Permisos | [permisos-propuestos.md](./permisos-propuestos.md) | Matriz final decidida por ASII-02 y activa desde #1577 |
 | Recorrido HTTP y PostgreSQL | [evidencia-integracion.md](./evidencia-integracion.md) | Verificado localmente |
 | Interfaz SPA | [`evidencia/salida-spa.txt`](./evidencia/salida-spa.txt) y [`capturas/`](./capturas/) | Verificada localmente |
 
@@ -20,7 +20,7 @@ No se declara despliegue en staging ni sincronizacion automatica de `local_user_
 | Tema | Estado |
 |---|---|
 | Acceso entre hospitales | Corregido (#1561): un miembro válido de otro hospital recibe 403 `HOSPITAL_DATABASE_TENANT_MISMATCH` y no cambian filas. Requiere `HOSPITAL_DB_TENANT_ID` |
-| Permisos | Propuesta lista en #1577, con pruebas sobre la matriz real. **No integrada:** la decide RBAC (ASII-02). Hasta entonces, todo 403 y sin entrada en el menú |
+| Permisos | Activos desde #1577: `traslados.ver` para enfermería y médico, `traslados.registrar` para enfermería y `altas.registrar` para médico. Sin restricción al tratante. Evidencia sin activación simulada: [`permisos-finales.mjs`](./evidencia/permisos-finales.mjs) y su [salida](./evidencia/salida-permisos-finales.txt) |
 | Identidad local | Sin cambio: ningún módulo crea `local_user_refs`. Médicos, Expediente y Recepción solo las leen, igual que este módulo. Se siembran a mano en la instalación local |
 | Servidor, staging u on-premise | No hay entorno autorizado |
 

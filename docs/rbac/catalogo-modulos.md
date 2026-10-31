@@ -80,9 +80,9 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | `alertas.ver` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.acusar` | Sí | — | Sí | — | — | — | — | Sí |
 | `alertas.cerrar` | Sí | — | Sí | — | — | — | — | — |
-| `traslados.registrar` | — | — | — | — | — | — | — | — |
-| `altas.registrar` | — | — | — | — | — | — | — | — |
-| `traslados.ver` | — | — | — | — | — | — | — | — |
+| `traslados.registrar` | — | — | — | Sí | — | — | — | — |
+| `altas.registrar` | — | — | Sí | — | — | — | — | — |
+| `traslados.ver` | — | — | Sí | Sí | — | — | — | — |
 
 ## Contratos conciliados y decisiones
 
@@ -102,7 +102,7 @@ R = recepcion; T = tecnico_laboratorio; B = bioquimico; J = jefatura_medica. «�
 | Resultados, `docs/ingreso-resultados/semana-05/contrato-api.md` | lab-results.create/correct/read; captura separada de validación |
 | Validación, `docs/validacion-resultados/semana-05/contrato-api.md` | lab-results.validate/read; bioquímico valida, técnico no valida |
 | NativePHP, `docs/nativephp/semana-05/contrato-api.md` | consume lab-results.read/correct; no recibe permisos por ser cliente |
-| Traslados y altas, `docs/traslados-altas` | traslados.registrar, altas.registrar y traslados.ver catalogados solo como **pending** (propuesta: enfermería traslada, médico da el alta, ambos consultan); ningún rol activo los recibe hasta que RBAC los apruebe |
+| Traslados y altas, `docs/traslados-altas` | traslados.registrar y traslados.ver activos para enfermería; altas.registrar y traslados.ver activos para médico. Ver la sección de activación |
 | Prescripciones y alertas | conserva permisos activos y la política pendiente de excepción de alergia |
 | Usuarios/tenants/RBAC | conserva usuarios.*, tenants.crear, sesiones.revocar_ajenas y operaciones RBAC existentes |
 
@@ -211,3 +211,17 @@ La autorización no sustituye validación de duplicados, reglas de vigencia,
 auditoría ni selección de la conexión hospitalaria. Las pruebas de este cambio
 verifican matriz y middleware RBAC; no acreditan endpoints de medicamentos.
 La política entra en vigor al integrar este cambio; #622 por sí solo no la activa.
+
+## Activación de traslados y altas
+
+Solicitada por ASII-08 (#908, #913). Decisión final de RBAC (ASII-02), 30/10/2026:
+`traslados.ver` para `enfermeria` y `medico`, `traslados.registrar` para `enfermeria` y `altas.registrar` para `medico`.
+Se retiran de `pending`. Los demás roles, incluido `superadmin`, siguen sin estas concesiones;
+no hay herencia administrativa implícita.
+
+El alta corresponde a cualquier médico con permiso vigente en el hospital del contexto.
+**Esta versión no la restringe al médico tratante** ni verifica la relación médico-paciente.
+
+La autorización no sustituye las reglas del módulo: guard de base hospitalaria, referencia activa en
+`local_user_refs`, estancia esperada, cama de destino disponible y transacción. La política entra en
+vigor al integrar este cambio; publicar los nombres no la activó.
