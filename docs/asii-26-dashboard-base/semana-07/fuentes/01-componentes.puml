@@ -1,0 +1,31 @@
+@startuml
+title ASII-26 - Componentes backend y frontend
+skinparam componentStyle uml2
+package "Frontend (Vue 3 + Pinia)" #Paleturquoise {
+  [AppLayout.vue] as fe0
+  [MenuLateral.vue (navigation.js)] as fe1
+  [InicioView.vue] as fe2
+  [TarjetaIndicador.vue] as fe3
+  [EstadoPagina.vue (carga/vacio/error)] as fe4
+  [useTableroStore (Pinia)] as fe5
+}
+package "Backend (Laravel / Micro-HIS)" #LightYellow {
+  [TableroController] as be0
+  [ObtenerTablero] as be1
+  [Indicador (entidad)] as be2
+  [IndicadorRepository (interfaz)] as be3
+  [IndicadorRepositoryPDO] as be4
+}
+interface "API REST /api/v1/tablero\n(contrato Semana 5)" as api
+fe0 --> fe1
+fe1 --> fe2
+fe2 --> fe3
+fe3 --> fe4
+fe4 --> fe5
+be0 --> be1
+be1 --> be2
+be2 --> be3
+be3 --> be4
+fe5 ..> api : JSON + JWT + X-Tenant-ID
+api - be0
+@enduml

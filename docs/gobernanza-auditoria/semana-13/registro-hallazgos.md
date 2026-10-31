@@ -36,3 +36,16 @@
 | Aislamiento | Sin hallazgos en el módulo. | Puntos 3 y 4; TC-C-01, TC-N-02 y TC-N-07…09 |
 | Errores | H-GOB-04 corregido. | Punto 8 |
 | Persistencia | Riesgo de concurrencia (H-GOB-02); falta probar con PostgreSQL. | Puntos 11 y 12 |
+
+## Seguimiento de hallazgos externos (2026-10-31)
+
+La tabla y el resumen anteriores son el registro de la revisión de la Semana 13 y no se reescriben. Estado actual de
+los dos hallazgos externos, verificado sobre `develop`:
+
+| Id | Estado actual | Verificación |
+|---|---|---|
+| H-GOB-07 | **Resuelto por Usuarios/Tenants.** El middleware `tenant` ya no depende de `App\Models\Tenant`: resuelve el hospital con el modelo federado `Hospital`. | Con la aplicación y PostgreSQL locales, `GET /api/v1/audit-events` responde 200 con los eventos del hospital de la sesión; un token de otro hospital recibe 403 `TENANT_MISMATCH` (`GovernanceHttpTest::test_real_token_cannot_select_foreign_hospital_in_header_or_query`). |
+| H-GOB-11 | **Resuelto por RBAC y Tenants.** `auditoria.ver` está activo en `config/rbac.php` y `DenialRecorder` se enlaza con `AuditDenials`, que escribe en `audit_log`. | `GovernanceHttpTest::test_medico_is_denied_before_filters_and_denial_is_persisted_once`: 403 `RBAC_DENIED` y una sola fila `rbac.access_denied` con el mismo `trace_id`. |
+
+Con esto quedan **0 hallazgos externos abiertos**. Siguen pendientes H-GOB-02 (bloqueo único de la cadena, decisión de
+Javier y Tenants) y H-GOB-05 (paginación por cursor en una versión 2 del contrato).

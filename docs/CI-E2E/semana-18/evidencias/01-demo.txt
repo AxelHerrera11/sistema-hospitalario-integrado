@@ -1,0 +1,27 @@
+# Demo funcional — QA, pruebas E2E, CI y guía de despliegue final — 2026-10-29 22:51 -0600 · Windows 11 · PHP 8.2.12
+# Código: integración local 7d34060e (develop 16654473 + PR abiertos de las Semanas 16–17)
+
+$ QA_E2E_BASE=http://127.0.0.1:8093 node --test tests/E2E/qa-calidad.e2e.mjs
+  ✔ E2E-QA-01 camino feliz: suites verdes con evidencia → approved y visible en el detalle
+  ✔ E2E-QA-02 una prueba E2E obligatoria en rojo → rejected con la regla SUITE_BELOW_THRESHOLD
+  ✔ E2E-QA-03 la etapa E2E no reportó → blocked (falta evidencia, no se aprueba por omisión)
+✔ E2E-QA: planificación → ejecución → evidencia → quality gate
+  ✔ E2E-QA-04 sin sesión → 401; observador no planifica → 403 RBAC_DENIED
+  ✔ E2E-QA-05 una ejecución del hospital 1 no existe para el hospital 2 (404) y no aparece en su listado
+  ✔ E2E-QA-06 X-Tenant-ID ajeno → 403 TENANT_MISMATCH
+  ✔ E2E-QA-07 almacén o RBAC caídos → 503 con código, sin detalle técnico
+  ✔ E2E-QA-08 una ejecución completada no admite más resultados (409)
+  ✔ E2E-QA-09 el prototipo navegable se sirve y respeta la cabecera de idioma
+✔ E2E-QA: permisos, tenant y errores
+ℹ tests 9
+ℹ pass 9
+ℹ fail 0
+$ php micro-his/qa-calidad-versiones/tests/run.php
+[unit] 31 pruebas, 0 fallos.
+[whitebox] 18 pruebas, 0 fallos.
+[blackbox] 23 pruebas, 0 fallos.
+[application] 16 pruebas, 0 fallos.
+[pdo] 15 pruebas, 0 fallos.
+[ci] 23 pruebas, 0 fallos.
+[architecture] 8 pruebas, 0 fallos.
+TODAS LAS SUITES APROBADAS

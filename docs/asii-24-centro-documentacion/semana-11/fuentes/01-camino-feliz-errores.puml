@@ -1,0 +1,12 @@
+@startuml
+title ASII-24 - Camino feliz y errores criticos (Semana 11)
+start
+:Catalogo → Buscar → Detalle → Descargar; Publicar → Revisar y publicar → Documento publicado;
+if (respuesta del servidor) then (2xx)
+  #palegreen:Confirmacion con el resultado concreto;
+else (error)
+  :Sin roles: 422 documento_sin_roles\nBusqueda vacia: 200 con lista vacia\nSin permiso: 403 forbidden\nSesion expirada: 401 unauthenticated;
+  :Mensaje accionable, datos conservados, foco en el error;
+endif
+stop
+@enduml

@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Tenants\Application\Administration\CreateHospitalUser;
 use App\Modules\Tenants\Application\Administration\ListHospitalUsers;
 use App\Modules\Tenants\Application\Administration\ManageHospitalMembership;
 use App\Modules\Tenants\Domain\Administration\AdminFailure;
 use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 
 final class HospitalUserController extends Controller
 {
@@ -33,6 +35,32 @@ final class HospitalUserController extends Controller
         );
 
         return response()->json($result);
+    }
+
+    public function store(Request $request, CreateHospitalUser $users): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'string', 'email', 'max:254'],
+            'display_name' => ['required', 'string', 'min:2', 'max:120'],
+            'password' => ['required', 'string', 'max:128', Password::min(12)->mixedCase()->numbers()->symbols()],
+            'role_code' => ['required', 'string', 'max:32'],
+        ]);
+
+        try {
+            $result = $users->execute(
+                $this->actorId($request),
+                $this->actorRoles($request),
+                $this->hospitalId($request),
+                $validated['email'],
+                $validated['display_name'],
+                $validated['password'],
+                $validated['role_code'],
+            );
+        } catch (AdminFailure $failure) {
+            return $this->failure($failure);
+        }
+
+        return response()->json($result, 201);
     }
 
     public function assign(Request $request, string $user): JsonResponse

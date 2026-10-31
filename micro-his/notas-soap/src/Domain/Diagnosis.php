@@ -8,10 +8,12 @@ namespace MicroHis\NotasSoap\Domain;
 final readonly class Diagnosis
 {
     public const TYPES = ['primary', 'secondary', 'differential'];
+    /** Forma de un código CIE-10 (J18, J18.9, S72.001A): se rechaza cualquier otra cosa antes de consultar el catálogo. */
+    public const CODE_PATTERN = '/^[A-Z][0-9][0-9A-Z](\.[0-9A-Z]{1,4})?$/';
 
     public function __construct(public string $code, public string $type)
     {
-        if (trim($code) === '' || !in_array($type, self::TYPES, true)) {
+        if (preg_match(self::CODE_PATTERN, $code) !== 1 || !in_array($type, self::TYPES, true)) {
             throw new SoapRuleViolation('DIAGNOSIS_INVALID', 422);
         }
     }

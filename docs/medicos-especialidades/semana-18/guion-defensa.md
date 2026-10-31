@@ -71,12 +71,12 @@ Resultado verificado: 27 de 27 comprobaciones y 16 de 16 pares de color cumplen.
 
 - Que el módulo está desplegado: **no hay despliegue** fuera del equipo local.
 - Que la inyección SQL o los límites se probaron en CI: se probaron localmente con PostgreSQL 16 efímero.
-- Que las 18 semanas están integradas: las semanas 13, 15, 16, 17 y 18 están en PR abiertos.
+- Que las 18 semanas están integradas sin revisión: las semanas 1 a 17 están en `develop` y la 18 es este PR.
 - Que las 9 capturas de la Semana 16 (PR #1040) prueban la integración: son de Chrome sin interfaz con un **API simulado**. La prueba contra el backend real con sesión real es la de [e2e-real.md](./e2e-real.md) (21 de 21 verificaciones y 6 capturas `capturas-reales/`), hecha sobre bases efímeras y datos ficticios.
 - Que la pantalla es accesible «en general»: se midieron 27 criterios automáticos en Chrome con API simulado ([accesibilidad.md](./accesibilidad.md)); **no** hay prueba con lector de pantalla, y la plataforma declara `lang="en"` en páginas en español (3.1.1), un hallazgo que no es del módulo.
 - Que el límite de tasa funciona en cualquier despliegue: depende de una caché compartida y persistente; con `CACHE_STORE=array` no cuenta nada.
 - Que la consulta de disponibilidad cumple RNF-MED-04 «en general»: se midió con 20 médicos, datos uniformes y sin HTTP; ver los límites en [rendimiento.md](./rendimiento.md).
-- Que se resolvió la amenaza MED-13 (aislamiento entre hospitales): sigue abierta y es de la plataforma.
+- Que se resolvió la amenaza MED-13 (aislamiento entre hospitales): es parcial; el guard rechaza otro hospital, pero varios hospitales dependen de la plataforma.
 
 ## Antes de entrar a la defensa
 

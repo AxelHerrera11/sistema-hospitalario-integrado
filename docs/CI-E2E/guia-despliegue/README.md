@@ -9,10 +9,42 @@
 | P1 | Quality gate del commit a desplegar | Artefacto `qa-gate-decision` del workflow `QA CI y E2E` | `verdict: approved` para **ese** `commit_sha` |
 | P2 | Rama y commit exactos | `git fetch origin && git rev-parse origin/develop` | Igual al `commit_sha` de P1 |
 | P3 | Versiones de plataforma | `php -v`, `node -v`, `psql --version` | PHP ≥ 8.2 con `pdo_pgsql`; Node 22; PostgreSQL 16 |
-| P4 | Variables de entorno completas | Comparar `.env` con `.env.example` | `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*`, `HOSPITAL_DB_*` definidos; `APP_ENV=production`, `APP_DEBUG=false`, `TENANTS_REFRESH_COOKIE_SECURE=true` |
+| P4 | Variables de entorno completas | Comparar `.env` con `.env.example` | `APP_KEY`, `JWT_SECRET`, `CENTRAL_DB_*`, `HOSPITAL_DB_*` y `HOSPITAL_DB_TENANT_ID` definidos; `APP_ENV=production`, `APP_DEBUG=false`, `TENANTS_REFRESH_COOKIE_SECURE=true` |
 | P5 | Respaldo de bases | `pg_dump -Fc his_central > central-<fecha>.dump` (y hospital) | Archivo creado y `pg_restore --list` lo lee |
 | P6 | Migraciones pendientes revisadas por Javier | `php artisan migrate:status --database=central` (y hospital) | Lista aprobada; ninguna destructiva sin respaldo |
 | P7 | Ventana y responsables | Grupo | Quién ejecuta, quién valida, quién decide rollback |
+
+`HOSPITAL_DB_TENANT_ID` identifica el único hospital asignado a esta conexión
+HOSPITAL. Mientras no exista selección dinámica desde el registro central, las
+rutas del catálogo de wards/camas fallan de forma cerrada si el valor está vacío
+o no coincide con el tenant autenticado.
+
+### 1.1 P1 sin GitHub Actions: gate reproducible en local
+
+Mientras el workflow no pueda correr en GitHub (facturación de la organización), P1 se cumple con el mismo pipeline
+en una máquina del grupo, con PostgreSQL en los puertos y credenciales de los servicios del job (bases desechables):
+
+```bash
+# Dos instancias PostgreSQL 16+ de prueba: 55431 (CENTRAL) y 55433 (HOSPITAL), usuario y contraseña postgres.
+# Con Docker:
+docker run -d --rm -p 55431:5432 -e POSTGRES_PASSWORD=postgres postgres:16
+docker run -d --rm -p 55433:5432 -e POSTGRES_PASSWORD=postgres postgres:16
+# Sin Docker ni permisos de administrador (por ejemplo en Windows), con los binarios de PostgreSQL:
+#   initdb -D <dir> -U postgres --pwfile=<archivo con "postgres"> -A scram-sha-256 -E UTF8
+#   pg_ctl -D <dir> -o "-p 55431 -c listen_addresses=127.0.0.1" -l <dir>.log start   (y otra en 55433)
+
+git checkout --detach <commit_sha a desplegar>
+QA_IMPORT_RELEASE=<versión> bash micro-his/qa-calidad-versiones/bin/pipeline-local.sh qa-evidence
+```
+
+- El script crea y migra `his_*_test`, recrea `his_*_e2e` en cada corrida y ejecuta todas las etapas del workflow,
+  incluidas la suite `Database` y el E2E de pila completa (`tests/E2E/auth-rbac.e2e.mjs`). Nunca usa otros puertos ni
+  otras bases (`bin/postgres-ci-local.php` lo impide).
+- Con `QA_IMPORT_RELEASE`, `php artisan qa:import-evidence` registra la ejecución, cada suite con su evidencia SHA-256
+  y la decisión del gate en `/calidad-versiones`, a nombre de la cuenta de servicio `ci-bot` y con auditoría en
+  Gobernanza. P1 se cumple si esa ejecución muestra **Aprobado** para el mismo commit de P2.
+- La importación también sirve para el paquete `qa-evidence` descargado de un workflow de GitHub:
+  `php artisan qa:import-evidence <carpeta> --sha=<commit> --release=<versión> --environment=ci`.
 
 ## 2. Despliegue (pasos reproducibles)
 

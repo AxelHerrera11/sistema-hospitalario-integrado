@@ -1,0 +1,19 @@
+@startuml
+title ASII-05 - Flujo de interaccion (camino principal)
+start
+:Recepcion abre **Agenda del dia**;
+:Pulsa **Nueva cita**;
+:Selecciona paciente, especialidad, doctor, fecha y hora;
+if (doctor disponible y sin solape?) then (si)
+  :Confirmacion "Cita agendada";
+  :Ver detalle / volver a agenda;
+else (no)
+  :Mensaje 409 con horarios libres sugeridos;
+  :Elige otro horario;
+endif
+:Desde detalle: confirmar, reprogramar o cancelar;
+if (cancelar?) then (si)
+  :Dialogo de confirmacion;
+endif
+stop
+@enduml

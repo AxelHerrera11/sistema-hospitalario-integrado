@@ -35,8 +35,8 @@
             <h2 id="doc-reg-title">Registrar médico</h2>
             <template v-for="field in registerFields" :key="field.name">
                 <label :for="`doc-reg-${field.name}`">{{ field.label }}</label>
-                <input :id="`doc-reg-${field.name}`" v-model="register[field.name]" autocomplete="off" :aria-invalid="Boolean(registerErrors[field.name])">
-                <span v-if="registerErrors[field.name]" class="doc__msg doc__msg--error" role="alert">{{ registerErrors[field.name] }}</span>
+                <input :id="`doc-reg-${field.name}`" v-model="register[field.name]" autocomplete="off" :aria-invalid="Boolean(registerErrors[field.name])" :aria-describedby="registerErrors[field.name] ? `doc-reg-${field.name}-error` : undefined">
+                <span v-if="registerErrors[field.name]" :id="`doc-reg-${field.name}-error`" class="doc__msg doc__msg--error" role="alert">{{ registerErrors[field.name] }}</span>
             </template>
             <p v-if="registerMessage.text" :class="['doc__msg', `doc__msg--${registerMessage.kind}`]" :role="registerMessage.kind === 'error' ? 'alert' : 'status'">{{ registerMessage.text }}</p>
             <button type="submit" :disabled="saving === 'register'">{{ saving === 'register' ? 'Guardando…' : 'Registrar' }}</button>
@@ -46,8 +46,8 @@
             <h2 id="doc-assoc-title">Asociar especialidad</h2>
             <template v-for="field in associateFields" :key="field.name">
                 <label :for="`doc-assoc-${field.name}`">{{ field.label }}</label>
-                <input :id="`doc-assoc-${field.name}`" v-model="associate[field.name]" autocomplete="off" :aria-invalid="Boolean(associateErrors[field.name])">
-                <span v-if="associateErrors[field.name]" class="doc__msg doc__msg--error" role="alert">{{ associateErrors[field.name] }}</span>
+                <input :id="`doc-assoc-${field.name}`" v-model="associate[field.name]" autocomplete="off" :aria-invalid="Boolean(associateErrors[field.name])" :aria-describedby="associateErrors[field.name] ? `doc-assoc-${field.name}-error` : undefined">
+                <span v-if="associateErrors[field.name]" :id="`doc-assoc-${field.name}-error`" class="doc__msg doc__msg--error" role="alert">{{ associateErrors[field.name] }}</span>
             </template>
             <label class="doc__check"><input v-model="associate.is_primary" type="checkbox"> Especialidad principal</label>
             <p v-if="associateMessage.text" :class="['doc__msg', `doc__msg--${associateMessage.kind}`]" :role="associateMessage.kind === 'error' ? 'alert' : 'status'">{{ associateMessage.text }}</p>
@@ -148,15 +148,31 @@ async function submit(name) {
 </script>
 
 <style scoped>
-.doc__card { display: flex; flex-direction: column; gap: 0.5rem; max-width: 28rem; margin: 1rem 0; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #fff; }
-.doc__check { flex-direction: row; display: flex; gap: 0.5rem; }
-.doc__msg { margin: 0; font-size: 0.875rem; }
-.doc__msg--error { color: #b91c1c; }
-.doc__msg--warn { color: #92400e; }
-.doc__msg--ok { color: #166534; }
-.doc__secondary { background: transparent; border: 1px solid #94a3b8; }
-.doc__table { border-collapse: collapse; width: 100%; max-width: 40rem; }
+/* El preflight de Tailwind quita bordes, fondos y tamaños a campos, botones y títulos; se restauran con los mismos tokens que Medicamentos. */
+.doc { max-width: 920px; margin: 0 auto; color: #0f172a; }
+.doc h1 { font-size: 1.6rem; font-weight: 700; margin: 0.5rem 0 1rem; }
+.doc h2 { font-size: 1.2rem; font-weight: 600; margin: 0 0 0.25rem; }
+.doc label { font-weight: 600; }
+.doc__card { display: flex; flex-direction: column; gap: 0.4rem; max-width: 28rem; margin: 1rem 0; padding: 1rem; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; }
+.doc input:not([type="checkbox"]) { min-height: 44px; padding: 0.5rem 0.65rem; border: 1px solid #64748b; border-radius: 6px; background: #fff; font: inherit; width: 100%; }
+.doc input[type="checkbox"] { width: 1.5rem; height: 1.5rem; } /* 24 px: tamaño mínimo del objetivo (WCAG 2.5.8) */
+.doc input[aria-invalid="true"] { border-color: #dc2626; box-shadow: 0 0 0 1px #dc2626; }
+.doc button { min-height: 44px; padding: 0.55rem 1rem; border: 1px solid #1d4ed8; border-radius: 6px; background: #1d4ed8; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+.doc button:disabled { opacity: 0.6; cursor: progress; }
+.doc .doc__secondary { background: #fff; color: #1e3a8a; }
+button:focus-visible, input:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+.doc__check { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; }
+.doc__msg { margin: 0.25rem 0 0; padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 4px solid #64748b; background: #f1f5f9; font-size: 0.9rem; }
+.doc__msg[hidden] { display: none; }
+.doc__msg--ok { background: #dcfce7; color: #14532d; border-left-color: #16a34a; }
+.doc__msg--warn { background: #fef9c3; color: #713f12; border-left-color: #ca8a04; }
+.doc__msg--error { background: #fee2e2; color: #7f1d1d; border-left-color: #dc2626; }
+.doc__table { border-collapse: collapse; width: 100%; max-width: 40rem; background: #fff; }
 .doc__table caption { text-align: left; font-weight: 600; padding-bottom: 0.25rem; }
-.doc__table th, .doc__table td { border-bottom: 1px solid #e2e8f0; padding: 0.4rem 0.5rem; text-align: left; }
-@media (max-width: 480px) { .doc__card { max-width: none; } }
+.doc__table th, .doc__table td { border-bottom: 1px solid #cbd5e1; padding: 0.5rem; text-align: left; vertical-align: top; }
+.doc__table thead th { background: #f1f5f9; }
+@media (max-width: 600px) {
+    .doc__card { max-width: none; padding: 0.85rem; }
+    .doc form > button { width: 100%; }
+}
 </style>

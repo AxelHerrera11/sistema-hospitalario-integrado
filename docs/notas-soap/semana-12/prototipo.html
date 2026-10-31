@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototipo · Notas SOAP y diagnósticos</title>
+<style>
+:root{--bg:#f3f4f6;--card:#fff;--tx:#1f2937;--mu:#4b5563;--bd:#6b7280;--pr:#1d4ed8;--er:#b91c1c;--wa:#92400e;--ok:#166534}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:#fff;padding:8px;z-index:9}
+:focus-visible{outline:3px solid var(--pr);outline-offset:2px}
+header{background:#111827;color:#fff;padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header strong{flex:1}header label{font-size:14px}header select{min-height:44px;font:inherit}
+.pac{position:sticky;top:0;z-index:2;background:#fff;border-bottom:1px solid #d1d5db;padding:8px 16px;font-size:14px}
+main{max-width:960px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:1.4rem;margin:.2em 0 .6em}
+.card{background:var(--card);border:1px solid #d1d5db;border-radius:8px;padding:16px;margin-bottom:12px}
+.chip{display:inline-block;border:1px solid currentColor;border-radius:99px;padding:2px 10px;font-size:14px;font-weight:600}
+.bor{color:var(--wa)}.fir{color:var(--ok)}.pri{color:var(--pr)}
+label,legend{display:block;font-weight:600;margin-top:12px}.hint{color:var(--mu);font-size:14px;font-weight:400}
+textarea,input[type=search]{width:100%;font:inherit;border:2px solid var(--bd);border-radius:6px;padding:8px;min-height:44px}
+textarea{min-height:96px}
+.err{color:var(--er);font-size:14px;margin:4px 0}.cnt{font-size:14px;color:var(--mu)}.cnt.near{color:var(--wa);font-weight:700}
+.btn{min-height:44px;min-width:44px;padding:8px 16px;border:2px solid var(--pr);border-radius:6px;background:#fff;color:var(--pr);font:inherit;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn.main{background:var(--pr);color:#fff}.btn.danger{border-color:var(--er);color:var(--er)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.dx{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.alert{border:2px solid var(--er);background:#fef2f2;border-radius:8px;padding:16px}
+.ok{border:2px solid var(--ok);background:#f0fdf4;border-radius:8px;padding:12px;margin-bottom:12px}
+.small{font-size:14px;color:var(--mu)}
+.dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:5}
+.dlg>div{background:#fff;border-radius:8px;padding:20px;max-width:480px;width:100%}
+details{border-bottom:1px solid #e5e7eb;padding:8px 0}summary{min-height:44px;font-weight:600;cursor:pointer}
+.sim{margin-top:24px;font-size:14px;color:var(--mu)}
+@media(max-width:767px){
+ .bar.fix{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #d1d5db;padding:8px 16px calc(8px + env(safe-area-inset-bottom));margin:0}
+ .bar.fix .btn{flex:1}.dlg{align-items:flex-end;padding:0}.dlg>div{border-radius:12px 12px 0 0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header><strong>HIS · Notas SOAP</strong>
+ <label>Rol <select id="rol"><option value="medico">Médico tratante</option><option value="enfermeria">Enfermería</option></select></label></header>
+<div class="pac" role="region" aria-label="Paciente">María Gómez · exp-7734 · Nac. 14/03/1987 · Episodio EP-1</div>
+<main id="main" tabindex="-1"></main>
+<div id="live" role="status" class="small" style="position:absolute;left:-999px"></div>
+<script>
+const CAT=[['J18.9','Neumonía, no especificada'],['J44.1','EPOC con exacerbación aguda'],['E11.9','Diabetes mellitus tipo 2']];
+const SEC=[['s','Subjetivo','¿Qué refiere el paciente?'],['o','Objetivo','Hallazgos del examen'],['a','Análisis','Qué se concluye'],['p','Plan','Qué se hará']];
+const MUESTRA={s:'Tos de 3 días, sin fiebre',o:'T 38.4 °C, FR 22/min',a:'Neumonía del lóbulo inferior derecho',p:'Amoxicilina 500 mg c/8h por 7 días'};
+const TIPOS={primary:'Principal',secondary:'Secundario',differential:'Diferencial'};
+const TRACE='7f3c1d92-0b41-4a7e-9c1f-2a5b7e0d4c33';
+const S={d:{s:'',o:'',a:'',p:''},note:null,dx:[],q:'',sel:null,tipo:'secondary',signed:false,v2:'',emot:false,rol:'medico',errs:{}};
+const $=s=>document.querySelector(s), main=$('#main'), esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const movil=()=>matchMedia('(max-width:767px)').matches, medico=()=>S.rol==='medico';
+const go=h=>{location.hash=h}, say=t=>{$('#live').textContent=t};
+const chip=()=>S.signed?'<span class="chip fir">✔ Firmada · Versión ${S.v2?2:1}</span>':'<span class="chip bor">● Borrador</span>';
+const autoria='<span class="small">Autoría: López, A. · Médico tratante</span>';
+
+const V={
+ episodio(){
+  if(!S.note) return `<h1 tabindex="-1">Notas SOAP del episodio</h1><div class="card"><p><strong>Este episodio aún no tiene nota SOAP.</strong></p>
+   ${medico()?'<a class="btn main" href="#/editor/0">Nueva nota</a>':'<p class="small">Su rol es de solo lectura (notas_soap.ver).</p>'}</div>`;
+  const dx=S.dx.length?S.dx.map(x=>`<div class="card dx"><span><strong>${x[0]}</strong> ${x[1]}</span><span class="chip pri">${TIPOS[x[2]]}</span></div>`).join(''):'<p class="small">Sin diagnósticos asociados todavía. Una nota sin diagnóstico principal no se puede firmar.</p>';
+  const acc=medico()&&!S.signed?'<a class="btn main" href="#/diagnostico">Asociar diagnóstico</a>':'';
+  return `<h1 tabindex="-1">Nota SOAP · EP-1</h1><p>${chip()} ${autoria}</p>
+   ${S.signed?'<p class="alert" role="note">Nota firmada: no se puede editar. Una corrección crea una versión nueva.</p>':''}
+   <div class="card">${SEC.map((x,i)=>`<details ${i==(S.rol==='enfermeria'?3:0)?'open':''}><summary>${x[1]}</summary>${esc(S.note[x[0]])}</details>`).join('')}</div>
+   <h2>Diagnósticos (${S.dx.length})</h2>${dx}
+   <div class="bar fix">${acc}<a class="btn" href="#/versiones">Versiones</a></div>`;
+ },
+ editor(p){
+  const m=movil(), paso=m?+p||0:-1, f=SEC.map((x,i)=>{const v=S.d[x[0]],n=v.length,e=S.errs[x[0]];
+   return `<div ${m&&i!==paso?'hidden':''}><label for="${x[0]}">${x[1]} (obligatorio) <span class="hint">${x[2]}</span></label>
+   <textarea id="${x[0]}" data-k="${x[0]}" maxlength="4000" aria-describedby="c${x[0]} ${e?'e'+x[0]:''}" ${e?'aria-invalid="true"':''}>${esc(v)}</textarea>
+   <div id="c${x[0]}" class="cnt ${n>=3600?'near':''}">${n} de 4000 caracteres${n>=3600?' · ⚠ Quedan '+(4000-n):''}</div>${e?`<div class="err" id="e${x[0]}">${e}</div>`:''}</div>`}).join('');
+  const sig=m&&paso<3, back=m&&paso>0?`<a class="btn" href="#/editor/${paso-1}">Atrás</a>`:'';
+  return `<h1 tabindex="-1">Nueva nota${m?` · Paso ${paso+1} de 4`:''}</h1><p class="small">Queda en borrador hasta que se firme. Los campos marcados son obligatorios.</p>
+   ${Object.keys(S.errs).length?`<div class="alert" role="alert">Revise: ${Object.keys(S.errs).length} sección(es) sin completar.</div>`:''}
+   <form novalidate>${f}<div class="bar fix">${back}<button type="button" class="btn main" id="sig" data-paso="${paso}">${sig?'Siguiente':'Revisar y registrar'}</button></div></form>`;
+ },
+ confirmar(){
+  return V.editor(0)+`<div class="dlg"><div role="dialog" aria-modal="true" aria-labelledby="dt"><h2 id="dt" tabindex="-1">Registrar nota como borrador</h2>
+   <p><strong>María Gómez</strong><br>exp-7734 · Nac. 14/03/1987<br>Episodio EP-1</p>
+   <details><summary>Ver las cuatro secciones</summary>${SEC.map(x=>`<p><strong>${x[1]}:</strong> ${esc(S.d[x[0]])}</p>`).join('')}</details>
+   <p class="small">Sin diagnósticos todavía: se asocian después de registrar.</p>
+   <div class="bar"><a class="btn" id="vol" href="#/editor/0">Volver a editar</a><button class="btn main" id="reg">Registrar nota</button></div></div></div>`;
+ },
+ exito(){
+  return `<h1 tabindex="-1">Nota registrada</h1><div class="ok" role="status"><strong>Nota registrada (borrador).</strong><br><span class="small">trace_id ${TRACE}</span></div>
+   <p>${chip()} ${autoria}</p><div class="bar"><a class="btn main" href="#/diagnostico">Asociar diagnóstico</a><a class="btn" href="#/episodio">Ver la nota</a></div>`;
+ },
+ diagnostico(){
+  const r=CAT.filter(c=>(c.join(' ')).toLowerCase().includes(S.q.toLowerCase())), hayP=S.dx.some(x=>x[2]==='primary');
+  const lista=r.length?r.map(c=>`<div class="card dx"><span><strong>${c[0]}</strong> ${c[1]}</span><button class="btn" data-c="${c[0]}" aria-pressed="${S.sel===c[0]}">${S.sel===c[0]?'Elegido':'Elegir'}</button></div>`).join(''):'<p>Ningún código coincide.</p>';
+  const sel=CAT.find(c=>c[0]===S.sel);
+  const tipo=sel?`<fieldset class="card"><legend>Tipo de diagnóstico para ${sel[0]}</legend>${Object.keys(TIPOS).map(k=>{const dis=k==='primary'&&hayP;
+   return `<label><input type="radio" name="t" value="${k}" ${S.tipo===k?'checked':''} ${dis?'disabled aria-describedby="rp"':''}> ${TIPOS[k]}</label>${dis?'<div class="small" id="rp">Ya hay un diagnóstico principal.</div>':''}`}).join('')}
+   <div class="bar"><button class="btn main" id="aso">Asociar a la nota</button></div></fieldset>`:'';
+  return `<h1 tabindex="-1">Asociar diagnóstico</h1><p>${chip()} ${autoria}</p>
+   <label for="q">Código o descripción <span class="hint">Ejemplo: J18.9 o neumonía</span></label><input id="q" type="search" value="${esc(S.q)}">
+   <p class="small" role="status">${r.length} resultado(s)</p>${lista}${tipo}
+   ${S.dx.length?`<h2>Asociados (${S.dx.length})</h2>${S.dx.map(x=>`<p>${x[0]} · ${TIPOS[x[2]]}</p>`).join('')}<a class="btn" href="#/episodio">Volver a la nota</a>`:''}`;
+ },
+ error(){
+  return `<h1 tabindex="-1">No se pudo asociar el diagnóstico</h1><div class="alert" role="alert"><p><strong>La nota fue firmada mientras la editaba: ya no se puede modificar.</strong></p>
+   <p>Su diagnóstico no se guardó. Para cambiarla, cree una versión nueva con su motivo.</p><p class="small">Código NOTE_SIGNED · trace_id ${TRACE}</p>
+   <div class="bar"><a class="btn main" href="#/versiones">Ver versiones</a><a class="btn" href="#/episodio">Volver a la nota</a></div></div>`;
+ },
+ versiones(){
+  const v2=S.v2, v1='<span class="chip fir">✔ Firmada</span>';
+  return `<h1 tabindex="-1">Versiones · EP-1</h1>
+   ${v2?`<div class="card"><p>${v1} <strong>Versión 2 · vigente</strong></p><p>Motivo: ${esc(v2)}</p>${autoria}</div>`:''}
+   <div class="card"><p>${S.signed?v1:'<span class="chip bor">● Borrador</span>'} <strong>Versión 1${v2?' · reemplazada por la versión 2':' · vigente'}</strong></p>${autoria}</div>
+   ${S.signed&&medico()&&!v2?'<a class="btn main" href="#/corregir">Crear versión corregida</a>':''}
+   ${S.signed&&!medico()?'<p class="small">Su rol no permite crear versiones.</p>':''} <a class="btn" href="#/episodio">Volver a la nota</a>`;
+ },
+ corregir(){
+  return `<h1 tabindex="-1">Crear versión corregida</h1><p>La versión 1 firmada no se modifica: se crea la versión 2 con el texto corregido y su motivo.</p>
+   <label for="mot">Motivo de la corrección (obligatorio)</label><textarea id="mot" ${S.emot?'aria-invalid="true" aria-describedby="emot"':''}></textarea>
+   ${S.emot?'<div class="err" id="emot" role="alert">Escriba el motivo de la corrección (obligatorio).</div>':''}
+   <div class="bar fix"><a class="btn" href="#/versiones">Cancelar</a><button class="btn main" id="cv">Crear versión 2</button></div>`;
+ }
+};
+
+function seed(r){
+ const q=new URLSearchParams(location.search), demo=q.has('demo')?'demo'+q.get('demo'):'';
+ if(q.get('rol')){S.rol=q.get('rol');$('#rol').value=S.rol}
+ if(['exito','diagnostico','error','versiones','episodio','corregir'].includes(r)&&!S.note&&demo) S.note={...MUESTRA};
+ if((r==='confirmar'||(r==='editor'&&demo))&&!S.d.s) S.d={...MUESTRA};
+ if(demo.includes('dx')&&!S.dx.length) S.dx=[['J18.9',CAT[0][1],'primary'],['E11.9',CAT[2][1],'secondary']];
+ if(r==='diagnostico'&&demo&&!S.sel&&!S.dx.length) S.sel='J18.9';
+ if(r==='error'||r==='corregir'||demo.includes('v2')) S.signed=true;
+ if(demo.includes('v2')&&!S.v2) S.v2='Error en la dosis del plan';
+}
+function route(){
+ const [r,p]=(location.hash.slice(2)||'episodio').split('/'); seed(r);
+ main.innerHTML=(V[r]||V.episodio)(p); bind(r);
+ const f=r==='confirmar'?$('#vol'):main.querySelector('h1'); if(f){f.focus();} say(document.title);
+}
+function bind(r){
+ main.querySelectorAll('textarea').forEach(t=>t.oninput=()=>{S.d[t.dataset.k]=t.value;const c=$('#c'+t.dataset.k),n=t.value.length;c.textContent=n+' de 4000 caracteres'+(n>=3600?' · ⚠ Quedan '+(4000-n):'');c.className='cnt '+(n>=3600?'near':'')});
+ const sig=$('#sig'); if(sig) sig.onclick=()=>{
+  const paso=+sig.dataset.paso, keys=paso<0||paso===3?SEC.map(x=>x[0]):[SEC[paso][0]]; S.errs={};
+  keys.forEach(k=>{if(!S.d[k].trim())S.errs[k]=`Escriba ${SEC.find(x=>x[0]===k)[1].toLowerCase()} (obligatorio).`});
+  if(Object.keys(S.errs).length){const k=Object.keys(S.errs)[0];const p=paso>=0?paso:0;route();setTimeout(()=>$('#'+k).focus());return}
+  paso>=0&&paso<3?go('/editor/'+(paso+1)):go('/confirmar');
+ };
+ const reg=$('#reg'); if(reg) reg.onclick=()=>{S.note={...S.d};S.errs={};go('/exito')};
+ const q=$('#q'); if(q) q.oninput=()=>{S.q=q.value;route();const n=$('#q');n.focus();n.setSelectionRange(99,99)};
+ main.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.sel=b.dataset.c;route()});
+ main.querySelectorAll('[name=t]').forEach(i=>i.onchange=()=>{S.tipo=i.value});
+ const aso=$('#aso'); if(aso) aso.onclick=()=>{
+  if($('#sim').checked){S.signed=true;return go('/error')}
+  const c=CAT.find(x=>x[0]===S.sel); S.dx.push([c[0],c[1],S.tipo]); S.sel=null; S.tipo='secondary'; route(); say('Diagnóstico asociado');
+ };
+ const cv=$('#cv'); if(cv) cv.onclick=()=>{const m=$('#mot').value.trim(); S.emot=!m; if(m){S.v2=m;go('/versiones')}else{route();$('#mot').focus()}};
+}
+$('#rol').onchange=e=>{S.rol=e.target.value;route()};
+addEventListener('hashchange',route); route();
+</script>
+<p class="sim" style="max-width:960px;margin:0 auto;padding:0 16px 96px"><label><input type="checkbox" id="sim"> Simular error crítico: otra persona firmó la nota mientras se asociaba el diagnóstico</label></p>
+</body>
+</html>

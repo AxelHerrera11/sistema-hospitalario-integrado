@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\TrasladosAltas;
 
+use App\Modules\Tenants\Infrastructure\Persistence\Hospital;
 use Closure;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Http\Request;
@@ -24,12 +25,7 @@ final class TrasladosTestIdentity implements RoleResolver, DenialRecorder
     public function handle(Request $request, Closure $next)
     {
         $request->setUserResolver(static fn () => self::$user);
-        $request->attributes->set('tenant', new class {
-            public function getKey(): string
-            {
-                return TrasladosTestIdentity::$hospital;
-            }
-        });
+        $request->attributes->set('tenant', new Hospital(['hospital_id' => self::$hospital]));
 
         return $next($request);
     }

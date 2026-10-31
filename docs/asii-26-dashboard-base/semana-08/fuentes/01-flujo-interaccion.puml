@@ -1,0 +1,17 @@
+@startuml
+title ASII-26 - Flujo de interaccion (camino principal)
+start
+:Usuario inicia sesion;
+:Layout muestra menu segun permisos (falla cerrada);
+:Inicio solicita tablero del periodo actual;
+:Estado **cargando** (esqueleto);
+if (respuesta?) then (200 con datos)
+  :Tarjetas con icono + texto + color;
+  :Clic en tarjeta -> detalle;
+elseif (200 sin datos) then
+  :Estado **vacio** con sugerencia;
+else (error)
+  :Estado **error** con Reintentar;
+endif
+stop
+@enduml
