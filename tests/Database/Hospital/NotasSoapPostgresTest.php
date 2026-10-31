@@ -86,12 +86,29 @@ class NotasSoapPostgresTest extends TestCase
         $this->store->add(self::EPISODE, self::DOCTOR, new SoapSections('s2', 'o', 'a', 'p'));
     }
 
-    /** DEFECTO D-02 en la base real: el trigger de diagnoses no comprueba que la nota esté sin firmar. Cuando se corrija, el INSERT debe fallar. */
-    public function test_known_defect_d02_a_signed_note_still_accepts_a_diagnosis_in_the_database(): void
+    /** D-02 mitigado en el módulo: otra sesión firma la nota entre la lectura y la escritura y el adaptador lo detecta, revierte y no deja auditoría. */
+    public function test_a_note_signed_between_read_and_write_is_refused_with_note_signed_and_nothing_is_saved(): void
+    {
+        $id = $this->store->add(self::EPISODE, self::DOCTOR, new SoapSections('s', 'o', 'a', 'p'));
+        $note = $this->store->find($id);
+        DB::connection('hospital')->update("UPDATE clinical_notes SET status = 'signed', signed_at = now() WHERE clinical_note_id = ?", [$id]);
+        try {
+            $this->store->addDiagnosis($note, new Diagnosis('J18.9', 'primary'), 'Neumonía');
+            $this->fail('Debió rechazarse una nota firmada.');
+        } catch (SoapRuleViolation $e) {
+            $this->assertSame(['NOTE_SIGNED', 409], [$e->getMessage(), $e->status]);
+        }
+        $this->assertFalse($this->pdo->inTransaction());
+        $this->assertSame(0, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM diagnoses'));
+        $this->assertSame(0, (int) DB::connection('hospital')->scalar("SELECT count(*) FROM local_access_audits WHERE action = 'diagnostico.asociado'"));
+    }
+
+    /** DEFECTO D-02 pendiente en la base (ASII-09): quien escriba SQL directo en diagnoses se salta la mitigación del módulo, porque el trigger no mira el estado de la nota. Cuando se corrija, el INSERT debe fallar. */
+    public function test_known_defect_d02_the_database_still_accepts_a_direct_diagnosis_on_a_signed_note(): void
     {
         $id = $this->store->add(self::EPISODE, self::DOCTOR, new SoapSections('s', 'o', 'a', 'p'));
         DB::connection('hospital')->update("UPDATE clinical_notes SET status = 'signed', signed_at = now() WHERE clinical_note_id = ?", [$id]);
-        $this->store->addDiagnosis($this->store->find($id), new Diagnosis('J18.9', 'primary'), 'Neumonía');
+        DB::connection('hospital')->insert("INSERT INTO diagnoses (clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES (?, ?, ?, 'J18.9', 'Neumonía', 'primary', current_date)", [$id, self::EPISODE, self::DOCTOR]);
         $this->assertSame(1, (int) DB::connection('hospital')->scalar('SELECT count(*) FROM diagnoses WHERE clinical_note_id = ?', [$id]));
     }
 

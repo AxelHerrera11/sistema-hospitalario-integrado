@@ -45,10 +45,19 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
     {
         $id = Uuid::v4();
         $this->transaction(function () use ($id, $note, $diagnosis, $description): void {
+            $this->assertStillDraft($note->id);
             $this->pdo->prepare('INSERT INTO diagnoses (diagnosis_id, clinical_note_id, care_episode_id, author_user_ref_id, code, description, type, onset_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
                 ->execute([$id, $note->id, $note->episodeId, $note->authorId, $diagnosis->code, $description, $diagnosis->type, date('Y-m-d')]);
             $this->audit->record($note->authorId, 'diagnostico.asociado', 'diagnosis', $id, $note->episodeId, ['clinical_note_id' => $note->id, 'code' => $diagnosis->code, 'type' => $diagnosis->type]);
         });
+    }
+
+    /** Otra sesión pudo firmar la nota tras leerla (D-02): se vuelve a comprobar dentro de la transacción, con la fila bloqueada contra la firma concurrente. Mitigación del módulo; la regla en la base (trigger) es de ASII-09. */
+    private function assertStillDraft(string $noteId): void
+    {
+        $lock = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'pgsql' ? ' FOR SHARE' : '';
+        $status = $this->rows('SELECT status FROM clinical_notes WHERE clinical_note_id = ?' . $lock, [$noteId])[0]['status'] ?? null;
+        $status === 'draft' || throw new SoapRuleViolation('NOTE_SIGNED', 409);
     }
 
     /** El expediente abierto del paciente del episodio. Crearlo es de Expediente: sin él no se escribe (409) en lugar de inventarlo. */
@@ -68,6 +77,9 @@ final class PdoClinicalNoteStore implements ClinicalNoteRepository
         } catch (\RuntimeException $e) { // PDOException o la bitácora caída de cualquier adaptador
             $this->pdo->inTransaction() && $this->pdo->rollBack();
             throw new \RuntimeException('persistencia_no_disponible', 0, $e);
+        } catch (SoapRuleViolation $e) { // regla de dominio comprobada dentro de la transacción: se revierte y se propaga tal cual
+            $this->pdo->inTransaction() && $this->pdo->rollBack();
+            throw $e;
         }
     }
 
