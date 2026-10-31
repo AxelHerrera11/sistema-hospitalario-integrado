@@ -98,8 +98,9 @@ muestras (61 menciones), Salas y camas (10) e Indicadores (3): todos necesitan P
 - **PostgreSQL real:** en este equipo no hay PostgreSQL ni Docker; las pruebas Feature usan dobles del
   repositorio/fuente y las rutas, middlewares y matriz RBAC reales. La consulta contra HOSPITAL queda
   pendiente de un recorrido con base real.
-- La conexion `hospital` no fija `timezone`: se asume UTC como en `config/app.php`. Conviene fijarla en la configuracion compartida (coordinar con plataforma).
+- **Supuesto pendiente de validar:** la conexion `hospital` no fija `timezone`; se asume UTC como en
+  `config/app.php`. Debe confirmarlo plataforma y fijarse en la configuracion compartida.
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-05-semana-16-api-lis671`
-  (API y pruebas, sobre la Semana 5) y parte 2 `feature/asii-05-semana-16-evidencia-lis671` (interfaz,
-  si aplica, y esta evidencia, sobre la parte 1). Los PR se abren cuando la Semana 5 (y la Semana 4,
-  PR #1182) esten fusionadas. `Refs #207`.
+  (API y pruebas, PR #1612 hacia `develop`) y parte 2 `feature/asii-05-semana-16-evidencia-lis671`
+  (esta evidencia, PR #1616 sobre la parte 1). La parte 2 se reapunta a `develop` cuando se fusione la
+  parte 1. Las Semanas 4 (#1182) y 5 (#1404) ya estan fusionadas. Issue del modulo: #207.
