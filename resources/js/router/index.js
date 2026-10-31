@@ -55,6 +55,12 @@ const router = createRouter({
             meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.alergias },
         },
         {
+            path: '/auditoria',
+            name: 'auditoria',
+            component: () => import('@/modules/auditoria/pages/AuditPage.vue'),
+            meta: { requiresAuth: true, permission: ROUTE_PERMISSIONS.auditoria },
+        },
+        {
             path: '/rbac',
             name: 'rbac',
             component: () => import('@/modules/rbac/CatalogPage.vue'),
