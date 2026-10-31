@@ -65,4 +65,9 @@ final class HospitalClinicalNoteStore implements ClinicalNoteRepository
     {
         $this->store->addDiagnosis($note, $diagnosis, $description);
     }
+
+    public function sign(ClinicalNote $note): void
+    {
+        $this->store->sign($note);
+    }
 }

@@ -6,6 +6,7 @@ use MicroHis\NotasSoap\Application\TreatingPhysicianGuard;
 use MicroHis\NotasSoap\Domain\ClinicalNote;
 use MicroHis\NotasSoap\Domain\Diagnosis;
 use MicroHis\NotasSoap\Domain\DiagnosisPolicy;
+use MicroHis\NotasSoap\Domain\SignaturePolicy;
 use MicroHis\NotasSoap\Domain\SoapRuleViolation;
 use MicroHis\NotasSoap\Domain\SoapSections;
 use MicroHis\NotasSoap\Domain\Uuid;
@@ -56,4 +57,12 @@ check('U-13', 'SoapSections rechaza una sección con solo espacio duro (U+00A0)'
 check('U-14', 'SoapSections rechaza una sección con solo espacio de ancho cero (U+200B)', violation(fn () => new SoapSections("\u{200B}", 'o', 'a', 'p')) === 'SOAP_SECTION_INVALID 422');
 check('U-15', 'Diagnosis rechaza un código con forma distinta de CIE-10 (inyección, espacios, minúsculas) y acepta J18, J18.9 y S72.001A', violation(fn () => new Diagnosis("J18.9'; DROP TABLE diagnoses; --", 'primary')) === 'DIAGNOSIS_INVALID 422' && violation(fn () => new Diagnosis(' J18.9', 'primary')) === 'DIAGNOSIS_INVALID 422' && violation(fn () => new Diagnosis('j18.9', 'primary')) === 'DIAGNOSIS_INVALID 422' && (new Diagnosis('J18', 'primary'))->code === 'J18' && (new Diagnosis('S72.001A', 'secondary'))->code === 'S72.001A');
 
+
+// UC-SOAP-05 · SignaturePolicy: completitud antes de firmar.
+$signer = new SignaturePolicy();
+$completa = new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('J18.9', 'primary'), new Diagnosis('I10', 'secondary')], new SoapSections('s', 'o', 'a', 'p'));
+check('U-16', 'SignaturePolicy deja firmar una nota con cuatro secciones y exactamente un diagnóstico principal', violation(fn () => $signer->assertCanSign($completa)) === '');
+check('U-17', 'SignaturePolicy rechaza firmar sin diagnóstico principal o sin secciones (SOAP_INCOMPLETE 422)', violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('I10', 'secondary')], new SoapSections('s', 'o', 'a', 'p')))) === 'SOAP_INCOMPLETE 422'
+    && violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'draft', [new Diagnosis('J18.9', 'primary')]))) === 'SOAP_INCOMPLETE 422');
+check('U-18', 'SignaturePolicy rechaza firmar dos veces (NOTE_SIGNED 409) y antes que la completitud', violation(fn () => $signer->assertCanSign(new ClinicalNote('n1', 'ep1', 'dra.lopez', 'signed'))) === 'NOTE_SIGNED 409');
 summary();

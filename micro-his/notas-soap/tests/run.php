@@ -44,7 +44,8 @@ function pdoApp(string $fail = ''): array
         'notes' => fn (): int => (int) $col('SELECT COUNT(*) FROM clinical_notes')[0],
         'descriptions' => fn (): array => $col('SELECT description FROM diagnoses'),
         'audits' => fn (): array => $col('SELECT action FROM local_access_audits'),
-        'sign' => fn (string $id) => $pdo->prepare("UPDATE clinical_notes SET status = 'signed' WHERE clinical_note_id = ?")->execute([$id]),
+        'breakAudit' => fn (): int|false => $pdo->exec('DROP TABLE local_access_audits'),
+        'signed' => fn (): array => $col("SELECT status || ':' || (signed_at IS NOT NULL) FROM clinical_notes ORDER BY clinical_note_id"),
     ]];
 }
 
@@ -58,7 +59,8 @@ function memoryApp(string $fail = ''): array
         'notes' => fn (): int => count($notes->notes),
         'descriptions' => fn (): array => array_column(array_merge([], ...array_values($notes->diagnoses)), 'description'),
         'audits' => fn (): array => array_column($audit->events, 'action'),
-        'sign' => fn (string $id) => $notes->markSigned($id),
+        'breakAudit' => function () use ($audit): void { $audit->down = true; },
+        'signed' => fn (): array => array_map(static fn (array $n): string => $n['status'] . ':' . (int) ($n['status'] === 'signed'), $notes->notes),
     ]];
 }
 
@@ -103,9 +105,19 @@ foreach (['pdo' => 'pdoApp', 'memoria' => 'memoryApp'] as $adapter => $make) {
         && $status(call($router, '/care-episodes/ep1/soap-notes', SOAP, ['X-User-ID' => 7])) === '422 PAYLOAD_INVALID' && $state['notes']() === 1);
     check($t('validación de tipos: código o tipo de diagnóstico no string -> 422 sin guardar'), $status($diagnose($nota, ['code' => 10, 'type' => 'secondary'])) === '422 PAYLOAD_INVALID'
         && $status($diagnose($nota, ['code' => 'I10', 'type' => ['secondary']])) === '422 PAYLOAD_INVALID' && count($state['descriptions']()) === 1);
-    $state['sign']($nota);
-    check($t('regla de dominio: nota firmada no acepta diagnósticos -> 409'), $status($diagnose($nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
+    $sign = static fn (string $note, string $actor = 'dra.lopez'): array => call($router, "/soap-notes/$note/sign", [], ['X-User-ID' => $actor]);
+    $vacia = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];
+    check($t('firma: sin diagnóstico principal -> 422 SOAP_INCOMPLETE y la nota sigue en borrador'), $status($sign($vacia)) === '422 SOAP_INCOMPLETE' && !in_array('nota_soap.firmada', $state['audits'](), true));
+    check($t('firma: un médico sin asignación activa no firma -> 403, y una nota inexistente -> 404'), $status($sign($nota, 'dr.perez')) === '403 NOT_TREATING_PHYSICIAN' && $status($sign('nota-nadie')) === '404 NOTE_NOT_FOUND');
+    $r = $sign($nota);
+    check($t('firma: la autora firma -> 200 signed, con signed_at y una auditoría nota_soap.firmada'), $r['status'] === 200 && $r['body']['status'] === 'signed' && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.firmada')) === 1 && in_array('signed:1', $state['signed'](), true));
+    check($t('firma: firmar otra vez -> 409 NOTE_SIGNED sin segunda auditoría'), $status($sign($nota)) === '409 NOTE_SIGNED' && count(array_filter($state['audits'](), static fn (string $a): bool => $a === 'nota_soap.firmada')) === 1);    check($t('regla de dominio: nota firmada no acepta diagnósticos -> 409'), $status($diagnose($nota, ['code' => 'I10', 'type' => 'secondary'])) === '409 NOTE_SIGNED');
     check($t('ruta desconocida -> 404 ROUTE_NOT_FOUND'), $status(call($router, '/soap-notes', [], method: 'DELETE')) === '404 ROUTE_NOT_FOUND');
+
+    $otra = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];
+    $diagnose($otra, ['code' => 'I10', 'type' => 'primary']);
+    $state['breakAudit']();
+    check($t('firma: bitácora caída -> 500 y la nota sigue en borrador (nunca se firma sin traza)'), $status($sign($otra)) === '500 SOAP_PERSISTENCE_ERROR' && count(array_filter($state['signed'](), static fn (string $s): bool => $s === 'signed:1')) === 1);
 
     [$router, $state] = $make('catalog');
     $nota = call($router, '/care-episodes/ep1/soap-notes', SOAP)['body']['clinical_note_id'];

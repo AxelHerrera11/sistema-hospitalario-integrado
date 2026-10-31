@@ -21,7 +21,7 @@ Contrato que consumen Expediente clínico, Prescripciones, Órdenes de laborator
 | `POST` | `/api/v1/soap-notes/{clinical_note_id}/diagnoses` | `notas_soap.asociar_diagnostico` | `201` | implementado; en el HIS integrado responde `503 ICD10_UNAVAILABLE` hasta que `icd10_codes` esté migrada y cargada (ASII-09, #1620) |
 | `GET` | `/api/v1/soap-notes/{clinical_note_id}` | `notas_soap.ver` | `200` | implementado |
 | `GET` | `/api/v1/care-episodes/{care_episode_id}/soap-notes` | `notas_soap.ver` | `200` | propuesto |
-| `POST` | `/api/v1/soap-notes/{clinical_note_id}/sign` | `notas_soap.firmar` | `200` | propuesto |
+| `POST` | `/api/v1/soap-notes/{clinical_note_id}/sign` | `notas_soap.firmar` | `200` | implementado (Semana 18) |
 | `POST` | `/api/v1/soap-notes/{clinical_note_id}/corrections` | `notas_soap.corregir` | `201` | propuesto |
 
 El permiso de diagnósticos pasa de `diagnosticos.asociar` (Semana 2, RNF-SOAP-01) a `notas_soap.asociar_diagnostico` para respetar `modulo.accion` de dos partes, la misma forma que usa Médicos (`medicos.asociar_especialidad`, #371). Ninguno está aún en el [catálogo de RBAC](../../rbac/semana-05/permisos.md); se proponen a María (ASII-02) con esta matriz inicial:
@@ -63,6 +63,21 @@ El permiso de diagnósticos pasa de `diagnosticos.asociar` (Semana 2, RNF-SOAP-0
 ```
 
 `201` → `{ "clinical_note_id": "…", "code": "J18.9", "type": "primary", "trace_id": "…" }`. La descripción se toma del catálogo, no del cliente.
+
+### `POST /api/v1/soap-notes/{clinical_note_id}/sign`
+
+Sin cuerpo. Solo firma el autor con asignación activa y solo si la nota está completa.
+
+| Resultado | Código | Cuándo |
+|---|---|---|
+| `200` | — | `{ "clinical_note_id": "…", "status": "signed", "trace_id": "…" }`; la nota queda con `signed_at` y es inmutable |
+| `403` | `NOT_TREATING_PHYSICIAN` | no es el autor o ya no tiene asignación activa |
+| `404` | `NOTE_NOT_FOUND` | la nota no existe |
+| `409` | `NOTE_SIGNED` | ya estaba firmada, también si otra sesión la firmó entre la lectura y el `UPDATE` |
+| `422` | `SOAP_INCOMPLETE` | no tiene exactamente un diagnóstico principal; la nota sigue en borrador |
+| `500` | `SOAP_PERSISTENCE_ERROR` | falló la auditoría o la escritura: la firma se revierte, nunca se firma sin traza |
+
+La firma y la auditoría `nota_soap.firmada` (con `version_no`, `primary_code` y `diagnosis_codes`, sin texto clínico) van en una sola transacción. **Pendiente:** el `outbox_events` hacia CENTRAL que prevé la Semana 1 no se escribe todavía, porque no hay contrato del evento con ASII-09 ni con Gobernanza.
 
 ### `GET /api/v1/soap-notes/{clinical_note_id}`
 
