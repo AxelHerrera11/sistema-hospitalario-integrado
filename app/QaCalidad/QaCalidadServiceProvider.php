@@ -50,6 +50,9 @@ final class QaCalidadServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        if ($this->app->runningInConsole()) {
+            $this->commands([ImportCiEvidence::class]);
+        }
         // Mismo orden que el resto de la API: tenant y jwt.auth antes del permiso; el caso de uso lo vuelve a exigir.
         Route::prefix('api/v1/qa/runs')->middleware(['api', 'tenant', 'jwt.auth'])->group(function (): void {
             Route::get('/', [QaRunController::class, 'handle'])->middleware('rbac:'.QaPermissions::VIEW);
