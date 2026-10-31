@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    participant GH as GitHub Actions (job quality-gate)
+    participant CLI as bin/quality-gate.php
+    participant RUN as GateRunner
+    participant UC as Casos de uso (Plan, Advance, Record, Evaluate)
+    participant AUTH as Authorizer / AccessGate
+    participant REPO as TestRunRepository (PDO SQLite)
+    participant AUD as GobernanzaAuditTrail
+    participant QG as QualityGate (dominio)
+
+    GH->>CLI: --evidence-root --sha --release --environment=ci
+    CLI->>CLI: valida manifiesto y política (si falla: exit 3)
+    CLI->>RUN: run(ci-bot@hospital-pruebas-e2e, manifiesto)
+    RUN->>UC: PlanTestRun(release, sha, suites)
+    UC->>AUTH: require(qa.ejecuciones.registrar)
+    alt sin permiso
+        AUTH-->>AUD: qa.acceso.denegado (Security)
+        AUTH-->>UC: AccessDenied → 403
+    else permitido
+        UC->>REPO: save(TestRun planned)
+        UC->>AUD: qa.ejecucion.planificada
+    end
+    RUN->>UC: AdvanceTestRun(start)
+    loop cada suite del manifiesto
+        RUN->>RUN: leer JUnit y calcular SHA-256 de evidencias
+        alt reporte ausente o inválido
+            RUN->>RUN: nota de recolección (sin resultado inventado)
+        else reporte válido
+            RUN->>UC: RecordSuiteResult(conteos, evidencias)
+            UC->>REPO: save (resultado de solo inserción)
+            UC->>AUD: qa.resultado.registrado
+        end
+    end
+    RUN->>UC: AdvanceTestRun(complete)
+    RUN->>UC: EvaluateQualityGate
+    UC->>QG: evaluate(run, política qg-0.1-propuesta)
+    QG-->>UC: GateDecision(approved | rejected | blocked, hallazgos)
+    UC->>REPO: saveDecision
+    UC->>AUD: qa.gate.evaluado (Security: si falla, 503)
+    UC-->>CLI: decisión
+    CLI-->>GH: gate-summary.md al resumen del job y exit 0 / 1 / 2

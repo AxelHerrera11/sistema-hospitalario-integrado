@@ -1,0 +1,18 @@
+%% User flow — Médico tratante (rol medico). Estados: inicial, carga, éxito, vacío, denegado, error recuperable.
+flowchart TD
+    A([Inicio: pantalla de búsqueda<br/>estado inicial con ayuda]) --> B[Escribe el código del paciente]
+    B --> V{¿Formato válido?}
+    V -- No --> VE[Mensaje bajo el campo + foco en el campo] --> B
+    V -- Sí --> L[Cargando… botones deshabilitados]
+    L --> R{Respuesta}
+    R -- 200 con episodios --> OK[Éxito: ficha, resumen y línea de tiempo<br/>motivos plegados] --> M{¿Ver un motivo?}
+    M -- Sí --> MD[Despliega «Motivo de atención»] --> H
+    M -- No --> H[«Ocultar datos del paciente» o cambiar de usuario/hospital → limpia la pantalla] --> Z([Fin])
+    R -- 200 sin episodios --> EV[Vacío: expediente abierto sin episodios] --> Z
+    R -- 404 EXPEDIENTE_NO_ABIERTO --> NA[Vacío: «Sin expediente abierto»<br/>acción «Solicitar apertura…»] --> CF{Diálogo de confirmación}
+    CF -- Cancelar --> Z
+    CF -- Sí, abrir --> AP[Apertura: 201 «Se abrió…» / 200 «ya existía»<br/>acción «Consultar expediente»] --> L
+    R -- 403 SIN_VINCULO_ASISTENCIAL --> DV[Acceso denegado: solo personal asignado] --> Z
+    R -- 503 --> RE{¿Quedan reintentos? máx. 3}
+    RE -- Sí --> L
+    RE -- No --> SO[«Avise a soporte e indique la hora»] --> Z

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+	<testcase name="aprueba" time="0.000953" classname="test"/>
+	<testcase name="omitida" time="0.000221" classname="test">
+		<skipped type="skipped" message="pendiente"/>
+	</testcase>
+	<testcase name="falla a propósito" time="0.000954" classname="test" failure="Expected values to be strictly equal:1 !== 2">
+		<failure type="testCodeFailure" message="Expected values to be strictly equal:1 !== 2">
+[Error [ERR_TEST_FAILURE]: Expected values to be strictly equal:
+
+1 !== 2
+] {
+  code: 'ERR_TEST_FAILURE',
+  failureType: 'testCodeFailure',
+  cause: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.&lt;anonymous> (file:///repo/tests/E2E/sample.test.mjs:5:40)
+      at Test.runInAsyncScope (node:async_hooks:211:14)
+      at Test.run (node:internal/test_runner/test:931:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:629:18)
+      at Test.postRun (node:internal/test_runner/test:1042:19)
+      at Test.run (node:internal/test_runner/test:970:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:629:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual'
+  }
+}
+		</failure>
+	</testcase>
+	<testsuite name="grupo" time="0.001166" disabled="0" errors="0" tests="1" failures="0" skipped="0" hostname="equipo-local">
+		<testcase name="anidada aprueba" time="0.000985" classname="test"/>
+	</testsuite>
+	<!-- tests 4 -->
+	<!-- suites 1 -->
+	<!-- pass 2 -->
+	<!-- fail 1 -->
+	<!-- cancelled 0 -->
+	<!-- skipped 1 -->
+	<!-- todo 0 -->
+	<!-- duration_ms 85.044 -->
+</testsuites>

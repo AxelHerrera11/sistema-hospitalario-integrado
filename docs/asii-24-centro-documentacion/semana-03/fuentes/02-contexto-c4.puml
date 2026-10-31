@@ -1,0 +1,14 @@
+@startuml
+!include <C4/C4_Context>
+
+title Contexto C4 - Centro de Documentacion (ASII-24)
+
+Person(usuario, "Usuario del HIS", "Enfermeria, recepcion o administracion")
+System(centro, "Centro de documentacion", "Publica y consulta manuales por rol")
+System_Ext(almacen, "Almacen de documentos", "Persistencia del catalogo")
+System_Ext(rbac, "RBAC del HIS", "Define los roles del usuario")
+
+Rel(usuario, centro, "Consulta manuales visibles para su rol")
+Rel(centro, rbac, "Resuelve el rol del usuario")
+Rel(centro, almacen, "Lee y escribe documentos")
+@enduml

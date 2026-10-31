@@ -1,0 +1,11 @@
+flowchart LR
+    %% Cómo se integraría el módulo con un repositorio de datos compartido (opciones evaluadas)
+    UC[Casos de uso QA] --> PORT{{TestRunRepository}}
+    PORT --> A1[Opción A - VIGENTE<br/>PdoTestRunRepository + SQLite<br/>de la ejecución, artefacto de CI]
+    PORT --> A2[Opción B - PROPUESTA a Javier<br/>PdoTestRunRepository + PostgreSQL CENTRAL<br/>tablas qa_* sin datos clínicos]
+    PORT --> A3[Opción C - descartada<br/>tablas qa_* en cada base hospital]
+    A1 --> ART[(GitHub artefactos<br/>retención 30/90 días)]
+    A2 --> CEN[(CENTRAL his_central<br/>misma conexión 'central' de Laravel)]
+    A3 --> HOS[(his_hospital por tenant)]
+    CEN -. requiere .-> JAV[[Aprobación y migración<br/>de Javier]]
+    HOS -. mezcla datos de CI con datos clínicos .-> X((no))

@@ -1,0 +1,25 @@
+@startuml
+title Micro-HIS Dashboard base (ASII-26) - Cliente-servidor, API REST e integracion
+skinparam componentStyle rectangle
+[SPA Vue 3 / Postman] as spa
+[API Gateway (ASII-30)\nJWT + X-Tenant-ID] as gw
+node "Servidor Micro-HIS ASII-26" {
+  [Router REST /api/v1] as router
+  [TableroController (Semana 4)] as ctrl
+  [Casos de uso] as uc
+  [IndicadorRepository (interfaz)] as repo
+  [IndicadorRepositoryPDO] as pdo
+}
+database "BD del modulo\n(por tenant)" as db
+spa --> gw : HTTPS + JSON
+gw --> router : /api/v1/tablero
+router --> ctrl
+ctrl --> uc
+uc --> repo
+pdo ..|> repo
+pdo --> db
+[ASII-05 Citas API] as citas
+[ASII-09 Ocupacion API] as ocu
+uc ..> citas : contrato HTTP\n(composicion)
+uc ..> ocu : contrato HTTP\n(composicion)
+@enduml

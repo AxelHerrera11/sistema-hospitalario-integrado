@@ -1,0 +1,11 @@
+  paciente  | measured_value | direction | destinataria | escalation_level |    status    | acusada_por 
+------------+----------------+-----------+--------------+------------------+--------------+-------------
+ PAC-E2E-01 |             32 | low       | medico       |                0 | acknowledged | medico
+(1 row)
+
+     action      |   actor    
+-----------------+------------
+ alerta.generada | bioquimico
+ alerta.acusada  | medico
+(2 rows)
+

@@ -1,0 +1,22 @@
+@startuml
+title ASII-27 - Secuencia de la solicitud REST
+actor Administracion as u
+participant "SPA Vue" as spa
+participant "Router REST" as r
+participant "ReporteController" as c
+participant "GenerarReporte" as uc
+participant "ReporteRepository" as repo
+u -> spa : elige periodo y genera
+spa -> r : POST /api/v1/reportes {periodo, datos}
+r -> c : generar(entrada)
+c -> uc : ejecutar(periodo, datos)
+alt periodo vacio
+  uc --> c : ReporteInvalidoException
+  c --> r : 422 reporte_invalido
+  r --> spa : 422 {code, message}
+else periodo valido
+  uc -> repo : guardar(reporte)
+  c --> r : 201 {id}
+  r --> spa : 201 {data}
+end
+@enduml

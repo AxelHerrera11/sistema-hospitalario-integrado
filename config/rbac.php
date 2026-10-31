@@ -44,6 +44,8 @@ return [
             'usuarios.ver', 'usuarios.desactivar', 'sesiones.revocar_ajenas',
         ],
         'medico' => [
+            // ASII-08: el médico da el alta y consulta la estancia.
+            'altas.registrar', 'traslados.ver',
             'citas.ver', 'citas.confirmar', 'citas.cancelar',
             'reportes.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver', 'laboratorio.ver',
@@ -60,6 +62,8 @@ return [
             'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
         ],
         'enfermeria' => [
+            // ASII-08: enfermería traslada y consulta la estancia.
+            'traslados.registrar', 'traslados.ver',
             'citas.ver', 'documentacion.ver', 'admision.ver',
             'expediente.ver', 'medicamentos.ver',
             'admisiones.ver', 'notas_soap.ver', 'signos_vitales.ver',
@@ -100,6 +104,8 @@ return [
      * Formato: permiso => roles que lo recibirían si se aprobara.
      */
     'pending' => [
+        // Propuesta de ASII-16 sin activar: actualizar el estado de órdenes.
+        'laboratorio.ordenes.actualizar' => ['tecnico_laboratorio'],
         'notas_soap.transferir_autoria' => ['medico', 'superadmin'],
         'prescripciones.excepcion_alergia' => ['medico', 'superadmin'],
         'laboratorio.catalogo.administrar' => ['admin_hospital'],
@@ -107,6 +113,8 @@ return [
         'alertas.acusar' => ['enfermeria'],
     ],
     'catalog' => [
+        // Propuesta de ASII-16 sin activar; no concede acceso a ningún rol.
+        'laboratorio.ordenes.actualizar',
         'medicamentos.registrar', 'medicamentos.cambiar_vigencia',
         'citas.ver', 'citas.crear', 'citas.confirmar',
         'citas.cancelar', 'reportes.ver', 'reportes.exportar',
@@ -130,5 +138,6 @@ return [
         'laboratorio.catalogo.ver', 'laboratorio.catalogo.administrar',
         'alergias.ver', 'alergias.registrar', 'admision.crear', 'camas.ver',
         'alertas.ver', 'alertas.acusar', 'alertas.cerrar',
+        'traslados.registrar', 'altas.registrar', 'traslados.ver',
     ],
 ];

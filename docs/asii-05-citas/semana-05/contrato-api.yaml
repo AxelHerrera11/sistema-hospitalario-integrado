@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Micro-HIS Citas (ASII-05) - API REST
+  version: 0.5.0
+  description: >
+    Contrato de la Semana 5. Borde REST sobre el Micro-HIS MVC + Repository de la Semana 4.
+    En el HIS real el prefijo es /api/v1 detras del API Gateway, con JWT (Authorization: Bearer)
+    y X-Tenant-ID; el sobre de respuesta sigue el formato comun de ASII-24.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+    tenantHeader: []
+paths:
+/citas:
+  get:
+    summary: Listar citas (filtro opcional por paciente)
+    parameters:
+      - { name: paciente, in: query, required: false, schema: { type: string } }
+    responses:
+      '200':
+        description: Lista de citas en `data`
+        content: { application/json: { schema: { properties: { data: { type: array, items: { $ref: '#/components/schemas/Cita' } } } } } }
+  post:
+    summary: Agendar cita (estado inicial scheduled)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/NuevaCita' }
+    responses:
+      '201': { description: Cita creada en `data` (id, estado) }
+      '409': { $ref: '#/components/responses/Error' }
+      '422': { $ref: '#/components/responses/Error' }
+      '404': { $ref: '#/components/responses/Error' }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    tenantHeader: { type: apiKey, in: header, name: X-Tenant-ID }
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, description: Codigo estable del error }
+        message: { type: string }
+        errors: { type: array, items: { type: string }, description: Campos faltantes (solo 422) }
+  responses:
+    Error:
+      description: Sobre comun de error (ASII-24)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+NuevaCita:
+  type: object
+  required: [paciente, doctor, desde, hasta]
+  properties:
+    paciente: { type: string }
+    doctor: { type: string }
+    desde: { type: string, format: date-time }
+    hasta: { type: string, format: date-time }
+Cita:
+  allOf:
+    - $ref: '#/components/schemas/NuevaCita'
+    - properties: { id: { type: string }, estado: { type: string, enum: [scheduled, confirmed, completed, cancelled] } }

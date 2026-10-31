@@ -80,13 +80,19 @@ class PublishedContractsTest extends TestCase
                 $request = Request::create('/api/v1/medications', 'POST');
                 $request->setUserResolver(fn () => new GenericUser(['id' => 'actor']));
                 $request->headers->set('X-Tenant-ID', $hospital);
-                $request->attributes->set('tenant', new class($hospital) {
+                $request->attributes->set('tenant', new class($hospital)
+                {
                     public function __construct(private string $id) {}
-                    public function getKey(): string { return $this->id; }
+
+                    public function getKey(): string
+                    {
+                        return $this->id;
+                    }
                 });
                 $executed = false;
                 $response = $middleware->handle($request, function () use (&$executed) {
                     $executed = true;
+
                     return response()->json(['ok' => true]);
                 }, $permission);
                 $this->assertSame($hospital === 'hospital-a' ? 200 : 403, $response->getStatusCode());
@@ -101,7 +107,7 @@ class PublishedContractsTest extends TestCase
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path($directory)));
             foreach ($files as $file) {
                 $path = str_replace('\\', '/', $file->getPathname());
-                if (str_contains($path, '/tests/') || !in_array($file->getExtension(), ['php', 'js', 'ts', 'vue', 'yaml', 'yml'], true)) {
+                if (str_contains($path, '/tests/') || ! in_array($file->getExtension(), ['php', 'js', 'ts', 'vue', 'yaml', 'yml'], true)) {
                     continue;
                 }
                 preg_match_all('/(?:rbac:|permission:|x-required-permission:\s*[\'"]?)([a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+)/', file_get_contents($path), $matches);
@@ -114,17 +120,18 @@ class PublishedContractsTest extends TestCase
 
     public function test_published_module_permissions_are_catalogued_or_explicitly_superseded(): void
     {
-        $exceptions = ['diagnosticos.asociar', 'prescripciones.anular', 'laboratorio.catalogo', 'laboratorio.ordenes', 'admision.registrada'];
+        // Referencias de archivos: no son declaraciones de permisos.
+        $exceptions = ['prescripciones.test.mjs', 'muestras.yml', 'diagnosticos.png', 'diagnosticos.asociar', 'prescripciones.anular', 'laboratorio.catalogo', 'laboratorio.ordenes', 'admision.registrada', 'wards.ward_id', 'wards.status', 'ocupacion.js', 'ocupacion.test.mjs', 'traslados.test.mjs', 'reportes.js', 'reportes.test.mjs', 'reportes.a11y.test.mjs', 'alergias.test.mjs', 'admision.mjs', 'admision.sh', 'admision.txt', 'alergias.mjs', 'alergias.sh', 'alergias.txt'];
         $prefixes = 'pacientes|medicos|admisiones|admision|camas|alergias|prescripciones|muestras|notas_soap|diagnosticos|signos_vitales|laboratorio|lab-results|ocupacion|alertas|usuarios|sesiones|citas|reportes|documentacion|expediente|medicamentos|auditoria|salas|wards|traslados|altas|analytics';
         $seen = [];
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(base_path('docs')));
         foreach ($files as $file) {
-            if (!in_array($file->getExtension(), ['md', 'yaml', 'yml'], true)) {
+            if (! in_array($file->getExtension(), ['md', 'yaml', 'yml'], true)) {
                 continue;
             }
             preg_match_all('/\b(?:'.$prefixes.')\.[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)*/', file_get_contents($file->getPathname()), $matches);
             foreach (array_unique($matches[0]) as $permission) {
-                if (!in_array($permission, $exceptions, true)) {
+                if (! in_array($permission, $exceptions, true)) {
                     $this->assertContains($permission, config('rbac.catalog'), $file->getPathname());
                     $seen[$permission] = true;
                 }
@@ -157,14 +164,19 @@ class PublishedContractsTest extends TestCase
                 $request = Request::create('/api/v1/lab-results');
                 $request->setUserResolver(fn () => new GenericUser(['id' => 'actor']));
                 $request->headers->set('X-Tenant-ID', $hospital);
-                $request->attributes->set('tenant', new class($hospital) {
+                $request->attributes->set('tenant', new class($hospital)
+                {
                     public function __construct(private string $id) {}
 
-                    public function getKey(): string { return $this->id; }
+                    public function getKey(): string
+                    {
+                        return $this->id;
+                    }
                 });
                 $executed = false;
                 $response = $middleware->handle($request, function () use (&$executed) {
                     $executed = true;
+
                     return response()->json(['ok' => true]);
                 }, 'lab-results.'.$operation);
                 $this->assertSame($hospital === 'hospital-a' ? 200 : 403, $response->getStatusCode());
