@@ -104,9 +104,9 @@ disponible) y ninguno pertenece a este modulo.
 
 ## Lo que no se verifico y dependencias
 
-- **PostgreSQL real:** en este equipo no hay PostgreSQL ni Docker; las pruebas Feature usan dobles del
-  repositorio/fuente y las rutas, middlewares y matriz RBAC reales. La consulta contra HOSPITAL queda
-  pendiente de un recorrido con base real.
+- **Sin base de datos clinica:** el catalogo vive en `config/centro_documentacion.php` y el contenido en `docs/`;
+  el modulo no consulta HOSPITAL (por eso no usa la guarda de base HOSPITAL). Los roles salen de `RoleResolver`,
+  que en las pruebas Feature se sustituye; rutas, middlewares y matriz RBAC son los reales.
 - La publicacion de documentos desde la interfaz requiere un permiso nuevo que debe proponerse a RBAC (ASII-02); por ahora el catalogo se administra en `config/centro_documentacion.php`.
 - **Dos ramas apiladas (limite de 400 lineas por PR):** parte 1 `feature/asii-24-semana-16-api-lis671`
   (API y pruebas, PR #1613 hacia `develop`) y parte 2 `feature/asii-24-semana-16-evidencia-lis671`
