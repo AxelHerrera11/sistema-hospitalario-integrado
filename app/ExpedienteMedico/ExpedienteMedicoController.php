@@ -19,13 +19,24 @@ use MicroHis\Rbac\Application\Authorize;
 use PDOException;
 
 /**
- * API v1 del expediente. Delgado: tenant, jwt.auth y rbac:expediente.ver los aplican los middlewares de la ruta.
+ * API v1 del expediente. Delgado: tenant, jwt.auth y el permiso rbac: de cada ruta los aplican los middlewares.
  * Aquí se traduce la identidad (usuario CENTRAL del JWT → local_user_refs del hospital) y se delega en el
  * micro-HIS con los servicios REALES del contenedor: Authorize (RBAC) y RecordAuditEvent (Gobernanza).
  */
 final class ExpedienteMedicoController extends Controller
 {
     public function consult(Request $request, string $patientCode): Response|JsonResponse
+    {
+        return $this->dispatch($request, 'GET', $patientCode);
+    }
+
+    /** Apertura idempotente: 201 si se creó, 200 si ya existía (RF-EXP-01). */
+    public function open(Request $request, string $patientCode): Response|JsonResponse
+    {
+        return $this->dispatch($request, 'POST', $patientCode);
+    }
+
+    private function dispatch(Request $request, string $method, string $patientCode): Response|JsonResponse
     {
         $central = (string) $request->user('api')?->getAuthIdentifier();
         try {
@@ -43,7 +54,7 @@ final class ExpedienteMedicoController extends Controller
             app(HospitalStoresProvider::class),
             new GobernanzaClinicalAudit(app(RecordAuditEvent::class)),
         );
-        $result = $router->dispatch(new MicroHisRequest('GET', '/patients/' . rawurlencode($patientCode) . '/medical-record', [
+        $result = $router->dispatch(new MicroHisRequest($method, '/patients/' . rawurlencode($patientCode) . '/medical-record', [
             'X-User-ID' => $central,
             'X-Tenant-ID' => self::hospitalOf($request),
             'X-Correlation-ID' => (string) $request->header('X-Request-Id', ''),
